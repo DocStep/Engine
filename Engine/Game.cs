@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Engine;
 
+
 public sealed class Game : Microsoft.Xna.Framework.Game {
     public Game () {
         _graphics = new GraphicsDeviceManager(this) {
@@ -34,18 +35,26 @@ public sealed class Game : Microsoft.Xna.Framework.Game {
     private Matrix _projection;
 
     private Vector3 _cameraPos = new Vector3(0, 0, 1);
+    private Matrix _cameraRot = Matrix.Identity;
+    private Vector3 _cameraOrbitCenterPos = new Vector3(0, 0, 0);
     private float _yaw;
     private float _pitch;
 
-    private float _distanceOffset = 0f;
+    //private float _distanceOffset = 0f;
+
     private float _cameraSpeed = 2f;
     private float _cameraSpeedShift = 4f;
     private const float _sensetivityMultiplier = 0.01f;
     private float _sensetivity = 0.5f;
 
-
     private MouseState _previousMouse;
     private int _previousScroll;
+    /*private CameraRotationMode _cameraRotationMode = CameraRotationMode.Center;
+    public enum CameraRotationMode {
+        Center,
+        Orbital,
+    }*/
+
 
     protected override void Initialize () {
         Window.ClientSizeChanged += OnResize;
@@ -56,8 +65,7 @@ public sealed class Game : Microsoft.Xna.Framework.Game {
         int w = Window.ClientBounds.Width;
         int h = Window.ClientBounds.Height;
 
-        if (w <= 0 || h <= 0)
-            return;
+        if (w <= 0 || h <= 0) return;
 
         _graphics.PreferredBackBufferWidth = w;
         _graphics.PreferredBackBufferHeight = h;
@@ -90,35 +98,31 @@ public sealed class Game : Microsoft.Xna.Framework.Game {
     }
 
     protected override void Update (GameTime gameTime) {
-        if (Keyboard.GetState().IsKeyDown(Keys.Escape))
-            Exit();
+        if (Keyboard.GetState().IsKeyDown(Keys.Escape)) Exit();
 
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         MouseState mouse = Mouse.GetState();
         KeyboardState kb = Keyboard.GetState();
 
+        bool lmb = mouse.LeftButton == ButtonState.Pressed;
         bool rmb = mouse.RightButton == ButtonState.Pressed;
         bool mmb = mouse.MiddleButton == ButtonState.Pressed;
+        bool alt = kb.IsKeyDown(Keys.LeftAlt) || kb.IsKeyDown(Keys.RightAlt);
 
-        int scrollDelta = mouse.ScrollWheelValue - _previousScroll;
-        if (scrollDelta != 0) {
-            _distanceOffset -= scrollDelta * 0.01f;
-            _distanceOffset = MathHelper.Clamp(_distanceOffset, -10f, 10f);
-        }
-        _previousScroll = mouse.ScrollWheelValue;
+        _cameraRot = Matrix.CreateFromYawPitchRoll(_yaw, _pitch, 0f);
+        Vector3 forward = Vector3.Transform(Vector3.Forward, _cameraRot);
+        Vector3 right = Vector3.Transform(Vector3.Right, _cameraRot);
+        Vector3 up = Vector3.Transform(Vector3.Up, _cameraRot);
+        Vector3 _cameraPosDelta = Vector3.Zero;
 
-        Matrix rotation = Matrix.CreateFromYawPitchRoll(_yaw, _pitch, 0f);
-
-        Vector3 forward = Vector3.Transform(Vector3.Forward, rotation);
-        Vector3 right = Vector3.Transform(Vector3.Right, rotation);
-
-        if (rmb && _previousMouse.RightButton == ButtonState.Pressed) {
+        if (alt && lmb || rmb) {
+            /// RMB
             int dx = mouse.X - _previousMouse.X;
             int dy = mouse.Y - _previousMouse.Y;
 
-            _yaw -= dx * _sensetivityMultiplier*_sensetivity;
-            _pitch -= dy * _sensetivityMultiplier*_sensetivity;
+            _yaw -= dx*_sensetivityMultiplier*_sensetivity;
+            _pitch -= dy*_sensetivityMultiplier*_sensetivity;
 
             _pitch = MathHelper.Clamp(
                 _pitch,
@@ -126,44 +130,102 @@ public sealed class Game : Microsoft.Xna.Framework.Game {
                 MathHelper.PiOver2 - 0.01f);
         }
 
+        UpdateCamera();
+
+        /// Drag
         if (mmb && _previousMouse.MiddleButton == ButtonState.Pressed) {
+            const float panSpeed = 0.001f;
             int dx = mouse.X - _previousMouse.X;
             int dy = mouse.Y - _previousMouse.Y;
 
-            const float panSpeed = 0.01f;
-
-            _cameraPos += right * dx * panSpeed;
-            _cameraPos += Vector3.Up * dy * panSpeed;
+            _cameraPosDelta = (-right*dx + Vector3.Up*dy)*panSpeed;
+            _cameraPos += _cameraPosDelta;
+            _cameraOrbitCenterPos += _cameraPosDelta;
         }
 
+        /// Zoom
+        int scrollDelta = mouse.ScrollWheelValue - _previousScroll;
+        if (scrollDelta != 0) {
+            //_distanceOffset -= 0.01f*scrollDelta;
+            //_distanceOffset = MathHelper.Clamp(_distanceOffset, -10f, 10f);
+
+            float delta = MathF.Max(0, 1f + (_cameraOrbitCenterPos - _cameraPos).Length());
+            float _distanceOffset = 0.001f*scrollDelta;
+            _cameraPos += delta*_distanceOffset*forward;
+        }
+        _previousScroll = mouse.ScrollWheelValue;
+
+
+        /// Move
         float speed = kb.IsKeyDown(Keys.LeftShift) ? _cameraSpeedShift : _cameraSpeed;
-
+        _cameraPosDelta = Vector3.Zero;
         if (kb.IsKeyDown(Keys.W))
-            _cameraPos += forward * speed * dt;
+            _cameraPosDelta += forward;
         if (kb.IsKeyDown(Keys.S))
-            _cameraPos -= forward * speed * dt;
+            _cameraPosDelta += -forward;
         if (kb.IsKeyDown(Keys.D))
-            _cameraPos += right * speed * dt;
+            _cameraPosDelta += right;
         if (kb.IsKeyDown(Keys.A))
-            _cameraPos -= right * speed * dt;
+            _cameraPosDelta += -right;
+        if (kb.IsKeyDown(Keys.Space) || kb.IsKeyDown(Keys.E))
+            _cameraPosDelta += up;
+        if (kb.IsKeyDown(Keys.C) || kb.IsKeyDown(Keys.Q))
+            _cameraPosDelta += -up;
+        _cameraPosDelta *= speed*dt;
 
+        _cameraPos += _cameraPosDelta;
+        _cameraOrbitCenterPos += _cameraPosDelta;
         _previousMouse = mouse;
-
-        UpdateCamera();
 
         base.Update(gameTime);
     }
 
     private void UpdateCamera () {
-        Matrix rotation = Matrix.CreateFromYawPitchRoll(_yaw, _pitch, 0f);
-        Vector3 forward = Vector3.Transform(Vector3.Forward, rotation);
-        Vector3 position = _cameraPos - forward * _distanceOffset;
+        MouseState mouse = Mouse.GetState();
+        KeyboardState kb = Keyboard.GetState();
+
+        bool lmb = mouse.LeftButton == ButtonState.Pressed;
+        bool rmb = mouse.RightButton == ButtonState.Pressed;
+        bool alt = kb.IsKeyDown(Keys.LeftAlt) || kb.IsKeyDown(Keys.RightAlt);
+
+        Matrix rotation;
+        Vector3 forward;
+        Vector3 position;
+
+        if (alt && lmb) {
+            /// Orbit Rotation
+            rotation = Matrix.CreateFromYawPitchRoll(_yaw, _pitch, 0f);
+
+            // Always rotate a FIXED-LENGTH reference vector by the CURRENT
+            // absolute angle — never re-rotate last frame's already-rotated offset.
+            float orbitDistance = (_cameraPos - _cameraOrbitCenterPos).Length();
+            if (orbitDistance < 0.01f) orbitDistance = 5f; // fallback if center==pos initially
+
+            Vector3 referenceOffset = Vector3.Backward * orbitDistance; // (0,0,1)*dist, arbitrary baseline
+            Vector3 offset = Vector3.Transform(referenceOffset, rotation);
+
+            position = _cameraOrbitCenterPos + offset;
+            forward = Vector3.Normalize(_cameraOrbitCenterPos - position);
+            rotation = Matrix.CreateWorld(Vector3.Zero, forward, Vector3.Up);
+            _cameraPos = position;
+        } else if (rmb) {
+            /// Center Rotation
+            rotation = Matrix.CreateFromYawPitchRoll(_yaw, _pitch, 0f);
+            forward = Vector3.Transform(Vector3.Forward, rotation);
+            position = _cameraPos;
+        } else {
+            rotation = _cameraRot;
+            forward = Vector3.Transform(Vector3.Forward, rotation);
+            position = _cameraPos;
+        }
 
         _view = Matrix.CreateLookAt(
             position,
             position + forward,
             Vector3.Up
         );
+
+        _cameraRot = rotation;
     }
 
     protected override void Draw (GameTime gameTime) {
@@ -178,11 +240,16 @@ public sealed class Game : Microsoft.Xna.Framework.Game {
 
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-        _sphere!.Draw(GraphicsDevice, Matrix.Identity, _view, _projection);
+        GraphicsDevice.BlendState = BlendState.AlphaBlend;
+        _sphere!.Draw(GraphicsDevice, Matrix.CreateTranslation(2*_cameraOrbitCenterPos)*Matrix.CreateScale(0.5f), _view, _projection, new Color(255, 255, 255, 64));
+        GraphicsDevice.BlendState = BlendState.Opaque;
+
+        //_cube!.Draw(GraphicsDevice, Matrix.Identity, _view, _projection);
 
         _spriteBatch!.Begin();
         _spriteBatch!.End();
 
         base.Draw(gameTime);
     }
+
 }

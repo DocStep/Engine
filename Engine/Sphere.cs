@@ -20,10 +20,11 @@ public sealed class Sphere : IDisposable {
 
         //_effect.EnableDefaultLighting();
         //_effect.Alpha = 0.4f;
-        _effect.LightingEnabled = true;
-        _effect.DirectionalLight0.Enabled = true;
-        _effect.DirectionalLight0.Direction = new Vector3(-1, -1, -1);
-        _effect.DirectionalLight0.DiffuseColor = Color.White.ToVector3();
+
+        //_effect.LightingEnabled = true;
+        //_effect.DirectionalLight0.Enabled = true;
+        //_effect.DirectionalLight0.Direction = new Vector3(-1, -1, -1);
+        //_effect.DirectionalLight0.DiffuseColor = Color.White.ToVector3();
 
         var (vertices, indices) = BuildMesh(radius, segments, color ?? Color.Yellow);
         _indexCount = indices.Length;
@@ -72,10 +73,12 @@ public sealed class Sphere : IDisposable {
             vertices[i].Normal.Normalize();
     }
 
-    public void Draw (GraphicsDevice graphicsDevice, Matrix world, Matrix view, Matrix projection) {
+    public void Draw (GraphicsDevice graphicsDevice, Matrix world, Matrix view, Matrix projection, Color color) {
         _effect.World = world;
         _effect.View = view;
         _effect.Projection = projection;
+        _effect.Alpha = color.A / 255f;
+        _effect.DiffuseColor = color.ToVector3();
 
         graphicsDevice.SetVertexBuffer(_vertexBuffer);
         graphicsDevice.Indices = _indexBuffer;
