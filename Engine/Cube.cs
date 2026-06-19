@@ -64,28 +64,22 @@ public sealed class Cube : IDisposable {
         }
     }
 
-    /// <summary>
-    /// Builds each face independently from its outward normal + two axes lying
-    /// in that face's plane. This guarantees correct winding (clockwise as seen
-    /// from outside the cube) and a correct outward-facing normal for lighting,
-    /// for every face — no hand-picked indices.
-    /// </summary>
     private static (VertexPositionNormalColor[] vertices, short[] indices) BuildMesh () {
-        var faces = new[]
-        {
-            (normal: Vector3.Forward, color: Color.Red, right: Vector3.Right, up: Vector3.Up),       // +Z front
-            (normal: Vector3.Backward, color: Color.Green, right: Vector3.Left, up: Vector3.Up),     // -Z back
-            (normal: Vector3.Right, color: Color.Blue, right: Vector3.Backward, up: Vector3.Up),     // +X right
-            (normal: Vector3.Left, color: Color.Yellow, right: Vector3.Forward, up: Vector3.Up),     // -X left
-            (normal: Vector3.Up, color: Color.Cyan, right: Vector3.Right, up: Vector3.Backward),     // +Y top
-            (normal: Vector3.Down, color: Color.Magenta, right: Vector3.Right, up: Vector3.Forward), // -Y bottom
+        var faces = new[] {
+            (normal: Vector3.Forward, right: Vector3.Right, up: Vector3.Up),       // +Z front
+            (normal: Vector3.Backward, right: Vector3.Left, up: Vector3.Up),       // -Z back
+            (normal: Vector3.Right, right: Vector3.Backward, up: Vector3.Up),      // +X right
+            (normal: Vector3.Left, right: Vector3.Forward, up: Vector3.Up),        // -X left
+            (normal: Vector3.Up, right: Vector3.Right, up: Vector3.Backward),      // +Y top
+            (normal: Vector3.Down, right: Vector3.Right, up: Vector3.Forward),     // -Y bottom
         };
 
         var vertices = new VertexPositionNormalColor[24];
         var indices = new short[36];
+        Color color = Color.LightGray;
 
         for (int f = 0; f < faces.Length; f++) {
-            var (normal, color, right, up) = faces[f];
+            var (normal, right, up) = faces[f];
             Vector3 center = normal * 0.5f;
 
             Vector3 bl = center - right * 0.5f - up * 0.5f;

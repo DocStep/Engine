@@ -34,7 +34,7 @@ public sealed class Game : Microsoft.Xna.Framework.Game {
     private Matrix _view;
     private Matrix _projection;
 
-    private Vector3 _cameraPos = new Vector3(0, 0, 1);
+    private Vector3 _cameraPos = new Vector3(1, 1, 2);
     private Matrix _cameraRot = Matrix.Identity;
     private Vector3 _cameraOrbitCenterPos = new Vector3(0, 0, 0);
     private float _yaw;
@@ -85,7 +85,7 @@ public sealed class Game : Microsoft.Xna.Framework.Game {
     protected override void LoadContent () {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _skybox = new WireframeCube(GraphicsDevice, 100f);
-        _grid = new WorldGrid(GraphicsDevice, 1, 1);
+        _grid = new WorldGrid(GraphicsDevice, 10, 1);
         _axes = new WorldAxes(GraphicsDevice, 3f);
         _cube = new Cube(GraphicsDevice);
         _sphere = new Sphere(GraphicsDevice);
@@ -94,7 +94,23 @@ public sealed class Game : Microsoft.Xna.Framework.Game {
 
         _previousScroll = Mouse.GetState().ScrollWheelValue;
 
+        LookAtOrbitCenter();
         UpdateCamera();
+    }
+
+
+    private void LookAtOrbitCenter () {
+        Vector3 offset = _cameraPos - _cameraOrbitCenterPos;
+        float dist = offset.Length();
+        if (dist < 0.0001f) return;
+
+        Vector3 forward = -offset / dist;
+
+        _pitch = MathF.Asin(MathHelper.Clamp(forward.Y, -1f, 1f));
+        float cosPitch = MathF.Cos(_pitch);
+        _yaw = MathF.Atan2(-forward.X / cosPitch, -forward.Z / cosPitch);
+
+        _cameraRot = Matrix.CreateFromYawPitchRoll(_yaw, _pitch, 0f);
     }
 
     protected override void Update (GameTime gameTime) {
@@ -111,6 +127,7 @@ public sealed class Game : Microsoft.Xna.Framework.Game {
         bool alt = kb.IsKeyDown(Keys.LeftAlt) || kb.IsKeyDown(Keys.RightAlt);
 
         _cameraRot = Matrix.CreateFromYawPitchRoll(_yaw, _pitch, 0f);
+        float posDeltaL = MathF.Max(0, (_cameraOrbitCenterPos - _cameraPos).Length());
         Vector3 forward = Vector3.Transform(Vector3.Forward, _cameraRot);
         Vector3 right = Vector3.Transform(Vector3.Right, _cameraRot);
         Vector3 up = Vector3.Transform(Vector3.Up, _cameraRot);
@@ -134,11 +151,11 @@ public sealed class Game : Microsoft.Xna.Framework.Game {
 
         /// Drag
         if (mmb && _previousMouse.MiddleButton == ButtonState.Pressed) {
-            const float panSpeed = 0.001f;
+            const float dragSpeed = 0.001f;
             int dx = mouse.X - _previousMouse.X;
             int dy = mouse.Y - _previousMouse.Y;
 
-            _cameraPosDelta = (-right*dx + Vector3.Up*dy)*panSpeed;
+            _cameraPosDelta = posDeltaL*dragSpeed*(-right*dx + Vector3.Up*dy);
             _cameraPos += _cameraPosDelta;
             _cameraOrbitCenterPos += _cameraPosDelta;
         }
@@ -148,10 +165,8 @@ public sealed class Game : Microsoft.Xna.Framework.Game {
         if (scrollDelta != 0) {
             //_distanceOffset -= 0.01f*scrollDelta;
             //_distanceOffset = MathHelper.Clamp(_distanceOffset, -10f, 10f);
-
-            float delta = MathF.Max(0, 1f + (_cameraOrbitCenterPos - _cameraPos).Length());
-            float _distanceOffset = 0.001f*scrollDelta;
-            _cameraPos += delta*_distanceOffset*forward;
+            const float zoomSpeed = 0.001f;
+            _cameraPos += posDeltaL*zoomSpeed*scrollDelta*forward;
         }
         _previousScroll = mouse.ScrollWheelValue;
 
@@ -213,6 +228,10 @@ public sealed class Game : Microsoft.Xna.Framework.Game {
             rotation = Matrix.CreateFromYawPitchRoll(_yaw, _pitch, 0f);
             forward = Vector3.Transform(Vector3.Forward, rotation);
             position = _cameraPos;
+
+            float orbitDistance = (_cameraOrbitCenterPos - _cameraPos).Length();
+            if (orbitDistance < 0.01f) orbitDistance = 5f;
+            _cameraOrbitCenterPos = position + forward * orbitDistance;
         } else {
             rotation = _cameraRot;
             forward = Vector3.Transform(Vector3.Forward, rotation);
@@ -241,10 +260,11 @@ public sealed class Game : Microsoft.Xna.Framework.Game {
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
         GraphicsDevice.BlendState = BlendState.AlphaBlend;
-        _sphere!.Draw(GraphicsDevice, Matrix.CreateTranslation(2*_cameraOrbitCenterPos)*Matrix.CreateScale(0.5f), _view, _projection, new Color(255, 255, 255, 64));
+        _sphere!.Draw(GraphicsDevice, Matrix.CreateScale(0.5f)*Matrix.CreateTranslation(_cameraOrbitCenterPos),
+            _view, _projection, new Color(255, 255, 255, 64));
         GraphicsDevice.BlendState = BlendState.Opaque;
 
-        //_cube!.Draw(GraphicsDevice, Matrix.Identity, _view, _projection);
+        _cube!.Draw(GraphicsDevice, Matrix.Identity, _view, _projection);
 
         _spriteBatch!.Begin();
         _spriteBatch!.End();
