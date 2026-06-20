@@ -3,7 +3,8 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 
-namespace Engine;
+namespace Engine.MonoGame;
+
 
 public sealed class Sphere : IDisposable {
     private readonly VertexBuffer _vertexBuffer;

@@ -11,13 +11,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.*" />
-    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.*" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="Content\**\*.*" />
-    <Content Include="Content\**\*.*" CopyToOutputDirectory="PreserveNewest" />
+    <ProjectReference Include="..\Engine.MonoGame\Engine.MonoGame.csproj" />
+    <ProjectReference Include="..\Engine.SilkNet\Engine.SilkNet.csproj" />
   </ItemGroup>
 
 </Project>

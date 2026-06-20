@@ -1,7 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Engine;
+namespace Engine.MonoGame;
+
 
 public sealed class WireframeCube : IDisposable {
     private readonly VertexBuffer _vb;

@@ -1,3 +1,5 @@
 <Solution>
+  <Project Path="Engine.MonoGame/Engine.MonoGame.csproj" Id="b3e376c6-28a7-433e-9626-35a5109c00e7" />
+  <Project Path="Engine.SilkNet/Engine.SilkNet.csproj" Id="ca39fbcb-6127-41ab-9143-de5fd5cd8090" />
   <Project Path="Engine/Engine.csproj" />
 </Solution>

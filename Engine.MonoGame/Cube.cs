@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Engine;
+namespace Engine.MonoGame;
 
 /// <summary>
 /// A basic colored cube mesh with per-face normals, so BasicEffect's lighting

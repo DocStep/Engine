@@ -2,12 +2,9 @@ using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Engine;
+namespace Engine.MonoGame;
 
-/// <summary>
-/// Vertex with position + normal + color. The normal is what lets
-/// BasicEffect (or a custom shader later) calculate lighting per-face.
-/// </summary>
+
 [StructLayout(LayoutKind.Sequential)]
 public struct VertexPositionNormalColor : IVertexType {
     public Vector3 Position;

@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace Engine;
+namespace Engine.MonoGame;
 
 
 public sealed class Game : Microsoft.Xna.Framework.Game {
@@ -42,8 +42,8 @@ public sealed class Game : Microsoft.Xna.Framework.Game {
 
     //private float _distanceOffset = 0f;
 
-    private float _cameraSpeed = 2f;
-    private float _cameraSpeedShift = 4f;
+    private float _cameraSpeed = 10f;
+    private float _cameraSpeedShift = 20f;
     private const float _sensetivityMultiplier = 0.01f;
     private float _sensetivity = 0.5f;
 
