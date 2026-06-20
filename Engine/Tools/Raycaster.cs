@@ -1,6 +1,6 @@
 ﻿using Silk.NET.Maths;
 
-namespace Engine.SilkNet;
+namespace Engine;
 
 
 /// Simple analytic ray intersection tests used for mouse picking.

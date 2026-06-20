@@ -1,6 +1,6 @@
 using Silk.NET.OpenGL;
 
-namespace Engine.SilkNet;
+namespace Engine;
 
 
 /// Three lines from the origin along +X (red), +Y (green), +Z (blue).

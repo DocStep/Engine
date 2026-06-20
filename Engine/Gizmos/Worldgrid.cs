@@ -1,6 +1,6 @@
 using Silk.NET.OpenGL;
 
-namespace Engine.SilkNet;
+namespace Engine;
 
 
 /// Flat grid of lines on the XZ plane, centered at the origin.

@@ -1,6 +1,7 @@
 ﻿using Silk.NET.OpenGL;
 
-namespace Engine.SilkNet;
+namespace Engine.Graphics;
+
 
 public class Shader : IDisposable {
     private readonly GL _gl;

@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace Engine.MonoGame;
+namespace Game.MonoGame;
 
 
 public sealed class Game : Microsoft.Xna.Framework.Game {

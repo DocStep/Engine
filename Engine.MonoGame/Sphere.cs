@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 
-namespace Engine.MonoGame;
+namespace Game.MonoGame;
 
 
 public sealed class Sphere : IDisposable {

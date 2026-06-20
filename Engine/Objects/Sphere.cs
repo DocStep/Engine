@@ -1,6 +1,6 @@
 ﻿using Silk.NET.OpenGL;
 
-namespace Engine.SilkNet;
+namespace Engine;
 
 
 /// Generated UV sphere with interleaved position (xyz) + normal (xyz) vertices.

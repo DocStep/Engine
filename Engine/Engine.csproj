@@ -1,18 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Library</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>Engine</RootNamespace>
-    <PublishReadyToRun>false</PublishReadyToRun>
-    <TieredCompilation>false</TieredCompilation>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Engine.MonoGame\Engine.MonoGame.csproj" />
-    <ProjectReference Include="..\Engine.SilkNet\Engine.SilkNet.csproj" />
+    <PackageReference Include="Silk.NET.Core" Version="2.23.0" />
+    <PackageReference Include="Silk.NET.Input" Version="2.23.0" />
+    <PackageReference Include="Silk.NET.Maths" Version="2.23.0" />
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.23.0" />
+    <PackageReference Include="Silk.NET.Windowing" Version="2.23.0" />
   </ItemGroup>
 
+
+	<ItemGroup>
+		<None Include="src/**/*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	
 </Project>

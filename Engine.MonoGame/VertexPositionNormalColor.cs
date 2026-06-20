@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Engine.MonoGame;
+namespace Game.MonoGame;
 
 
 [StructLayout(LayoutKind.Sequential)]

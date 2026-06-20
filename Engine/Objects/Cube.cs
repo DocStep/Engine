@@ -1,6 +1,6 @@
 ﻿using Silk.NET.OpenGL;
 
-namespace Engine.SilkNet;
+namespace Engine;
 
 public class Cube : IDisposable {
     private readonly GL _gl;

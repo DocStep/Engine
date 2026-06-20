@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Engine.MonoGame;
+namespace Game.MonoGame;
 
 
 public sealed class WireframeCube : IDisposable {
