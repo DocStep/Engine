@@ -1,4 +1,5 @@
 ﻿using Silk.NET.OpenGL;
+using Silk.NET.Maths;
 
 namespace Engine.Graphics;
 
@@ -61,6 +62,12 @@ public class Shader : IDisposable {
         int location = _gl.GetUniformLocation(_handle, name);
         _gl.Uniform3(location, x, y, z);
     }
+
+    public void SetColor (string name, Vector3D<float> color) {
+        int location = _gl.GetUniformLocation(_handle, name);
+        _gl.Uniform3(location, color.X, color.Y, color.Z);
+    }
+
 
     public void SetFloat (string name, float value) {
         int location = _gl.GetUniformLocation(_handle, name);

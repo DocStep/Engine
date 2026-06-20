@@ -10,7 +10,7 @@ public class Material {
     public Texture? AlbedoMap = null;
     public float Roughness = 0.5f;
     public float Metallic = 0f;
-    public float Ambient = 0.08f;
+    public float Ambient = 0.1f;
 
 
     public void Apply (Shader shader) {
@@ -18,7 +18,8 @@ public class Material {
         shader.SetFloat("uRoughness", Roughness);
         shader.SetFloat("uMetallic", Metallic);
         shader.SetFloat("uAmbient", Ambient);
-        // bind texture if present
+
+        /// Bind texture if present
     }
 
 

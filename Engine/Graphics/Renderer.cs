@@ -19,7 +19,9 @@ internal class Renderer {
         GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
         GL.Enable(EnableCap.DepthTest);
 
-        _mat_Default = new Material { Color = new(0.6f, 0.55f, 0.5f), Roughness = 0.5f };
+        _mat_Default = new Material { Color = Constants.lightGray, Roughness = 0.5f };
+        _mat_Default1 = new Material { Color = Constants.gray, Roughness = 1f };
+        _mat_Default2 = new Material { Color = Constants.darkGray, Roughness = 0f };
         _mat_DefaultUnlit = new Material { Color = new(0.6f, 0.55f, 0.5f), Roughness = 1f };
         _mat_DefaultAxes = new Material { Color = new(0.6f, 0.55f, 0.5f), Roughness = 0.5f };
 
@@ -37,6 +39,8 @@ internal class Renderer {
 
     public static Renderer Instance = null!;
 
+    public Action? DrawGizmos = null;
+
 
     private IWindow Window = null!;
     internal GL GL = null!;
@@ -46,6 +50,8 @@ internal class Renderer {
     internal Shader _shaderAxes = null!;
 
     internal Material _mat_Default = null!;
+    internal Material _mat_Default1 = null!;
+    internal Material _mat_Default2 = null!;
     internal Material _mat_DefaultUnlit = null!;
     internal Material _mat_DefaultAxes = null!;
 
@@ -56,104 +62,106 @@ internal class Renderer {
     private WorldAxes _axes = null!;
     private WorldAxes _gizmoAxes = null!;
 
-    internal Vector3D<float> lightGray = new Vector3D<float>(0.78f, 0.78f, 0.78f);
-    internal Vector3D<float> lightDir = Vector3D.Normalize(new Vector3D<float>(-0.4f, -1f, -0.3f));
-    //internal Vector3D<float> lightDir = Vector3D.Normalize(new Vector3D<float>(0f, -1f, 0f));
-    internal Vector3D<float> lightColor = new Vector3D<float>(1f, 1f, 1f);
+    internal Vector3D<float> sunLightDir = Vector3D.Normalize(new Vector3D<float>(-0.4f, -1f, -0.3f));
+    internal Vector3D<float> sunLightColor = new Vector3D<float>(1f, 1f, 1f);
+    internal float sunLightIntensity = 1f;
+
+    internal const float _cameraFOV = 0.25f*MathF.PI;
+    internal const float _cameraPlaneClose = 0.1f;
+    internal const float _cameraPlaneFar = 1000f;
+
+    private readonly static Matrix4X4<float> _modelIdentity = Matrix4X4<float>.Identity;
+    private readonly static float[] _uModelIdentity = Utils.MatrixToArray(_modelIdentity);
+    
+    /// Gizmos
+    private float cameraOrbitCenterRadius = 0.5f;
 
     /// Debug
     internal Matrix4X4<float> View;
     internal Matrix4X4<float> Projection;
+    private float[] uView;
+    private float[] uProjection;
 
 
+    void Draw () {
+        sunLightIntensity = 10f;
 
+        /// Cube
+        _shader.Use();
+        SetSceneUniforms(_shader);
+        //Matrix4X4<float> cubeModel = Matrix4X4.CreateRotationX(0.25f*MathF.PI)*Matrix4X4.CreateRotationY(0.25f*MathF.PI);
+        _shader.SetMatrix4("uModel", _uModelIdentity);
+        _mat_Default.Apply(_shader);
+        //_shader.SetFloat("uAmbient", 1f);
+        _cube.Draw();
+
+        /// Sphere
+        _shader.Use();
+        Matrix4X4<float> sphere_Model = Matrix4X4.CreateScale(0.5f)*Matrix4X4.CreateTranslation(new Vector3D<float>(1.5f, 0f, 0f));
+        _shader.SetMatrix4("uModel", Utils.MatrixToArray(sphere_Model));
+        _mat_Default2.Apply(_shader);
+        _shader.SetColor("uColor", Constants.cyan);
+        _sphere.Draw();
+    }
+
+
+    private void OnRender (double deltaTime) {
+        UpdateProjection();
+        
+        DrawGizmosBasic();
+
+        //DrawGizmos?.Invoke();
+        Draw();
+
+        DrawGizmoCameraOrbitCenter();
+        DrawGizmoAxesWidget();
+    }
     private void UpdateProjection () {
         float aspect = Window.Size.X/(float)Window.Size.Y;
-        Projection = Matrix4X4.CreatePerspectiveFieldOfView(Camera._cameraFOV, aspect, Camera._cameraPlaneClose, Camera._cameraPlaneFar);
+        Projection = Matrix4X4.CreatePerspectiveFieldOfView(_cameraFOV, aspect, _cameraPlaneClose, _cameraPlaneFar);
+        uView = Utils.MatrixToArray(View);
+        uProjection = Utils.MatrixToArray(Projection);
     }
 
-    private void LookAtOrbitCenter () {
-        Vector3D<float> offset = Camera.Instance.cameraPos - Camera.Instance.cameraOrbitCenterPos;
-        float dist = offset.Length;
-        if (dist < 0.0001f) return;
-
-        Vector3D<float> forward = -offset / dist;
-
-        Camera.Instance.pitch = MathF.Asin(Utils.Clamp(forward.Y, -1f, 1f));
-        float cosPitch = MathF.Cos(Camera.Instance.pitch);
-        Camera.Instance.yaw = MathF.Atan2(-forward.X / cosPitch, -forward.Z / cosPitch);
-
-        Camera.Instance.cameraRot = Utils.CreateFromYawPitchRoll(Camera.Instance.yaw, Camera.Instance.pitch, 0f);
+    private void DrawGizmoCameraOrbitCenter () {
+        _shaderUnlit.Use();
+        SetSceneUniforms(_shaderUnlit);
+        float dist = (Camera.Instance.cameraOrbitCenterPos - Camera.Instance.cameraPos).Length;
+        Matrix4X4<float> gizmoSphereModel = Matrix4X4.CreateScale(cameraOrbitCenterRadius*dist*0.01f)
+            *Matrix4X4.CreateTranslation(Camera.Instance.cameraOrbitCenterPos);
+        _shaderUnlit.SetMatrix4("uModel", Utils.MatrixToArray(gizmoSphereModel));
+        _shaderUnlit.SetVector3("uColor", 0.5f, 0.5f, 0.5f);
+        _shaderUnlit.SetFloat("uAlpha", 0.2f);
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        GL.DepthMask(false);
+        _gizmoSphere.Draw();
+        GL.DepthMask(true);
+        GL.Disable(EnableCap.Blend);
     }
-
-
-    internal void OnRender (double deltaTime) {
+    private void DrawGizmosBasic () {
         GL.Clear((uint)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
 
         GL.Enable(EnableCap.CullFace);
         GL.CullFace(TriangleFace.Back);
 
-        Matrix4X4<float> modelIdentity = Matrix4X4<float>.Identity;
-
-        /// Grid (unlit, opaque, gray)
+        /// Grid
         _shaderUnlit.Use();
-        _shaderUnlit.SetMatrix4("uModel", Utils.MatrixToArray(modelIdentity));
-        _shaderUnlit.SetMatrix4("uView", Utils.MatrixToArray(View));
-        _shaderUnlit.SetMatrix4("uProjection", Utils.MatrixToArray(Projection));
+        SetSceneUniforms(_shaderUnlit);
+        _shaderUnlit.SetMatrix4("uModel", _uModelIdentity);
         _shaderUnlit.SetVector3("uColor", 0.35f, 0.35f, 0.4f);
-        _shaderUnlit.SetFloat("uAlpha", 1f);
+        //_shaderUnlit.SetFloat("uAlpha", 1f);
         _grid.Draw();
 
-        /// Axes (vertex-colored, unlit, always on top of grid/scene)
+        /// Axes
         GL.Disable(EnableCap.DepthTest);
         _shaderAxes.Use();
-        _shaderAxes.SetMatrix4("uModel", Utils.MatrixToArray(modelIdentity));
-        _shaderAxes.SetMatrix4("uView", Utils.MatrixToArray(View));
-        _shaderAxes.SetMatrix4("uProjection", Utils.MatrixToArray(Projection));
+        SetSceneUniforms(_shaderAxes);
+        _shaderAxes.SetMatrix4("uModel", _uModelIdentity);
         _axes.Draw();
         GL.Enable(EnableCap.DepthTest);
-
-
-        /// Cube (lit, opaque, light gray)
-        _shader.Use();
-        SetSceneUniforms(_shader);
-
-        Matrix4X4<float> cubeModel =
-            //Matrix4X4.CreateRotationX(MathF.PI / 4f) *
-            //Matrix4X4.CreateRotationY(MathF.PI / 4f) *
-            Matrix4X4.CreateTranslation(new Vector3D<float>(0f, 0f, 0f));
-        _shader.SetMatrix4("uModel", Utils.MatrixToArray(cubeModel));
-        _shader.SetVector3("uColor", lightGray.X, lightGray.Y, lightGray.Z);
-        _cube.Draw();
-
-        Matrix4X4<float> sphereModel = Matrix4X4.CreateScale(0.5f)*Matrix4X4.CreateTranslation(new Vector3D<float>(1.5f, 0f, 0f));
-        _shader.SetMatrix4("uModel", Utils.MatrixToArray(sphereModel));
-        _sphere.Draw();
-
-        /// Sphere (unlit, semi-transparent, small pivot marker, centered on orbit center)
-        GL.Enable(EnableCap.Blend);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-        GL.DepthMask(false);
-
-        _shaderUnlit.Use();
-        Matrix4X4<float> gizmoSphereModel = Matrix4X4.CreateScale(0.05f)*Matrix4X4.CreateTranslation(Camera.Instance.cameraOrbitCenterPos);
-        _shaderUnlit.SetMatrix4("uModel", Utils.MatrixToArray(gizmoSphereModel));
-        _shaderUnlit.SetMatrix4("uView", Utils.MatrixToArray(View));
-        _shaderUnlit.SetMatrix4("uProjection", Utils.MatrixToArray(Projection));
-        _shaderUnlit.SetVector3("uColor", 0f, 0f, 0f);
-        _shaderUnlit.SetFloat("uAlpha", 0.2f);
-        _gizmoSphere.Draw();
-
-        GL.DepthMask(true);
-        GL.Disable(EnableCap.Blend);
-
-        DrawGizmo();
-        
-        UpdateProjection();
     }
-
-
-    private void DrawGizmo () {
+    private void DrawGizmoAxesWidget () {
         const int gizmoSize = 90;
         const int gizmoMargin = 16;
 
@@ -195,18 +203,18 @@ internal class Renderer {
 
 
     private void SetSceneUniforms (Shader shader) {
-        shader.SetMatrix4("uView", Utils.MatrixToArray(View));
-        shader.SetMatrix4("uProjection", Utils.MatrixToArray(Projection));
-        shader.SetVector3("uLightDir", lightDir.X, lightDir.Y, lightDir.Z);
-        shader.SetVector3("uLightColor", lightColor.X, lightColor.Y, lightColor.Z);
+        shader.SetMatrix4("uView", uView);
+        shader.SetMatrix4("uProjection", uProjection);
+        shader.SetVector3("uSunLightColor", sunLightColor.X, sunLightColor.Y, sunLightColor.Z);
+        shader.SetFloat("uSunLightIntensity", sunLightIntensity);
+        shader.SetVector3("uSunLightDir", sunLightDir.X, sunLightDir.Y, sunLightDir.Z);
         shader.SetVector3("uViewPos", Camera.Instance.cameraPos.X, Camera.Instance.cameraPos.Y, Camera.Instance.cameraPos.Z);
     }
 
 
     internal void OnFramebufferResize (Vector2D<int> newSize) {
         GL.Viewport(newSize);
-        if (newSize.X > 0 && newSize.Y > 0)
-            UpdateProjection();
+        if (0 < newSize.X && 0 < newSize.Y) UpdateProjection();
     }
 
     internal void OnClosing () {

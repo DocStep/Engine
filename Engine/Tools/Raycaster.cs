@@ -3,12 +3,7 @@
 namespace Engine;
 
 
-/// Simple analytic ray intersection tests used for mouse picking.
-/// All tests return the ray parameter t (distance along the ray) on hit,
-/// or null on miss. The hit point is `origin + direction*t`.
 public static class Raycaster {
-    /// Builds a world-space ray from a mouse position (pixels, origin top-left)
-    /// through the camera, using the inverse view-projection matrix.
     public static (Vector3D<float> origin, Vector3D<float> direction) ScreenPointToRay (
         float mouseX, float mouseY, int viewportWidth, int viewportHeight,
         Matrix4X4<float> view, Matrix4X4<float> projection) {
@@ -45,9 +40,7 @@ public static class Raycaster {
         return null;
     }
 
-    /// Axis-aligned box test, given the box's local min/max corners and a world model matrix
-    /// (translation + uniform/non-uniform scale; no rotation support needed here).
-    public static float? IntersectAabb (Vector3D<float> origin, Vector3D<float> direction, Vector3D<float> worldMin, Vector3D<float> worldMax) {
+    /*public static float? IntersectAabb (Vector3D<float> origin, Vector3D<float> direction, Vector3D<float> worldMin, Vector3D<float> worldMax) {
         float tMin = float.NegativeInfinity;
         float tMax = float.PositiveInfinity;
 
@@ -73,9 +66,61 @@ public static class Raycaster {
 
         if (tMax < 0f) return null;
         return tMin >= 0f ? tMin : tMax;
+    }*/
+
+    internal static float? IntersectAABB (Vector3D<float> origin, Vector3D<float> dir, Vector3D<float> min, Vector3D<float> max) {
+        float tMin = float.NegativeInfinity;
+        float tMax = float.PositiveInfinity;
+
+        Span<float> o = stackalloc float[] { origin.X, origin.Y, origin.Z };
+        Span<float> d = stackalloc float[] { dir.X, dir.Y, dir.Z };
+        Span<float> mn = stackalloc float[] { min.X, min.Y, min.Z };
+        Span<float> mx = stackalloc float[] { max.X, max.Y, max.Z };
+
+        for (int i = 0; i < 3; i++) {
+            if (MathF.Abs(d[i]) < 1e-8f) {
+                if (o[i] < mn[i] || o[i] > mx[i]) return null;
+            } else {
+                float t1 = (mn[i] - o[i]) / d[i];
+                float t2 = (mx[i] - o[i]) / d[i];
+                if (t1 > t2) (t1, t2) = (t2, t1);
+                tMin = MathF.Max(tMin, t1);
+                tMax = MathF.Min(tMax, t2);
+                if (tMin > tMax) return null;
+            }
+        }
+
+        if (tMin > 0f) return tMin;
+        if (tMax > 0f) return tMax;
+        return null;
     }
 
-    /// Infinite plane test (plane defined by a point on it and a normal).
+    // Möller–Trumbore
+    internal static float? IntersectTriangle (
+        Vector3D<float> origin, Vector3D<float> dir,
+        Vector3D<float> v0, Vector3D<float> v1, Vector3D<float> v2) {
+        const float EPSILON = 1e-8f;
+
+        Vector3D<float> edge1 = v1 - v0;
+        Vector3D<float> edge2 = v2 - v0;
+        Vector3D<float> h = Vector3D.Cross(dir, edge2);
+        float det = Vector3D.Dot(edge1, h);
+
+        if (MathF.Abs(det) < EPSILON) return null; // parallel
+
+        float invDet = 1f / det;
+        Vector3D<float> s = origin - v0;
+        float u = invDet * Vector3D.Dot(s, h);
+        if (u < 0f || u > 1f) return null;
+
+        Vector3D<float> q = Vector3D.Cross(s, edge1);
+        float v = invDet * Vector3D.Dot(dir, q);
+        if (v < 0f || u + v > 1f) return null;
+
+        float t = invDet * Vector3D.Dot(edge2, q);
+        return t > EPSILON ? t : null;
+    }
+
     public static float? IntersectPlane (Vector3D<float> origin, Vector3D<float> direction, Vector3D<float> planePoint, Vector3D<float> planeNormal) {
         float denominator = Vector3D.Dot(direction, planeNormal);
         if (MathF.Abs(denominator) < 1e-8f) return null; // ray parallel to plane

@@ -16,15 +16,10 @@ public class Engine : IDisposable {
 
 
     private IWindow Window = null!;
-    //private OpenGL.GL GL = null!;
     private Renderer Renderer = null!;
     internal IInputContext Input = null!;
-    
-
     private Camera Camera = null!;
     
-
-
 
     public void Run () {
         var options = WindowOptions.Default with {
@@ -59,11 +54,10 @@ public class Engine : IDisposable {
 
         Camera = new Camera(Window);
         Camera.LookAtOrbitCenter();
-        Camera.Update(Window, Input, 0);
     }
 
     private void OnUpdate (double deltaTime) {
-        Camera.Update(Window, Input, deltaTime);
+
     }
 
     private void OnKeyDown (IKeyboard keyboard, Key key, int scancode) {
