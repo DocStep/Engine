@@ -1,47 +1,34 @@
-﻿using Silk.NET.OpenGL;
+﻿using Silk.NET.Maths;
 
-namespace Engine;
+namespace Engine.Graphics;
 
 
-/// Generated UV sphere with interleaved position (xyz) + normal (xyz) vertices.
-/// For a unit-radius sphere, the normal at each vertex equals its position, so
-/// no separate normal pass is needed.
-public class Sphere : IDisposable {
-    private readonly GL _gl;
-    private readonly uint _vao;
-    private readonly uint _vbo;
-    private readonly uint _ebo;
-    private readonly uint _indexCount;
-    private readonly float r = 0.5f;
-
-    public Sphere (GL gl, int latSegments = 16, int lonSegments = 24) {
-        _gl = gl;
-
-        var vertices = new List<float>();
+/// Generates a UV sphere as MeshData. No GL here — wrap the result in a
+/// Mesh to actually draw it: new Mesh(gl, Sphere.Generate()).
+public static class Sphere {
+    public static MeshData Generate (float radius = 0.5f, int latSegments = 16, int lonSegments = 24) {
+        var vertices = new List<Vertex>();
         var indices = new List<uint>();
 
         for (int lat = 0; lat <= latSegments; lat++) {
-            float theta = MathF.PI * lat / latSegments; // 0 (top) .. PI (bottom)
+            float theta = MathF.PI*lat/latSegments; /// 0 (top) .. PI (bottom)
             float sinTheta = MathF.Sin(theta);
             float cosTheta = MathF.Cos(theta);
 
             for (int lon = 0; lon <= lonSegments; lon++) {
-                float phi = 2f * MathF.PI * lon / lonSegments; // 0 .. 2PI
+                float phi = 2f*MathF.PI*lon/lonSegments; /// 0 .. 2PI
                 float sinPhi = MathF.Sin(phi);
                 float cosPhi = MathF.Cos(phi);
 
-                float x = cosPhi * sinTheta;
+                float x = cosPhi*sinTheta;
                 float y = cosTheta;
-                float z = sinPhi * sinTheta;
+                float z = sinPhi*sinTheta;
 
-                // Position (unit sphere — scale to radius via uModel)
-                vertices.Add(r*x);
-                vertices.Add(r*y);
-                vertices.Add(r*z);
-                // Normal (same as position for a unit sphere centered at origin)
-                vertices.Add(x);
-                vertices.Add(y);
-                vertices.Add(z);
+                var position = new Vector3D<float>(radius*x, radius*y, radius*z);
+                var normal = new Vector3D<float>(x, y, z);
+                var uv = new Vector2D<float>((float)lon/lonSegments, 1f - (float)lat/latSegments);
+
+                vertices.Add(new Vertex(position, normal, uv));
             }
         }
 
@@ -61,60 +48,6 @@ public class Sphere : IDisposable {
             }
         }
 
-        _indexCount = (uint)indices.Count;
-
-        _vao = _gl.GenVertexArray();
-        _gl.BindVertexArray(_vao);
-
-        _vbo = _gl.GenBuffer();
-        _gl.BindBuffer(GLEnum.ArrayBuffer, _vbo);
-        unsafe {
-            var verticesArray = vertices.ToArray();
-            fixed (float* v = verticesArray) {
-                _gl.BufferData(
-                    GLEnum.ArrayBuffer,
-                    (nuint)(verticesArray.Length * sizeof(float)),
-                    v,
-                    GLEnum.StaticDraw);
-            }
-        }
-
-        _ebo = _gl.GenBuffer();
-        _gl.BindBuffer(GLEnum.ElementArrayBuffer, _ebo);
-        unsafe {
-            var indicesArray = indices.ToArray();
-            fixed (uint* i = indicesArray) {
-                _gl.BufferData(
-                    GLEnum.ElementArrayBuffer,
-                    (nuint)(indicesArray.Length * sizeof(uint)),
-                    i,
-                    GLEnum.StaticDraw);
-            }
-        }
-
-        const uint floatsPerVertex = 6; // 3 position + 3 normal
-        unsafe {
-            _gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, floatsPerVertex * sizeof(float), (void*)0);
-            _gl.EnableVertexAttribArray(0);
-
-            _gl.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, floatsPerVertex * sizeof(float), (void*)(3 * sizeof(float)));
-            _gl.EnableVertexAttribArray(1);
-        }
-
-        _gl.BindVertexArray(0);
-    }
-
-    public void Draw () {
-        _gl.BindVertexArray(_vao);
-        unsafe {
-            _gl.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, null);
-        }
-        _gl.BindVertexArray(0);
-    }
-
-    public void Dispose () {
-        _gl.DeleteBuffer(_vbo);
-        _gl.DeleteBuffer(_ebo);
-        _gl.DeleteVertexArray(_vao);
+        return new MeshData(vertices.ToArray(), indices.ToArray());
     }
 }

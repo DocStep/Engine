@@ -10,7 +10,11 @@ uniform float uAlpha;
 out vec4 FragColor;
 
 void main () {
-    float dist = length(vWorldPos - uCameraPos);
-    float alpha = 1.0 - smoothstep(uRadius - uFade, uRadius, dist);
-    FragColor = vec4(uColor, alpha*uAlpha);
+    vec3 dir = vWorldPos - uCameraPos;
+    float dist = length(dir);
+    float alpha = 1.0 - smoothstep(uFade, uRadius, dist);
+    float angle = dot(normalize(abs(dir)), vec3(0, 1, 0));
+    angle = 1f-angle;
+    angle = 1f-angle;
+    FragColor = vec4(uColor, angle*alpha*uAlpha);
 }

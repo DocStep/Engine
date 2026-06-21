@@ -28,8 +28,8 @@ internal sealed class CameraEditor : Camera {
     private const float _clickDragThresholdPixels = 5f;
 
     private const float _moveStartSpeedFactor = 1f;
-    private const float     _moveRampUpTime = 2f;
-    private const float _moveOvershootSpeedFactor = 10f;
+    private const float _moveRampUpTime = 2f;
+    private const float _moveOvershootSpeedFactor = 5f;
     private const float _moveMaxHoldTime = 10f;
 
     private const float _zoomSpeed = 0.1f;
@@ -60,6 +60,9 @@ internal sealed class CameraEditor : Camera {
         var dir = Vector3D.Normalize(_cameraPos - _cameraOrbitCenterPos);
         yaw = MathF.Atan2(dir.X, dir.Z);
         pitch = -MathF.Asin(dir.Y);
+
+        isFocusing = false;
+        moveHoldTime = 0f;
     }
 
 

@@ -7,16 +7,11 @@ uniform mat4 uView;
 uniform mat4 uProjection;
 
 out vec3 vNormal;
-out vec3 vWorldPos;
+out vec3 vFragPos;
 
 void main () {
     vec4 worldPos = uModel * vec4(aPosition, 1.0);
-    vWorldPos = worldPos.xyz;
-
-    // Normal matrix (inverse-transpose) would be more correct for non-uniform
-    // scale, but our model matrices here are uniform-scale/translation only,
-    // so transforming by the model's upper-left 3x3 is fine.
+    vFragPos = worldPos.xyz;
     vNormal = mat3(uModel) * aNormal;
-
     gl_Position = uProjection * uView * worldPos;
 }

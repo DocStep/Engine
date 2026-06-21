@@ -11,6 +11,6 @@ out vec4 FragColor;
 
 void main () {
     float dist = length(vWorldPos - uCameraPos);
-    float alpha = 1.0 - smoothstep(uRadius - uFade, uRadius, dist);
+    float alpha = 1.0 - smoothstep(uFade, uRadius, dist);
     FragColor = vec4(vColor, alpha*uAlpha);
 }

@@ -18,10 +18,32 @@ internal class Renderer {
         GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
         GL.Enable(EnableCap.DepthTest);
 
+        _cube = new Mesh(GL, Cube.Generate());
+        _sphere = new Mesh(GL, Sphere.Generate());
+        _gizmoSphere = new Mesh(GL, Sphere.Generate());
+        _grid = new WorldGrid(GL, (int)_cameraPlaneFar, 1f);
+        _axes = new WorldAxes(GL, 10f*_cameraPlaneFar);
+        _gizmoAxes = new WorldAxes(GL, 1f);
+
+        _shader = new Shader(GL, Utils.LoadSrc("src/Shaders/Vertex.shader"), Utils.LoadSrc("src/Shaders/Fragment.shader"));
+        _shaderUnlit = new Shader(GL, Utils.LoadSrc("src/Shaders/UnlitVertex.shader"), Utils.LoadSrc("src/Shaders/UnlitFragment.shader"));
+        _shaderGrid = new Shader(GL, Utils.LoadSrc("src/Shaders/GridVertex.shader"), Utils.LoadSrc("src/Shaders/GridFragment.shader"));
+        _shaderAxes = new Shader(GL, Utils.LoadSrc("src/Shaders/AxesVertex.shader"), Utils.LoadSrc("src/Shaders/AxesFragment.shader"));
+
+        _shaderSkybox = new Shader(GL, Utils.LoadSrc("src/Shaders/SkyboxVertex.shader"), Utils.LoadSrc("src/Shaders/SkyboxFragment.shader"));
+        //_hdrTexture = new HdrTexture(GL, "src/autumn_field_puresky_4k.hdr");
+        _hdrTexture = new HdrTexture(GL, "src/rogland_clear_night_4k.hdr");
+        ///_hdrTexture = new HdrTexture(GL, "src/grasslands_sunset_4k.hdr");
+        ///_hdrTexture = new HdrTexture(GL, "src/overcast_soil_puresky_4k.hdr");
+        ///_hdrTexture = new HdrTexture(GL, "src/qwantani_dusk_2_puresky_4k.hdr");
+
+        _skybox = new Skybox(GL, _shaderSkybox, _hdrTexture);
+        _skybox.BlurScale = 2f;
+
         _mat_Default = new Material { Color = Constants.lightGray, };
         _mat_Smooth = new Material { Color = Constants.lightGray, Roughness = 0f, };
         _mat_Matt = new Material { Color = Constants.lightGray, Roughness = 1f, };
-        _mat_Metallic = new Material { Color = Constants.gray, Roughness = 0.1f, Metallic = 1, };
+        _mat_Metallic = new Material { Color = Constants.gray, Roughness = 0.05f, Metallic = 1, };
 
         _mat_DefaultUnlit = new Material { Color = Constants.gray, Roughness = 1f, };
 
@@ -31,17 +53,6 @@ internal class Renderer {
         _mat_Green = new Material { Color = new(0, 1, 0), };
         _mat_Blue = new Material { Color = new(0, 0, 1), };
 
-        _cube = new Cube(GL);
-        _sphere = new Sphere(GL);
-        _gizmoSphere = new Sphere(GL);
-        _grid = new WorldGrid(GL, (int)_cameraPlaneFar, 1f);
-        _axes = new WorldAxes(GL, 0.5f*_cameraPlaneFar);
-        _gizmoAxes = new WorldAxes(GL, 1f);
-
-        _shader = new Shader(GL, Utils.LoadSrc("src/Shaders/Vertex.shader"), Utils.LoadSrc("src/Shaders/Fragment.shader"));
-        _shaderUnlit = new Shader(GL, Utils.LoadSrc("src/Shaders/UnlitVertex.shader"), Utils.LoadSrc("src/Shaders/UnlitFragment.shader"));
-        _shaderGrid = new Shader(GL, Utils.LoadSrc("src/Shaders/GridVertex.shader"), Utils.LoadSrc("src/Shaders/GridFragment.shader"));
-        _shaderAxes = new Shader(GL, Utils.LoadSrc("src/Shaders/AxesVertex.shader"), Utils.LoadSrc("src/Shaders/AxesFragment.shader"));
     }
 
     public static Renderer Instance = null!;
@@ -56,6 +67,10 @@ internal class Renderer {
     internal Shader _shaderGrid = null!;
     internal Shader _shaderAxes = null!;
 
+    internal Shader _shaderSkybox = null!;
+    private Skybox _skybox = null!;
+    private HdrTexture? _hdrTexture = null;
+
     internal Material _mat_Default = null!;
     internal Material _mat_Smooth = null!;
     internal Material _mat_Matt = null!;
@@ -69,9 +84,9 @@ internal class Renderer {
     internal Material _mat_Green = null!;
     internal Material _mat_Blue = null!;
 
-    private Cube _cube = null!;
-    private Sphere _sphere = null!;
-    private Sphere _gizmoSphere = null!;
+    private Mesh _cube = null!;
+    private Mesh _sphere = null!;
+    private Mesh _gizmoSphere = null!;
     private WorldGrid _grid = null!;
     private WorldAxes _axes = null!;
     private WorldAxes _gizmoAxes = null!;
@@ -97,7 +112,6 @@ internal class Renderer {
     private float[] uProjection = [];
 
 
-
     private void SetSceneUniforms (Shader shader) {
         shader.Use();
         shader.SetMatrix4("uView", uView);
@@ -106,23 +120,21 @@ internal class Renderer {
         shader.SetFloat("uSunLightIntensity", sunLightIntensity);
         shader.SetVector3("uSunLightDir", sunLightDir.X, sunLightDir.Y, sunLightDir.Z);
         shader.SetVector3("uViewPos", Camera.Instance.cameraPos.X, Camera.Instance.cameraPos.Y, Camera.Instance.cameraPos.Z);
+        shader.SetVector3("uAmbientColor", 0.05f, 0.05f, 0.06f);
     }
 
 
     private void Draw () {
-        sunLightIntensity = 5f;
+        sunLightIntensity = 10f;
         Matrix4X4<float> mesh_m4x4;
         float[] mesh_uModel;
 
         /// Cube
         SetSceneUniforms(_shader);
-        //mesh_m4x4 = Matrix4X4<float>.Identity;
-        //mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
         mesh_m4x4 = Matrix4X4.CreateTranslation(new Vector3D<float>(4f, 0f, 0f));
         mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
         _shader.SetMatrix4("uModel", _uModelIdentity);
         _mat_Default.Apply(_shader);
-        //_shader.SetFloat("uAmbient", 1f);
         _cube.Draw();
 
         /// Sphere R
@@ -171,18 +183,26 @@ internal class Renderer {
         mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
         _shader.SetMatrix4("uModel", mesh_uModel);
         _mat_Matt.Apply(_shader);
-        _shader.SetVector3("uSunLightDir", -Vector3D<float>.UnitY);
         _sphere.Draw();
 
-        /// Sphere Metallic
-        SetSceneUniforms(_shader);
-        mesh_m4x4 = Matrix4X4.CreateTranslation(new Vector3D<float>(0f, 0f, -4f));
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shader.SetMatrix4("uModel", mesh_uModel);
-        _mat_Metallic.Apply(_shader);
-        _shader.SetVector3("uSunLightDir", -Vector3D<float>.UnitY);
-        _sphere.Draw();
 
+        /// Spheres Grid
+        float offsetX = 0f;
+        float offsetZ = -4f;
+        float gridCount = 5f;
+        for (int x = 0; x < gridCount; x++) {
+            for (int z = 0; z < gridCount; z++) {
+                SetSceneUniforms(_shader);
+                mesh_m4x4 = Matrix4X4.CreateTranslation(
+                    new Vector3D<float>(2f*x + offsetX, 0f, -2f*z + offsetZ));
+                mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
+                _shader.SetMatrix4("uModel", mesh_uModel);
+                _shader.SetColor("uColor", Constants.gray);
+                _shader.SetFloat("uRoughness", 1f - x/gridCount);
+                _shader.SetFloat("uMetallic", z/gridCount);
+                _sphere.Draw();
+            }
+        }
     }
 
 
@@ -190,6 +210,8 @@ internal class Renderer {
         UpdateProjection();
 
         GL.Clear((uint)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
+
+        _skybox.Draw(View, Projection);
 
         GL.Enable(EnableCap.CullFace);
         GL.CullFace(TriangleFace.Back);
@@ -225,8 +247,8 @@ internal class Renderer {
         SetSceneUniforms(_shaderGrid);
         _shaderGrid.SetMatrix4("uModel", _uModelIdentity);
         _shaderGrid.SetVector3("uCameraPos", Camera.Instance.cameraPos);
-        _shaderGrid.SetVector3("uColor", Constants.gray);
-        _shaderGrid.SetFloat("uAlpha", 0.25f);
+        _shaderGrid.SetVector3("uColor", Constants.lightGray);
+        _shaderGrid.SetFloat("uAlpha", 0.5f);
         _shaderGrid.SetFloat("uRadius", 200f);
         _shaderGrid.SetFloat("uFade", 50f);
         _grid.Draw();
@@ -244,7 +266,7 @@ internal class Renderer {
         _shaderAxes.SetMatrix4("uModel", _uModelIdentity);
         _shaderAxes.SetVector3("uCameraPos", Camera.Instance.cameraPos);
         _shaderAxes.SetFloat("uAlpha", 0.5f);
-        _shaderAxes.SetFloat("uRadius", 100f);
+        _shaderAxes.SetFloat("uRadius", 200f);
         _shaderAxes.SetFloat("uFade", 50f);
         _axes.Draw();
 
@@ -327,6 +349,9 @@ internal class Renderer {
         _shader.Dispose();
         _shaderUnlit.Dispose();
         _shaderAxes.Dispose();
+        _skybox.Dispose();
+        _hdrTexture?.Dispose();
+        _shaderSkybox.Dispose();
     }
 
 }

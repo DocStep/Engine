@@ -72,10 +72,18 @@ public class Shader : IDisposable {
         _gl.Uniform3(location, color.X, color.Y, color.Z);
     }
 
-
+    public void SetInt (string name, int value) {
+        int location = _gl.GetUniformLocation(_handle, name);
+        _gl.Uniform1(location, value);
+    }
     public void SetFloat (string name, float value) {
         int location = _gl.GetUniformLocation(_handle, name);
         _gl.Uniform1(location, value);
+    }
+
+    public void SetBool (string name, bool value) {
+        int location = _gl.GetUniformLocation(_handle, name);
+        _gl.Uniform1(location, value ? 1 : 0);
     }
 
     public void Dispose () {
