@@ -15,11 +15,20 @@ public class Engine : IDisposable {
     public static Engine Instance = null!;
 
 
-    private IWindow Window = null!;
+    internal static IWindow Window = null!;
+    internal static IKeyboard? keyboard;
+    internal static IMouse? mouse;
+
     private Renderer Renderer = null!;
     internal IInputContext Input = null!;
     private Camera Camera = null!;
-    
+
+    private double _deltaTime;
+    public static double deltaTime {
+        get => Instance._deltaTime;
+        private set => Instance._deltaTime = value;
+    }
+
 
     public void Run () {
         var options = WindowOptions.Default with {
@@ -38,7 +47,7 @@ public class Engine : IDisposable {
             (screenSize.Y - options.Size.Y)/2);
 
         Window.Load += OnLoad;
-        Window.Update += OnUpdate;
+        Window.Update += OnUpdate_;
         Window.Closing += OnClosing;
 
         Window.Run();
@@ -50,15 +59,20 @@ public class Engine : IDisposable {
             keyboard.KeyDown += OnKeyDown;
         }
 
-        Renderer = new Renderer(Window);
+        Renderer = new Renderer();
 
-        Camera = new Camera(Window);
-        Camera.LookAtOrbitCenter();
+        Camera = new CameraEditor();
     }
 
-    private void OnUpdate (double deltaTime) {
+    private void OnUpdate_ (double deltaTime) {
+        keyboard = Engine.Instance.Input.Keyboards.FirstOrDefault();
+        mouse = Engine.Instance.Input.Mice.FirstOrDefault();
+        if (keyboard == null || mouse == null) return;
 
+        if (keyboard.IsKeyPressed(Key.Escape)) Window.Close();
     }
+
+
 
     private void OnKeyDown (IKeyboard keyboard, Key key, int scancode) {
         if (key == Key.Escape) {

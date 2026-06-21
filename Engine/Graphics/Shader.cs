@@ -62,6 +62,10 @@ public class Shader : IDisposable {
         int location = _gl.GetUniformLocation(_handle, name);
         _gl.Uniform3(location, x, y, z);
     }
+    public void SetVector3 (string name, Vector3D<float> vec3) {
+        int location = _gl.GetUniformLocation(_handle, name);
+        _gl.Uniform3(location, vec3.X, vec3.Y, vec3.Z);
+    }
 
     public void SetColor (string name, Vector3D<float> color) {
         int location = _gl.GetUniformLocation(_handle, name);

@@ -6,6 +6,8 @@ namespace Engine.Graphics;
 
 public class Material {
 
+    public Shader? shader = null;
+
     public Vector3D<float> Color = Constants.lightGray;
     public Texture? AlbedoMap = null;
     public float Roughness = 0.5f;

@@ -12,6 +12,7 @@ public class Sphere : IDisposable {
     private readonly uint _vbo;
     private readonly uint _ebo;
     private readonly uint _indexCount;
+    private readonly float r = 0.5f;
 
     public Sphere (GL gl, int latSegments = 16, int lonSegments = 24) {
         _gl = gl;
@@ -34,9 +35,9 @@ public class Sphere : IDisposable {
                 float z = sinPhi * sinTheta;
 
                 // Position (unit sphere — scale to radius via uModel)
-                vertices.Add(x);
-                vertices.Add(y);
-                vertices.Add(z);
+                vertices.Add(r*x);
+                vertices.Add(r*y);
+                vertices.Add(r*z);
                 // Normal (same as position for a unit sphere centered at origin)
                 vertices.Add(x);
                 vertices.Add(y);
