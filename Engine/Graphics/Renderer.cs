@@ -25,19 +25,18 @@ internal class Renderer {
         _axes = new WorldAxes(GL, 10f*_cameraPlaneFar);
         _gizmoAxes = new WorldAxes(GL, 1f);
 
-        _shader = new Shader(GL, Utils.LoadSrc("src/Shaders/Vertex.shader"), Utils.LoadSrc("src/Shaders/Fragment.shader"));
-        _shaderUnlit = new Shader(GL, Utils.LoadSrc("src/Shaders/UnlitVertex.shader"), Utils.LoadSrc("src/Shaders/UnlitFragment.shader"));
-        _shaderGrid = new Shader(GL, Utils.LoadSrc("src/Shaders/GridVertex.shader"), Utils.LoadSrc("src/Shaders/GridFragment.shader"));
-        _shaderAxes = new Shader(GL, Utils.LoadSrc("src/Shaders/AxesVertex.shader"), Utils.LoadSrc("src/Shaders/AxesFragment.shader"));
+        _shader = new Shader(Utils.LoadSrc("src/Shaders/Vertex.shader"), Utils.LoadSrc("src/Shaders/Fragment.shader"));
+        _shaderUnlit = new Shader(Utils.LoadSrc("src/Shaders/UnlitVertex.shader"), Utils.LoadSrc("src/Shaders/UnlitFragment.shader"));
+        _shaderGrid = new Shader(Utils.LoadSrc("src/Shaders/GridVertex.shader"), Utils.LoadSrc("src/Shaders/GridFragment.shader"));
+        _shaderAxes = new Shader(Utils.LoadSrc("src/Shaders/AxesVertex.shader"), Utils.LoadSrc("src/Shaders/AxesFragment.shader"));
 
-        _shaderSkybox = new Shader(GL, Utils.LoadSrc("src/Shaders/SkyboxVertex.shader"), Utils.LoadSrc("src/Shaders/SkyboxFragment.shader"));
-        //_hdrTexture = new HdrTexture(GL, "src/autumn_field_puresky_4k.hdr");
-        _hdrTexture = new HdrTexture(GL, "src/rogland_clear_night_4k.hdr");
-        ///_hdrTexture = new HdrTexture(GL, "src/grasslands_sunset_4k.hdr");
-        ///_hdrTexture = new HdrTexture(GL, "src/overcast_soil_puresky_4k.hdr");
-        ///_hdrTexture = new HdrTexture(GL, "src/qwantani_dusk_2_puresky_4k.hdr");
-
-        _skybox = new Skybox(GL, _shaderSkybox, _hdrTexture);
+        _shaderSkybox = new Shader(Utils.LoadSrc("src/Shaders/SkyboxVertex.shader"), Utils.LoadSrc("src/Shaders/SkyboxFragment.shader"));
+        //_hdrTexture = new HdrTexture("src/autumn_field_puresky_4k.hdr");
+        _hdrTexture = new HdrTexture("src/rogland_clear_night_4k.hdr");
+        ///_hdrTexture = new HdrTexture("src/grasslands_sunset_4k.hdr");
+        ///_hdrTexture = new HdrTexture("src/overcast_soil_puresky_4k.hdr");
+        ///_hdrTexture = new HdrTexture("src/qwantani_dusk_2_puresky_4k.hdr");
+        _skybox = new Skybox(_shaderSkybox, _hdrTexture);
         _skybox.BlurScale = 2f;
 
         _mat_Default = new Material { Color = Constants.lightGray, };
@@ -121,6 +120,12 @@ internal class Renderer {
         shader.SetVector3("uSunLightDir", sunLightDir.X, sunLightDir.Y, sunLightDir.Z);
         shader.SetVector3("uViewPos", Camera.Instance.cameraPos.X, Camera.Instance.cameraPos.Y, Camera.Instance.cameraPos.Z);
         shader.SetVector3("uAmbientColor", 0.05f, 0.05f, 0.06f);
+
+        _hdrTexture?.Bind(TextureUnit.Texture0);
+        shader.SetInt("uSkybox", 0);
+
+        float maxLod = _hdrTexture is not null ? MathF.Log2(MathF.Max(_hdrTexture.Width, _hdrTexture.Height)) : 0f;
+        shader.SetFloat("uMaxReflectionLod", maxLod);
     }
 
 
@@ -203,6 +208,16 @@ internal class Renderer {
                 _sphere.Draw();
             }
         }
+
+        SetSceneUniforms(_shader);
+        mesh_m4x4 = Matrix4X4.CreateTranslation(new Vector3D<float>(-4f, 0f, 0f))
+            *Matrix4X4.CreateScale<float>(2f, 2f, 2f);
+        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
+        _shader.SetMatrix4("uModel", mesh_uModel);
+        _mat_Matt.Apply(_shader);
+        _shader.SetFloat("uRoughness", 0);
+        _shader.SetFloat("uMetallic", 1);
+        _sphere.Draw();
     }
 
 
@@ -211,7 +226,7 @@ internal class Renderer {
 
         GL.Clear((uint)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
 
-        _skybox.Draw(View, Projection);
+        _skybox?.Draw(View, Projection);
 
         GL.Enable(EnableCap.CullFace);
         GL.CullFace(TriangleFace.Back);

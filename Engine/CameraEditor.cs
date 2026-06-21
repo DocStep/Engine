@@ -10,7 +10,7 @@ namespace Engine;
 internal sealed class CameraEditor : Camera {
     internal CameraEditor () : base() {
         Instance = this;
-        SetDefaultTransform();
+        SetTransformDefault();
         LookAtOrbitCenter();
     }
 
@@ -44,6 +44,7 @@ internal sealed class CameraEditor : Camera {
     private bool mmbDragged;
     private bool previousMmb;
     private bool previousR;
+    private bool previousT;
 
     private bool isFocusing;
     private Vector3D<float> focusTargetCameraPos;
@@ -52,12 +53,22 @@ internal sealed class CameraEditor : Camera {
     private float moveHoldTime;
 
 
-    private void SetDefaultTransform () {
+    private void SetTransformDefault () {
         cameraPos = _cameraPos;
-        cameraRot = Matrix4X4.CreateLookAt(_cameraPos, _cameraOrbitCenterPos, Vector3D<float>.UnitY);
         cameraOrbitCenterPos = _cameraOrbitCenterPos;
 
-        var dir = Vector3D.Normalize(_cameraPos - _cameraOrbitCenterPos);
+        NewTransform();
+    }
+    private void SetTransformT () {
+        cameraPos = _cameraPos;
+        cameraOrbitCenterPos = new Vector3D<float>(-8f, 0f, 0f);
+
+        NewTransform();
+    }
+    private void NewTransform () {
+        cameraRot = Matrix4X4.CreateLookAt(cameraPos, cameraOrbitCenterPos, Vector3D<float>.UnitY);
+
+        var dir = Vector3D.Normalize(cameraPos - cameraOrbitCenterPos);
         yaw = MathF.Atan2(dir.X, dir.Z);
         pitch = -MathF.Asin(dir.Y);
 
@@ -81,8 +92,10 @@ internal sealed class CameraEditor : Camera {
         bool mmb = mouse.IsButtonPressed(MouseButton.Middle);
         bool alt = keyboard.IsKeyPressed(Key.AltLeft) || keyboard.IsKeyPressed(Key.AltRight);
         bool r = keyboard.IsKeyPressed(Key.R);
+        bool t = keyboard.IsKeyPressed(Key.T);
 
-        if (r && !previousR) SetDefaultTransform();
+        if (r && !previousR) SetTransformDefault();
+        if (t && !previousT) SetTransformT();
 
         cameraRot = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
         float posDeltaL = MathF.Max(0, (cameraOrbitCenterPos - cameraPos).Length);
@@ -139,9 +152,9 @@ internal sealed class CameraEditor : Camera {
             Vector3D<float> camDelta = focusTargetCameraPos - cameraPos;
             Vector3D<float> orbitDelta = focusTargetOrbitCenterPos - cameraOrbitCenterPos;
 
-            float t = MathF.Min(1f, _focusGlideSpeed*dt);
-            cameraPos += camDelta*t;
-            cameraOrbitCenterPos += orbitDelta*t;
+            float _t = MathF.Min(1f, _focusGlideSpeed*dt);
+            cameraPos += camDelta*_t;
+            cameraOrbitCenterPos += orbitDelta*_t;
 
             if (camDelta.Length < 0.01f && orbitDelta.Length < 0.01f) {
                 cameraPos = focusTargetCameraPos;
@@ -195,6 +208,7 @@ internal sealed class CameraEditor : Camera {
         previousMmb = mmb;
 
         previousR = r;
+        previousT = t;
     }
 
     protected override void UpdateCamera (double deltaTime) {

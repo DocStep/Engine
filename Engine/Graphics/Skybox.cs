@@ -5,16 +5,16 @@ namespace Engine.Graphics;
 
 
 public class Skybox : IDisposable {
-    public Skybox (GL gl, Shader shader, HdrTexture? texture) {
-        _gl = gl;
+    public Skybox (Shader shader, HdrTexture? texture) {
+        GL = Renderer.Instance.GL;
         _shader = shader;
         _texture = texture;
 
-        _emptyVao = _gl.GenVertexArray();
+        _emptyVao = GL.GenVertexArray();
     }
 
 
-    private readonly GL _gl;
+    private readonly GL GL;
     private readonly Shader _shader;
     private readonly HdrTexture? _texture;
     private uint _emptyVao;
@@ -28,8 +28,8 @@ public class Skybox : IDisposable {
         Matrix4X4.Invert(view, out var invView);
         Matrix4X4.Invert(projection, out var invProjection);
 
-        _gl.DepthFunc(DepthFunction.Lequal);
-        _gl.DepthMask(false);
+        GL.DepthFunc(DepthFunction.Lequal);
+        GL.DepthMask(false);
 
         _shader.Use();
         _shader.SetMatrix4("uInvView", Utils.MatrixToArray(invView));
@@ -39,15 +39,20 @@ public class Skybox : IDisposable {
         _shader.SetInt("uSkyboxTexture", 0);
         _shader.SetFloat("uBlurScale", BlurScale);
 
-        _gl.BindVertexArray(_emptyVao);
-        _gl.DrawArrays(PrimitiveType.Triangles, 0, 3);
-        _gl.BindVertexArray(0);
+        GL.BindVertexArray(_emptyVao);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+        GL.BindVertexArray(0);
 
-        _gl.DepthMask(true);
-        _gl.DepthFunc(DepthFunction.Less);
+        //GL.BindTexture(TextureTarget.TextureCubeMap, skyboxTextureId);
+        //GL.GenerateMipmap(TextureTarget.TextureCubeMap);
+
+        GL.DepthMask(true);
+        GL.DepthFunc(DepthFunction.Less);
     }
+
 
     public void Dispose () {
-        _gl.DeleteVertexArray(_emptyVao);
+        GL.DeleteVertexArray(_emptyVao);
     }
+
 }
