@@ -3,31 +3,27 @@
 namespace Engine.Graphics;
 
 
-/// GPU-side mesh. Owns the VAO/VBO/EBO and uploads a MeshData once on
-/// construction. This is the single place attribute layout (location 0/1/2)
-/// is set up, so every mesh in the engine — primitive or imported — draws
-/// the same way.
 public class Mesh : IDisposable {
-    private readonly GL _gl;
+    private readonly GL GL;
     private readonly uint _vao;
     private readonly uint _vbo;
     private readonly uint _ebo;
     private readonly uint _indexCount;
 
-    public Mesh (GL gl, MeshData data) {
-        _gl = gl;
+    public Mesh (MeshData data) {
+        GL = Renderer.Instance.GL;
         _indexCount = (uint)data.Indices.Length;
 
         float[] vertices = Flatten(data.Vertices);
 
-        _vao = _gl.GenVertexArray();
-        _gl.BindVertexArray(_vao);
+        _vao = GL.GenVertexArray();
+        GL.BindVertexArray(_vao);
 
-        _vbo = _gl.GenBuffer();
-        _gl.BindBuffer(GLEnum.ArrayBuffer, _vbo);
+        _vbo = GL.GenBuffer();
+        GL.BindBuffer(GLEnum.ArrayBuffer, _vbo);
         unsafe {
             fixed (float* v = vertices) {
-                _gl.BufferData(
+                GL.BufferData(
                     GLEnum.ArrayBuffer,
                     (nuint)(vertices.Length*sizeof(float)),
                     v,
@@ -35,11 +31,11 @@ public class Mesh : IDisposable {
             }
         }
 
-        _ebo = _gl.GenBuffer();
-        _gl.BindBuffer(GLEnum.ElementArrayBuffer, _ebo);
+        _ebo = GL.GenBuffer();
+        GL.BindBuffer(GLEnum.ElementArrayBuffer, _ebo);
         unsafe {
             fixed (uint* i = data.Indices) {
-                _gl.BufferData(
+                GL.BufferData(
                     GLEnum.ElementArrayBuffer,
                     (nuint)(data.Indices.Length*sizeof(uint)),
                     i,
@@ -50,19 +46,19 @@ public class Mesh : IDisposable {
         const uint stride = Vertex.FloatStride*sizeof(float);
         unsafe {
             /// Position (location 0)
-            _gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, stride, (void*)0);
-            _gl.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, stride, (void*)0);
+            GL.EnableVertexAttribArray(0);
 
             /// Normal (location 1)
-            _gl.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, stride, (void*)(3*sizeof(float)));
-            _gl.EnableVertexAttribArray(1);
+            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, stride, (void*)(3*sizeof(float)));
+            GL.EnableVertexAttribArray(1);
 
             /// UV (location 2)
-            _gl.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, stride, (void*)(6*sizeof(float)));
-            _gl.EnableVertexAttribArray(2);
+            GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, stride, (void*)(6*sizeof(float)));
+            GL.EnableVertexAttribArray(2);
         }
 
-        _gl.BindVertexArray(0);
+        GL.BindVertexArray(0);
     }
 
     private static float[] Flatten (Vertex[] verts) {
@@ -82,16 +78,16 @@ public class Mesh : IDisposable {
     }
 
     public void Draw () {
-        _gl.BindVertexArray(_vao);
+        GL.BindVertexArray(_vao);
         unsafe {
-            _gl.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, null);
+            GL.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, null);
         }
-        _gl.BindVertexArray(0);
+        GL.BindVertexArray(0);
     }
 
     public void Dispose () {
-        _gl.DeleteBuffer(_vbo);
-        _gl.DeleteBuffer(_ebo);
-        _gl.DeleteVertexArray(_vao);
+        GL.DeleteBuffer(_vbo);
+        GL.DeleteBuffer(_ebo);
+        GL.DeleteVertexArray(_vao);
     }
 }

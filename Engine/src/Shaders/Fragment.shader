@@ -15,6 +15,7 @@ uniform vec3 uViewPos;
 uniform vec3 uAmbientColor;
 uniform sampler2D uSkybox;
 uniform float uMaxReflectionLod;
+uniform float uExposure;
 
 const float PI = 3.14159265;
 
@@ -30,8 +31,18 @@ float G_Smith (float NdV, float NdL, float rough) {
 vec3 F_Schlick (float cosTheta, vec3 F0) {
     return F0 + (1.0 - F0)*pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
+vec3 F_SchlickRoughness (float cosTheta, vec3 F0, float roughness) {
+    vec3 maxF0 = max(vec3(1.0 - roughness), F0);
+    return F0 + (maxF0 - F0)*pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
 
-/// Convert a direction vector to equirectangular UV coordinates
+/// Unity's grazing-angle specular occlusion (UniversalFragmentPBR-style)
+/// Fades reflections out at glancing angles on convex surfaces, avoiding
+/// the "shiny rim glow" artifact pure Fresnel produces with no AO term
+float GetSpecularOcclusion (float NdV, float occlusion, float roughness) {
+    return clamp(pow(NdV + occlusion, exp2(-16.0*roughness - 1.0)) - 1.0 + occlusion, 0.0, 1.0);
+}
+
 vec2 DirToEquirectUV (vec3 dir) {
     float u = 0.5 + atan(dir.z, dir.x)/(2.0*PI);
     float v = 0.5 + asin(clamp(dir.y, -1.0, 1.0))/PI;
@@ -46,7 +57,7 @@ void main () {
     vec3 R = reflect(-V, N);
 
     float NdL = max(dot(N, L), 0.0);
-    float NdV = max(dot(N, V), 0.0);
+    float NdV = max(dot(N, V), 1e-4);
     float NdH = max(dot(N, H), 0.0);
     float HdV = max(dot(H, V), 0.0);
 
@@ -63,22 +74,25 @@ void main () {
     vec3 kD = (1.0 - Fdirect)*(1.0 - uMetallic);
     vec3 Lo = (kD*uColor/PI + spec)*uSunLightColor*uSunLightIntensity*NdL;
 
-    /// --- Ambient (diffuse, flat placeholder) ---
-    vec3 Fambient = F_Schlick(NdV, F0);
+    /// --- Ambient diffuse ---
+    vec3 Fambient = F_SchlickRoughness(NdV, F0, rough);
     vec3 kDambient = (1.0 - Fambient)*(1.0 - uMetallic);
     vec3 diffuseAmbient = kDambient*uAmbientColor*uColor;
 
-    /// --- Ambient (specular, from skybox reflection) ---
+    /// --- Ambient specular (IBL), exposure applied BEFORE tonemap, with occlusion ---
     float lod = rough*uMaxReflectionLod;
     vec2 envUV = DirToEquirectUV(R);
-    vec3 envSpec = textureLod(uSkybox, envUV, lod).rgb;
-    vec3 specularAmbient = envSpec*Fambient;
+    vec3 envSpec = textureLod(uSkybox, envUV, lod).rgb*uExposure;
+    float specOcclusion = GetSpecularOcclusion(NdV, 1.0, rough);
+    vec3 specularAmbient = envSpec*Fambient*specOcclusion;
 
     vec3 ambient = diffuseAmbient + specularAmbient;
-
     vec3 color = ambient + Lo;
-    color = color/(color + vec3(1.0));   /// Reinhard tone map
-    color = pow(color, vec3(1.0/2.2));   /// gamma correction
+
+    /// Unity URP defaults to no tonemap in linear HDR until post-process,
+    /// but if you keep Reinhard, do it after exposure, not instead of it
+    color = color/(color + vec3(1.0));
+    color = pow(color, vec3(1.0/2.2));
 
     FragColor = vec4(color, 1.0);
 }

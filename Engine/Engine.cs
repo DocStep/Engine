@@ -33,7 +33,7 @@ public class Engine : IDisposable {
     public void Run () {
         var options = WindowOptions.Default with {
             Size = new Vector2D<int>(1280, 720),
-            Title = "Survival Engine",
+            Title = "Engine",
             VSync = false,
         };
 
@@ -65,6 +65,7 @@ public class Engine : IDisposable {
     }
 
     private void OnUpdate_ (double deltaTime) {
+        Engine.deltaTime = deltaTime;
         keyboard = Engine.Instance.Input.Keyboards.FirstOrDefault();
         mouse = Engine.Instance.Input.Mice.FirstOrDefault();
         if (keyboard == null || mouse == null) return;

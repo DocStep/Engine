@@ -6,27 +6,29 @@ namespace Engine.Graphics;
 
 public class Shader : IDisposable {
     private readonly GL GL;
-    private readonly uint _handle;
+    private readonly uint _program;
+    public string Name = "Unnamed";
 
-    public Shader (string vertexSource, string fragmentSource) {
+    public Shader (string vertexSource, string fragmentSource, string name = "unnamed") {
         GL = Renderer.Instance.GL;
+        Name = name;
 
         uint vertex = CompileShader(ShaderType.VertexShader, vertexSource);
         uint fragment = CompileShader(ShaderType.FragmentShader, fragmentSource);
 
-        _handle = GL.CreateProgram();
-        GL.AttachShader(_handle, vertex);
-        GL.AttachShader(_handle, fragment);
-        GL.LinkProgram(_handle);
+        _program = GL.CreateProgram();
+        GL.AttachShader(_program, vertex);
+        GL.AttachShader(_program, fragment);
+        GL.LinkProgram(_program);
 
-        GL.GetProgram(_handle, ProgramPropertyARB.LinkStatus, out int status);
+        GL.GetProgram(_program, ProgramPropertyARB.LinkStatus, out int status);
         if (status == 0) {
-            string log = GL.GetProgramInfoLog(_handle);
+            string log = GL.GetProgramInfoLog(_program);
             throw new Exception($"Shader program failed to link: {log}");
         }
 
-        GL.DetachShader(_handle, vertex);
-        GL.DetachShader(_handle, fragment);
+        GL.DetachShader(_program, vertex);
+        GL.DetachShader(_program, fragment);
         GL.DeleteShader(vertex);
         GL.DeleteShader(fragment);
     }
@@ -46,15 +48,25 @@ public class Shader : IDisposable {
     }
 
     public void Use () {
-        GL.UseProgram(_handle);
+        GL.UseProgram(_program);
+        //var err = GL.GetError();
+        //if (err != GLEnum.NoError) 
+        //    Console.WriteLine($"UseProgram({_program}, {Name}) Error: {err}");
     }
 
     public void SetMatrix4 (string name, float[] matrix) {
-        int location = GL.GetUniformLocation(_handle, name);
+        int location = GL.GetUniformLocation(_program, name);
         unsafe {
             fixed (float* ptr = matrix) {
                 GL.UniformMatrix4(location, 1, false, ptr);
             }
+        }
+    }
+    public void SetMatrix4X4 (string name, Matrix4X4<float> matrix) {
+        int location = GL.GetUniformLocation(_program, name);
+        if (location == -1) Console.WriteLine($"Uniform '{name}' not found in program {_program}!");
+        unsafe {
+            GL.UniformMatrix4(location, 1, false, (float*)&matrix);
         }
     }
 
@@ -64,34 +76,34 @@ public class Shader : IDisposable {
     }
 
     public void SetVector3 (string name, float x, float y, float z) {
-        int location = GL.GetUniformLocation(_handle, name);
+        int location = GL.GetUniformLocation(_program, name);
         GL.Uniform3(location, x, y, z);
     }
     public void SetVector3 (string name, Vector3D<float> vec3) {
-        int location = GL.GetUniformLocation(_handle, name);
+        int location = GL.GetUniformLocation(_program, name);
         GL.Uniform3(location, vec3.X, vec3.Y, vec3.Z);
     }
 
     public void SetColor (string name, Vector3D<float> color) {
-        int location = GL.GetUniformLocation(_handle, name);
+        int location = GL.GetUniformLocation(_program, name);
         GL.Uniform3(location, color.X, color.Y, color.Z);
     }
 
     public void SetInt (string name, int value) {
-        int location = GL.GetUniformLocation(_handle, name);
+        int location = GL.GetUniformLocation(_program, name);
         GL.Uniform1(location, value);
     }
     public void SetFloat (string name, float value) {
-        int location = GL.GetUniformLocation(_handle, name);
+        int location = GL.GetUniformLocation(_program, name);
         GL.Uniform1(location, value);
     }
 
     public void SetBool (string name, bool value) {
-        int location = GL.GetUniformLocation(_handle, name);
+        int location = GL.GetUniformLocation(_program, name);
         GL.Uniform1(location, value ? 1 : 0);
     }
 
     public void Dispose () {
-        GL.DeleteProgram(_handle);
+        GL.DeleteProgram(_program);
     }
 }

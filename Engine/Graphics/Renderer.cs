@@ -2,6 +2,7 @@
 using Silk.NET.Windowing;
 using Silk.NET.Input;
 using Silk.NET.Maths;
+using Engine.Graphics.UI;
 
 namespace Engine.Graphics;
 
@@ -18,24 +19,25 @@ internal class Renderer {
         GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
         GL.Enable(EnableCap.DepthTest);
 
-        _cube = new Mesh(GL, Cube.Generate());
-        _sphere = new Mesh(GL, Sphere.Generate());
-        _gizmoSphere = new Mesh(GL, Sphere.Generate());
-        _grid = new WorldGrid(GL, (int)_cameraPlaneFar, 1f);
-        _axes = new WorldAxes(GL, 10f*_cameraPlaneFar);
-        _gizmoAxes = new WorldAxes(GL, 1f);
 
-        _shader = new Shader(Utils.LoadSrc("src/Shaders/Vertex.shader"), Utils.LoadSrc("src/Shaders/Fragment.shader"));
-        _shaderUnlit = new Shader(Utils.LoadSrc("src/Shaders/UnlitVertex.shader"), Utils.LoadSrc("src/Shaders/UnlitFragment.shader"));
-        _shaderGrid = new Shader(Utils.LoadSrc("src/Shaders/GridVertex.shader"), Utils.LoadSrc("src/Shaders/GridFragment.shader"));
-        _shaderAxes = new Shader(Utils.LoadSrc("src/Shaders/AxesVertex.shader"), Utils.LoadSrc("src/Shaders/AxesFragment.shader"));
+        _cube = new Mesh(Cube.Generate());
+        _sphere = new Mesh(Sphere.Generate());
+        _gizmoSphere = new Mesh(Sphere.Generate());
+        _grid = new WorldGrid((int)_cameraPlaneFar, 1f);
+        _axes = new WorldAxes(10f*_cameraPlaneFar);
+        _gizmoAxes = new WorldAxes(1f);
 
-        _shaderSkybox = new Shader(Utils.LoadSrc("src/Shaders/SkyboxVertex.shader"), Utils.LoadSrc("src/Shaders/SkyboxFragment.shader"));
-        //_hdrTexture = new HdrTexture("src/autumn_field_puresky_4k.hdr");
-        _hdrTexture = new HdrTexture("src/rogland_clear_night_4k.hdr");
-        ///_hdrTexture = new HdrTexture("src/grasslands_sunset_4k.hdr");
-        ///_hdrTexture = new HdrTexture("src/overcast_soil_puresky_4k.hdr");
-        ///_hdrTexture = new HdrTexture("src/qwantani_dusk_2_puresky_4k.hdr");
+        _shader = new Shader(Utils.LoadSrc("src/Shaders/Vertex.shader"), Utils.LoadSrc("src/Shaders/Fragment.shader"), "Lit");
+        _shaderUnlit = new Shader(Utils.LoadSrc("src/Shaders/UnlitVertex.shader"), Utils.LoadSrc("src/Shaders/UnlitFragment.shader"), "Unlit");
+        _shaderGrid = new Shader(Utils.LoadSrc("src/Shaders/GridVertex.shader"), Utils.LoadSrc("src/Shaders/GridFragment.shader"), "Grid");
+        _shaderAxes = new Shader(Utils.LoadSrc("src/Shaders/AxesVertex.shader"), Utils.LoadSrc("src/Shaders/AxesFragment.shader"), "Axes");
+
+        _shaderSkybox = new Shader(Utils.LoadSrc("src/Shaders/SkyboxVertex.shader"), Utils.LoadSrc("src/Shaders/SkyboxFragment.shader"), "Skybox");
+        //_hdrTexture = new HdrTexture("src/hdr/autumn_field_puresky_4k.hdr");
+        _hdrTexture = new HdrTexture("src/hdr/rogland_clear_night_4k.hdr");
+        ///_hdrTexture = new HdrTexture("src/hdr/grasslands_sunset_4k.hdr");
+        ///_hdrTexture = new HdrTexture("src/hdr/overcast_soil_puresky_4k.hdr");
+        //_hdrTexture = new HdrTexture("src/hdr/qwantani_dusk_2_puresky_4k.hdr");
         _skybox = new Skybox(_shaderSkybox, _hdrTexture);
         _skybox.BlurScale = 2f;
 
@@ -52,14 +54,17 @@ internal class Renderer {
         _mat_Green = new Material { Color = new(0, 1, 0), };
         _mat_Blue = new Material { Color = new(0, 0, 1), };
 
+        _textRenderer = new TextRenderer();
     }
 
     public static Renderer Instance = null!;
 
+    public readonly TextRenderer _textRenderer = null!;
+
     public Action? DrawGizmos = null;
 
 
-    internal GL GL = null!;
+    internal readonly GL GL = null!;
 
     internal Shader _shader = null!;
     internal Shader _shaderUnlit = null!;
@@ -109,6 +114,28 @@ internal class Renderer {
     internal Matrix4X4<float> Projection = Matrix4X4<float>.Identity;
     private float[] uView = [];
     private float[] uProjection = [];
+    
+    private bool _renderSkybox = true;
+    private bool renderSkybox {
+        get => _renderSkybox;
+        set {
+            if (_renderSkybox != value) {
+                _renderSkybox = value;
+                renderSkyboxUpdate();
+            }
+        }
+    }
+    private void renderSkyboxUpdate () { }
+    private bool _renderFPS = true;
+    private bool renderFPS {
+        get => _renderFPS;
+        set {
+            if (_renderFPS != value) {
+                _renderFPS = value;
+            }
+        }
+    }
+
 
 
     private void SetSceneUniforms (Shader shader) {
@@ -121,11 +148,13 @@ internal class Renderer {
         shader.SetVector3("uViewPos", Camera.Instance.cameraPos.X, Camera.Instance.cameraPos.Y, Camera.Instance.cameraPos.Z);
         shader.SetVector3("uAmbientColor", 0.05f, 0.05f, 0.06f);
 
-        _hdrTexture?.Bind(TextureUnit.Texture0);
-        shader.SetInt("uSkybox", 0);
+        if (_hdrTexture is not null) {
+            _hdrTexture.Bind(TextureUnit.Texture0);
+            shader.SetInt("uSkybox", 0);
 
-        float maxLod = _hdrTexture is not null ? MathF.Log2(MathF.Max(_hdrTexture.Width, _hdrTexture.Height)) : 0f;
-        shader.SetFloat("uMaxReflectionLod", maxLod);
+            float maxLod = MathF.Log2(MathF.Max(_hdrTexture.Width, _hdrTexture.Height));
+            shader.SetFloat("uMaxReflectionLod", maxLod);
+        }
     }
 
 
@@ -195,16 +224,18 @@ internal class Renderer {
         float offsetX = 0f;
         float offsetZ = -4f;
         float gridCount = 5f;
-        for (int x = 0; x < gridCount; x++) {
-            for (int z = 0; z < gridCount; z++) {
-                SetSceneUniforms(_shader);
+        float gridScale = 1f;
+        SetSceneUniforms(_shader);
+        _shader.SetColor("uColor", Constants.gray);
+        _shader.SetFloat("uExposure", 1f);
+        for (int x = 0; x < gridCount*gridScale; x++) {
+            for (int z = 0; z < gridCount*gridScale; z++) {
                 mesh_m4x4 = Matrix4X4.CreateTranslation(
-                    new Vector3D<float>(2f*x + offsetX, 0f, -2f*z + offsetZ));
+                    new Vector3D<float>(2f*x/gridScale + offsetX, 0f, -2f*z/gridScale + offsetZ));
                 mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
                 _shader.SetMatrix4("uModel", mesh_uModel);
-                _shader.SetColor("uColor", Constants.gray);
-                _shader.SetFloat("uRoughness", 1f - x/gridCount);
-                _shader.SetFloat("uMetallic", z/gridCount);
+                _shader.SetFloat("uRoughness", 1f - x/gridCount/gridScale);
+                _shader.SetFloat("uMetallic", z/gridCount/gridScale);
                 _sphere.Draw();
             }
         }
@@ -226,7 +257,7 @@ internal class Renderer {
 
         GL.Clear((uint)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
 
-        _skybox?.Draw(View, Projection);
+        if (renderSkybox) _skybox?.Draw(View, Projection);
 
         GL.Enable(EnableCap.CullFace);
         GL.CullFace(TriangleFace.Back);
@@ -234,10 +265,12 @@ internal class Renderer {
         Draw();
 
         DrawGizmosBasic();
-        //DrawGizmos?.Invoke();
+        ///DrawGizmos?.Invoke();
 
         DrawGizmoCameraOrbitCenter();
         DrawGizmoAxesWidget();
+
+        DrawUI();
     }
     private void UpdateProjection () {
         float aspect = Engine.Window.Size.X/(float)Engine.Window.Size.Y;
@@ -245,10 +278,20 @@ internal class Renderer {
         uView = Utils.MatrixToArray(View);
         uProjection = Utils.MatrixToArray(Projection);
     }
+    private void DrawUI () {
+        GL.Disable(EnableCap.CullFace);
+        
+        if (_renderFPS) {
+            _textRenderer.DrawText($"FPS: {(int)(1/Engine.deltaTime)}", 20, 30, Engine.Window.Size.X, Engine.Window.Size.Y);
+            _textRenderer.DrawText($"ms: {Engine.deltaTime*1000:F1}", 20, 50, Engine.Window.Size.X, Engine.Window.Size.Y);
+        }
+            
+
+        GL.Enable(EnableCap.CullFace);
+    }
 
     private void DrawGizmosBasic () {
         DrawGizmoGrid();
-        //GL.Clear(ClearBufferMask.DepthBufferBit);
         DrawGizmoAxes();
     }
     private void DrawGizmoGrid () {

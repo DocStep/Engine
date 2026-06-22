@@ -33,11 +33,11 @@ void main () {
     viewPos /= viewPos.w;
 
     vec3 worldDir = normalize((uInvView*vec4(viewPos.xyz, 0.0)).xyz);
-
     vec2 uv = DirectionToEquirectUV(worldDir);
     vec3 color = textureLod(uSkyboxTexture, uv, uBlurScale).rgb;
 
     color = Tonemap(color);
+    //color = color/(color + vec3(1.0)); /// Reinhard tone map
     color = pow(color, vec3(1.0/2.2)); /// gamma correction
     
     FragColor = vec4(color, 1.0);

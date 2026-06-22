@@ -3,17 +3,14 @@ using Silk.NET.OpenGL;
 namespace Engine;
 
 
-/// Flat grid of lines on the XZ plane, centered at the origin.
-/// `halfExtent` is the number of cells in each direction from center;
-/// `spacing` is the distance between adjacent lines.
 public class WorldGrid : IDisposable {
-    private readonly GL _gl;
+    private readonly GL GL;
     private readonly uint _vao;
     private readonly uint _vbo;
     private readonly uint _vertexCount;
 
-    public WorldGrid (GL gl, int halfExtent = 10, float spacing = 1f) {
-        _gl = gl;
+    public WorldGrid (int halfExtent = 10, float spacing = 1f) {
+        GL = Graphics.Renderer.Instance.GL; ;
 
         var vertices = new List<float>();
         float extent = halfExtent * spacing;
@@ -32,15 +29,15 @@ public class WorldGrid : IDisposable {
 
         _vertexCount = (uint)(vertices.Count / 3);
 
-        _vao = _gl.GenVertexArray();
-        _gl.BindVertexArray(_vao);
+        _vao = GL.GenVertexArray();
+        GL.BindVertexArray(_vao);
 
-        _vbo = _gl.GenBuffer();
-        _gl.BindBuffer(GLEnum.ArrayBuffer, _vbo);
+        _vbo = GL.GenBuffer();
+        GL.BindBuffer(GLEnum.ArrayBuffer, _vbo);
         unsafe {
             var verticesArray = vertices.ToArray();
             fixed (float* v = verticesArray) {
-                _gl.BufferData(
+                GL.BufferData(
                     GLEnum.ArrayBuffer,
                     (nuint)(verticesArray.Length * sizeof(float)),
                     v,
@@ -49,21 +46,21 @@ public class WorldGrid : IDisposable {
         }
 
         unsafe {
-            _gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), (void*)0);
-            _gl.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), (void*)0);
+            GL.EnableVertexAttribArray(0);
         }
 
-        _gl.BindVertexArray(0);
+        GL.BindVertexArray(0);
     }
 
     public void Draw () {
-        _gl.BindVertexArray(_vao);
-        _gl.DrawArrays(PrimitiveType.Lines, 0, _vertexCount);
-        _gl.BindVertexArray(0);
+        GL.BindVertexArray(_vao);
+        GL.DrawArrays(PrimitiveType.Lines, 0, _vertexCount);
+        GL.BindVertexArray(0);
     }
 
     public void Dispose () {
-        _gl.DeleteBuffer(_vbo);
-        _gl.DeleteVertexArray(_vao);
+        GL.DeleteBuffer(_vbo);
+        GL.DeleteVertexArray(_vao);
     }
 }
