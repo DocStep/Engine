@@ -7,7 +7,7 @@ using StbTrueTypeSharp;
 namespace Engine.Graphics.UI;
 
 
-public class TextRenderer {
+public class TextRenderer : IDisposable {
     GL GL;
     FontAtlas _atlas;
     uint _vao, _vbo;
@@ -21,7 +21,7 @@ public class TextRenderer {
     List<Vertex> _vertices = new List<Vertex>();
 
     public unsafe TextRenderer () {
-        this.GL = Renderer.Instance.GL;
+        GL = Renderer.Instance.GL;
         _atlas = FontAtlas.Load("src/Fonts/FuturaCyrillicMedium.ttf", 24);
         _shader = new Shader(Utils.LoadSrc("src/Shaders/UI/TextVertex.shader"), Utils.LoadSrc("src/Shaders/UI/TextFragment.shader"), "Text");
 
@@ -123,6 +123,14 @@ public class TextRenderer {
         var err = GL.GetError();
         if (err != GLEnum.NoError) Console.WriteLine($"DrawDebugQuad Error: {err}");
         GL.Enable(EnableCap.DepthTest);
+    }
+
+
+    public void Dispose () {
+        GL.DeleteVertexArray(_vao);
+        GL.DeleteBuffer(_vbo);
+        _shader.Dispose();
+        _atlas.Dispose();
     }
 
 }

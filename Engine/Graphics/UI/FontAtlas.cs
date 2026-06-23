@@ -7,7 +7,8 @@ using StbTrueTypeSharp;
 namespace Engine.Graphics.UI;
 
 
-public class FontAtlas {
+public class FontAtlas : IDisposable {
+    GL? GL = null;
     public uint TextureId;
     public int AtlasWidth;
     public int AtlasHeight;
@@ -26,7 +27,12 @@ public class FontAtlas {
         int atlasWidth = 512;
         int atlasHeight = 512;
         var fontData = File.ReadAllBytes(ttfPath);
-        var atlas = new FontAtlas { AtlasWidth = atlasWidth, AtlasHeight = atlasHeight, FontSize = fontSize };
+        var atlas = new FontAtlas {
+            GL = Renderer.Instance.GL,
+            AtlasWidth = atlasWidth,
+            AtlasHeight = atlasHeight,
+            FontSize = fontSize,
+        };
 
         var bakedChars = new StbTrueType.stbtt_bakedchar[96]; /// ASCII 32-127
         var bitmap = new byte[atlasWidth*atlasHeight];
@@ -70,6 +76,10 @@ public class FontAtlas {
         }
 
         return atlas;
+    }
+
+    public void Dispose () {
+        GL?.DeleteTexture(TextureId);
     }
 
 }

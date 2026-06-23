@@ -93,7 +93,7 @@ internal sealed class CameraEditor : Camera {
         Vector3D<float> cameraPosDelta = Vector3D<float>.Zero;
         float posDeltaL = MathF.Max(0, (cameraOrbitCenterPos - cameraPos).Length);
 
-        if (Inputs.Actions[LMB].pressed || Inputs.Actions[RMB].pressed) {
+        if (Inputs.Actions[LMB].pressed && Inputs.Actions[Alt].pressed || Inputs.Actions[RMB].pressed) {
             float dx = Inputs.MouseDelta.X;
             float dy = Inputs.MouseDelta.Y;
 

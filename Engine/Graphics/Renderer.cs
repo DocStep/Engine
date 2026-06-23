@@ -22,9 +22,10 @@ internal class Renderer {
         _cube = new Mesh(Cube.Generate());
         _sphere = new Mesh(Sphere.Generate());
         _gizmoSphere = new Mesh(Sphere.Generate());
-        _grid = new WorldGrid((int)_cameraPlaneFar, 1f);
-        _axes = new WorldAxes(10f*_cameraPlaneFar);
-        _gizmoAxes = new WorldAxes(1f);
+        _gizmoGrid = new WorldGrid((int)_cameraPlaneFar, 1f);
+        _gizmoAxes = new WorldAxes(10f*_cameraPlaneFar);
+        _gizmoAxesWidget = new WorldAxes(1f);
+        _gizmoSun = new Mesh(Arrow.Generate(shaftLength: 1f, shaftRadius: 0.01f, headLength: 0.2f, headRadius: 0.1f));
 
         _shaderLit = new Shader(Utils.LoadSrc("src/Shaders/Vertex.shader"), Utils.LoadSrc("src/Shaders/Fragment.shader"), "Lit");
         _shaderUnlit = new Shader(Utils.LoadSrc("src/Shaders/UnlitVertex.shader"), Utils.LoadSrc("src/Shaders/UnlitFragment.shader"), "Unlit");
@@ -90,9 +91,10 @@ internal class Renderer {
     private Mesh _cube = null!;
     private Mesh _sphere = null!;
     private Mesh _gizmoSphere = null!;
-    private WorldGrid _grid = null!;
-    private WorldAxes _axes = null!;
+    private WorldGrid _gizmoGrid = null!;
     private WorldAxes _gizmoAxes = null!;
+    private WorldAxes _gizmoAxesWidget = null!;
+    private Mesh _gizmoSun = null!;
 
     internal Vector3D<float> sunLightDir = Vector3D.Normalize(new Vector3D<float>(0.4f, -1f, -0.3f));
     internal Vector3D<float> sunLightColor = new Vector3D<float>(1f, 1f, 1f);
@@ -272,8 +274,6 @@ internal class Renderer {
         DrawGizmoAxesWidget();
 
         DrawUI();
-
-
     }
     private void UpdateProjection () {
         float aspect = Engine.Window.Size.X/(float)Engine.Window.Size.Y;
@@ -282,29 +282,33 @@ internal class Renderer {
         uProjection = Utils.MatrixToArray(Projection);
     }
     private void DrawUI () {
-        if (Inputs.Actions[Inputs.F3].pressedDown) {
-            _renderFPS = !_renderFPS;
-        }
+        GL.Disable(EnableCap.CullFace);
 
+        if (Inputs.Actions[Inputs.F3].pressedDown) _renderFPS = !_renderFPS;
         if (_renderFPS) {
-            GL.Disable(EnableCap.CullFace);
             int left = 10;
             _textRenderer.DrawText($"FPS: {(int)(1/Engine.deltaTime)}", left, 20, Engine.Window.Size.X, Engine.Window.Size.Y);
             _textRenderer.DrawText($"ms: {Engine.deltaTime*1000:F1}", left, 40, Engine.Window.Size.X, Engine.Window.Size.Y);
             _textRenderer.DrawText($"Pos: {Camera.Instance.cameraPos:F2}", left, 60, Engine.Window.Size.X, Engine.Window.Size.Y);
             _textRenderer.DrawText($"MousePos: {Camera.Instance.mousePos:F2}", left, 80, Engine.Window.Size.X, Engine.Window.Size.Y);
             _textRenderer.DrawText($"Wheel: {Inputs.Wheel:F2}", left, 100, Engine.Window.Size.X, Engine.Window.Size.Y);
-            GL.Enable(EnableCap.CullFace);
         }
+
+        GL.Enable(EnableCap.CullFace);
     }
 
     private void DrawGizmosBasic () {
-        DrawGizmoGrid();
-        DrawGizmoAxes();
-    }
-    private void DrawGizmoGrid () {
+        GL.Disable(EnableCap.CullFace);
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+        DrawGizmoGrid();
+        DrawGizmoAxes();
+        DrawGizmoSun();
+
+        GL.Disable(EnableCap.Blend);
+    }
+    private void DrawGizmoGrid () {
         GL.DepthMask(false);
 
         GL.DepthRange(0.0001, 1.0);
@@ -317,16 +321,12 @@ internal class Renderer {
         _shaderGrid.SetFloat("uAlpha", 0.5f);
         _shaderGrid.SetFloat("uRadius", 200f);
         _shaderGrid.SetFloat("uFade", 50f);
-        _grid.Draw();
+        _gizmoGrid.Draw();
 
         GL.DepthRange(0.0, 1.0);
         GL.DepthMask(true);
-        GL.Disable(EnableCap.Blend);
     }
     private void DrawGizmoAxes () {
-        GL.Enable(EnableCap.Blend);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-
         _shaderAxes.Use();
         SetSceneUniforms(_shaderAxes);
         _shaderAxes.SetMatrix4("uModel", _uModelIdentity);
@@ -334,12 +334,48 @@ internal class Renderer {
         _shaderAxes.SetFloat("uAlpha", 0.5f);
         _shaderAxes.SetFloat("uRadius", 200f);
         _shaderAxes.SetFloat("uFade", 50f);
-        _axes.Draw();
+        _gizmoAxes.Draw();
+    }
+    private void DrawGizmoSun () {
+        GL.Disable(EnableCap.CullFace);
 
-        GL.Disable(EnableCap.Blend);
+        _shaderUnlit.Use();
+        SetSceneUniforms(_shaderUnlit);
+        //Matrix4X4<float> mesh_m4x4 = Matrix4X4.CreateTranslation(new Vector3D<float>(0f, 5f, 0f))
+        //    *Matrix4X4.CreateRotationX(sunLightDir.X)*Matrix4X4.CreateRotationY(sunLightDir.Y)*Matrix4X4.CreateRotationZ(sunLightDir.Z);
+        Matrix4X4<float> mesh_m4x4 = Transform(new Vector3D<float>(-8f, 5f, 0f), sunLightDir);
+
+        float[] mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
+        _shaderUnlit.SetMatrix4("uModel", mesh_uModel);
+        _shaderUnlit.SetColor("uColor", Constants.yellow);
+        _shaderUnlit.SetFloat("uAlpha", 0.5f);
+        _gizmoSun.Draw();
+
+        GL.Enable(EnableCap.CullFace);
+    }
+    public static Matrix4X4<float> Transform (Vector3D<float> position, Vector3D<float> sunLightDir) {
+        var target = Vector3D.Normalize(sunLightDir);
+        var from = Vector3D<float>.UnitY;
+
+        var dot = Vector3D.Dot(from, target);
+        Matrix4X4<float> rotation;
+
+        if (dot > 0.9999f) {
+            rotation = Matrix4X4<float>.Identity;
+        } else if (dot < -0.9999f) {
+            rotation = Matrix4X4.CreateRotationX(MathF.PI);
+        } else {
+            var axis = Vector3D.Normalize(Vector3D.Cross(from, target));
+            var angle = MathF.Acos(dot);
+            rotation = Matrix4X4.CreateFromAxisAngle(axis, angle);
+        }
+
+        return rotation*Matrix4X4.CreateTranslation(position);
     }
     private void DrawGizmoCameraOrbitCenter () {
         if (CameraEditor.Instance is null) return;
+
+        GL.DepthMask(false);
 
         _shaderUnlit.Use();
         SetSceneUniforms(_shaderUnlit);
@@ -349,12 +385,9 @@ internal class Renderer {
         _shaderUnlit.SetMatrix4("uModel", Utils.MatrixToArray(gizmoSphereModel));
         _shaderUnlit.SetVector3("uColor", 0.5f, 0.5f, 0.5f);
         _shaderUnlit.SetFloat("uAlpha", 0.2f);
-        GL.Enable(EnableCap.Blend);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-        GL.DepthMask(false);
         _gizmoSphere.Draw();
+
         GL.DepthMask(true);
-        GL.Disable(EnableCap.Blend);
     }
 
     private void DrawGizmoAxesWidget () {
@@ -390,7 +423,7 @@ internal class Renderer {
         _shaderAxes.SetMatrix4("uView", Utils.MatrixToArray(gizmoView));
         _shaderAxes.SetMatrix4("uProjection", Utils.MatrixToArray(gizmoProjection));
 
-        _gizmoAxes.Draw();
+        _gizmoAxesWidget.Draw();
 
         GL.Enable(EnableCap.DepthTest);
 
@@ -409,15 +442,18 @@ internal class Renderer {
         _cube.Dispose();
         _sphere.Dispose();
         _gizmoSphere.Dispose();
-        _grid.Dispose();
-        _axes.Dispose();
+        _gizmoGrid.Dispose();
         _gizmoAxes.Dispose();
+        _gizmoAxesWidget.Dispose();
+        _gizmoSun.Dispose();
         _shaderLit.Dispose();
         _shaderUnlit.Dispose();
+        _shaderGrid.Dispose();
         _shaderAxes.Dispose();
         _skybox.Dispose();
         _hdrTexture?.Dispose();
         _shaderSkybox.Dispose();
+        _textRenderer.Dispose();
     }
 
 }

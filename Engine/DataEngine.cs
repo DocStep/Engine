@@ -11,7 +11,8 @@ public static class DataEngine {
 
 
     public static Dictionary<string, InputsGroup> InputsData = new Dictionary<string, InputsGroup>() {
-
+        [Inputs.MoveUp] = new([Keys.Space, Keys.E], hidden: true),
+        [Inputs.MoveDown] = new([Keys.C, Keys.LeftControl, Keys.Q], hidden: true),
     };
 
 
