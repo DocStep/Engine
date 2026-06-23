@@ -1,0 +1,170 @@
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Linq;
+
+namespace Engine;
+
+
+public class CoT {
+
+    public static bool debug = true;
+
+    public string flag = string.Empty;
+    public Task? task = null;
+    public CancellationTokenSource? cts;
+    public bool active = false;
+    public bool locked = false;
+    public System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+
+    private static readonly object _lock = new object();
+
+    public static ConcurrentDictionary<string, ConcurrentBag<CoT>> Tasks = new();
+    public static int Count = 0;
+
+    public static int GetCount() {
+        int count = 0;
+        foreach (var kv in Tasks)
+            count += kv.Value.Count;
+        return count;
+    }
+
+    public async static Task Start(Func<Task> actionFunc, bool locked = false,
+        [System.Runtime.CompilerServices.CallerMemberName] string flag = null) {
+
+        if (actionFunc == null) return;
+
+        flag ??= actionFunc.Method.Name;
+
+        var cot = new CoT() {
+            flag = flag,
+            locked = locked,
+            active = true,
+            /// cts = new CancellationTokenSource()
+        };
+
+        lock (_lock) {
+            var bag = Tasks.GetOrAdd(flag, _ => new ConcurrentBag<CoT>());
+            bag.Add(cot);
+            Count++;
+        }
+
+        cot.stopwatch.Start();
+
+        cot.task = Task.Run(async () => {
+            try {
+                /// await actionFunc(cot.cts.Token);
+                await actionFunc();
+            }
+            catch (Exception e) {
+                Log.log($"Task error {flag}: {e}");
+            }
+            finally {
+                cot.active = false;
+                cot.stopwatch.Stop();
+                Remove(cot);
+            }
+        });
+
+        await cot.task;
+    }
+
+    public static bool isActiveFlag(string flag) {
+        return Tasks.ContainsKey(flag);
+    }
+
+    public static bool isActiveCoroutine(string flag) {
+        if (!Tasks.TryGetValue(flag, out var bag))
+            return false;
+
+        foreach (var cot in bag)
+            if (cot.task != null)
+                return true;
+
+        return false;
+    }
+
+    public static CoT Get(string flag, bool activeCheck = false) {
+        if (activeCheck && !isActiveFlag(flag))
+            return null;
+
+        if (!Tasks.TryGetValue(flag, out var bag))
+            return null;
+
+        foreach (var cot in bag)
+            return cot; /// first
+
+        return null;
+    }
+
+    private static void Remove(CoT cot) {
+        if (!Tasks.TryGetValue(cot.flag, out var bag))
+            return;
+
+        var newBag = new ConcurrentBag<CoT>();
+        foreach (var c in bag)
+            if (c != cot)
+                newBag.Add(c);
+
+        lock (_lock) {
+            if (newBag.IsEmpty) {
+                Tasks.TryRemove(cot.flag, out _);
+            } else {
+                Tasks[cot.flag] = newBag;
+            }
+
+            Count--;
+        }
+    }
+
+    public static void Stop(string flag, bool forceLocked = false) {
+        if (!Tasks.TryGetValue(flag, out var bag))
+            return;
+
+        foreach (var cot in bag) {
+            if (!lib.Implies(cot.locked, forceLocked))
+                continue;
+
+            cot.cts?.Cancel(); /// safe
+        }
+    }
+
+    public static void Stop(CoT cot, bool forceLocked = false) {
+        if (!lib.Implies(cot.locked, forceLocked))
+            return;
+
+        cot.cts?.Cancel();
+    }
+
+    public static void StopAll(bool forceLocked = false) {
+        foreach (var kv in Tasks)
+            foreach (var cot in kv.Value)
+                Stop(cot, forceLocked);
+    }
+
+    public static void StopAllWith(string flagPart, bool forceLocked = false) {
+        foreach (var kv in Tasks) {
+            if (!kv.Key.Contains(flagPart))
+                continue;
+
+            foreach (var cot in kv.Value)
+                Stop(cot, forceLocked);
+        }
+    }
+
+    public static void End_CallBack(CoT cot) {
+        cot.stopwatch.Stop();
+    }
+
+    public static void WriteAll() {
+        string s = string.Empty;
+
+        foreach (var kv in Tasks)
+            s += kv.Key + ": " + kv.Value.Count + "\n";
+
+        Log.log(s);
+    }
+
+}

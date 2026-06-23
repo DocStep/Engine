@@ -1,8 +1,8 @@
 ﻿using Silk.NET.OpenGL;
-using Silk.NET.Windowing;
-using Silk.NET.Input;
 using Silk.NET.Maths;
 using Engine.Graphics.UI;
+using Engine.Input;
+using static Engine.DataEngine;
 
 namespace Engine.Graphics;
 
@@ -19,7 +19,6 @@ internal class Renderer {
         GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
         GL.Enable(EnableCap.DepthTest);
 
-
         _cube = new Mesh(Cube.Generate());
         _sphere = new Mesh(Sphere.Generate());
         _gizmoSphere = new Mesh(Sphere.Generate());
@@ -27,7 +26,7 @@ internal class Renderer {
         _axes = new WorldAxes(10f*_cameraPlaneFar);
         _gizmoAxes = new WorldAxes(1f);
 
-        _shader = new Shader(Utils.LoadSrc("src/Shaders/Vertex.shader"), Utils.LoadSrc("src/Shaders/Fragment.shader"), "Lit");
+        _shaderLit = new Shader(Utils.LoadSrc("src/Shaders/Vertex.shader"), Utils.LoadSrc("src/Shaders/Fragment.shader"), "Lit");
         _shaderUnlit = new Shader(Utils.LoadSrc("src/Shaders/UnlitVertex.shader"), Utils.LoadSrc("src/Shaders/UnlitFragment.shader"), "Unlit");
         _shaderGrid = new Shader(Utils.LoadSrc("src/Shaders/GridVertex.shader"), Utils.LoadSrc("src/Shaders/GridFragment.shader"), "Grid");
         _shaderAxes = new Shader(Utils.LoadSrc("src/Shaders/AxesVertex.shader"), Utils.LoadSrc("src/Shaders/AxesFragment.shader"), "Axes");
@@ -39,7 +38,7 @@ internal class Renderer {
         ///_hdrTexture = new HdrTexture("src/hdr/overcast_soil_puresky_4k.hdr");
         //_hdrTexture = new HdrTexture("src/hdr/qwantani_dusk_2_puresky_4k.hdr");
         _skybox = new Skybox(_shaderSkybox, _hdrTexture);
-        _skybox.BlurScale = 2f;
+        _skybox.BlurScale = 3f;
 
         _mat_Default = new Material { Color = Constants.lightGray, };
         _mat_Smooth = new Material { Color = Constants.lightGray, Roughness = 0f, };
@@ -66,7 +65,7 @@ internal class Renderer {
 
     internal readonly GL GL = null!;
 
-    internal Shader _shader = null!;
+    internal Shader _shaderLit = null!;
     internal Shader _shaderUnlit = null!;
     internal Shader _shaderGrid = null!;
     internal Shader _shaderAxes = null!;
@@ -114,7 +113,7 @@ internal class Renderer {
     internal Matrix4X4<float> Projection = Matrix4X4<float>.Identity;
     private float[] uView = [];
     private float[] uProjection = [];
-    
+
     private bool _renderSkybox = true;
     private bool renderSkybox {
         get => _renderSkybox;
@@ -164,59 +163,59 @@ internal class Renderer {
         float[] mesh_uModel;
 
         /// Cube
-        SetSceneUniforms(_shader);
+        SetSceneUniforms(_shaderLit);
         mesh_m4x4 = Matrix4X4.CreateTranslation(new Vector3D<float>(4f, 0f, 0f));
         mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shader.SetMatrix4("uModel", _uModelIdentity);
-        _mat_Default.Apply(_shader);
+        _shaderLit.SetMatrix4("uModel", _uModelIdentity);
+        _mat_Default.Apply(_shaderLit);
         _cube.Draw();
 
         /// Sphere R
-        SetSceneUniforms(_shader);
+        SetSceneUniforms(_shaderLit);
         mesh_m4x4 = Matrix4X4.CreateTranslation(new Vector3D<float>(2f, 0f, 0f));
         mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shader.SetMatrix4("uModel", mesh_uModel);
-        _mat_Red.Apply(_shader);
+        _shaderLit.SetMatrix4("uModel", mesh_uModel);
+        _mat_Red.Apply(_shaderLit);
         _sphere.Draw();
 
         /// Sphere R
-        SetSceneUniforms(_shader);
+        SetSceneUniforms(_shaderLit);
         mesh_m4x4 = Matrix4X4.CreateTranslation(new Vector3D<float>(0f, 0f, 2f));
         mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shader.SetMatrix4("uModel", mesh_uModel);
-        _mat_Red.Apply(_shader);
+        _shaderLit.SetMatrix4("uModel", mesh_uModel);
+        _mat_Red.Apply(_shaderLit);
         _sphere.Draw();
 
         /// Sphere G
-        SetSceneUniforms(_shader);
+        SetSceneUniforms(_shaderLit);
         mesh_m4x4 = Matrix4X4.CreateTranslation(new Vector3D<float>(2f, 0f, 2f));
         mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shader.SetMatrix4("uModel", mesh_uModel);
-        _mat_Green.Apply(_shader);
+        _shaderLit.SetMatrix4("uModel", mesh_uModel);
+        _mat_Green.Apply(_shaderLit);
         _sphere.Draw();
 
         /// Sphere B
-        SetSceneUniforms(_shader);
+        SetSceneUniforms(_shaderLit);
         mesh_m4x4 = Matrix4X4.CreateTranslation(new Vector3D<float>(4f, 0f, 2f));
         mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shader.SetMatrix4("uModel", mesh_uModel);
-        _mat_Blue.Apply(_shader);
+        _shaderLit.SetMatrix4("uModel", mesh_uModel);
+        _mat_Blue.Apply(_shaderLit);
         _sphere.Draw();
 
         /// Sphere Smooth
-        SetSceneUniforms(_shader);
+        SetSceneUniforms(_shaderLit);
         mesh_m4x4 = Matrix4X4.CreateTranslation(new Vector3D<float>(2f, 0f, -2f));
         mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shader.SetMatrix4("uModel", mesh_uModel);
-        _mat_Smooth.Apply(_shader);
+        _shaderLit.SetMatrix4("uModel", mesh_uModel);
+        _mat_Smooth.Apply(_shaderLit);
         _sphere.Draw();
 
         /// Sphere Matt
-        SetSceneUniforms(_shader);
+        SetSceneUniforms(_shaderLit);
         mesh_m4x4 = Matrix4X4.CreateTranslation(new Vector3D<float>(0f, 0f, -2f));
         mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shader.SetMatrix4("uModel", mesh_uModel);
-        _mat_Matt.Apply(_shader);
+        _shaderLit.SetMatrix4("uModel", mesh_uModel);
+        _mat_Matt.Apply(_shaderLit);
         _sphere.Draw();
 
 
@@ -225,29 +224,31 @@ internal class Renderer {
         float offsetZ = -4f;
         float gridCount = 5f;
         float gridScale = 1f;
-        SetSceneUniforms(_shader);
-        _shader.SetColor("uColor", Constants.gray);
-        _shader.SetFloat("uExposure", 1f);
+        SetSceneUniforms(_shaderLit);
+        _shaderLit.SetColor("uColor", Constants.black);
+        _shaderLit.SetFloat("uExposure", 1f);
         for (int x = 0; x < gridCount*gridScale; x++) {
             for (int z = 0; z < gridCount*gridScale; z++) {
                 mesh_m4x4 = Matrix4X4.CreateTranslation(
                     new Vector3D<float>(2f*x/gridScale + offsetX, 0f, -2f*z/gridScale + offsetZ));
                 mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-                _shader.SetMatrix4("uModel", mesh_uModel);
-                _shader.SetFloat("uRoughness", 1f - x/gridCount/gridScale);
-                _shader.SetFloat("uMetallic", z/gridCount/gridScale);
+                _shaderLit.SetMatrix4("uModel", mesh_uModel);
+                _shaderLit.SetFloat("uRoughness", 1f - x/gridCount/gridScale);
+                _shaderLit.SetFloat("uMetallic", z/gridCount/gridScale);
                 _sphere.Draw();
             }
         }
 
-        SetSceneUniforms(_shader);
+        SetSceneUniforms(_shaderLit);
         mesh_m4x4 = Matrix4X4.CreateTranslation(new Vector3D<float>(-4f, 0f, 0f))
             *Matrix4X4.CreateScale<float>(2f, 2f, 2f);
         mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shader.SetMatrix4("uModel", mesh_uModel);
-        _mat_Matt.Apply(_shader);
-        _shader.SetFloat("uRoughness", 0);
-        _shader.SetFloat("uMetallic", 1);
+        _shaderLit.SetMatrix4("uModel", mesh_uModel);
+        //_mat_Matt.Apply(_shader);
+        _shaderLit.SetColor("uColor", Constants.white);
+        _shaderLit.SetFloat("uRoughness", 0);
+        _shaderLit.SetFloat("uMetallic", 1);
+        _shaderLit.SetFloat("uAmbient", 0);
         _sphere.Draw();
     }
 
@@ -271,6 +272,8 @@ internal class Renderer {
         DrawGizmoAxesWidget();
 
         DrawUI();
+
+
     }
     private void UpdateProjection () {
         float aspect = Engine.Window.Size.X/(float)Engine.Window.Size.Y;
@@ -279,15 +282,20 @@ internal class Renderer {
         uProjection = Utils.MatrixToArray(Projection);
     }
     private void DrawUI () {
-        GL.Disable(EnableCap.CullFace);
-        
-        if (_renderFPS) {
-            _textRenderer.DrawText($"FPS: {(int)(1/Engine.deltaTime)}", 20, 30, Engine.Window.Size.X, Engine.Window.Size.Y);
-            _textRenderer.DrawText($"ms: {Engine.deltaTime*1000:F1}", 20, 50, Engine.Window.Size.X, Engine.Window.Size.Y);
+        if (Inputs.Actions[Inputs.F3].pressedDown) {
+            _renderFPS = !_renderFPS;
         }
-            
 
-        GL.Enable(EnableCap.CullFace);
+        if (_renderFPS) {
+            GL.Disable(EnableCap.CullFace);
+            int left = 10;
+            _textRenderer.DrawText($"FPS: {(int)(1/Engine.deltaTime)}", left, 20, Engine.Window.Size.X, Engine.Window.Size.Y);
+            _textRenderer.DrawText($"ms: {Engine.deltaTime*1000:F1}", left, 40, Engine.Window.Size.X, Engine.Window.Size.Y);
+            _textRenderer.DrawText($"Pos: {Camera.Instance.cameraPos:F2}", left, 60, Engine.Window.Size.X, Engine.Window.Size.Y);
+            _textRenderer.DrawText($"MousePos: {Camera.Instance.mousePos:F2}", left, 80, Engine.Window.Size.X, Engine.Window.Size.Y);
+            _textRenderer.DrawText($"Wheel: {Inputs.Wheel:F2}", left, 100, Engine.Window.Size.X, Engine.Window.Size.Y);
+            GL.Enable(EnableCap.CullFace);
+        }
     }
 
     private void DrawGizmosBasic () {
@@ -404,7 +412,7 @@ internal class Renderer {
         _grid.Dispose();
         _axes.Dispose();
         _gizmoAxes.Dispose();
-        _shader.Dispose();
+        _shaderLit.Dispose();
         _shaderUnlit.Dispose();
         _shaderAxes.Dispose();
         _skybox.Dispose();

@@ -40,34 +40,6 @@ public static class Raycaster {
         return null;
     }
 
-    /*public static float? IntersectAabb (Vector3D<float> origin, Vector3D<float> direction, Vector3D<float> worldMin, Vector3D<float> worldMax) {
-        float tMin = float.NegativeInfinity;
-        float tMax = float.PositiveInfinity;
-
-        for (int axis = 0; axis < 3; axis++) {
-            float originAxis = GetAxis(origin, axis);
-            float dirAxis = GetAxis(direction, axis);
-            float minAxis = GetAxis(worldMin, axis);
-            float maxAxis = GetAxis(worldMax, axis);
-
-            if (MathF.Abs(dirAxis) < 1e-8f) {
-                if (originAxis < minAxis || originAxis > maxAxis) return null;
-                continue;
-            }
-
-            float t1 = (minAxis - originAxis) / dirAxis;
-            float t2 = (maxAxis - originAxis) / dirAxis;
-            if (t1 > t2) (t1, t2) = (t2, t1);
-
-            tMin = MathF.Max(tMin, t1);
-            tMax = MathF.Min(tMax, t2);
-            if (tMin > tMax) return null;
-        }
-
-        if (tMax < 0f) return null;
-        return tMin >= 0f ? tMin : tMax;
-    }*/
-
     internal static float? IntersectAABB (Vector3D<float> origin, Vector3D<float> dir, Vector3D<float> min, Vector3D<float> max) {
         float tMin = float.NegativeInfinity;
         float tMax = float.PositiveInfinity;

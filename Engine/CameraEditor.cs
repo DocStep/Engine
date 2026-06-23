@@ -1,8 +1,7 @@
-﻿using Silk.NET.OpenGL;
-using Silk.NET.Windowing;
-using Silk.NET.Input;
-using Silk.NET.Maths;
+﻿using Silk.NET.Maths;
 using Engine.Graphics;
+using Engine.Input;
+using static Engine.Input.Inputs;
 
 namespace Engine;
 
@@ -15,6 +14,7 @@ internal sealed class CameraEditor : Camera {
     }
 
     new public static CameraEditor? Instance = null;
+
 
     private Vector3D<float> _cameraPos = new Vector3D<float>(-10, 3, -2);
     private Matrix4X4<float> _cameraRot = Matrix4X4<float>.Identity;
@@ -39,12 +39,10 @@ internal sealed class CameraEditor : Camera {
 
     internal Vector3D<float> cameraOrbitCenterPos = Vector3D<float>.Zero;
 
-    private float mmbDownX;
-    private float mmbDownY;
-    private bool mmbDragged;
-    private bool previousMmb;
-    private bool previousR;
-    private bool previousT;
+    private float cameraDragStartX;
+    private float cameraDragStartY;
+    private bool isCameraDragging;
+    //private bool previousMmb;
 
     private bool isFocusing;
     private Vector3D<float> focusTargetCameraPos;
@@ -78,39 +76,30 @@ internal sealed class CameraEditor : Camera {
 
 
     protected override void Update (double deltaTime) {
-        var keyboard = Engine.Instance.Input.Keyboards.FirstOrDefault();
-        var mouse = Engine.Instance.Input.Mice.FirstOrDefault();
-        if (keyboard == null || mouse == null) return;
+        if (Inputs.Actions[NavBack].pressedDown) Engine.Window.Close();
 
-        if (keyboard.IsKeyPressed(Key.Escape)) Engine.Window.Close();
+        mousePos.X = Inputs.MousePos.X;
+        mousePos.Y = Inputs.MousePos.Y;
+        //Log.log($"mousePos {mousePos}");
         float dt = (float)deltaTime;
-        float mouseX = mouse.Position.X;
-        float mouseY = mouse.Position.Y;
 
-        bool lmb = mouse.IsButtonPressed(MouseButton.Left);
-        bool rmb = mouse.IsButtonPressed(MouseButton.Right);
-        bool mmb = mouse.IsButtonPressed(MouseButton.Middle);
-        bool alt = keyboard.IsKeyPressed(Key.AltLeft) || keyboard.IsKeyPressed(Key.AltRight);
-        bool r = keyboard.IsKeyPressed(Key.R);
-        bool t = keyboard.IsKeyPressed(Key.T);
-
-        if (r && !previousR) SetTransformDefault();
-        if (t && !previousT) SetTransformT();
+        if (Inputs.Actions[Reset].pressedDown) SetTransformDefault();
+        if (Inputs.Actions[CameraFocusMaterial].pressedDown) SetTransformT();
 
         cameraRot = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
-        float posDeltaL = MathF.Max(0, (cameraOrbitCenterPos - cameraPos).Length);
         Vector3D<float> forward = Vector3D.Transform(-Vector3D<float>.UnitZ, cameraRot);
         Vector3D<float> right = Vector3D.Transform(Vector3D<float>.UnitX, cameraRot);
         Vector3D<float> up = Vector3D.Transform(Vector3D<float>.UnitY, cameraRot);
         Vector3D<float> cameraPosDelta = Vector3D<float>.Zero;
+        float posDeltaL = MathF.Max(0, (cameraOrbitCenterPos - cameraPos).Length);
 
-        if (alt && lmb || rmb) {
-            float dx = mouseX - previousMouseX;
-            float dy = mouseY - previousMouseY;
+        if (Inputs.Actions[LMB].pressed || Inputs.Actions[RMB].pressed) {
+            float dx = Inputs.MouseDelta.X;
+            float dy = Inputs.MouseDelta.Y;
 
             float flipSign = 1f;
-            yaw += -dx * _sensetivityMultiplier * _sensetivity * flipSign;
-            pitch += -dy * _sensetivityMultiplier * _sensetivity;
+            yaw += -dx*_sensetivityMultiplier*_sensetivity*flipSign;
+            pitch += -dy*_sensetivityMultiplier*_sensetivity;
             pitch = Utils.WrapAngle(pitch);
 
             isFocusing = false;
@@ -118,32 +107,33 @@ internal sealed class CameraEditor : Camera {
 
         UpdateCamera(deltaTime);
 
-
         /// Middle Mouse: drag to pan, clean click (no drag) to focus
-        if (mmb && !previousMmb) {
-            mmbDownX = mouseX;
-            mmbDownY = mouseY;
-            mmbDragged = false;
+        if (Inputs.Actions[CameraDrag].pressedDown) {
+            cameraDragStartX = mousePos.X;
+            cameraDragStartY = mousePos.Y;
+            isCameraDragging = false;
         }
 
-        if (mmb && previousMmb) {
+        if (Inputs.Actions[CameraDrag].pressed) {
             const float dragSpeed = 0.001f;
-            float dx = mouseX - previousMouseX;
-            float dy = mouseY - previousMouseY;
+            float dx = Inputs.MouseDelta.X;
+            float dy = Inputs.MouseDelta.Y;
 
-            float totalDx = mouseX - mmbDownX;
-            float totalDy = mouseY - mmbDownY;
+            float totalDx = mousePos.X - cameraDragStartX;
+            float totalDy = mousePos.Y - cameraDragStartY;
             if (_clickDragThresholdPixels*_clickDragThresholdPixels < totalDx*totalDx + totalDy*totalDy) {
-                mmbDragged = true;
+                isCameraDragging = true;
                 isFocusing = false;
             }
 
-            cameraPosDelta = posDeltaL * dragSpeed * (-right*dx + up*dy);
+            cameraPosDelta = posDeltaL*dragSpeed*(-right*dx + up*dy);
             cameraPos += cameraPosDelta;
             cameraOrbitCenterPos += cameraPosDelta;
-        } else if (!mmb && previousMmb) {
-            if (!mmbDragged) {
-                TryFocusOnPoint(mouseX, mouseY, Engine.Window.Size.X, Engine.Window.Size.Y);
+
+            Inputs.MouseHide();
+        } else if (Inputs.Actions[CameraDrag].pressedUp) {
+            if (!isCameraDragging) {
+                TryFocusOnPoint(mousePos.X, mousePos.Y, Engine.Window.Size.X, Engine.Window.Size.Y);
             }
         }
 
@@ -164,21 +154,20 @@ internal sealed class CameraEditor : Camera {
         }
 
         /// Zoom
-        float scrollDelta = 0 < mouse.ScrollWheels.Count ? mouse.ScrollWheels[0].Y : 0;
-        if (scrollDelta != 0) {
-            cameraPos += posDeltaL*_zoomSpeed*scrollDelta*forward;
+        if (InputState.WheelDelta != 0) {
+            cameraPos += posDeltaL*_zoomSpeed*InputState.WheelDelta*forward;
             isFocusing = false;
         }
 
-        /// Move (speed ramps up the longer held)
-        float baseSpeed = keyboard.IsKeyPressed(Key.ShiftLeft) ? _cameraSpeedShift : _cameraSpeed;
+        /// Move
+        float baseSpeed = Inputs.Actions[Shift].pressedDown ? _cameraSpeedShift : _cameraSpeed;
         cameraPosDelta = Vector3D<float>.Zero;
-        if (keyboard.IsKeyPressed(Key.W)) cameraPosDelta += forward;
-        if (keyboard.IsKeyPressed(Key.S)) cameraPosDelta += -forward;
-        if (keyboard.IsKeyPressed(Key.D)) cameraPosDelta += right;
-        if (keyboard.IsKeyPressed(Key.A)) cameraPosDelta += -right;
-        if (keyboard.IsKeyPressed(Key.Space) || keyboard.IsKeyPressed(Key.E)) cameraPosDelta += up;
-        if (keyboard.IsKeyPressed(Key.C) || keyboard.IsKeyPressed(Key.Q)) cameraPosDelta += -up;
+        if (Inputs.Actions[MoveForward].pressed) cameraPosDelta += forward;
+        if (Inputs.Actions[MoveBack].pressed) cameraPosDelta += -forward;
+        if (Inputs.Actions[MoveRight].pressed) cameraPosDelta += right;
+        if (Inputs.Actions[MoveLeft].pressed) cameraPosDelta += -right;
+        if (Inputs.Actions[MoveUp].pressed) cameraPosDelta += up;
+        if (Inputs.Actions[MoveDown].pressed) cameraPosDelta += -up;
 
         if (0.0001f < cameraPosDelta.LengthSquared) {
             Vector3D<float> moveDirection = Vector3D.Normalize(cameraPosDelta);
@@ -202,31 +191,16 @@ internal sealed class CameraEditor : Camera {
 
         cameraPos += cameraPosDelta;
         cameraOrbitCenterPos += cameraPosDelta;
-
-        previousMouseX = mouseX;
-        previousMouseY = mouseY;
-        previousMmb = mmb;
-
-        previousR = r;
-        previousT = t;
     }
 
     protected override void UpdateCamera (double deltaTime) {
-        var keyboard = Engine.Instance.Input.Keyboards.FirstOrDefault();
-        var mouse = Engine.Instance.Input.Mice.FirstOrDefault();
-        if (keyboard == null || mouse == null) return;
-
-        bool lmb = mouse.IsButtonPressed(MouseButton.Left);
-        bool rmb = mouse.IsButtonPressed(MouseButton.Right);
-        bool alt = keyboard.IsKeyPressed(Key.AltLeft) || keyboard.IsKeyPressed(Key.AltRight);
-
         Matrix4X4<float> rotation;
         Vector3D<float> forward;
         Vector3D<float> position;
 
         Vector3D<float> worldUp = MathF.Cos(pitch) < 0 ? -Vector3D<float>.UnitY : Vector3D<float>.UnitY;
 
-        if (alt && lmb) {
+        if (Inputs.Actions[Alt].pressed && Inputs.Actions[LMB].pressed) {
             /// Orbit Rotation
             rotation = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
 
@@ -238,8 +212,8 @@ internal sealed class CameraEditor : Camera {
             forward  = Vector3D.Normalize(cameraOrbitCenterPos - position);
             cameraPos = position;
 
-            mouse.Cursor.CursorMode = CursorMode.Raw;
-        } else if (rmb) {
+            Inputs.MouseShow();
+        } else if (Inputs.Actions[RMB].pressed) {
             /// Center Rotation
             rotation = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
             forward  = Vector3D.Transform(-Vector3D<float>.UnitZ, rotation);
@@ -249,13 +223,13 @@ internal sealed class CameraEditor : Camera {
             if (orbitDistance < 0.01f) orbitDistance = 5f;
             cameraOrbitCenterPos = position + forward * orbitDistance;
 
-            mouse.Cursor.CursorMode = CursorMode.Raw;
+            Inputs.MouseShow();
         } else {
             rotation = cameraRot;
             forward  = Vector3D.Transform(-Vector3D<float>.UnitZ, rotation);
             position = cameraPos;
 
-            mouse.Cursor.CursorMode = CursorMode.Normal;
+            Inputs.MouseHide();
         }
 
         Renderer.Instance.View = Matrix4X4.CreateLookAt(position, position + forward, worldUp);
