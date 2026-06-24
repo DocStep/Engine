@@ -1,10 +1,10 @@
-﻿using Silk.NET.Maths;
+﻿using System.Numerics;
 
 namespace Engine;
 
 
 internal readonly struct BoundingBox {
-    internal readonly Vector3D<float> Min;
-    internal readonly Vector3D<float> Max;
-    internal BoundingBox (Vector3D<float> min, Vector3D<float> max) { Min = min; Max = max; }
+    internal readonly Vector3 Min;
+    internal readonly Vector3 Max;
+    internal BoundingBox (Vector3 min, Vector3 max) { Min = min; Max = max; }
 }

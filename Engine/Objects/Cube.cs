@@ -1,10 +1,6 @@
-﻿using Silk.NET.Maths;
-
-namespace Engine.Graphics;
+﻿namespace Engine.Graphics;
 
 
-/// Generates a unit cube as MeshData. No GL here — wrap the result in a
-/// Mesh to actually draw it: new Mesh(gl, Cube.Generate()).
 public static class Cube {
     public static MeshData Generate (float size = 1f) {
         float h = 0.5f*size;

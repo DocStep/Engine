@@ -222,8 +222,10 @@ public static class Inputs {
         if (!KeysLoad()) KeysDef();
     }
     public static bool KeysLoad () {
+        return false;
         if (!Directory.Exists(Engine.savesFolder)) return false;
         if (!File.Exists(getPathSettingsFile())) return false;
+
 
         Actions = new Dictionary<string, InputsGroup>(ActionsDef);
 
@@ -248,7 +250,7 @@ public static class Inputs {
             }
         }
 
-        Log.log($"Inited (Loaded): {nameof(Inputs)}");
+        Log.log($"Inited (Loaded): {nameof(Inputs)} {getPathSettingsFile()}");
         return true;
     }
     public static void KeysDef () {

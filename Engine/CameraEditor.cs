@@ -1,4 +1,4 @@
-﻿using Silk.NET.Maths;
+﻿using System.Numerics;
 using Engine.Graphics;
 using Engine.Input;
 using static Engine.Input.Inputs;
@@ -16,9 +16,9 @@ internal sealed class CameraEditor : Camera {
     new public static CameraEditor? Instance = null;
 
 
-    private Vector3D<float> _cameraPos = new Vector3D<float>(-10, 3, -2);
-    private Matrix4X4<float> _cameraRot = Matrix4X4<float>.Identity;
-    private Vector3D<float> _cameraOrbitCenterPos = Vector3D<float>.Zero;
+    private Vector3 _cameraPos = new Vector3(-10, 3, -2);
+    private Matrix4x4 _cameraRot = Matrix4x4.Identity;
+    private Vector3 _cameraOrbitCenterPos = Vector3.Zero;
 
     /// Values
     private const float _cameraSpeed = 10f;
@@ -37,7 +37,7 @@ internal sealed class CameraEditor : Camera {
     private const float _focusTargetDistance = 3f;
 
 
-    internal Vector3D<float> cameraOrbitCenterPos = Vector3D<float>.Zero;
+    internal Vector3 cameraOrbitCenterPos = Vector3.Zero;
 
     private float cameraDragStartX;
     private float cameraDragStartY;
@@ -45,8 +45,8 @@ internal sealed class CameraEditor : Camera {
     //private bool previousMmb;
 
     private bool isFocusing;
-    private Vector3D<float> focusTargetCameraPos;
-    private Vector3D<float> focusTargetOrbitCenterPos;
+    private Vector3 focusTargetCameraPos;
+    private Vector3 focusTargetOrbitCenterPos;
 
     private float moveHoldTime;
 
@@ -59,14 +59,14 @@ internal sealed class CameraEditor : Camera {
     }
     private void SetTransformT () {
         cameraPos = _cameraPos;
-        cameraOrbitCenterPos = new Vector3D<float>(-8f, 0f, 0f);
+        cameraOrbitCenterPos = new Vector3(-8f, 0f, 0f);
 
         NewTransform();
     }
     private void NewTransform () {
-        cameraRot = Matrix4X4.CreateLookAt(cameraPos, cameraOrbitCenterPos, Vector3D<float>.UnitY);
+        cameraRot = Matrix4x4.CreateLookAt(cameraPos, cameraOrbitCenterPos, Vector3.UnitY);
 
-        var dir = Vector3D.Normalize(cameraPos - cameraOrbitCenterPos);
+        var dir = Vector3.Normalize(cameraPos - cameraOrbitCenterPos);
         yaw = MathF.Atan2(dir.X, dir.Z);
         pitch = -MathF.Asin(dir.Y);
 
@@ -87,11 +87,11 @@ internal sealed class CameraEditor : Camera {
         if (Inputs.Actions[CameraFocusMaterial].pressedDown) SetTransformT();
 
         cameraRot = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
-        Vector3D<float> forward = Vector3D.Transform(-Vector3D<float>.UnitZ, cameraRot);
-        Vector3D<float> right = Vector3D.Transform(Vector3D<float>.UnitX, cameraRot);
-        Vector3D<float> up = Vector3D.Transform(Vector3D<float>.UnitY, cameraRot);
-        Vector3D<float> cameraPosDelta = Vector3D<float>.Zero;
-        float posDeltaL = MathF.Max(0, (cameraOrbitCenterPos - cameraPos).Length);
+        Vector3 forward = Vector3.Transform(-Vector3.UnitZ, cameraRot);
+        Vector3 right = Vector3.Transform(Vector3.UnitX, cameraRot);
+        Vector3 up = Vector3.Transform(Vector3.UnitY, cameraRot);
+        Vector3 cameraPosDelta = Vector3.Zero;
+        float posDeltaL = MathF.Max(0, (cameraOrbitCenterPos - cameraPos).Length());
 
         if (Inputs.Actions[LMB].pressed && Inputs.Actions[Alt].pressed || Inputs.Actions[RMB].pressed) {
             float dx = Inputs.MouseDelta.X;
@@ -139,14 +139,14 @@ internal sealed class CameraEditor : Camera {
 
         /// Smoothly glide toward the focus target
         if (isFocusing) {
-            Vector3D<float> camDelta = focusTargetCameraPos - cameraPos;
-            Vector3D<float> orbitDelta = focusTargetOrbitCenterPos - cameraOrbitCenterPos;
+            Vector3 camDelta = focusTargetCameraPos - cameraPos;
+            Vector3 orbitDelta = focusTargetOrbitCenterPos - cameraOrbitCenterPos;
 
             float _t = MathF.Min(1f, _focusGlideSpeed*dt);
             cameraPos += camDelta*_t;
             cameraOrbitCenterPos += orbitDelta*_t;
 
-            if (camDelta.Length < 0.01f && orbitDelta.Length < 0.01f) {
+            if (camDelta.LengthSquared() < 0.1f && orbitDelta.LengthSquared() < 0.1f) {
                 cameraPos = focusTargetCameraPos;
                 cameraOrbitCenterPos = focusTargetOrbitCenterPos;
                 isFocusing = false;
@@ -160,8 +160,8 @@ internal sealed class CameraEditor : Camera {
         }
 
         /// Move
-        float baseSpeed = Inputs.Actions[Shift].pressedDown ? _cameraSpeedShift : _cameraSpeed;
-        cameraPosDelta = Vector3D<float>.Zero;
+        float baseSpeed = Inputs.Actions[Shift].pressed ? _cameraSpeedShift : _cameraSpeed;
+        cameraPosDelta = Vector3.Zero;
         if (Inputs.Actions[MoveForward].pressed) cameraPosDelta += forward;
         if (Inputs.Actions[MoveBack].pressed) cameraPosDelta += -forward;
         if (Inputs.Actions[MoveRight].pressed) cameraPosDelta += right;
@@ -169,10 +169,10 @@ internal sealed class CameraEditor : Camera {
         if (Inputs.Actions[MoveUp].pressed) cameraPosDelta += up;
         if (Inputs.Actions[MoveDown].pressed) cameraPosDelta += -up;
 
-        if (0.0001f < cameraPosDelta.LengthSquared) {
-            Vector3D<float> moveDirection = Vector3D.Normalize(cameraPosDelta);
+        if (0.0001f < cameraPosDelta.LengthSquared()) {
+            Vector3 moveDirection = Vector3.Normalize(cameraPosDelta);
 
-            bool continuousMovement = moveDirection != Vector3D<float>.Zero;
+            bool continuousMovement = moveDirection != Vector3.Zero;
             moveHoldTime = continuousMovement ? moveHoldTime + dt : 0f;
 
             float rampT = Utils.Clamp(moveHoldTime / _moveRampUpTime, 0f, 1f);
@@ -194,55 +194,55 @@ internal sealed class CameraEditor : Camera {
     }
 
     protected override void UpdateCamera (double deltaTime) {
-        Matrix4X4<float> rotation;
-        Vector3D<float> forward;
-        Vector3D<float> position;
+        Matrix4x4 rotation;
+        Vector3 forward;
+        Vector3 position;
 
-        Vector3D<float> worldUp = MathF.Cos(pitch) < 0 ? -Vector3D<float>.UnitY : Vector3D<float>.UnitY;
+        Vector3 worldUp = MathF.Cos(pitch) < 0 ? -Vector3.UnitY : Vector3.UnitY;
 
         if (Inputs.Actions[Alt].pressed && Inputs.Actions[LMB].pressed) {
             /// Orbit Rotation
             rotation = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
 
-            float orbitDistance = (cameraPos - cameraOrbitCenterPos).Length;
+            float orbitDistance = (cameraPos - cameraOrbitCenterPos).Length();
             if (orbitDistance < 0.01f) orbitDistance = 5f;
 
-            Vector3D<float> offset = Vector3D.Transform(Vector3D<float>.UnitZ * orbitDistance, rotation);
+            Vector3 offset = Vector3.Transform(Vector3.UnitZ * orbitDistance, rotation);
             position = cameraOrbitCenterPos + offset;
-            forward  = Vector3D.Normalize(cameraOrbitCenterPos - position);
+            forward  = Vector3.Normalize(cameraOrbitCenterPos - position);
             cameraPos = position;
 
             Inputs.MouseShow();
         } else if (Inputs.Actions[RMB].pressed) {
             /// Center Rotation
             rotation = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
-            forward  = Vector3D.Transform(-Vector3D<float>.UnitZ, rotation);
+            forward  = Vector3.Transform(-Vector3.UnitZ, rotation);
             position = cameraPos;
 
-            float orbitDistance = (cameraOrbitCenterPos - cameraPos).Length;
+            float orbitDistance = (cameraOrbitCenterPos - cameraPos).Length();
             if (orbitDistance < 0.01f) orbitDistance = 5f;
             cameraOrbitCenterPos = position + forward * orbitDistance;
 
             Inputs.MouseShow();
         } else {
             rotation = cameraRot;
-            forward  = Vector3D.Transform(-Vector3D<float>.UnitZ, rotation);
+            forward  = Vector3.Transform(-Vector3.UnitZ, rotation);
             position = cameraPos;
 
             Inputs.MouseHide();
         }
 
-        Renderer.Instance.View = Matrix4X4.CreateLookAt(position, position + forward, worldUp);
+        Renderer.Instance.View = Matrix4x4.CreateLookAt(position, position + forward, worldUp);
         cameraRot = rotation;
     }
 
 
     private void LookAtOrbitCenter () {
-        Vector3D<float> offset = cameraPos - cameraOrbitCenterPos;
-        float dist = offset.Length;
+        Vector3 offset = cameraPos - cameraOrbitCenterPos;
+        float dist = offset.Length();
         if (dist < 0.0001f) return;
 
-        Vector3D<float> forward = -offset / dist;
+        Vector3 forward = -offset / dist;
 
         pitch = MathF.Asin(Utils.Clamp(forward.Y, -1f, 1f));
         float cosPitch = MathF.Cos(pitch);
@@ -267,14 +267,14 @@ internal sealed class CameraEditor : Camera {
         // Fallback: ground plane at Y = 0
         if (!bestT.HasValue) {
             float? planeT = Raycaster.IntersectPlane(
-                rayOrigin, rayDirection, Vector3D<float>.Zero, Vector3D<float>.UnitY);
+                rayOrigin, rayDirection, Vector3.Zero, Vector3.UnitY);
             if (planeT.HasValue) bestT = planeT;
         }
 
         if (!bestT.HasValue) return;
 
-        Vector3D<float> hitPoint = rayOrigin + rayDirection * bestT.Value;
-        Vector3D<float> currentForward = Vector3D.Transform(-Vector3D<float>.UnitZ, cameraRot);
+        Vector3 hitPoint = rayOrigin + rayDirection * bestT.Value;
+        Vector3 currentForward = Vector3.Transform(-Vector3.UnitZ, cameraRot);
 
         focusTargetOrbitCenterPos = hitPoint;
         focusTargetCameraPos = hitPoint - currentForward*_focusTargetDistance;

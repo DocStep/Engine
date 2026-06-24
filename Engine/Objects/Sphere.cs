@@ -1,10 +1,8 @@
-﻿using Silk.NET.Maths;
+﻿using System.Numerics;
 
 namespace Engine.Graphics;
 
 
-/// Generates a UV sphere as MeshData. No GL here — wrap the result in a
-/// Mesh to actually draw it: new Mesh(gl, Sphere.Generate()).
 public static class Sphere {
     public static MeshData Generate (float radius = 0.5f, int latSegments = 16, int lonSegments = 24) {
         var vertices = new List<Vertex>();
@@ -24,9 +22,9 @@ public static class Sphere {
                 float y = cosTheta;
                 float z = sinPhi*sinTheta;
 
-                var position = new Vector3D<float>(radius*x, radius*y, radius*z);
-                var normal = new Vector3D<float>(x, y, z);
-                var uv = new Vector2D<float>((float)lon/lonSegments, 1f - (float)lat/latSegments);
+                var position = new Vector3(radius*x, radius*y, radius*z);
+                var normal = new Vector3(x, y, z);
+                var uv = new Vector2((float)lon/lonSegments, 1f - (float)lat/latSegments);
 
                 vertices.Add(new Vertex(position, normal, uv));
             }

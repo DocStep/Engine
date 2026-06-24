@@ -1,5 +1,5 @@
-﻿using Silk.NET.OpenGL;
-using Silk.NET.Maths;
+﻿using System.Numerics;
+using Silk.NET.OpenGL;
 
 namespace Engine.Graphics;
 
@@ -62,7 +62,7 @@ public class Shader : IDisposable {
             }
         }
     }
-    public void SetMatrix4X4 (string name, Matrix4X4<float> matrix) {
+    public void SetMatrix4X4 (string name, Matrix4x4 matrix) {
         int location = GL.GetUniformLocation(_program, name);
         if (location == -1) Console.WriteLine($"Uniform '{name}' not found in program {_program}!");
         unsafe {
@@ -79,12 +79,12 @@ public class Shader : IDisposable {
         int location = GL.GetUniformLocation(_program, name);
         GL.Uniform3(location, x, y, z);
     }
-    public void SetVector3 (string name, Vector3D<float> vec3) {
+    public void SetVector3 (string name, Vector3 vec3) {
         int location = GL.GetUniformLocation(_program, name);
         GL.Uniform3(location, vec3.X, vec3.Y, vec3.Z);
     }
 
-    public void SetColor (string name, Vector3D<float> color) {
+    public void SetColor (string name, Vector3 color) {
         int location = GL.GetUniformLocation(_program, name);
         GL.Uniform3(location, color.X, color.Y, color.Z);
     }

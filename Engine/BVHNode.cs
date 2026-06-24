@@ -1,4 +1,4 @@
-﻿using Silk.NET.Maths;
+﻿using System.Numerics;
 
 namespace Engine;
 
@@ -10,14 +10,14 @@ internal class BVHNode {
 
     private const int LeafThreshold = 8;
 
-    internal static BVHNode Build (Vector3D<float>[] verts, uint[] indices) {
+    internal static BVHNode Build (Vector3[] verts, uint[] indices) {
         int triCount = indices.Length/3;
         int[] allTris = new int[triCount];
         for (int i = 0; i < triCount; i++) allTris[i] = i;
         return BuildRecursive(verts, indices, allTris);
     }
 
-    private static BVHNode BuildRecursive (Vector3D<float>[] verts, uint[] indices, int[] tris) {
+    private static BVHNode BuildRecursive (Vector3[] verts, uint[] indices, int[] tris) {
         var node = new BVHNode();
         node.Bounds = ComputeBounds(verts, indices, tris);
 
@@ -27,7 +27,7 @@ internal class BVHNode {
         }
 
         // Split on longest axis at centroid midpoint
-        Vector3D<float> extent = node.Bounds.Max - node.Bounds.Min;
+        Vector3 extent = node.Bounds.Max - node.Bounds.Min;
         int axis = extent.X >= extent.Y && extent.X >= extent.Z ? 0
                  : extent.Y >= extent.Z ? 1 : 2;
 
@@ -39,7 +39,7 @@ internal class BVHNode {
         var rightTris = new List<int>();
 
         foreach (int ti in tris) {
-            Vector3D<float> centroid = TriangleCentroid(verts, indices, ti);
+            Vector3 centroid = TriangleCentroid(verts, indices, ti);
             float val = axis == 0 ? centroid.X : axis == 1 ? centroid.Y : centroid.Z;
             (val < mid ? leftTris : rightTris).Add(ti);
         }
@@ -55,33 +55,33 @@ internal class BVHNode {
         return node;
     }
 
-    private static BoundingBox ComputeBounds (Vector3D<float>[] verts, uint[] indices, int[] tris) {
-        var min = new Vector3D<float>(float.MaxValue);
-        var max = new Vector3D<float>(float.MinValue);
+    private static BoundingBox ComputeBounds (Vector3[] verts, uint[] indices, int[] tris) {
+        var min = new Vector3(float.MaxValue);
+        var max = new Vector3(float.MinValue);
 
         foreach (int ti in tris) {
             for (int j = 0; j < 3; j++) {
-                Vector3D<float> v = verts[indices[ti*3 + j]];
-                min = Vector3D.Min(min, v);
-                max = Vector3D.Max(max, v);
+                Vector3 v = verts[indices[ti*3 + j]];
+                min = Vector3.Min(min, v);
+                max = Vector3.Max(max, v);
             }
         }
 
         return new BoundingBox(min, max);
     }
 
-    private static Vector3D<float> TriangleCentroid (Vector3D<float>[] verts, uint[] indices, int ti) {
-        Vector3D<float> v0 = verts[indices[ti*3]];
-        Vector3D<float> v1 = verts[indices[ti*3 + 1]];
-        Vector3D<float> v2 = verts[indices[ti*3 + 2]];
+    private static Vector3 TriangleCentroid (Vector3[] verts, uint[] indices, int ti) {
+        Vector3 v0 = verts[indices[ti*3]];
+        Vector3 v1 = verts[indices[ti*3 + 1]];
+        Vector3 v2 = verts[indices[ti*3 + 2]];
         return (v0 + v1 + v2) / 3f;
     }
 
     // Returns closest hit T, or null
     internal float? Intersect (
-        Vector3D<float> origin, Vector3D<float> dir,
-        Vector3D<float>[] verts, uint[] indices,
-        Matrix4X4<float> model) {
+        Vector3 origin, Vector3 dir,
+        Vector3[] verts, uint[] indices,
+        Matrix4x4 model) {
         if (!Raycaster.IntersectAABB(origin, dir, Bounds.Min, Bounds.Max).HasValue)
             return null;
 
@@ -89,9 +89,9 @@ internal class BVHNode {
         if (TriangleIndices is not null) {
             float? best = null;
             foreach (int ti in TriangleIndices) {
-                Vector3D<float> v0 = Vector3D.Transform(verts[indices[ti*3]], model);
-                Vector3D<float> v1 = Vector3D.Transform(verts[indices[ti*3 + 1]], model);
-                Vector3D<float> v2 = Vector3D.Transform(verts[indices[ti*3 + 2]], model);
+                Vector3 v0 = Vector3.Transform(verts[indices[ti*3]], model);
+                Vector3 v1 = Vector3.Transform(verts[indices[ti*3 + 1]], model);
+                Vector3 v2 = Vector3.Transform(verts[indices[ti*3 + 2]], model);
                 float? t = Raycaster.IntersectTriangle(origin, dir, v0, v1, v2);
                 if (t.HasValue && (!best.HasValue || t.Value < best.Value))
                     best = t;

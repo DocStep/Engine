@@ -1,25 +1,14 @@
-﻿using System.Globalization;
-using Silk.NET.Maths;
+﻿using System.Numerics;
+using System.Globalization;
 
 namespace Engine.Graphics;
 
 
-/// Minimal Wavefront OBJ import/export. Operates purely on MeshData,
-/// so loaded meshes go straight into new Mesh(gl, data) and generated
-/// meshes (Cube.Generate, Sphere.Generate, ...) can be saved the same way.
-///
-/// Import notes:
-/// - Faces with more than 3 vertices are fan-triangulated (v0, vi, vi+1).
-/// - Missing normals/UVs default to zero; if every normal came back zero,
-///   MeshData.RecalculateNormals() is called automatically.
-/// - Each unique (position/uv/normal) index triple becomes its own vertex,
-///   since OBJ allows attributes to be shared/indexed independently and
-///   our interleaved Vertex layout does not.
 public static class ObjLoader {
     public static MeshData Load (string path) {
-        var positions = new List<Vector3D<float>>();
-        var uvs = new List<Vector2D<float>>();
-        var normals = new List<Vector3D<float>>();
+        var positions = new List<Vector3>();
+        var uvs = new List<Vector2>();
+        var normals = new List<Vector3>();
 
         var vertices = new List<Vertex>();
         var indices = new List<uint>();
@@ -35,16 +24,16 @@ public static class ObjLoader {
 
             switch (tokens[0]) {
                 case "v":
-                    positions.Add(new Vector3D<float>(
+                    positions.Add(new Vector3(
                         ParseFloat(tokens[1]), ParseFloat(tokens[2]), ParseFloat(tokens[3])));
                     break;
 
                 case "vt":
-                    uvs.Add(new Vector2D<float>(ParseFloat(tokens[1]), ParseFloat(tokens[2])));
+                    uvs.Add(new Vector2(ParseFloat(tokens[1]), ParseFloat(tokens[2])));
                     break;
 
                 case "vn":
-                    normals.Add(new Vector3D<float>(
+                    normals.Add(new Vector3(
                         ParseFloat(tokens[1]), ParseFloat(tokens[2]), ParseFloat(tokens[3])));
                     hasAnyNormal = true;
                     break;
@@ -84,8 +73,8 @@ public static class ObjLoader {
                 return existing;
 
             var position = positions[vi];
-            var uv = ti >= 0 ? uvs[ti] : Vector2D<float>.Zero;
-            var normal = ni >= 0 ? normals[ni] : Vector3D<float>.Zero;
+            var uv = ti >= 0 ? uvs[ti] : Vector2.Zero;
+            var normal = ni >= 0 ? normals[ni] : Vector3.Zero;
 
             uint newIndex = (uint)vertices.Count;
             vertices.Add(new Vertex(position, normal, uv));

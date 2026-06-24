@@ -1,8 +1,5 @@
 ﻿using Silk.NET.OpenGL;
-using Silk.NET.Windowing;
-using Silk.NET.Input;
-using Silk.NET.Maths;
-using StbTrueTypeSharp;
+using System.Numerics;
 
 namespace Engine.Graphics.UI;
 
@@ -14,8 +11,8 @@ public class TextRenderer : IDisposable {
     Shader _shader;
 
     struct Vertex {
-        public Vector2D<float> Pos;
-        public Vector2D<float> UV;
+        public Vector2 Pos;
+        public Vector2 UV;
     }
 
     List<Vertex> _vertices = new List<Vertex>();
@@ -23,7 +20,7 @@ public class TextRenderer : IDisposable {
     public unsafe TextRenderer () {
         GL = Renderer.Instance.GL;
         _atlas = FontAtlas.Load("src/Fonts/FuturaCyrillicMedium.ttf", 24);
-        _shader = new Shader(Utils.LoadSrc("src/Shaders/UI/TextVertex.shader"), Utils.LoadSrc("src/Shaders/UI/TextFragment.shader"), "Text");
+        _shader = new Shader(Utils.LoadSrc("src/Shaders/UI/Text_Vertex.shader"), Utils.LoadSrc("src/Shaders/UI/Text_Fragment.shader"), "Text");
 
         _vao = GL.GenVertexArray();
         _vbo = GL.GenBuffer();
@@ -51,18 +48,18 @@ public class TextRenderer : IDisposable {
             float y1 = y0 + ci.Height;
 
             /// two triangles per glyph
-            _vertices.Add(new Vertex { Pos = new Vector2D<float>(x0, y0), UV = new Vector2D<float>(ci.U0, ci.V0) });
-            _vertices.Add(new Vertex { Pos = new Vector2D<float>(x1, y0), UV = new Vector2D<float>(ci.U1, ci.V0) });
-            _vertices.Add(new Vertex { Pos = new Vector2D<float>(x1, y1), UV = new Vector2D<float>(ci.U1, ci.V1) });
+            _vertices.Add(new Vertex { Pos = new Vector2(x0, y0), UV = new Vector2(ci.U0, ci.V0) });
+            _vertices.Add(new Vertex { Pos = new Vector2(x1, y0), UV = new Vector2(ci.U1, ci.V0) });
+            _vertices.Add(new Vertex { Pos = new Vector2(x1, y1), UV = new Vector2(ci.U1, ci.V1) });
 
-            _vertices.Add(new Vertex { Pos = new Vector2D<float>(x0, y0), UV = new Vector2D<float>(ci.U0, ci.V0) });
-            _vertices.Add(new Vertex { Pos = new Vector2D<float>(x1, y1), UV = new Vector2D<float>(ci.U1, ci.V1) });
-            _vertices.Add(new Vertex { Pos = new Vector2D<float>(x0, y1), UV = new Vector2D<float>(ci.U0, ci.V1) });
+            _vertices.Add(new Vertex { Pos = new Vector2(x0, y0), UV = new Vector2(ci.U0, ci.V0) });
+            _vertices.Add(new Vertex { Pos = new Vector2(x1, y1), UV = new Vector2(ci.U1, ci.V1) });
+            _vertices.Add(new Vertex { Pos = new Vector2(x0, y1), UV = new Vector2(ci.U0, ci.V1) });
 
             cursorX += ci.XAdvance;
         }
 
-        var ortho = Matrix4X4.CreateOrthographicOffCenter(0, screenWidth, screenHeight, 0, -1f, 1f);
+        var ortho = Matrix4x4.CreateOrthographicOffCenter(0, screenWidth, screenHeight, 0, -1f, 1f);
 
         GL.Disable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Blend);
@@ -92,15 +89,15 @@ public class TextRenderer : IDisposable {
         Console.WriteLine($"Current FBO: {fbo}");
 
         var verts = new Vertex[] {
-            new Vertex { Pos = new Vector2D<float>(100, 100), UV = new Vector2D<float>(0, 0) },
-            new Vertex { Pos = new Vector2D<float>(300, 100), UV = new Vector2D<float>(1, 0) },
-            new Vertex { Pos = new Vector2D<float>(300, 300), UV = new Vector2D<float>(1, 1) },
-            new Vertex { Pos = new Vector2D<float>(100, 100), UV = new Vector2D<float>(0, 0) },
-            new Vertex { Pos = new Vector2D<float>(300, 300), UV = new Vector2D<float>(1, 1) },
-            new Vertex { Pos = new Vector2D<float>(100, 300), UV = new Vector2D<float>(0, 1) },
+            new Vertex { Pos = new Vector2(100, 100), UV = new Vector2(0, 0) },
+            new Vertex { Pos = new Vector2(300, 100), UV = new Vector2(1, 0) },
+            new Vertex { Pos = new Vector2(300, 300), UV = new Vector2(1, 1) },
+            new Vertex { Pos = new Vector2(100, 100), UV = new Vector2(0, 0) },
+            new Vertex { Pos = new Vector2(300, 300), UV = new Vector2(1, 1) },
+            new Vertex { Pos = new Vector2(100, 300), UV = new Vector2(0, 1) },
         };
 
-        var ortho = Matrix4X4.CreateOrthographicOffCenter(0, screenWidth, screenHeight, 0, -1f, 1f);
+        var ortho = Matrix4x4.CreateOrthographicOffCenter(0, screenWidth, screenHeight, 0, -1f, 1f);
 
         GL.Disable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Blend);

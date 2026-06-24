@@ -1,5 +1,5 @@
-﻿using Silk.NET.OpenGL;
-using Silk.NET.Maths;
+﻿using System.Numerics;
+using Silk.NET.OpenGL;
 
 namespace Engine.Graphics;
 
@@ -9,17 +9,17 @@ namespace Engine.Graphics;
 /// by the equirect->cubemap conversion, irradiance convolution, and
 /// specular prefilter passes — they differ only in shader and resolution.
 public static class CubemapCapture {
-    private static readonly Matrix4X4<float>[] CaptureViews = {
-        Matrix4X4.CreateLookAt(Vector3D<float>.Zero, new Vector3D<float>( 1, 0, 0), new Vector3D<float>(0, -1, 0)),
-        Matrix4X4.CreateLookAt(Vector3D<float>.Zero, new Vector3D<float>(-1, 0, 0), new Vector3D<float>(0, -1, 0)),
-        Matrix4X4.CreateLookAt(Vector3D<float>.Zero, new Vector3D<float>( 0, 1, 0), new Vector3D<float>(0, 0, 1)),
-        Matrix4X4.CreateLookAt(Vector3D<float>.Zero, new Vector3D<float>( 0,-1, 0), new Vector3D<float>(0, 0,-1)),
-        Matrix4X4.CreateLookAt(Vector3D<float>.Zero, new Vector3D<float>( 0, 0, 1), new Vector3D<float>(0, -1, 0)),
-        Matrix4X4.CreateLookAt(Vector3D<float>.Zero, new Vector3D<float>( 0, 0,-1), new Vector3D<float>(0, -1, 0)),
+    private static readonly Matrix4x4[] CaptureViews = {
+        Matrix4x4.CreateLookAt(Vector3.Zero, new Vector3( 1, 0, 0), new Vector3(0, -1, 0)),
+        Matrix4x4.CreateLookAt(Vector3.Zero, new Vector3(-1, 0, 0), new Vector3(0, -1, 0)),
+        Matrix4x4.CreateLookAt(Vector3.Zero, new Vector3( 0, 1, 0), new Vector3(0, 0, 1)),
+        Matrix4x4.CreateLookAt(Vector3.Zero, new Vector3( 0,-1, 0), new Vector3(0, 0,-1)),
+        Matrix4x4.CreateLookAt(Vector3.Zero, new Vector3( 0, 0, 1), new Vector3(0, -1, 0)),
+        Matrix4x4.CreateLookAt(Vector3.Zero, new Vector3( 0, 0,-1), new Vector3(0, -1, 0)),
     };
 
-    public static readonly Matrix4X4<float> CaptureProjection =
-        Matrix4X4.CreatePerspectiveFieldOfView(MathF.PI/2f, 1f, 0.1f, 10f);
+    public static readonly Matrix4x4 CaptureProjection =
+        Matrix4x4.CreatePerspectiveFieldOfView(MathF.PI/2f, 1f, 0.1f, 10f);
 
     /// Allocates an empty cubemap with `mipLevels` levels reserved (call
     /// with mipLevels=1 for the base equirect conversion and irradiance map,
@@ -66,7 +66,7 @@ public static class CubemapCapture {
         uint target,
         uint faceSize,
         int mipLevel,
-        Action<Matrix4X4<float>, Matrix4X4<float>, int> drawCubeFace) {
+        Action<Matrix4x4, Matrix4x4, int> drawCubeFace) {
 
         uint fbo = gl.GenFramebuffer();
         uint rbo = gl.GenRenderbuffer();

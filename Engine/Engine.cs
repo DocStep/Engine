@@ -1,5 +1,3 @@
-//using Silk.NET.Input;
-using Silk.NET.Maths;
 using Silk.NET.Windowing;
 using Engine.Graphics;
 using Engine.Input;
@@ -58,7 +56,7 @@ public class Engine : IDisposable {
         Console.WriteLine($"========== Init Finish ==========");
 
         var options = WindowOptions.Default with {
-            Size = new Vector2D<int>(1280, 720),
+            Size = new Silk.NET.Maths.Vector2D<int>(1280, 720),
             Title = "Engine",
             VSync = false,
         };
@@ -67,8 +65,8 @@ public class Engine : IDisposable {
 
         var monitors = Silk.NET.Windowing.Monitor.GetMonitors(Window);
         var monitor = monitors.First();
-        var screenSize = monitor.VideoMode.Resolution ?? new Vector2D<int>(1920, 1080);
-        Window.Position = new Vector2D<int>(
+        var screenSize = monitor.VideoMode.Resolution ?? new Silk.NET.Maths.Vector2D<int>(1920, 1080);
+        Window.Position = new Silk.NET.Maths.Vector2D<int>(
             (screenSize.X - options.Size.X)/2,
             (screenSize.Y - options.Size.Y)/2);
 

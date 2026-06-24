@@ -1,17 +1,14 @@
 ﻿using System.Numerics;
-using Silk.NET.Maths;
-using IKeyboard = Silk.NET.Input.IKeyboard;
-using IMouse = Silk.NET.Input.IMouse;
 
 namespace Engine.Input;
 
 
 public static class InputState {
 
-    private static IKeyboard? keyboard;
-    public static IKeyboard? Keyboard => keyboard;
-    private static IMouse? mouse;
-    public static IMouse? Mouse => mouse;
+    private static Silk.NET.Input.IKeyboard? keyboard;
+    public static Silk.NET.Input.IKeyboard? Keyboard => keyboard;
+    private static Silk.NET.Input.IMouse? mouse;
+    public static Silk.NET.Input.IMouse? Mouse => mouse;
 
     public static Vector2 MousePos { get; private set; }
     public static Vector2 MouseDelta { get; private set; }
@@ -43,7 +40,7 @@ public static class InputState {
         firstMouseSample = true;
     }
 
-    static void OnScroll (IMouse mouse, Silk.NET.Input.ScrollWheel wheel) => wheelDelta = wheel.Y;
+    static void OnScroll (Silk.NET.Input.IMouse mouse, Silk.NET.Input.ScrollWheel wheel) => wheelDelta = wheel.Y;
 
     public static void Update () {
         previous = new HashSet<Keys>(current);

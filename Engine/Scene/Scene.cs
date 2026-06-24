@@ -1,7 +1,7 @@
-﻿using Silk.NET.OpenGL;
+﻿using System.Numerics;
+using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 using Silk.NET.Input;
-using Silk.NET.Maths;
 using Engine.Graphics;
 
 namespace Engine;
@@ -9,20 +9,20 @@ namespace Engine;
 
 internal static class Scene {
     internal record SceneObject (
-        Vector3D<float>[] Vertices,
+        Vector3[] Vertices,
         uint[] Indices,
-        Matrix4X4<float> ModelMatrix,
+        Matrix4x4 ModelMatrix,
         BVHNode BVH
     );
 
     internal static readonly List<SceneObject> Objects = new List<SceneObject>();
 
-    internal static void Register (Vector3D<float>[] vertices, uint[] indices, Matrix4X4<float> modelMatrix) {
+    internal static void Register (Vector3[] vertices, uint[] indices, Matrix4x4 modelMatrix) {
         var bvh = BVHNode.Build(vertices, indices);
         Objects.Add(new SceneObject(vertices, indices, modelMatrix, bvh));
     }
 
-    internal static void Unregister (Vector3D<float>[] vertices) {
+    internal static void Unregister (Vector3[] vertices) {
         Objects.RemoveAll(o => o.Vertices == vertices);
     }
 

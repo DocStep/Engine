@@ -1,5 +1,5 @@
-﻿using Silk.NET.OpenGL;
-using Silk.NET.Maths;
+﻿using System.Numerics;
+using Silk.NET.OpenGL;
 
 namespace Engine.Graphics;
 
@@ -22,11 +22,11 @@ public class Skybox : IDisposable {
     public float BlurScale = 0f;
 
 
-    public void Draw (Matrix4X4<float> view, Matrix4X4<float> projection) {
+    public void Draw (Matrix4x4 view, Matrix4x4 projection) {
         if (_texture is null) return;
 
-        Matrix4X4.Invert(view, out var invView);
-        Matrix4X4.Invert(projection, out var invProjection);
+        Matrix4x4.Invert(view, out var invView);
+        Matrix4x4.Invert(projection, out var invProjection);
 
         GL.DepthFunc(DepthFunction.Lequal);
         GL.DepthMask(false);

@@ -1,12 +1,9 @@
-﻿using Silk.NET.Maths;
+﻿using System.Numerics;
 using Engine.Graphics;
 
 namespace Engine;
 
 
-/// Procedural arrow mesh pointing along local +Y: a cylindrical shaft
-/// topped with a cone head. Built once as MeshData; orientation/position
-/// driven by a model matrix when drawn, same as any other mesh.
 public static class Arrow {
     public static MeshData Generate (
         float shaftLength = 4f,
@@ -38,8 +35,8 @@ public static class Arrow {
             float x = MathF.Cos(angle)*radius;
             float z = MathF.Sin(angle)*radius;
 
-            verts.Add(new Vertex { Position = new Vector3D<float>(x, 0f, z), UV = new Vector2D<float>(t, 0f) });
-            verts.Add(new Vertex { Position = new Vector3D<float>(x, length, z), UV = new Vector2D<float>(t, 1f) });
+            verts.Add(new Vertex { Position = new Vector3(x, 0f, z), UV = new Vector2(t, 0f) });
+            verts.Add(new Vertex { Position = new Vector3(x, length, z), UV = new Vector2(t, 1f) });
         }
 
         for (uint i = 0; i < segments; i++) {
@@ -64,11 +61,11 @@ public static class Arrow {
             float angle = t*MathF.PI*2f;
             float x = MathF.Cos(angle)*radius;
             float z = MathF.Sin(angle)*radius;
-            verts.Add(new Vertex { Position = new Vector3D<float>(x, baseY, z), UV = new Vector2D<float>(t, 0f) });
+            verts.Add(new Vertex { Position = new Vector3(x, baseY, z), UV = new Vector2(t, 0f) });
         }
 
         uint tipIndex = (uint)verts.Count;
-        verts.Add(new Vertex { Position = new Vector3D<float>(0f, tipY, 0f), UV = new Vector2D<float>(0.5f, 1f) });
+        verts.Add(new Vertex { Position = new Vector3(0f, tipY, 0f), UV = new Vector2(0.5f, 1f) });
 
         for (uint i = 0; i < segments; i++) {
             indices.Add(ringStart + i);
@@ -77,7 +74,7 @@ public static class Arrow {
         }
 
         uint capCenter = (uint)verts.Count;
-        verts.Add(new Vertex { Position = new Vector3D<float>(0f, baseY, 0f), UV = new Vector2D<float>(0.5f, 0f) });
+        verts.Add(new Vertex { Position = new Vector3(0f, baseY, 0f), UV = new Vector2(0.5f, 0f) });
 
         for (uint i = 0; i < segments; i++) {
             indices.Add(capCenter);

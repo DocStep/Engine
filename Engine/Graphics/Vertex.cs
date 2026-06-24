@@ -1,14 +1,14 @@
-﻿using Silk.NET.Maths;
+﻿using System.Numerics;
 
 namespace Engine.Graphics;
 
 
 public struct Vertex {
-    public Vector3D<float> Position;
-    public Vector3D<float> Normal;
-    public Vector2D<float> UV;
+    public Vector3 Position;
+    public Vector3 Normal;
+    public Vector2 UV;
 
-    public Vertex (Vector3D<float> position, Vector3D<float> normal, Vector2D<float> uv) {
+    public Vertex (Vector3 position, Vector3 normal, Vector2 uv) {
         Position = position;
         Normal = normal;
         UV = uv;
