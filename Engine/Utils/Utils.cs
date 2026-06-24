@@ -7,11 +7,32 @@ namespace Engine;
 internal static class Utils {
 
     extension(Matrix4x4) {
-        public static Matrix4x4 Rotation (Vector3 euler) {
-            var q = Quaternion.CreateFromYawPitchRoll( euler.Y, euler.X, euler.Z);
+        public static Matrix4x4 Position (Vector3 position) {
+            return Matrix4x4.CreateTranslation(position);
+        }
+    }
+    extension(Matrix4x4) {
+        public static Matrix4x4 Position (float x, float y, float z) {
+            return Matrix4x4.CreateTranslation(new Vector3(x, y, z));
+        }
+    }
+
+    const float Deg2Rad = MathF.PI/180f;
+    extension(Matrix4x4) {
+        public static Matrix4x4 Rotation (float x, float y, float z) {
+            var q = Quaternion.CreateFromYawPitchRoll(y*Deg2Rad, x*Deg2Rad, z*Deg2Rad);
             return Matrix4x4.CreateFromQuaternion(q);
         }
     }
+    extension(Matrix4x4) {
+        public static Matrix4x4 Rotation (Vector3 euler) {
+            euler *= Deg2Rad;
+            var q = Quaternion.CreateFromYawPitchRoll(euler.Y, euler.X, euler.Z);
+            return Matrix4x4.CreateFromQuaternion(q);
+        }
+    }
+
+
 
     internal static float Clamp (float value, float min, float max) {
         if (value < min) return min;

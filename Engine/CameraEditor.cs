@@ -22,7 +22,7 @@ internal sealed class CameraEditor : Camera {
 
     /// Values
     private const float _cameraSpeed = 10f;
-    private const float _cameraSpeedShift = 20f;
+    private const float _cameraSpeedShift = 30f;
 
     private const float _focusGlideSpeed = 10f;
     private const float _clickDragThresholdPixels = 5f;

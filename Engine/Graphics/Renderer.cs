@@ -21,11 +21,15 @@ internal class Renderer {
 
         _cube = new Mesh(Cube.Generate());
         _sphere = new Mesh(Sphere.Generate());
-        _gizmoSphere = new Mesh(Sphere.Generate());
         _gizmoGrid = new WorldGrid((int)_cameraPlaneFar, 1f);
         _gizmoAxes = new WorldAxes(10f*_cameraPlaneFar);
         _gizmoAxesWidget = new WorldAxes(1f);
         _gizmoSun = new Mesh(Arrow.Generate(shaftLength: 1f, shaftRadius: 0.01f, headLength: 0.2f, headRadius: 0.1f));
+        _mesh_gizmoCube = new Mesh(WireGizmos.Cube(Vector3.Zero, Vector3.One));
+        _mesh_gizmoSphere = new Mesh(WireGizmos.Sphere(Vector3.Zero, 0.5f));
+        _mesh_gizmoCapsule = new Mesh(WireGizmos.Capsule(-0.5f*Vector3.UnitY, 0.5f*Vector3.UnitY, 0.5f));
+
+        _gizmoSphereOrbit = new Mesh(Sphere.Generate());
 
         _shaderLit = new Shader(Utils.LoadSrc("src/Shaders/Lit_Vertex.shader"), Utils.LoadSrc("src/Shaders/Lit_Fragment.shader"), "Lit");
         _shaderUnlit = new Shader(Utils.LoadSrc("src/Shaders/Unlit_Vertex.shader"), Utils.LoadSrc("src/Shaders/Unlit_Fragment.shader"), "Unlit");
@@ -54,12 +58,9 @@ internal class Renderer {
         _mat_Green = new Material { Color = new(0, 1, 0), };
         _mat_Blue = new Material { Color = new(0, 0, 1), };
 
-        _meshData_Torus = ObjLoader.Load("src/Models/Torus.obj");
-        _mesh_Torus = new Mesh(_meshData_Torus);
-        _meshData_Suzanne = ObjLoader.Load("src/Models/Suzanne.obj");
-        _mesh_Suzanne = new Mesh(_meshData_Suzanne);
-        _meshData_SuzanneHighRes = ObjLoader.Load("src/Models/SuzanneHighRes.obj");
-        _mesh_SuzanneHighRes = new Mesh(_meshData_SuzanneHighRes);
+        _mesh_Torus = new Mesh(ObjLoader.Load("src/Models/Torus.obj"));
+        _mesh_Suzanne = new Mesh(ObjLoader.Load("src/Models/Suzanne.obj"));
+        _mesh_SuzanneHighRes = new Mesh(ObjLoader.Load("src/Models/SuzanneHighRes.obj"));
 
         _textRenderer = new TextRenderer();
     }
@@ -97,18 +98,19 @@ internal class Renderer {
 
     private Mesh _cube = null!;
     private Mesh _sphere = null!;
-    private Mesh _gizmoSphere = null!;
+    private Mesh _gizmoSphereOrbit = null!;
     private WorldGrid _gizmoGrid = null!;
     private WorldAxes _gizmoAxes = null!;
     private WorldAxes _gizmoAxesWidget = null!;
     private Mesh _gizmoSun = null!;
 
     private Mesh _mesh_Torus = null!;
-    private MeshData _meshData_Torus = null!;
     private Mesh _mesh_Suzanne = null!;
-    private MeshData _meshData_Suzanne = null!;
     private Mesh _mesh_SuzanneHighRes = null!;
-    private MeshData _meshData_SuzanneHighRes = null!;
+
+    private Mesh _mesh_gizmoCube = null!; 
+    private Mesh _mesh_gizmoSphere = null!; 
+    private Mesh _mesh_gizmoCapsule = null!; 
 
     internal Vector3 sunLightDir = Vector3.Normalize(new Vector3(0.4f, -1f, -0.3f));
     internal Vector3 sunLightColor = new Vector3(1f, 1f, 1f);
@@ -251,48 +253,53 @@ internal class Renderer {
             }
         }
 
-        /// Sphere Reflection
+        /// Reflection
         SetSceneUniforms(_shaderLit);
-        mesh_m4x4 = Matrix4x4.CreateTranslation(new Vector3(-4f, 0f, 0f))*Matrix4x4.CreateScale(2f, 2f, 2f);
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shaderLit.SetMatrix4("uModel", mesh_uModel);
-        //_mat_Matt.Apply(_shader);
         _shaderLit.SetColor("uColor", Constants.white);
         _shaderLit.SetFloat("uRoughness", 0);
         _shaderLit.SetFloat("uMetallic", 1);
         _shaderLit.SetFloat("uAmbient", 0);
+        /// Reflection Sphere
+        mesh_m4x4 = Matrix4x4.Position(-4f, 0f, 0f)*Matrix4x4.CreateScale(2f, 2f, 2f);
+        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
+        _shaderLit.SetMatrix4("uModel", mesh_uModel);
         _sphere.Draw();
-
         /// Suzanne
-        SetSceneUniforms(_shaderLit);
-        mesh_m4x4 = Matrix4x4.CreateTranslation(new Vector3(0f, 0f, 0f))*Matrix4x4.Rotation(new Vector3(0, 2, 0));
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shaderLit.SetMatrix4("uModel", mesh_uModel);
-        //_mat_Matt.Apply(_shader);
-        _shaderLit.SetColor("uColor", Constants.white);
-        _shaderLit.SetFloat("uRoughness", 0);
-        _shaderLit.SetFloat("uMetallic", 1);
-        _shaderLit.SetFloat("uAmbient", 0);
-        _mesh_Suzanne.Draw();
-        /// SuzanneHightRes
-        SetSceneUniforms(_shaderLit);
-        mesh_m4x4 = Matrix4x4.Rotation(new Vector3(0, 180, 0))*Matrix4x4.CreateTranslation(new Vector3(4f, 0f, 0f));
+        mesh_m4x4 = Matrix4x4.Rotation(0, 180, 0)*Matrix4x4.Position(0, 0, 0);
         mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
         _shaderLit.SetMatrix4("uModel", mesh_uModel);
         _mesh_SuzanneHighRes.Draw();
-        /// Torus
-        SetSceneUniforms(_shaderLit);
-        mesh_m4x4 = Matrix4x4.CreateTranslation(new Vector3(8f, 0f, 0f));
+        /// SuzanneHightRes
+        mesh_m4x4 = Matrix4x4.Rotation(0, 180, 0)*Matrix4x4.Position(4, 0, 0);
         mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
         _shaderLit.SetMatrix4("uModel", mesh_uModel);
-        //_mat_Matt.Apply(_shader);
-        _shaderLit.SetColor("uColor", Constants.white);
-        _shaderLit.SetFloat("uRoughness", 0);
-        _shaderLit.SetFloat("uMetallic", 1);
-        _shaderLit.SetFloat("uAmbient", 0);
+        _mesh_Suzanne.Draw();
+        /// Torus
+        mesh_m4x4 = Matrix4x4.Position(8, 0, 0);
+        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
+        _shaderLit.SetMatrix4("uModel", mesh_uModel);
         _mesh_Torus.Draw();
 
-
+        /// Gizmos
+        GL.Disable(EnableCap.CullFace);
+        SetSceneUniforms(_shaderUnlit);
+        _shaderUnlit.SetColor("uColor", Constants.green);
+        _shaderUnlit.SetFloat("uAlpha", 0.5f);
+        /// Gizmos Cube
+        mesh_m4x4 = Matrix4x4.Position(0f, 0f, 4f);
+        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
+        _shaderUnlit.SetMatrix4("uModel", mesh_uModel);
+        _mesh_gizmoCube.Draw(PrimitiveType.Lines);
+        /// Gizmos Sphere
+        mesh_m4x4 = Matrix4x4.Position(2f, 0f, 4f);
+        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
+        _shaderUnlit.SetMatrix4("uModel", mesh_uModel);
+        _mesh_gizmoSphere.Draw(PrimitiveType.Lines);
+        /// Gizmos Capsule
+        mesh_m4x4 = Matrix4x4.Position(4f, 0f, 4f);
+        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
+        _shaderUnlit.SetMatrix4("uModel", mesh_uModel);
+        _mesh_gizmoCapsule.Draw(PrimitiveType.Lines);
     }
 
 
@@ -410,7 +417,7 @@ internal class Renderer {
         _shaderUnlit.SetMatrix4("uModel", Utils.MatrixToArray(gizmoSphereModel));
         _shaderUnlit.SetVector3("uColor", 0.5f, 0.5f, 0.5f);
         _shaderUnlit.SetFloat("uAlpha", 0.2f);
-        _gizmoSphere.Draw();
+        _gizmoSphereOrbit.Draw();
 
         GL.DepthMask(true);
     }
@@ -466,7 +473,7 @@ internal class Renderer {
     internal void OnClosing () {
         _cube.Dispose();
         _sphere.Dispose();
-        _gizmoSphere.Dispose();
+        _gizmoSphereOrbit.Dispose();
         _gizmoGrid.Dispose();
         _gizmoAxes.Dispose();
         _gizmoAxesWidget.Dispose();

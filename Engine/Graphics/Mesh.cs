@@ -77,10 +77,10 @@ public class Mesh : IDisposable {
         return result;
     }
 
-    public void Draw () {
+    public void Draw (PrimitiveType primitiveType = PrimitiveType.Triangles) {
         GL.BindVertexArray(_vao);
         unsafe {
-            GL.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, null);
+            GL.DrawElements(primitiveType, _indexCount, DrawElementsType.UnsignedInt, null);
         }
         GL.BindVertexArray(0);
     }

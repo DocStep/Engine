@@ -45,4 +45,5 @@ public class MeshData {
                 Vertices[i].Normal = Vector3.Normalize(n);
         }
     }
+
 }
