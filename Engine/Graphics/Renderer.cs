@@ -343,7 +343,7 @@ internal class Renderer {
         SetSceneUniforms(_shaderUnlit);
         //Matrix4X4<float> mesh_m4x4 = Matrix4X4.CreateTranslation(new Vector3D<float>(0f, 5f, 0f))
         //    *Matrix4X4.CreateRotationX(sunLightDir.X)*Matrix4X4.CreateRotationY(sunLightDir.Y)*Matrix4X4.CreateRotationZ(sunLightDir.Z);
-        Matrix4X4<float> mesh_m4x4 = Transform(new Vector3D<float>(-8f, 5f, 0f), sunLightDir);
+        Matrix4X4<float> mesh_m4x4 = Matrix4X4.Rotation(sunLightDir)*Matrix4X4.CreateTranslation(new Vector3D<float>(-8f, 5f, 0f));
 
         float[] mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
         _shaderUnlit.SetMatrix4("uModel", mesh_uModel);
@@ -353,25 +353,7 @@ internal class Renderer {
 
         GL.Enable(EnableCap.CullFace);
     }
-    public static Matrix4X4<float> Transform (Vector3D<float> position, Vector3D<float> sunLightDir) {
-        var target = Vector3D.Normalize(sunLightDir);
-        var from = Vector3D<float>.UnitY;
-
-        var dot = Vector3D.Dot(from, target);
-        Matrix4X4<float> rotation;
-
-        if (dot > 0.9999f) {
-            rotation = Matrix4X4<float>.Identity;
-        } else if (dot < -0.9999f) {
-            rotation = Matrix4X4.CreateRotationX(MathF.PI);
-        } else {
-            var axis = Vector3D.Normalize(Vector3D.Cross(from, target));
-            var angle = MathF.Acos(dot);
-            rotation = Matrix4X4.CreateFromAxisAngle(axis, angle);
-        }
-
-        return rotation*Matrix4X4.CreateTranslation(position);
-    }
+    
     private void DrawGizmoCameraOrbitCenter () {
         if (CameraEditor.Instance is null) return;
 

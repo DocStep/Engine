@@ -7,7 +7,29 @@ using Silk.NET.OpenGL;
 namespace Engine;
 
 
-internal class Utils {
+internal static class Utils {
+
+    extension(Matrix4X4) {
+        public static Matrix4X4<float> Rotation (Vector3D<float> sunLightDir) {
+            var target = Vector3D.Normalize(sunLightDir);
+            var from = Vector3D<float>.UnitY;
+
+            var dot = Vector3D.Dot(from, target);
+            Matrix4X4<float> rotation;
+
+            if (dot > 0.9999f) {
+                rotation = Matrix4X4<float>.Identity;
+            } else if (dot < -0.9999f) {
+                rotation = Matrix4X4.CreateRotationX(MathF.PI);
+            } else {
+                var axis = Vector3D.Normalize(Vector3D.Cross(from, target));
+                var angle = MathF.Acos(dot);
+                rotation = Matrix4X4.CreateFromAxisAngle(axis, angle);
+            }
+
+            return rotation;
+        }
+    }
 
     internal static float Clamp (float value, float min, float max) {
         if (value < min) return min;
