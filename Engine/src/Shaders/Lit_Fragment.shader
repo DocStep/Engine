@@ -2,7 +2,6 @@
 
 in vec3 vNormal;
 in vec3 vFragPos;
-out vec4 FragColor;
 
 uniform vec3 uColor;
 uniform float uRoughness;
@@ -15,9 +14,12 @@ uniform vec3 uViewPos;
 uniform vec3 uAmbientColor;
 uniform sampler2D uSkybox;
 uniform float uMaxReflectionLod;
-uniform float uExposure;
 
+const float uExposure = 1.0;
 const float PI = 3.14159265;
+
+out vec4 FragColor;
+
 
 float D_GGX (float NdH, float a2) {
     float d = NdH*NdH*(a2 - 1.0) + 1.0;

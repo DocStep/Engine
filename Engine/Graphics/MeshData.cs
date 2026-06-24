@@ -3,10 +3,6 @@
 namespace Engine.Graphics;
 
 
-/// Plain CPU-side mesh data. No GL handles here on purpose —
-/// procedural generators, the OBJ importer/exporter, and anything
-/// else that builds or transforms geometry should only ever touch this.
-/// Hand a finished MeshData to a Mesh when you actually need to draw it.
 public class MeshData {
     public Vertex[] Vertices;
     public uint[] Indices;

@@ -30,6 +30,12 @@ public class Engine : IDisposable {
         private set => Instance._deltaTime = value;
     }
 
+    private double _fixedDeltaTime;
+    public static double fixedDeltaTime {
+        get => Instance._fixedDeltaTime;
+        private set => Instance._fixedDeltaTime = value;
+    }
+
     /// Debug
     public EngineStates engineState = EngineStates.Loading;
     public bool debug = false;
@@ -37,6 +43,13 @@ public class Engine : IDisposable {
     
     public float deltaTimeCalculated;
 
+    private const double FixedTimestep = 1d/50d;
+    private double _time = 0d;
+    public static double time {
+        get => Instance._time;
+        private set => Instance._time = value;
+    }
+    private double _accumulator = 0d;
 
 
     public void Run () {
@@ -72,7 +85,7 @@ public class Engine : IDisposable {
 
         Window.Load += OnLoad;
         Window.Update += OnUpdate;
-        //Window.Closing += OnClosing;
+        Window.Closing += OnClosing;
 
         Window.Run();
     }
@@ -94,24 +107,31 @@ public class Engine : IDisposable {
 
     private void OnUpdate (double deltaTime) {
         _deltaTime = deltaTime;
+        _accumulator += deltaTime;
+
         Update();
+        while (FixedTimestep <= _accumulator) {
+            FixedUpdate();
+            _accumulator -= FixedTimestep;
+        }
 
         if (Inputs.Actions[Inputs.NavBack].pressed) Window.Close();
     }
 
-    void FixedUpdate () {
+    private void FixedUpdate () {
         DataEngine.global_audio_Mult = 1f;
-        //Debug.Log(de_FixedUpdate?.GetInvocationList().Length ?? 0);
+
+        //Log.log($"{_accumulator:F3}");
         de_FixedUpdate?.Invoke();
     }
-    void Update () {
+    private void Update () {
         InputState.Update();
         Inputs.Update();
 
         de_Update?.Invoke();
 
         /// Counters
-        sessionTime += _deltaTime;
+        time += deltaTime;
         //deltaTimeCalculated += (Time.unscaledDeltaTime - deltaTimeCalculated)*0.1f;
     }
 

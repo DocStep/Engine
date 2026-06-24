@@ -19,15 +19,19 @@ internal class Renderer {
         GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
         GL.Enable(EnableCap.DepthTest);
 
+        _mesh_GizmoCube = new Mesh(WireGizmos.Cube(Vector3.Zero, Vector3.One));
+        _mesh_GizmoSphere = new Mesh(WireGizmos.Sphere(Vector3.Zero, 0.5f));
+        _mesh_GizmoCapsule = new Mesh(WireGizmos.Capsule(-0.5f*Vector3.UnitY, 0.5f*Vector3.UnitY, 0.5f));
+        _mesh_GizmoPlane = new Mesh(Plane.GenerateWireframe());
+        _mesh_GizmoSun = new Mesh(Arrow.Generate(shaftLength: 1f, shaftRadius: 0.01f, headLength: 0.2f, headRadius: 0.1f));
+
         _mesh_Cube = new Mesh(Cube.Generate());
         _mesh_Sphere = new Mesh(Sphere.Generate());
+        //_mesh_Capsule = new Mesh(Capsule.Generate());
+        _mesh_Plane = new Mesh(Plane.Generate());
         _GizmoGrid = new WorldGrid((int)_cameraPlaneFar, 1f);
         _GizmoAxes = new WorldAxes(10f*_cameraPlaneFar);
         _GizmoAxesWidget = new WorldAxes(1f);
-        _mesh_GizmoSun = new Mesh(Arrow.Generate(shaftLength: 1f, shaftRadius: 0.01f, headLength: 0.2f, headRadius: 0.1f));
-        _mesh_gizmoCube = new Mesh(WireGizmos.Cube(Vector3.Zero, Vector3.One));
-        _mesh_gizmoSphere = new Mesh(WireGizmos.Sphere(Vector3.Zero, 0.5f));
-        _mesh_gizmoCapsule = new Mesh(WireGizmos.Capsule(-0.5f*Vector3.UnitY, 0.5f*Vector3.UnitY, 0.5f));
 
         _sh_Lit = new Shader(Utils.LoadSrc("src/Shaders/Lit_Vertex.shader"), Utils.LoadSrc("src/Shaders/Lit_Fragment.shader"), "Lit");
         _sh_Unlit = new Shader(Utils.LoadSrc("src/Shaders/Unlit_Vertex.shader"), Utils.LoadSrc("src/Shaders/Unlit_Fragment.shader"), "Unlit");
@@ -102,12 +106,15 @@ internal class Renderer {
     public readonly WorldAxes _GizmoAxesWidget = null!;
     public readonly Mesh _mesh_GizmoSun = null!;
 
-    public readonly Mesh _mesh_gizmoCube = null!; 
-    public readonly Mesh _mesh_gizmoSphere = null!;
-    public readonly Mesh _mesh_gizmoCapsule = null!;
+    public readonly Mesh _mesh_GizmoCube = null!; 
+    public readonly Mesh _mesh_GizmoSphere = null!;
+    public readonly Mesh _mesh_GizmoCapsule = null!;
+    public readonly Mesh _mesh_GizmoPlane = null!;
 
     public readonly Mesh _mesh_Cube = null!;
     public readonly Mesh _mesh_Sphere = null!;
+    public readonly Mesh _mesh_Capsule = null!;
+    public readonly Mesh _mesh_Plane = null!;
     public readonly Mesh _mesh_Torus = null!;
     public readonly Mesh _mesh_Suzanne = null!;
     public readonly Mesh _mesh_SuzanneHighRes = null!;
@@ -179,7 +186,7 @@ internal class Renderer {
 
     internal readonly List<RenderInfo> RenderList = new List<RenderInfo>();
     private void Draw () {
-        sunLightIntensity = 10f;
+        sunLightIntensity = 5f;
         Matrix4x4 mesh_m4x4;
         float[] mesh_uModel;
 
@@ -188,7 +195,7 @@ internal class Renderer {
         mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
         SetSceneUniforms(_sh_Lit);
         _sh_Lit.SetMatrix4("uModel", mesh_uModel);
-        //_m_MaterialPreview.Apply(_sh_Lit);
+        //_m_MaterialPreview.Apply(_sh_Lit);w
         _mesh_Sphere.Draw();*/
 
         /// Spheres Grid
@@ -201,7 +208,6 @@ internal class Renderer {
         for (int x = 0; x < gridCount*gridScale; x++) {
             for (int z = 0; z < gridCount*gridScale; z++) {
                 RenderList.Add(new() {
-                    name = "SphereSmooth",
                     pos = new Vector3(2f*x/gridScale + offsetX, 0f, -2f*z/gridScale + offsetZ),
                     mesh = _mesh_Sphere,
                     shader = _sh_Lit,

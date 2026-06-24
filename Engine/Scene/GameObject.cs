@@ -19,7 +19,15 @@ public class GameObject {
 
     public string Name = GameObject.GameObjectName;
     public readonly Transform Transform = new Transform();
-    public readonly List<Component> Components = new List<Component>();
+    private readonly List<Component> Components = new List<Component>();
+    public void AddComponent (Component component) {
+        component.owner = Transform;
+        Components.Add(component);
+    }
+    public void RemoveComponent (Component component) {
+        component.owner = null!;
+        Components.Remove(component);
+    }
 
     public const string GameObjectName = "GameObject";
 
@@ -29,22 +37,7 @@ public class GameObject {
     public void Update () {
         int count = Components.Count;
         for (int i = 0; i < count; i++) {
-            //Components[i].Update();
-
-            if (Components[i] is Graphics.MeshComponent meshComponent) {
-                Graphics.RenderInfo renderInfo = new Graphics.RenderInfo() {
-                    name = Name,
-                    pos = Transform.position,
-                    rot = Transform.rotation,
-                    scale = Transform.scale,
-
-                    mesh = meshComponent.mesh,
-                    shader = meshComponent.shader,
-                    material = meshComponent.material,
-                    primitiveType = meshComponent.primitiveType,
-                };
-                Graphics.Renderer.Instance.RenderList.Add(renderInfo);
-            }
+            Components[i].Update();
         }
     }
 

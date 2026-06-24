@@ -11,5 +11,20 @@ public class MeshComponent : Component {
     public Material? material = Renderer.Instance._m_Lit;
     public Silk.NET.OpenGL.PrimitiveType primitiveType = Silk.NET.OpenGL.PrimitiveType.Triangles;
 
+    public override void Update () {
+        if (mesh is null || shader is null || material is null) return;
+
+        RenderInfo renderInfo = new RenderInfo() {
+            pos = owner.position,
+            rot = owner.rotation,
+            scale = owner.scale,
+
+            mesh = mesh,
+            shader = shader,
+            material = material,
+            primitiveType = primitiveType,
+        };
+        Renderer.Instance.RenderList.Add(renderInfo);
+    }
 
 }

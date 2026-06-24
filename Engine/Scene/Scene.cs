@@ -15,65 +15,66 @@ public class Scene {
     public void Load () {
         GameObject cube = new GameObject() { Name = "Cube", };
         cube.Transform.position = new Vector3(0, 0, -4);
-        cube.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Cube, });
+        cube.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_Cube, });
 
         GameObject sphere = new GameObject() { Name = "Sphere", };
         sphere.Transform.position = new Vector3(2, 0, -4);
-        sphere.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, });
+        sphere.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, });
+        sphere.AddComponent(new BoxColliderComponent());
 
         GameObject sphereR = new GameObject() { Name = "Sphere R", };
         sphereR.Transform.position = new Vector3(0, 0, -6);
-        sphereR.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_LitRed, });
+        sphereR.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_LitRed, });
 
         GameObject sphereG = new GameObject() { Name = "Sphere G", };
         sphereG.Transform.position = new Vector3(2, 0, -6);
-        sphereG.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_LitGreen, });
+        sphereG.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_LitGreen, });
 
         GameObject sphereB = new GameObject() { Name = "Sphere B", };
         sphereB.Transform.position = new Vector3(4, 0, -6);
-        sphereB.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_LitBlue, });
+        sphereB.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_LitBlue, });
 
         GameObject sphereMatt = new GameObject() { Name = "Sphere Matt", };
         sphereMatt.Transform.position = new Vector3(4, 0, -6);
-        sphereMatt.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_Matt, });
+        sphereMatt.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_Matt, });
 
         GameObject sphereSmooth = new GameObject() { Name = "Sphere Smooth", };
         sphereSmooth.Transform.position = new Vector3(4, 0, -6);
-        sphereSmooth.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_Smooth, });
+        sphereSmooth.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_Smooth, });
 
         GameObject reflectionSphere = new GameObject() { Name = "Reflection Sphere", };
         reflectionSphere.Transform.position = new Vector3(-8, 0, 0);
         reflectionSphere.Transform.scale = 2*Vector3.One;
-        reflectionSphere.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_MaterialPreview, });
+        reflectionSphere.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_MaterialPreview, });
 
         GameObject reflectionSuzanneHightRes = new GameObject() { Name = "Reflection SuzanneHightRes", };
         reflectionSuzanneHightRes.Transform.position = new Vector3(0, 0, 0);
         reflectionSuzanneHightRes.Transform.rotation = new Vector3(0, 180, 0);
-        reflectionSuzanneHightRes.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_SuzanneHighRes, material = Renderer.Instance._m_MaterialPreview, });
+        reflectionSuzanneHightRes.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_SuzanneHighRes, material = Renderer.Instance._m_MaterialPreview, });
 
         GameObject reflectionSuzanne = new GameObject() { Name = "Reflection Suzanne", };
         reflectionSuzanne.Transform.position = new Vector3(4, 0, 0);
         reflectionSuzanne.Transform.rotation = new Vector3(0, 180, 0);
-        reflectionSuzanne.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Suzanne, material = Renderer.Instance._m_MaterialPreview, });
+        reflectionSuzanne.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_Suzanne, material = Renderer.Instance._m_MaterialPreview, });
 
         GameObject reflectionTorus = new GameObject() { Name = "Reflection Torus", };
         reflectionTorus.Transform.position = new Vector3(8, 0, 0);
-        reflectionTorus.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Torus, material = Renderer.Instance._m_MaterialPreview, });
+        reflectionTorus.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_Torus, material = Renderer.Instance._m_MaterialPreview, });
 
         /// Gizmos
         GameObject gizmosCube = new GameObject() { Name = "Gizmos Cube", };
         gizmosCube.Transform.position = new Vector3(0, 0, 4);
-        gizmosCube.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_gizmoCube, material = Renderer.Instance._mat_GizmosG,
+        gizmosCube.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_GizmoCube, material = Renderer.Instance._mat_GizmosG,
             shader = Renderer.Instance._sh_Unlit, primitiveType = PrimitiveType.Lines, });
 
         GameObject gizmosSphere = new GameObject() { Name = "Gizmos Sphere", };
         gizmosSphere.Transform.position = new Vector3(2, 0, 4);
-        gizmosSphere.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_gizmoSphere, material = Renderer.Instance._mat_GizmosG,
+        gizmosSphere.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_GizmoSphere, material = Renderer.Instance._mat_GizmosG,
             shader = Renderer.Instance._sh_Unlit, primitiveType = PrimitiveType.Lines, });
 
         GameObject gizmosCapsule = new GameObject() { Name = "Gizmos Capsule", };
         gizmosCapsule.Transform.position = new Vector3(4, 0, 4);
-        gizmosCapsule.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_gizmoCapsule, material = Renderer.Instance._mat_GizmosG, 
+        gizmosCapsule.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_GizmoCapsule, material = Renderer.Instance._mat_GizmosG, 
             shader = Renderer.Instance._sh_Unlit, primitiveType = PrimitiveType.Lines, });
 
     }
