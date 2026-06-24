@@ -256,14 +256,14 @@ internal sealed class CameraEditor : Camera {
             Renderer.Instance.View, Renderer.Instance.Projection);
 
         float? bestT = null;
-
+/*
         // Per-triangle raycast against all registered scene objects (BVH-accelerated)
         foreach (var obj in Scene.Objects) {
             float? t = obj.BVH.Intersect(rayOrigin, rayDirection, obj.Vertices, obj.Indices, obj.ModelMatrix);
             if (t.HasValue && (!bestT.HasValue || t.Value < bestT.Value))
                 bestT = t;
         }
-
+*/
         // Fallback: ground plane at Y = 0
         if (!bestT.HasValue) {
             float? planeT = Raycaster.IntersectPlane(

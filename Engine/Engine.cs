@@ -87,6 +87,8 @@ public class Engine : IDisposable {
 
         Renderer = new Renderer();
 
+        SceneManager.Init();
+
         Camera = new CameraEditor();
     }
 

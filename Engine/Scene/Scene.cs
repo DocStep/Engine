@@ -7,24 +7,97 @@ using Engine.Graphics;
 namespace Engine;
 
 
-internal static class Scene {
-    internal record SceneObject (
-        Vector3[] Vertices,
-        uint[] Indices,
-        Matrix4x4 ModelMatrix,
-        BVHNode BVH
-    );
+public class Scene {
+    public Scene () {
 
-    internal static readonly List<SceneObject> Objects = new List<SceneObject>();
-
-    internal static void Register (Vector3[] vertices, uint[] indices, Matrix4x4 modelMatrix) {
-        var bvh = BVHNode.Build(vertices, indices);
-        Objects.Add(new SceneObject(vertices, indices, modelMatrix, bvh));
     }
 
-    internal static void Unregister (Vector3[] vertices) {
-        Objects.RemoveAll(o => o.Vertices == vertices);
+    public void Load () {
+        GameObject cube = new GameObject() { Name = "Cube", };
+        cube.Transform.position = new Vector3(0, 0, -4);
+        cube.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Cube, });
+
+        GameObject sphere = new GameObject() { Name = "Sphere", };
+        sphere.Transform.position = new Vector3(2, 0, -4);
+        sphere.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, });
+
+        GameObject sphereR = new GameObject() { Name = "Sphere R", };
+        sphereR.Transform.position = new Vector3(0, 0, -6);
+        sphereR.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_LitRed, });
+
+        GameObject sphereG = new GameObject() { Name = "Sphere G", };
+        sphereG.Transform.position = new Vector3(2, 0, -6);
+        sphereG.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_LitGreen, });
+
+        GameObject sphereB = new GameObject() { Name = "Sphere B", };
+        sphereB.Transform.position = new Vector3(4, 0, -6);
+        sphereB.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_LitBlue, });
+
+        GameObject sphereMatt = new GameObject() { Name = "Sphere Matt", };
+        sphereMatt.Transform.position = new Vector3(4, 0, -6);
+        sphereMatt.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_Matt, });
+
+        GameObject sphereSmooth = new GameObject() { Name = "Sphere Smooth", };
+        sphereSmooth.Transform.position = new Vector3(4, 0, -6);
+        sphereSmooth.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_Smooth, });
+
+        GameObject reflectionSphere = new GameObject() { Name = "Reflection Sphere", };
+        reflectionSphere.Transform.position = new Vector3(-8, 0, 0);
+        reflectionSphere.Transform.scale = 2*Vector3.One;
+        reflectionSphere.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Sphere, material = Renderer.Instance._m_MaterialPreview, });
+
+        GameObject reflectionSuzanneHightRes = new GameObject() { Name = "Reflection SuzanneHightRes", };
+        reflectionSuzanneHightRes.Transform.position = new Vector3(0, 0, 0);
+        reflectionSuzanneHightRes.Transform.rotation = new Vector3(0, 180, 0);
+        reflectionSuzanneHightRes.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_SuzanneHighRes, material = Renderer.Instance._m_MaterialPreview, });
+
+        GameObject reflectionSuzanne = new GameObject() { Name = "Reflection Suzanne", };
+        reflectionSuzanne.Transform.position = new Vector3(4, 0, 0);
+        reflectionSuzanne.Transform.rotation = new Vector3(0, 180, 0);
+        reflectionSuzanne.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Suzanne, material = Renderer.Instance._m_MaterialPreview, });
+
+        GameObject reflectionTorus = new GameObject() { Name = "Reflection Torus", };
+        reflectionTorus.Transform.position = new Vector3(8, 0, 0);
+        reflectionTorus.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_Torus, material = Renderer.Instance._m_MaterialPreview, });
+
+        /// Gizmos
+        GameObject gizmosCube = new GameObject() { Name = "Gizmos Cube", };
+        gizmosCube.Transform.position = new Vector3(0, 0, 4);
+        gizmosCube.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_gizmoCube, material = Renderer.Instance._mat_GizmosG,
+            shader = Renderer.Instance._sh_Unlit, primitiveType = PrimitiveType.Lines, });
+
+        GameObject gizmosSphere = new GameObject() { Name = "Gizmos Sphere", };
+        gizmosSphere.Transform.position = new Vector3(2, 0, 4);
+        gizmosSphere.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_gizmoSphere, material = Renderer.Instance._mat_GizmosG,
+            shader = Renderer.Instance._sh_Unlit, primitiveType = PrimitiveType.Lines, });
+
+        GameObject gizmosCapsule = new GameObject() { Name = "Gizmos Capsule", };
+        gizmosCapsule.Transform.position = new Vector3(4, 0, 4);
+        gizmosCapsule.Components.Add(new MeshComponent() { mesh = Renderer.Instance._mesh_gizmoCapsule, material = Renderer.Instance._mat_GizmosG, 
+            shader = Renderer.Instance._sh_Unlit, primitiveType = PrimitiveType.Lines, });
+
     }
 
-    internal static void Clear () => Objects.Clear();
+    private readonly List<GameObject> objects = new();
+    public void ObjectAdd (GameObject gameObject) {
+        objects.Add(gameObject);
+    }
+    public void ObjectRemove (GameObject gameObject) {
+        objects.Remove(gameObject);
+    }
+
+    public void Update () {
+        Renderer.Instance.RenderList.Clear();
+
+        int count = objects.Count;
+        for (int i = 0; i < count; i++) {
+            objects[i].Update();
+        }
+    }
+
+
+    public void Destroy (GameObject go) {
+        objects.Remove(go);
+    }
+
 }
