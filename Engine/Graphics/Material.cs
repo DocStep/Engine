@@ -13,6 +13,7 @@ public class Material {
     public float Roughness = 0.5f;
     public float Metallic = 0f;
     public float Ambient = 0.08f;
+    public float Alpha = 1f;
 
 
     public void Apply (Shader shader) {
@@ -20,6 +21,7 @@ public class Material {
         shader.SetFloat("uRoughness", Roughness);
         shader.SetFloat("uMetallic", Metallic);
         shader.SetFloat("uAmbient", Ambient);
+        shader.SetFloat("uAlpha", Alpha);
 
         /// Bind texture if present
     }

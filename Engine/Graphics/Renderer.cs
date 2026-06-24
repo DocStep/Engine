@@ -45,18 +45,20 @@ internal class Renderer {
         _skybox = new Skybox(_shaderSkybox, _hdrTexture);
         _skybox.BlurScale = 3f;
 
-        _mat_Default = new Material { Color = Constants.lightGray, };
+        _mat_Lit = new Material { Color = Constants.lightGray, };
         _mat_Smooth = new Material { Color = Constants.lightGray, Roughness = 0f, };
         _mat_Matt = new Material { Color = Constants.lightGray, Roughness = 1f, };
         _mat_Metallic = new Material { Color = Constants.gray, Roughness = 0.05f, Metallic = 1, };
+        _mat_MaterialPreview = new Material { Color = Constants.white, Roughness = 0, Metallic = 1, Ambient = 0 };
 
-        _mat_DefaultUnlit = new Material { Color = Constants.gray, Roughness = 1f, };
+        _mat_Unlit = new Material { Color = Constants.gray, Roughness = 1f, };
 
-        _mat_DefaultAxes = new Material { Color = Constants.gray, };
+        _mat_Axes = new Material { Color = Constants.gray, };
+        _mat_GizmosG = new Material { Color = Constants.green, Alpha = 0.5f, };
 
-        _mat_Red = new Material { Color = new(1, 0, 0), };
-        _mat_Green = new Material { Color = new(0, 1, 0), };
-        _mat_Blue = new Material { Color = new(0, 0, 1), };
+        _mat_LitRed = new Material { Color = new(1, 0, 0), };
+        _mat_LitGreen = new Material { Color = new(0, 1, 0), };
+        _mat_LitBlue = new Material { Color = new(0, 0, 1), };
 
         _mesh_Torus = new Mesh(ObjLoader.Load("src/Models/Torus.obj"));
         _mesh_Suzanne = new Mesh(ObjLoader.Load("src/Models/Suzanne.obj"));
@@ -74,27 +76,28 @@ internal class Renderer {
 
     internal readonly GL GL = null!;
 
-    internal Shader _shaderLit = null!;
-    internal Shader _shaderUnlit = null!;
-    internal Shader _shaderGrid = null!;
-    internal Shader _shaderAxes = null!;
+    internal readonly Shader _shaderLit = null!;
+    internal readonly Shader _shaderUnlit = null!;
+    internal readonly Shader _shaderGrid = null!;
+    internal readonly Shader _shaderAxes = null!;
 
     internal Shader _shaderSkybox = null!;
     private Skybox _skybox = null!;
     private HdrTexture? _hdrTexture = null;
 
-    internal Material _mat_Default = null!;
+    internal Material _mat_Lit = null!;
+    internal Material _mat_Unlit = null!;
     internal Material _mat_Smooth = null!;
     internal Material _mat_Matt = null!;
     internal Material _mat_Metallic = null!;
+    internal Material _mat_MaterialPreview = null!;
 
-    internal Material _mat_DefaultUnlit = null!;
+    internal Material _mat_Axes = null!;
+    internal Material _mat_GizmosG = null!;
 
-    internal Material _mat_DefaultAxes = null!;
-
-    internal Material _mat_Red = null!;
-    internal Material _mat_Green = null!;
-    internal Material _mat_Blue = null!;
+    internal Material _mat_LitRed = null!;
+    internal Material _mat_LitGreen = null!;
+    internal Material _mat_LitBlue = null!;
 
     private Mesh _cube = null!;
     private Mesh _sphere = null!;
@@ -174,64 +177,46 @@ internal class Renderer {
         }
     }
 
-
+    const string GameObjectName = "GameObject";
+    public struct RenderInfo () {
+        public string name = GameObjectName;
+        public Vector3 pos = default;
+        public Vector3 rot = default;
+        public Vector3 scale = default;
+        public Mesh mesh = default!;
+        public Shader shader = default!;
+        public Material? material = default;
+        public PrimitiveType primitiveType = PrimitiveType.Triangles;
+    }
     private void Draw () {
         sunLightIntensity = 10f;
-        Matrix4x4 mesh_m4x4;
-        float[] mesh_uModel;
+        List<RenderInfo> List = new List<RenderInfo>() {
+            new() { name = "Cube", pos = new Vector3(0, 0, -4), mesh = _cube, shader = _shaderLit, material = _mat_Lit, },
+            new() { name = "Sphere", pos = new Vector3(2, 0, -4), mesh = _sphere, shader = _shaderLit, material = _mat_Lit, },
 
-        /// Cube
-        SetSceneUniforms(_shaderLit);
-        mesh_m4x4 = Matrix4x4.CreateTranslation(new Vector3(0f, 0f, -4f));
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shaderLit.SetMatrix4("uModel", mesh_uModel);
-        _mat_Default.Apply(_shaderLit);
-        _cube.Draw();
-        /// Sphere
-        SetSceneUniforms(_shaderLit);
-        mesh_m4x4 = Matrix4x4.CreateTranslation(new Vector3(2f, 0f, -4f));
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shaderLit.SetMatrix4("uModel", mesh_uModel);
-        _mat_Default.Apply(_shaderLit);
-        _sphere.Draw();
+            new() { name = "Sphere R", pos = new Vector3(0, 0, -6), mesh = _sphere, shader = _shaderLit, material = _mat_LitRed, },
+            new() { name = "Sphere G", pos = new Vector3(2, 0, -6), mesh = _sphere, shader = _shaderLit, material = _mat_LitGreen, },
+            new() { name = "Sphere B", pos = new Vector3(4, 0, -6), mesh = _sphere, shader = _shaderLit, material = _mat_LitBlue, },
 
-        /// Sphere R
-        SetSceneUniforms(_shaderLit);
-        mesh_m4x4 = Matrix4x4.CreateTranslation(new Vector3(0f, 0f, -6f));
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shaderLit.SetMatrix4("uModel", mesh_uModel);
-        _mat_Red.Apply(_shaderLit);
-        _sphere.Draw();
-        /// Sphere G
-        SetSceneUniforms(_shaderLit);
-        mesh_m4x4 = Matrix4x4.CreateTranslation(new Vector3(2f, 0f, -6f));
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shaderLit.SetMatrix4("uModel", mesh_uModel);
-        _mat_Green.Apply(_shaderLit);
-        _sphere.Draw();
-        /// Sphere B
-        SetSceneUniforms(_shaderLit);
-        mesh_m4x4 = Matrix4x4.CreateTranslation(new Vector3(4f, 0f, -6f));
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shaderLit.SetMatrix4("uModel", mesh_uModel);
-        _mat_Blue.Apply(_shaderLit);
-        _sphere.Draw();
+            new() { name = "Sphere Matt", pos = new Vector3(0, 0, -8), mesh = _sphere, shader = _shaderLit, material = _mat_Smooth, },
+            new() { name = "Sphere Smooth", pos = new Vector3(2, 0, -8), mesh = _sphere, shader = _shaderLit, material = _mat_Smooth, },
 
-        /// Sphere Smooth
-        SetSceneUniforms(_shaderLit);
-        mesh_m4x4 = Matrix4x4.CreateTranslation(new Vector3(2f, 0f, -8f));
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shaderLit.SetMatrix4("uModel", mesh_uModel);
-        _mat_Smooth.Apply(_shaderLit);
-        _sphere.Draw();
-        /// Sphere Matt
-        SetSceneUniforms(_shaderLit);
-        mesh_m4x4 = Matrix4x4.CreateTranslation(new Vector3(0f, 0f, -8f));
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shaderLit.SetMatrix4("uModel", mesh_uModel);
-        _mat_Matt.Apply(_shaderLit);
-        _sphere.Draw();
+            new() { name = "Reflection Sphere", pos = new Vector3(-4, 0, 0), scale = 2*Vector3.One, 
+                mesh = _sphere, shader = _shaderLit, material = _mat_MaterialPreview, },
+            new() { name = "Reflection SuzanneHightRes", pos = new Vector3(0, 0, 0), rot = new(0, 180, 0),
+                mesh = _mesh_SuzanneHighRes, shader = _shaderLit, material = _mat_MaterialPreview, },
+            new() { name = "Reflection Suzanne", pos = new Vector3(4, 0, 0), rot = new(0, 180, 0),
+                mesh = _mesh_Suzanne, shader = _shaderLit, material = _mat_MaterialPreview, },
+            new() { name = "Reflection Torus", pos = new Vector3(8, 0, 0),
+                mesh = _mesh_Torus, shader = _shaderLit, material = _mat_MaterialPreview, },
 
+            new() { name = "Gizmos Cube", pos = new Vector3(0, 0, 4),
+                mesh = _mesh_gizmoCube, shader = _shaderUnlit, material = _mat_GizmosG, primitiveType = PrimitiveType.Lines, },
+            new() { name = "Gizmos Sphere", pos = new Vector3(2, 0, 4),
+                mesh = _mesh_gizmoSphere, shader = _shaderUnlit, material = _mat_GizmosG, primitiveType = PrimitiveType.Lines, },
+            new() { name = "Gizmos Capsule", pos = new Vector3(4, 0, 4),
+                mesh = _mesh_gizmoCapsule, shader = _shaderUnlit, material = _mat_GizmosG, primitiveType = PrimitiveType.Lines, },
+        };
 
         /// Spheres Grid
         float offsetX = 0f;
@@ -243,9 +228,17 @@ internal class Renderer {
         _shaderLit.SetFloat("uExposure", 1f);
         for (int x = 0; x < gridCount*gridScale; x++) {
             for (int z = 0; z < gridCount*gridScale; z++) {
-                mesh_m4x4 = Matrix4x4.CreateTranslation(
+                List.Add(new() {
+                    name = "SphereSmooth",
+                    pos = new Vector3(2f*x/gridScale + offsetX, 0f, -2f*z/gridScale + offsetZ),
+                    mesh = _sphere,
+                    shader = _shaderLit,
+                    material = _mat_Smooth,
+                });
+
+                Matrix4x4 mesh_m4x4 = Matrix4x4.CreateTranslation(
                     new Vector3(2f*x/gridScale + offsetX, 0f, -2f*z/gridScale + offsetZ));
-                mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
+                float[]  mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
                 _shaderLit.SetMatrix4("uModel", mesh_uModel);
                 _shaderLit.SetFloat("uRoughness", 1f - x/gridCount/gridScale);
                 _shaderLit.SetFloat("uMetallic", z/gridCount/gridScale);
@@ -253,53 +246,15 @@ internal class Renderer {
             }
         }
 
-        /// Reflection
-        SetSceneUniforms(_shaderLit);
-        _shaderLit.SetColor("uColor", Constants.white);
-        _shaderLit.SetFloat("uRoughness", 0);
-        _shaderLit.SetFloat("uMetallic", 1);
-        _shaderLit.SetFloat("uAmbient", 0);
-        /// Reflection Sphere
-        mesh_m4x4 = Matrix4x4.Position(-4f, 0f, 0f)*Matrix4x4.CreateScale(2f, 2f, 2f);
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shaderLit.SetMatrix4("uModel", mesh_uModel);
-        _sphere.Draw();
-        /// Suzanne
-        mesh_m4x4 = Matrix4x4.Rotation(0, 180, 0)*Matrix4x4.Position(0, 0, 0);
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shaderLit.SetMatrix4("uModel", mesh_uModel);
-        _mesh_SuzanneHighRes.Draw();
-        /// SuzanneHightRes
-        mesh_m4x4 = Matrix4x4.Rotation(0, 180, 0)*Matrix4x4.Position(4, 0, 0);
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shaderLit.SetMatrix4("uModel", mesh_uModel);
-        _mesh_Suzanne.Draw();
-        /// Torus
-        mesh_m4x4 = Matrix4x4.Position(8, 0, 0);
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shaderLit.SetMatrix4("uModel", mesh_uModel);
-        _mesh_Torus.Draw();
-
-        /// Gizmos
-        GL.Disable(EnableCap.CullFace);
-        SetSceneUniforms(_shaderUnlit);
-        _shaderUnlit.SetColor("uColor", Constants.green);
-        _shaderUnlit.SetFloat("uAlpha", 0.5f);
-        /// Gizmos Cube
-        mesh_m4x4 = Matrix4x4.Position(0f, 0f, 4f);
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shaderUnlit.SetMatrix4("uModel", mesh_uModel);
-        _mesh_gizmoCube.Draw(PrimitiveType.Lines);
-        /// Gizmos Sphere
-        mesh_m4x4 = Matrix4x4.Position(2f, 0f, 4f);
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shaderUnlit.SetMatrix4("uModel", mesh_uModel);
-        _mesh_gizmoSphere.Draw(PrimitiveType.Lines);
-        /// Gizmos Capsule
-        mesh_m4x4 = Matrix4x4.Position(4f, 0f, 4f);
-        mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-        _shaderUnlit.SetMatrix4("uModel", mesh_uModel);
-        _mesh_gizmoCapsule.Draw(PrimitiveType.Lines);
+        int count = List.Count;
+        for (int i = 0; i < List.Count; i++) {
+            Matrix4x4 mesh_m4x4 = Matrix4x4.Rotation(List[i].rot)*Matrix4x4.Position(List[i].pos);
+            float[] mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
+            SetSceneUniforms(List[i].shader);
+            List[i].shader.SetMatrix4("uModel", mesh_uModel);
+            List[i].material?.Apply(List[i].shader);
+            List[i].mesh.Draw(List[i].primitiveType);
+        }
     }
 
 
