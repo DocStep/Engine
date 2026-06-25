@@ -21,6 +21,7 @@ public static class SceneManager {
         scenes.Add(scene);
         scene.Load();
 
+
         Engine.Instance.de_Update += Update;
     }
 

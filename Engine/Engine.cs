@@ -98,11 +98,14 @@ public class Engine : IDisposable {
             keyboard.KeyDown += OnKeyDown;
         }*/
 
-        Renderer = new Renderer();
 
+        ComponentManager.Init();
+
+        Renderer = new Renderer();
         SceneManager.Init();
 
         Camera = new CameraEditor();
+
     }
 
     private void OnUpdate (double deltaTime) {
@@ -121,13 +124,14 @@ public class Engine : IDisposable {
     private void FixedUpdate () {
         DataEngine.global_audio_Mult = 1f;
 
-        //Log.log($"{_accumulator:F3}");
+        ComponentManager.FixedUpdate();
         de_FixedUpdate?.Invoke();
     }
     private void Update () {
         InputState.Update();
         Inputs.Update();
 
+        ComponentManager.Update();
         de_Update?.Invoke();
 
         /// Counters

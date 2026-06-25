@@ -88,12 +88,7 @@ public class Scene {
     }
 
     public void Update () {
-        Renderer.Instance.RenderList.Clear();
 
-        int count = objects.Count;
-        for (int i = 0; i < count; i++) {
-            objects[i].Update();
-        }
     }
 
 

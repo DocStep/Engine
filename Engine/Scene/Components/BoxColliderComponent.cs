@@ -10,9 +10,14 @@ public class BoxColliderComponent : ColliderComponent {
     public Vector3 rotation;
     public Vector3 scale;
 
+    private RenderInfo renderInfo;
 
+
+    public override void FixedUpdate () {
+
+    }
     public override void Update () {
-        RenderInfo renderInfo = new RenderInfo() {
+        renderInfo = new RenderInfo() {
             pos = owner.position,
             rot = owner.rotation,
             scale = owner.scale,
@@ -24,5 +29,7 @@ public class BoxColliderComponent : ColliderComponent {
         };
         Renderer.Instance.RenderList.Add(renderInfo);
     }
+
+
 
 }

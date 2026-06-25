@@ -68,8 +68,6 @@ public static class Plane {
                     Normal = Vector3.UnitY,
                     UV = new Vector2(u, v)
                 };
-
-                Console.WriteLine(vertices[i].Position);
             }
         }
 

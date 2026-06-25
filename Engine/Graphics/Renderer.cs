@@ -259,27 +259,14 @@ internal class Renderer {
         DrawGizmoAxesWidget();
 
         DrawUI();
+
+        DrawEnd();
     }
     private void UpdateProjection () {
         float aspect = Engine.Window.Size.X/(float)Engine.Window.Size.Y;
         Projection = Matrix4x4.CreatePerspectiveFieldOfView(_cameraFOV, aspect, _cameraPlaneClose, _cameraPlaneFar);
         uView = Utils.MatrixToArray(View);
         uProjection = Utils.MatrixToArray(Projection);
-    }
-    private void DrawUI () {
-        GL.Disable(EnableCap.CullFace);
-
-        if (Inputs.Actions[Inputs.F3].pressedDown) _renderFPS = !_renderFPS;
-        if (_renderFPS) {
-            int left = 10;
-            _textRenderer.DrawText($"FPS: {(int)(1/Engine.deltaTime)}", left, 20, Engine.Window.Size.X, Engine.Window.Size.Y);
-            _textRenderer.DrawText($"ms: {Engine.deltaTime*1000:F1}", left, 40, Engine.Window.Size.X, Engine.Window.Size.Y);
-            _textRenderer.DrawText($"Pos: {Camera.Instance.cameraPos:F2}", left, 60, Engine.Window.Size.X, Engine.Window.Size.Y);
-            _textRenderer.DrawText($"MousePos: {Camera.Instance.mousePos:F2}", left, 80, Engine.Window.Size.X, Engine.Window.Size.Y);
-            //_textRenderer.DrawText($"Wheel: {Inputs.Wheel:F2}", left, 100, Engine.Window.Size.X, Engine.Window.Size.Y);
-        }
-
-        GL.Enable(EnableCap.CullFace);
     }
 
     private void DrawGizmosBasic () {
@@ -397,7 +384,25 @@ internal class Renderer {
         GL.Viewport(Engine.Window.Size);
     }
 
+    private void DrawUI () {
+        GL.Disable(EnableCap.CullFace);
 
+        if (Inputs.Actions[Inputs.F3].pressedDown) _renderFPS = !_renderFPS;
+        if (_renderFPS) {
+            int left = 10;
+            _textRenderer.DrawText($"FPS: {(int)(1/Engine.deltaTime)}", left, 20, Engine.Window.Size.X, Engine.Window.Size.Y);
+            _textRenderer.DrawText($"ms: {Engine.deltaTime*1000:F1}", left, 40, Engine.Window.Size.X, Engine.Window.Size.Y);
+            _textRenderer.DrawText($"Pos: {Camera.Instance.cameraPos:F2}", left, 60, Engine.Window.Size.X, Engine.Window.Size.Y);
+            _textRenderer.DrawText($"MousePos: {Camera.Instance.mousePos:F2}", left, 80, Engine.Window.Size.X, Engine.Window.Size.Y);
+            //_textRenderer.DrawText($"Wheel: {Inputs.Wheel:F2}", left, 100, Engine.Window.Size.X, Engine.Window.Size.Y);
+        }
+
+        GL.Enable(EnableCap.CullFace);
+    }
+
+    private void DrawEnd () {
+        RenderList.Clear();
+    }
 
     internal void OnFrameBufferResize (Silk.NET.Maths.Vector2D<int> newSize) {
         GL.Viewport(newSize);
