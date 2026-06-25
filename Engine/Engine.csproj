@@ -28,7 +28,6 @@
 
 	<ItemGroup>
 	  <Folder Include="lib\Json\Converters\" />
-	  <Folder Include="Physics\" />
 	</ItemGroup>
 	
 </Project>

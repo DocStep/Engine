@@ -159,6 +159,12 @@ internal class Renderer {
     }
 
 
+    private readonly List<RenderInfo> RenderList = new List<RenderInfo>();
+    public void AddRenderInfo (RenderInfo renderInfo) {
+        RenderList.Add(renderInfo);
+    }
+
+
 
     private void SetSceneUniforms (Shader shader) {
         shader.Use();
@@ -181,12 +187,6 @@ internal class Renderer {
         }
     }
 
-    
-
-    private readonly List<RenderInfo> RenderList = new List<RenderInfo>();
-    public void AddRenderInfo (RenderInfo renderInfo) {
-        RenderList.Add(renderInfo);
-    }
 
     private void Draw () {
         if (Constants.drawTestGrid) 
@@ -383,6 +383,8 @@ internal class Renderer {
             _textRenderer.DrawText($"MousePos: {Camera.Instance.mousePos:F2}", left, 80, Engine.Window.Size.X, Engine.Window.Size.Y);
             _textRenderer.DrawText($"Components: {ComponentManager.componentsCount}", left, 100, Engine.Window.Size.X, Engine.Window.Size.Y);
             //_textRenderer.DrawText($"Wheel: {Inputs.Wheel:F2}", left, 100, Engine.Window.Size.X, Engine.Window.Size.Y);
+            
+            //Log.log(ComponentManager.NameAll);
         }
 
         GL.Enable(EnableCap.CullFace);

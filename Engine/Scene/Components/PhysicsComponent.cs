@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Numerics;
 
-namespace Engine.Graphics;
+namespace Engine;
 
 
-public class PhysicsComponent : Component, IComponentUpdate, IComponentFixedUpdate {
+public class PhysicsComponent : Component, IComponentFixedUpdate {
 
     public float mass = 1f;
     public Vector3 massCenter = Vector3.Zero;
@@ -22,8 +22,6 @@ public class PhysicsComponent : Component, IComponentUpdate, IComponentFixedUpda
     private Vector3 velocityAngular = Vector3.Zero;
     public Vector3 VelocityAngular => getVelocityAngular();
 
-    RenderInfo renderInfo;
-
 
     public void FixedUpdate () {
         if (isKinematic) return;
@@ -37,19 +35,6 @@ public class PhysicsComponent : Component, IComponentUpdate, IComponentFixedUpda
 
         owner.Transform.Position += (float)Engine.fixedDeltaTime*velocity;
         owner.Transform.Rotation += (float)Engine.fixedDeltaTime*velocityAngular;
-    }
-    public void Update () {
-        renderInfo = new RenderInfo() {
-            pos = owner.Transform.Position,
-            rot = owner.Transform.Rotation,
-            scale = 0.5f*owner.Transform.Scale,
-
-            mesh = Renderer.Instance._mesh_GizmoSphere,
-            shader = Renderer.Instance._sh_Unlit,
-            material = Renderer.Instance._mat_GizmosG,
-            primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
-        };
-        Renderer.Instance.AddRenderInfo(renderInfo);
     }
 
     public void AddForce (Vector3 force) {

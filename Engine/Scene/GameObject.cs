@@ -7,6 +7,7 @@ namespace Engine;
 
 public class GameObject {
     public GameObject() {
+        Id = GetHashCode();
         SceneManager.ActiveScene.ObjectAdd(this);
     }
     public GameObject (List<Component> Components) : base() {
@@ -18,8 +19,18 @@ public class GameObject {
     }
 
     public string Name = GameObject.GameObjectName;
+    public readonly int Id = 0;
     public readonly TransformComponent Transform = new TransformComponent();
     private readonly List<Component> Components = new List<Component>();
+
+
+    public T GetComponent<T> () where T : Component {
+        foreach (Component component in Components) {
+            if (component is T match) return match;
+        }
+        throw new Exception($"Component of type {typeof(T)} not found in GameObject {Name}");
+        //return null;
+    }
     public void AddComponent (Component component) {
         component.owner = this;
         Components.Add(component);
@@ -30,6 +41,8 @@ public class GameObject {
         Components.Remove(component);
         ComponentManager.ComponentUnregister(component);
     }
+
+
 
     public const string GameObjectName = "GameObject";
 

@@ -8,7 +8,16 @@ public static class ComponentManager {
     private readonly static Dictionary<Type, List<Component>> components =  new Dictionary<Type, List<Component>>();
     private readonly static List<IComponentUpdate> componentsUpdate = new List<IComponentUpdate>();
     private readonly static List<IComponentFixedUpdate> componentsFixedUpdate = new List<IComponentFixedUpdate>();
-    public static int componentsCount => componentsFixedUpdate.Count;
+    public static int componentsCount => components.Count;
+    /*public static string NameAll {
+        get {
+            string names = "All\n";
+            foreach (var component in components) {
+                names += " " + component.Key.Name;
+            }
+            return names;
+        }
+    }*/
 
     private readonly static List<IComponentUpdate> componentsRender = new List<IComponentUpdate>();
 
@@ -55,7 +64,7 @@ public static class ComponentManager {
             componentsFixedUpdate.Add(iComponentFixedUpdate);
         }
 
-        
+        component.OnAdd();
     }
     public static void ComponentUnregister (Component component) {
         Type type = component.GetType();
@@ -74,6 +83,8 @@ public static class ComponentManager {
         if (component is IComponentFixedUpdate iComponentFixedUpdate) {
             componentsFixedUpdate.Remove(iComponentFixedUpdate);
         }
+
+        component.OnDestroy();
     }
     public static void ComponentRegister (List<Component> components) {
         for (int c = 0; c < components.Count; c++) {

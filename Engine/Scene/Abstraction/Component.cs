@@ -6,5 +6,7 @@ public abstract class Component {
 
     public TransformComponent? parent = null;
 
+    public virtual void OnAdd () { }
+    public virtual void OnDestroy () { }
 
 }
