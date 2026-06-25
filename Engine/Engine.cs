@@ -24,26 +24,13 @@ public class Engine : IDisposable {
     //internal IInputContext Input = null!;
     private Camera Camera = null!;
 
-    private double _deltaTime;
-    public static double deltaTime {
-        get => Instance._deltaTime;
-        private set => Instance._deltaTime = value;
-    }
-
-    private double _fixedDeltaTime;
-    public static double fixedDeltaTime {
-        get => Instance._fixedDeltaTime;
-        private set => Instance._fixedDeltaTime = value;
-    }
-
     /// Debug
     public EngineStates engineState = EngineStates.Loading;
     public bool debug = false;
     public double sessionTime = 0f;
-    
+
     public float deltaTimeCalculated;
 
-    private const double FixedTimestep = 1d/50d;
     private double _time = 0d;
     public static double time {
         get => Instance._time;
@@ -51,6 +38,17 @@ public class Engine : IDisposable {
     }
     private double _accumulator = 0d;
 
+    private double _deltaTime;
+    public static double deltaTime {
+        get => Instance._deltaTime;
+        private set => Instance._deltaTime = value;
+    }
+
+    private double _fixedDeltaTime = 1d/50d;
+    public static double fixedDeltaTime {
+        get => Instance._fixedDeltaTime;
+        private set => Instance._fixedDeltaTime = value;
+    }
 
     public void Run () {
         ConsoleUtils.SetConsolePosition(10, 10);
@@ -106,16 +104,29 @@ public class Engine : IDisposable {
 
         Camera = new CameraEditor();
 
+        engineState = EngineStates.Ready;
     }
 
     private void OnUpdate (double deltaTime) {
-        _deltaTime = deltaTime;
-        _accumulator += deltaTime;
+        InputState.Update();
+        Inputs.Update();
 
-        Update();
-        while (FixedTimestep <= _accumulator) {
-            FixedUpdate();
-            _accumulator -= FixedTimestep;
+        if (Inputs.Actions[Inputs.EditorPause].pressedDown) {
+            Log.log(engineState);
+            if (engineState == EngineStates.Ready) engineState = EngineStates.Paused;
+            else if (engineState == EngineStates.Paused) engineState = EngineStates.Ready;
+        }
+        if (engineState == EngineStates.Ready) {
+            _deltaTime = deltaTime;
+            _accumulator += deltaTime;
+
+            Update();
+            while (fixedDeltaTime <= _accumulator) {
+                FixedUpdate();
+                _accumulator -= fixedDeltaTime;
+            }
+        } else {
+            ComponentManager.UpdateRender();
         }
 
         if (Inputs.Actions[Inputs.NavBack].pressed) Window.Close();
@@ -128,15 +139,20 @@ public class Engine : IDisposable {
         de_FixedUpdate?.Invoke();
     }
     private void Update () {
-        InputState.Update();
-        Inputs.Update();
-
         ComponentManager.Update();
         de_Update?.Invoke();
 
         /// Counters
         time += deltaTime;
-        //deltaTimeCalculated += (Time.unscaledDeltaTime - deltaTimeCalculated)*0.1f;
+    }
+
+
+    public static void SetFixedDeltaTime (double value) {
+        if (value <= 0d) {
+            Log.log("fixedDeltaTime must be > 0");
+            return;
+        }
+        fixedDeltaTime = value;
     }
 
 

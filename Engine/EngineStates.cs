@@ -5,4 +5,5 @@ public enum EngineStates : int {
     na,
     Ready,
     Loading,
+    Paused,
 }

@@ -18,18 +18,16 @@ public class BoxColliderComponent : ColliderComponent {
     }
     public override void Update () {
         renderInfo = new RenderInfo() {
-            pos = position + owner.position,
-            rot = rotation + owner.rotation,
-            scale = scale*owner.scale,
+            pos = position + owner.Transform.Position,
+            rot = rotation + owner.Transform.Rotation,
+            scale = scale*owner.Transform.Scale,
 
             mesh = Renderer.Instance._mesh_GizmoCube,
             shader = Renderer.Instance._sh_Unlit,
             material = Renderer.Instance._mat_GizmosG,
             primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
         };
-        Renderer.Instance.RenderList.Add(renderInfo);
+        Renderer.Instance.AddRenderInfo(renderInfo);
     }
-
-
 
 }

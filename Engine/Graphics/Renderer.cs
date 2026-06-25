@@ -183,7 +183,11 @@ internal class Renderer {
 
     
 
-    internal readonly List<RenderInfo> RenderList = new List<RenderInfo>();
+    private readonly List<RenderInfo> RenderList = new List<RenderInfo>();
+    public void AddRenderInfo (RenderInfo renderInfo) {
+        RenderList.Add(renderInfo);
+    }
+
     private void Draw () {
         if (Constants.drawTestGrid) 
             DrawSphereTest(0, -10, Constants.testGridCount, Constants.testGridDensity);
@@ -377,6 +381,7 @@ internal class Renderer {
             _textRenderer.DrawText($"ms: {Engine.deltaTime*1000:F1}", left, 40, Engine.Window.Size.X, Engine.Window.Size.Y);
             _textRenderer.DrawText($"Pos: {Camera.Instance.cameraPos:F2}", left, 60, Engine.Window.Size.X, Engine.Window.Size.Y);
             _textRenderer.DrawText($"MousePos: {Camera.Instance.mousePos:F2}", left, 80, Engine.Window.Size.X, Engine.Window.Size.Y);
+            _textRenderer.DrawText($"Components: {ComponentManager.componentsCount}", left, 100, Engine.Window.Size.X, Engine.Window.Size.Y);
             //_textRenderer.DrawText($"Wheel: {Inputs.Wheel:F2}", left, 100, Engine.Window.Size.X, Engine.Window.Size.Y);
         }
 

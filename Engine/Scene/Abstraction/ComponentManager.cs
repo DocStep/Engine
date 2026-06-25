@@ -3,11 +3,14 @@
 namespace Engine;
 
 
-internal static class ComponentManager {
+public static class ComponentManager {
 
     private readonly static Dictionary<Type, List<Component>> components =  new Dictionary<Type, List<Component>>();
     private readonly static List<IComponentUpdate> componentsUpdate = new List<IComponentUpdate>();
     private readonly static List<IComponentFixedUpdate> componentsFixedUpdate = new List<IComponentFixedUpdate>();
+    public static int componentsCount => componentsFixedUpdate.Count;
+
+    private readonly static List<IComponentUpdate> componentsRender = new List<IComponentUpdate>();
 
 
     public static void Init () {
@@ -17,14 +20,19 @@ internal static class ComponentManager {
         }
     }
 
+    internal static void FixedUpdate () {
+        for (int c = 0; c < componentsFixedUpdate.Count; c++) {
+            componentsFixedUpdate[c].FixedUpdate();
+        }
+    }
     internal static void Update () {
         for (int c = 0; c < componentsUpdate.Count; c++) {
             componentsUpdate[c].Update();
         }
     }
-    internal static void FixedUpdate () {
-        for (int c = 0; c < componentsFixedUpdate.Count; c++) {
-            componentsFixedUpdate[c].FixedUpdate();
+    internal static void UpdateRender () {
+        for (int c = 0; c < componentsRender.Count; c++) {
+            componentsRender[c].Update();
         }
     }
 
@@ -36,12 +44,18 @@ internal static class ComponentManager {
             list.Add(component);
         } else components.Add(type, new List<Component>());
 
-        if (component is IComponentUpdate icomponentUpdate) {
-            componentsUpdate.Add(icomponentUpdate);
+        if (component is IComponentUpdate iComponentUpdate) {
+            componentsUpdate.Add(iComponentUpdate);
+
+            if (component is IRenderComponent iRenderComponent) {
+                componentsRender.Add(iComponentUpdate);
+            }
         }
-        if (component is IComponentFixedUpdate icomponentFixedUpdate) {
-            componentsFixedUpdate.Add(icomponentFixedUpdate);
+        if (component is IComponentFixedUpdate iComponentFixedUpdate) {
+            componentsFixedUpdate.Add(iComponentFixedUpdate);
         }
+
+        
     }
     public static void ComponentUnregister (Component component) {
         Type type = component.GetType();
@@ -50,11 +64,15 @@ internal static class ComponentManager {
             list.Remove(component);
         }
 
-        if (component is IComponentUpdate icomponentUpdate) {
-            componentsUpdate.Remove(icomponentUpdate);
+        if (component is IComponentUpdate iComponentUpdate) {
+            componentsUpdate.Remove(iComponentUpdate);
+
+            if (component is IRenderComponent iRenderComponent) {
+                componentsRender.Remove(iComponentUpdate);
+            }
         }
-        if (component is IComponentFixedUpdate icomponentFixedUpdate) {
-            componentsFixedUpdate.Remove(icomponentFixedUpdate);
+        if (component is IComponentFixedUpdate iComponentFixedUpdate) {
+            componentsFixedUpdate.Remove(iComponentFixedUpdate);
         }
     }
     public static void ComponentRegister (List<Component> components) {

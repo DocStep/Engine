@@ -21,7 +21,7 @@ public class GameObject {
     public readonly TransformComponent Transform = new TransformComponent();
     private readonly List<Component> Components = new List<Component>();
     public void AddComponent (Component component) {
-        component.owner = Transform;
+        component.owner = this;
         Components.Add(component);
         ComponentManager.ComponentRegister(component);
     }

@@ -29,6 +29,15 @@ public class Scene {
     }
 
 
+    public GameObject? Find (string name) {
+        for (int i = 0; i < objects.Count; i++) {
+            if (objects[i].Name == name)
+                return objects[i];
+        }
+        return null;
+    }
+
+
     public void Destroy (GameObject go) {
         objects.Remove(go);
     }

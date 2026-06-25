@@ -4,7 +4,7 @@ using System.Numerics;
 namespace Engine.Graphics;
 
 
-public class MeshComponent : Component, IComponentUpdate {
+public class MeshComponent : Component, IRenderComponent, IComponentUpdate {
 
     public Mesh? mesh = null;
     public Shader? shader = Renderer.Instance._sh_Lit;
@@ -18,16 +18,16 @@ public class MeshComponent : Component, IComponentUpdate {
         if (mesh is null || shader is null || material is null) return;
 
         renderInfo = new RenderInfo() {
-            pos = owner.position,
-            rot = owner.rotation,
-            scale = owner.scale,
+            pos = owner.Transform.Position,
+            rot = owner.Transform.Rotation,
+            scale = owner.Transform.Scale,
 
             mesh = mesh,
             shader = shader,
             material = material,
             primitiveType = primitiveType,
         };
-        Renderer.Instance.RenderList.Add(renderInfo);
+        Renderer.Instance.AddRenderInfo(renderInfo);
     }
 
 }

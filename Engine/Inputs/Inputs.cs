@@ -132,6 +132,7 @@ public static class Inputs {
     public const string F3 = nameof(F3);
     public const string Debug = nameof(Debug);
     public const string Reset = nameof(Reset);
+    public const string EditorPause = nameof(EditorPause);
     public const string Temp = nameof(Temp);
 
 
@@ -180,6 +181,7 @@ public static class Inputs {
         [F3] = new InputsGroup(new List<Keys>() { Keys.F3 }, hidden: true),
         [Debug] = new InputsGroup(new List<Keys>() { Keys.L }, hidden: true),
         [Reset] = new InputsGroup(new List<Keys>() { Keys.R }, hidden: true),
+        [EditorPause] = new InputsGroup(new List<Keys>() { Keys.P }, hidden: true),
         [Temp] = new InputsGroup(new List<Keys>() { Keys.RightBracket }, hidden: true),
     };
 
