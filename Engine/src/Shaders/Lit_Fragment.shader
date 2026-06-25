@@ -14,9 +14,10 @@ uniform vec3 uViewPos;
 uniform vec3 uAmbientColor;
 uniform sampler2D uSkybox;
 uniform float uMaxReflectionLod;
+uniform float uReflectionIntensity;
 
-const float uExposure = 1.0;
 const float PI = 3.14159265;
+const float uExposure = 1.0;
 
 out vec4 FragColor;
 
@@ -38,9 +39,6 @@ vec3 F_SchlickRoughness (float cosTheta, vec3 F0, float roughness) {
     return F0 + (maxF0 - F0)*pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
-/// Unity's grazing-angle specular occlusion (UniversalFragmentPBR-style)
-/// Fades reflections out at glancing angles on convex surfaces, avoiding
-/// the "shiny rim glow" artifact pure Fresnel produces with no AO term
 float GetSpecularOcclusion (float NdV, float occlusion, float roughness) {
     return clamp(pow(NdV + occlusion, exp2(-16.0*roughness - 1.0)) - 1.0 + occlusion, 0.0, 1.0);
 }
@@ -64,11 +62,13 @@ void main () {
     float HdV = max(dot(H, V), 0.0);
 
     float rough = max(uRoughness, 0.04);
-    float a2 = rough*rough*rough*rough;
+    float a = rough*rough;
+
+    float a2 = max(a*a, 1e-3);
 
     vec3 F0 = mix(vec3(0.04), uColor, uMetallic);
 
-    /// --- Direct light ---
+    /// Direct light
     vec3 Fdirect = F_Schlick(HdV, F0);
     float D = D_GGX(NdH, a2);
     float G = G_Smith(NdV, NdL, rough);
@@ -81,18 +81,17 @@ void main () {
     vec3 kDambient = (1.0 - Fambient)*(1.0 - uMetallic);
     vec3 diffuseAmbient = kDambient*uAmbientColor*uColor;
 
-    /// --- Ambient specular (IBL), exposure applied BEFORE tonemap, with occlusion ---
+    /// Ambient specular (IBL), exposure applied BEFORE tonemap, with occlusion
     float lod = rough*uMaxReflectionLod;
     vec2 envUV = DirToEquirectUV(R);
     vec3 envSpec = textureLod(uSkybox, envUV, lod).rgb*uExposure;
     float specOcclusion = GetSpecularOcclusion(NdV, 1.0, rough);
-    vec3 specularAmbient = envSpec*Fambient*specOcclusion;
+    vec3 specularAmbient = envSpec*Fambient*specOcclusion*uReflectionIntensity;
 
     vec3 ambient = diffuseAmbient + specularAmbient;
     vec3 color = ambient + Lo;
 
-    /// Unity URP defaults to no tonemap in linear HDR until post-process,
-    /// but if you keep Reinhard, do it after exposure, not instead of it
+    /// Tonemaping
     color = color/(color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));
 

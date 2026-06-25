@@ -17,7 +17,9 @@ public static class SceneManager {
 
 
     public static void Init () {
-        Scene scene = new Scene();
+        Scene scene;
+        //scene = new SceneMaterials();
+        scene = new ScenePhysics();
         scenes.Add(scene);
         scene.Load();
 

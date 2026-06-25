@@ -21,4 +21,20 @@ internal static class Constants {
     public readonly static Vector3 cyan = new Vector3(0f, 1f, 1f);
 
 
+    internal static float _cameraFOV = 0.25f*MathF.PI;
+    internal static float _cameraPlaneClose = 0.1f;
+    internal static float _cameraPlaneFar = 1000f;
+
+    internal static Vector3 sunLightDir = Vector3.Normalize(new Vector3(0.4f, -1f, -0.3f));
+    internal static Vector3 sunLightColor = new Vector3(1f, 1f, 1f);
+    internal static float sunLightIntensity = 5f;
+    internal static float reflectionIntensity = 1f;
+
+    internal static bool drawTestGrid = false;
+    internal static int testGridCount = 5;
+    internal static int testGridDensity = 1;
+
+    internal static bool drawGizmos = true;
+    internal static bool drawGizmosSun = true;
+
 }

@@ -18,9 +18,9 @@ public class BoxColliderComponent : ColliderComponent {
     }
     public override void Update () {
         renderInfo = new RenderInfo() {
-            pos = owner.position,
-            rot = owner.rotation,
-            scale = owner.scale,
+            pos = position + owner.position,
+            rot = rotation + owner.rotation,
+            scale = scale*owner.scale,
 
             mesh = Renderer.Instance._mesh_GizmoCube,
             shader = Renderer.Instance._sh_Unlit,
