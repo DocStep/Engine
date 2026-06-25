@@ -22,7 +22,7 @@ public class ScenePhysics : Scene {
 
 
         GameObject cube = new GameObject() { Name = "Cube", };
-        cube.Transform.Position = new Vector3(0, 4, 0);
+        cube.Transform.Position = new Vector3(0, 10, 0);
         cube.Transform.Rotation = new Vector3(30, 0, 0);
         cube.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_Cube, });
         cube.AddComponent(new BoxColliderComponent());

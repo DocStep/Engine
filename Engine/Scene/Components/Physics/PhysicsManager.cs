@@ -12,8 +12,9 @@ public static class PhysicsManager {
     private static readonly List<ColliderComponent> staticColliders = new();
     private static readonly Dictionary<(int, int, int), List<ColliderComponent>> grid = new();
 
-    private const float PositionCorrectionPercent = 0.2f; /// only correct part of the penetration per step
-    private const float PenetrationSlop = 0.01f; /// ignore tiny penetration, don't fight floating point noise
+    private const float PositionCorrectionPercent = 0.25f; /// only correct part of the penetration per step
+    private const float PenetrationSlop = 0.001f; /// ignore tiny penetration, don't fight floating point noise
+    public static float bounciness = 0.1f;
 
 
     public static void Register (ColliderComponent collider) {
@@ -94,8 +95,9 @@ public static class PhysicsManager {
     }
 
     private static void Resolve (ColliderComponent a, ColliderComponent b, Contact contact) {
-        PhysicsComponent physA = a.owner.GetComponent<PhysicsComponent>();
-        PhysicsComponent physB = b.owner.GetComponent<PhysicsComponent>();
+        PhysicsComponent? physA = a.owner.GetComponent<PhysicsComponent>();
+        PhysicsComponent? physB = b.owner.GetComponent<PhysicsComponent>();
+        if (physA is null || physB is null) return;
 
         bool aDynamic = physA != null && !physA.isKinematic;
         bool bDynamic = physB != null && !physB.isKinematic;
@@ -104,18 +106,25 @@ public static class PhysicsManager {
         float pushA = aDynamic && bDynamic ? 0.5f : aDynamic ? 1f : 0f;
         float pushB = aDynamic && bDynamic ? 0.5f : bDynamic ? 1f : 0f;
 
-        float correction = MathF.Max(contact.penetration - PenetrationSlop, 0f)*PositionCorrectionPercent;
+        // Separate overlapping objects
+        // Normal points from A to B; to separate them, push A away (negative) and B towards (positive)
+        float correction = MathF.Max(contact.penetration - PenetrationSlop, 0f) * PositionCorrectionPercent;
+        if (aDynamic) a.owner.Transform.Position += pushA * correction * contact.normal;
+        if (bDynamic) b.owner.Transform.Position -= pushB * correction * contact.normal;
 
-        if (aDynamic) a.owner.Transform.Position -= pushA*correction*contact.normal;
-        if (bDynamic) b.owner.Transform.Position += pushB*correction*contact.normal;
+        // Calculate relative velocity along the contact normal
+        Vector3 velA = physA?.Velocity ?? Vector3.Zero;
+        Vector3 velB = physB?.Velocity ?? Vector3.Zero;
+        float relativeVelocity = Vector3.Dot(velA - velB, contact.normal);
 
-        float relativeVelocity = Vector3.Dot(physA?.Velocity ?? Vector3.Zero, contact.normal)
-                                - Vector3.Dot(physB?.Velocity ?? Vector3.Zero, contact.normal);
-
-        /// only kill velocity if objects are moving INTO each other, not already separating
+        // Only resolve if objects are moving INTO each other, not already separating
         if (relativeVelocity < 0f) {
-            if (aDynamic) physA.AddImpulse(-relativeVelocity*pushA*2f*contact.normal);
-            if (bDynamic) physB.AddImpulse(relativeVelocity*pushB*2f*contact.normal);
+            // Calculate impulse magnitude with restitution
+            float impulseMagnitude = -(1f + bounciness) * relativeVelocity / (pushA + pushB);
+            Vector3 impulse = impulseMagnitude * contact.normal;
+
+            if (aDynamic) physA!.AddImpulse(pushA * impulse);
+            if (bDynamic) physB!.AddImpulse(-pushB * impulse);
         }
     }
 

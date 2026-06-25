@@ -24,12 +24,12 @@ public class GameObject {
     private readonly List<Component> Components = new List<Component>();
 
 
-    public T GetComponent<T> () where T : Component {
+    public T? GetComponent<T> () where T : Component {
         foreach (Component component in Components) {
             if (component is T match) return match;
         }
-        throw new Exception($"Component of type {typeof(T)} not found in GameObject {Name}");
-        //return null;
+        //throw new Exception($"Component of type {typeof(T)} not found in GameObject {Name}");
+        return null;
     }
     public void AddComponent (Component component) {
         component.owner = this;
