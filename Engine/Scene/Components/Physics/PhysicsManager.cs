@@ -107,7 +107,9 @@ public static class PhysicsManager {
         float pushB = aDynamic && bDynamic ? 0.5f : bDynamic ? 1f : 0f;
 
         // Separate overlapping objects
-        // Normal points from A to B; to separate them, push A away (negative) and B towards (positive)
+        // Normal points from B to A (away from B), so to separate:
+        // - Push A in the direction of normal (away from B)
+        // - Push B in the opposite direction (away from A)
         float correction = MathF.Max(contact.penetration - PenetrationSlop, 0f) * PositionCorrectionPercent;
         if (aDynamic) a.owner.Transform.Position += pushA * correction * contact.normal;
         if (bDynamic) b.owner.Transform.Position -= pushB * correction * contact.normal;
