@@ -1,4 +1,4 @@
-﻿//using using Newtonsoft.Json;
+﻿using System.Numerics;
 
 namespace Engine;
 
@@ -14,8 +14,8 @@ public class NoiseHeight : Noise {
     public float strength;
 
     /// <summary> strength*[-1, 1] </summary>
-    public virtual float ValueHeight (Vec2 pos2) {
+    public virtual float ValueHeight (Vector2 vec2) {
         //return strength*base.Value(pos2);
-        return strength*noise.GetNoise(frequency*pos2.x, frequency*pos2.y);
+        return strength*noise.GetNoise(frequency*vec2.X, frequency*vec2.Y);
     }
 }

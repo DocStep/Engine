@@ -315,8 +315,7 @@ internal class Renderer {
         SetSceneUniforms(_sh_Unlit);
         //Matrix4X4<float> mesh_m4x4 = Matrix4X4.CreateTranslation(new Vector3D<float>(0f, 5f, 0f))
         //    *Matrix4X4.CreateRotationX(sunLightDir.X)*Matrix4X4.CreateRotationY(sunLightDir.Y)*Matrix4X4.CreateRotationZ(sunLightDir.Z);
-        Matrix4x4 mesh_m4x4 = Matrix4x4.Rotation(sunLightDir)*Matrix4x4.CreateTranslation(new Vector3(-8f, 5f, 0f));
-
+        Matrix4x4 mesh_m4x4 = Utils.RotationFromDirection(sunLightDir)*Matrix4x4.Position(-8f, 5f, 0f);
         float[] mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
         _sh_Unlit.SetMatrix4("uModel", mesh_uModel);
         _sh_Unlit.SetColor("uColor", Constants.yellow);

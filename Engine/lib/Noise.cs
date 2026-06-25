@@ -1,4 +1,4 @@
-﻿//using System;
+﻿using System.Numerics;
 using Newtonsoft.Json;
 
 namespace Engine;
@@ -48,9 +48,9 @@ public class Noise {
     }
 
     /// <summary> [-1, 1] </summary>
-    public virtual float Value (Vec2 pos2) {
+    public virtual float Value (Vector2 pos2) {
         if (!enable) return 0;
-        return noise.GetNoise(pos2.x, pos2.y);
+        return noise.GetNoise(pos2.X, pos2.Y);
     }
 
     /// <summary> [0, 1] </summary>

@@ -6,9 +6,11 @@ namespace Engine;
 
 
 public static class ScriptsCache<T> {
-    private static List<T> Scripts;
 
-    public static List<T> FindAll (Reflection reflection) {
+    private static List<T> Scripts = new List<T>();
+
+
+    public static List<T> FindAll (ReflectionScripts reflection) {
         if (Scripts is not null) return Scripts;
 
         Scripts = new List<T>(0);
