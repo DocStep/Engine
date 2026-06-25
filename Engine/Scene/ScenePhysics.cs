@@ -13,12 +13,12 @@ public class ScenePhysics : Scene {
     }
 
     public override void Load () {
-        GameObject plane = new GameObject() { Name = "Plane", };
-        plane.Transform.Position = new Vector3(0, 0, 0);
-        plane.Transform.Scale = new Vector3(10, 1f, 10);
-        plane.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_Plane, });
-        plane.AddComponent(new BoxColliderComponent() { scale = new Vector3(1, 1f, 1), isStatic = true, });
-        plane.AddComponent(new PhysicsComponent() { isKinematic = true, });
+        GameObject ground = new GameObject() { Name = "Plane", };
+        ground.Transform.Position = new Vector3(0, 0, 0);
+        ground.Transform.Scale = new Vector3(10, 1f, 10);
+        ground.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_Cube, });
+        ground.AddComponent(new BoxColliderComponent() { scale = new Vector3(1, 1f, 1), isStatic = true, });
+        ground.AddComponent(new PhysicsComponent() { isKinematic = true, });
 
 
         GameObject cube = new GameObject() { Name = "Cube", };

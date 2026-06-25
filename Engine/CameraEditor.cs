@@ -26,6 +26,7 @@ internal sealed class CameraEditor : Camera {
 
     private const float _focusGlideSpeed = 10f;
     private const float _clickDragThresholdPixels = 5f;
+    private const float _snapThreshold = 0.01f;
 
     private const float _moveStartSpeedFactor = 1f;
     private const float _moveRampUpTime = 2f;
@@ -35,7 +36,6 @@ internal sealed class CameraEditor : Camera {
     private const float _zoomSpeed = 0.1f;
 
     private const float _focusTargetDistance = 3f;
-
 
     internal Vector3 cameraOrbitCenterPos = Vector3.Zero;
 
@@ -146,7 +146,7 @@ internal sealed class CameraEditor : Camera {
             cameraPos += camDelta*_t;
             cameraOrbitCenterPos += orbitDelta*_t;
 
-            if (camDelta.LengthSquared() < 0.1f && orbitDelta.LengthSquared() < 0.1f) {
+            if (camDelta.LengthSquared() < _snapThreshold*_snapThreshold && orbitDelta.LengthSquared() < _snapThreshold*_snapThreshold) {
                 cameraPos = focusTargetCameraPos;
                 cameraOrbitCenterPos = focusTargetOrbitCenterPos;
                 isFocusing = false;
