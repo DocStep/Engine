@@ -13,19 +13,33 @@ public class BoxColliderComponent : ColliderComponent {
 
 
     public override void Update () {
-        if (!drawGizmos) return;
+        if (drawGizmos) {
+            Graphics.RenderInfo renderInfo = new Graphics.RenderInfo() {
+                pos = position + owner.Transform.Position,
+                rot = rotation + owner.Transform.Rotation,
+                scale = scale*owner.Transform.Scale,
 
-        Graphics.RenderInfo renderInfo = new Graphics.RenderInfo() {
-            pos = position + owner.Transform.Position,
-            rot = rotation + owner.Transform.Rotation,
-            scale = scale*owner.Transform.Scale,
+                mesh = Graphics.Renderer.Instance._mesh_GizmoCube,
+                shader = Graphics.Renderer.Instance._sh_Unlit,
+                material = Graphics.Renderer.Instance._mat_GizmosG,
+                primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
+            };
+            Graphics.Renderer.Instance.AddRenderInfo(renderInfo);
+        }
 
-            mesh = Graphics.Renderer.Instance._mesh_GizmoCube,
-            shader = Graphics.Renderer.Instance._sh_Unlit,
-            material = Graphics.Renderer.Instance._mat_GizmosG,
-            primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
-        };
-        Graphics.Renderer.Instance.AddRenderInfo(renderInfo);
+        PhysicsComponent? physicsComponent = owner.GetComponent<PhysicsComponent>();
+        if (physicsComponent is not null && !physicsComponent.isKinematic) {
+            Graphics.UI.TextRenderer.AddText(string.Empty);
+            string vel = $"{owner.Name} Vel: {physicsComponent.Velocity}";
+            string velAng = $"{owner.Name} VelAng: {physicsComponent.VelocityAngular}";
+            string size = $"{owner.Name} HalfExtents: {GetWorldOBB().HalfExtents}";
+            Graphics.UI.TextRenderer.AddText(vel);
+            Graphics.UI.TextRenderer.AddText(velAng);
+            Graphics.UI.TextRenderer.AddText(size);
+            //Log.log(vel);
+            //Log.log(velAng);
+            //Log.log(size);
+        }
     }
 
     public OBB GetWorldOBB () {

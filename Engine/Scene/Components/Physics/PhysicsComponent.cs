@@ -15,20 +15,21 @@ public class PhysicsComponent : Component, IComponentUpdate {
     public bool isKinematic = false;
 
     private Vector3 velocity = Vector3.Zero;
-    public Vector3 Velocity => getVelocity();
-
+    public Vector3 Velocity {
+        get {
+            return velocity;
+        }
+    }
     private Vector3 velocityAngular = Vector3.Zero;
-    public Vector3 VelocityAngular => getVelocityAngular();
+    public Vector3 VelocityAngular {
+        get {
+            return velocityAngular;
+        }
+    }
 
-    Vector3 getVelocity () {
-        return velocity;
-    }
-    Vector3 getVelocityAngular () {
-        return velocityAngular;
-    }
 
     public void Update () {
-        Graphics.UI.TextRenderer.AddText($"Velocity: {ComponentManager.componentsCount}", Graphics.Constants.left, 120);
+
     }
 
 

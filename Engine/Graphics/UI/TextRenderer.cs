@@ -36,8 +36,8 @@ public class TextRenderer : IDisposable {
     List<Vertex> _vertices = new List<Vertex>();
     
     private readonly static List<TextRenderInfo> Texts = new List<TextRenderInfo>();
-    public static void AddText (string _text, float _x, float _y) {
-        Texts.Add(new (_text, _x, _y));
+    public static void AddText (string _text) {
+        Texts.Add(new (_text));
     }
 
     private bool _renderF3 = true;
@@ -56,15 +56,12 @@ public class TextRenderer : IDisposable {
         if (_renderF3) {
             GL.Disable(EnableCap.CullFace);
 
-            Texts.Add(new TextRenderInfo($"FPS: {(int)(1/Engine.deltaTime)}", Constants.left, 20));
-            Texts.Add(new TextRenderInfo($"ms: {Engine.deltaTime*1000:F1}", Constants.left, 40));
-            Texts.Add(new TextRenderInfo($"Pos: {Camera.Instance.cameraPos:F2}", Constants.left, 60));
-            Texts.Add(new TextRenderInfo($"MousePos: {Camera.Instance.mousePos:F2}", Constants.left, 80));
-            Texts.Add(new TextRenderInfo($"Components: {ComponentManager.componentsCount}", Constants.left, 100));
-
             int count = Texts.Count;
+            int y = 0;
+            int yStep = 20;
             for (int i = 0; i < count; i++) {
-                DrawText(Texts[i].text, Texts[i].x, Texts[i].y);
+                y += yStep;
+                DrawText(Texts[i].text, Constants.left, y);
             }
             Texts.Clear();
         }

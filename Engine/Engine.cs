@@ -139,8 +139,14 @@ public class Engine : IDisposable {
         de_FixedUpdate?.Invoke();
     }
     private void Update () {
+        Graphics.UI.TextRenderer.AddText($"FPS: {(int)(1/Engine.deltaTime)}");
+        Graphics.UI.TextRenderer.AddText($"ms: {Engine.deltaTime*1000:F1}");
+        Graphics.UI.TextRenderer.AddText($"Pos: {Camera.Instance?.cameraPos:F2}");
+        Graphics.UI.TextRenderer.AddText($"MousePos: {Camera.Instance?.mousePos:F2}");
+        Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.componentsCount}");
+
         ComponentManager.Update();
-        de_Update?.Invoke();
+        //de_Update?.Invoke();
 
         /// Counters
         time += deltaTime;
