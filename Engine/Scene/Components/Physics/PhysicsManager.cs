@@ -124,9 +124,14 @@ public static class PhysicsManager {
             // Calculate impulse magnitude with restitution
             float impulseMagnitude = -(1f + bounciness) * relativeVelocity / (pushA + pushB);
             Vector3 impulse = impulseMagnitude * contact.normal;
-
             if (aDynamic) physA!.AddImpulse(pushA * impulse);
             if (bDynamic) physB!.AddImpulse(-pushB * impulse);
+
+            Vector3 rA = contact.point - (physA != null ? a.owner.Transform.Position : Vector3.Zero);
+            Vector3 rB = contact.point - (physB != null ? b.owner.Transform.Position : Vector3.Zero);
+            //Log.log($"rA={rA} impulse={impulse} torque={Vector3.Cross(rA, pushA * impulse)}");
+            if (aDynamic) physA!.AddTorqueImpulse(Vector3.Cross(rA, pushA * impulse));
+            if (bDynamic) physB!.AddTorqueImpulse(Vector3.Cross(rB, -pushB * impulse));
         }
     }
 

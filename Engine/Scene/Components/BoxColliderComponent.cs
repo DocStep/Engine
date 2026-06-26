@@ -29,25 +29,13 @@ public class BoxColliderComponent : ColliderComponent {
     }
 
     /// Get the oriented bounding box center and half-extents
-    private (Vector3 center, Vector3 halfExtents, Quaternion rotation) GetOBB () {
+    private  (Vector3 center, Vector3 halfExtents, Quaternion rotation) GetOBB () {
         Vector3 center = position + owner.Transform.Position;
         Vector3 halfExtents = 0.5f * scale * owner.Transform.Scale;
-        Quaternion rot = QuaternionFromEuler(this.rotation + owner.Transform.Rotation);
+        Quaternion rot = PhysicsComponent.QuaternionFromEuler(this.rotation + owner.Transform.Rotation);
         return (center, halfExtents, rot);
     }
 
-    /// Convert Euler angles (in radians) to Quaternion
-    private static Quaternion QuaternionFromEuler (Vector3 euler) {
-        Vector3 c = new Vector3(MathF.Cos(euler.X * 0.5f), MathF.Cos(euler.Y * 0.5f), MathF.Cos(euler.Z * 0.5f));
-        Vector3 s = new Vector3(MathF.Sin(euler.X * 0.5f), MathF.Sin(euler.Y * 0.5f), MathF.Sin(euler.Z * 0.5f));
-
-        return new Quaternion(
-            s.X * c.Y * c.Z - c.X * s.Y * s.Z,
-            c.X * s.Y * c.Z + s.X * c.Y * s.Z,
-            c.X * c.Y * s.Z - s.X * s.Y * c.Z,
-            c.X * c.Y * c.Z + s.X * s.Y * s.Z
-        );
-    }
 
     /// Get the world-space bounds of the rotated box
     public override Bounds GetWorldBounds () {
@@ -105,56 +93,80 @@ public class BoxColliderComponent : ColliderComponent {
         contact = default;
 
         if (other is BoxColliderComponent otherBox) {
-            return OverlapsBoxAABB(otherBox, out contact);
+            return OverlapsBoxOBB(otherBox, out contact);
         }
 
         return false;
     }
 
-    private bool OverlapsBoxAABB (BoxColliderComponent other, out Contact contact) {
+    private bool OverlapsBoxOBB (BoxColliderComponent other, out Contact contact) {
         contact = default;
 
-        Bounds a = GetWorldBounds();
-        Bounds b = other.GetWorldBounds();
+        var (centerA, halfA, rotA) = GetOBB();
+        var (centerB, halfB, rotB) = other.GetOBB();
 
-        // Check if AABB overlap exists
-        Vector3 overlap = new Vector3(
-            MathF.Min(a.Max.X, b.Max.X) - MathF.Max(a.Min.X, b.Min.X),
-            MathF.Min(a.Max.Y, b.Max.Y) - MathF.Max(a.Min.Y, b.Min.Y),
-            MathF.Min(a.Max.Z, b.Max.Z) - MathF.Max(a.Min.Z, b.Min.Z)
-        );
+        // Get axes for A and B (local X, Y, Z rotated into world space)
+        Vector3[] axesA = {
+            RotateVector(Vector3.UnitX, rotA),
+            RotateVector(Vector3.UnitY, rotA),
+            RotateVector(Vector3.UnitZ, rotA),
+        };
+            Vector3[] axesB = {
+            RotateVector(Vector3.UnitX, rotB),
+            RotateVector(Vector3.UnitY, rotB),
+            RotateVector(Vector3.UnitZ, rotB),
+        };
 
-        // No collision if any axis shows separation
-        if (overlap.X <= 0f || overlap.Y <= 0f || overlap.Z <= 0f) {
-            return false;
+        Vector3 translation = centerB - centerA;
+
+        float minPen = float.MaxValue;
+        Vector3 minAxis = Vector3.Zero;
+
+        // Test all 15 axes: 3 from A, 3 from B, 9 cross products
+        Span<Vector3> testAxes = stackalloc Vector3[15];
+        testAxes[0] = axesA[0]; testAxes[1] = axesA[1]; testAxes[2] = axesA[2];
+        testAxes[3] = axesB[0]; testAxes[4] = axesB[1]; testAxes[5] = axesB[2];
+        int idx = 6;
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+                testAxes[idx++] = Vector3.Cross(axesA[i], axesB[j]);
+
+        for (int i = 0; i < 15; i++) {
+            Vector3 axis = testAxes[i];
+            if (axis.LengthSquared() < 1e-6f) continue; // skip degenerate cross products
+            axis = Vector3.Normalize(axis);
+
+            float projA = MathF.Abs(Vector3.Dot(axesA[0] * halfA.X, axis))
+                        + MathF.Abs(Vector3.Dot(axesA[1] * halfA.Y, axis))
+                        + MathF.Abs(Vector3.Dot(axesA[2] * halfA.Z, axis));
+            float projB = MathF.Abs(Vector3.Dot(axesB[0] * halfB.X, axis))
+                        + MathF.Abs(Vector3.Dot(axesB[1] * halfB.Y, axis))
+                        + MathF.Abs(Vector3.Dot(axesB[2] * halfB.Z, axis));
+
+            float dist = MathF.Abs(Vector3.Dot(translation, axis));
+            float pen = projA + projB - dist;
+
+            if (pen <= 0f) return false; // separating axis found
+
+            if (pen < minPen) {
+                minPen = pen;
+                minAxis = axis;
+            }
         }
 
-        // Find the axis with minimum penetration (most likely separation direction)
-        Vector3 normal = Vector3.Zero;
-        float minPenetration = float.MaxValue;
+        // Ensure normal points from B to A
+        if (Vector3.Dot(translation, minAxis) > 0f)
+            minAxis = -minAxis;
 
-        if (overlap.X < minPenetration) {
-            minPenetration = overlap.X;
-            normal = new Vector3(1f, 0f, 0f);
-        }
-        if (overlap.Y < minPenetration) {
-            minPenetration = overlap.Y;
-            normal = new Vector3(0f, 1f, 0f);
-        }
-        if (overlap.Z < minPenetration) {
-            minPenetration = overlap.Z;
-            normal = new Vector3(0f, 0f, 1f);
-        }
-
-        // Ensure normal points from B to A (away from B)
-        Vector3 delta = a.Center - b.Center;
-        if (Vector3.Dot(delta, normal) < 0f) {
-            normal = -normal;
-        }
+        Vector3 deepest = centerA;
+        deepest += Vector3.Dot(axesA[0], -minAxis) > 0 ? axesA[0] * halfA.X : -axesA[0] * halfA.X;
+        deepest += Vector3.Dot(axesA[1], -minAxis) > 0 ? axesA[1] * halfA.Y : -axesA[1] * halfA.Y;
+        deepest += Vector3.Dot(axesA[2], -minAxis) > 0 ? axesA[2] * halfA.Z : -axesA[2] * halfA.Z;
 
         contact = new Contact {
-            normal = normal,
-            penetration = minPenetration
+            normal = minAxis,
+            penetration = minPen,
+            point = deepest
         };
 
         return true;
