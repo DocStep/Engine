@@ -81,7 +81,7 @@ internal static class Utils {
 
 
     internal static Matrix4x4 CreateFromYawPitchRoll (float yaw, float pitch, float roll) {
-        return Matrix4x4.CreateRotationZ(roll)*Matrix4x4.CreateRotationX(pitch)*Matrix4x4.CreateRotationY(yaw);
+        return Matrix4x4.CreateRotationZ(roll)*Matrix4x4.CreateRotationX(-pitch)*Matrix4x4.CreateRotationY(-yaw);
     }
 
     internal static float Lerp (float a, float b, float t) => a + (b - a)*t;
@@ -116,6 +116,31 @@ internal static class Utils {
         );
     }
 
+    internal static Matrix4x4 CreateLookAtLH (Vector3 eye, Vector3 target, Vector3 up) {
+        Vector3 zaxis = Vector3.Normalize(target - eye);        /// LH: forward = +Z, not -Z
+        Vector3 xaxis = Vector3.Normalize(Vector3.Cross(up, zaxis));
+        Vector3 yaxis = Vector3.Cross(zaxis, xaxis);
+
+        return new Matrix4x4(
+            xaxis.X, yaxis.X, zaxis.X, 0f,
+            xaxis.Y, yaxis.Y, zaxis.Y, 0f,
+            xaxis.Z, yaxis.Z, zaxis.Z, 0f,
+            -Vector3.Dot(xaxis, eye), -Vector3.Dot(yaxis, eye), -Vector3.Dot(zaxis, eye), 1f
+        );
+    }
+
+    internal static Matrix4x4 CreatePerspectiveFieldOfViewLH (float fov, float aspect, float near, float far) {
+        float yScale = 1f/MathF.Tan(fov*0.5f);
+        float xScale = yScale/aspect;
+        float zRange = far/(far - near);
+
+        return new Matrix4x4(
+            xScale, 0f, 0f, 0f,
+            0f, yScale, 0f, 0f,
+            0f, 0f, zRange, 1f,
+            0f, 0f, -near*zRange, 0f
+        );
+    }
 
     /// Wraps an angle to [-pi, pi].
     internal static float WrapAngle (float angle) {

@@ -10,14 +10,12 @@ internal sealed class CameraEditor : Camera {
     internal CameraEditor () : base() {
         Instance = this;
         SetTransformDefault();
-        LookAtOrbitCenter();
     }
 
     new public static CameraEditor? Instance = null;
 
 
-    private Vector3 _cameraPos = new Vector3(-10, 3, -2);
-    private Matrix4x4 _cameraRot = Matrix4x4.Identity;
+    private Vector3 _cameraPos = new Vector3(-2, 3, -10);
     private Vector3 _cameraOrbitCenterPos = Vector3.Zero;
 
     /// Values
@@ -26,7 +24,7 @@ internal sealed class CameraEditor : Camera {
 
     private const float _focusGlideSpeed = 10f;
     private const float _clickDragThresholdPixels = 5f;
-    private const float _snapThreshold = 0.01f;
+    private const float _snapThreshold = 0.001f;
 
     private const float _moveStartSpeedFactor = 1f;
     private const float _moveRampUpTime = 2f;
@@ -57,18 +55,18 @@ internal sealed class CameraEditor : Camera {
 
         NewTransform();
     }
-    private void SetTransformT () {
+    private void SetTransformMaterialPreview () {
         cameraPos = _cameraPos;
-        cameraOrbitCenterPos = new Vector3(-8f, 0f, 0f);
+        cameraOrbitCenterPos = new Vector3(0f, 0f, -8f);
 
         NewTransform();
     }
     private void NewTransform () {
-        cameraRot = Matrix4x4.CreateLookAt(cameraPos, cameraOrbitCenterPos, Vector3.UnitY);
+        cameraRot = Utils.CreateLookAtLH(cameraPos, cameraOrbitCenterPos, Vector3.UnitY);
 
-        var dir = Vector3.Normalize(cameraPos - cameraOrbitCenterPos);
-        yaw = MathF.Atan2(dir.X, dir.Z);
-        pitch = -MathF.Asin(dir.Y);
+        var dir = Vector3.Normalize(cameraOrbitCenterPos - cameraPos);
+        yaw = -MathF.Atan2(dir.X, dir.Z);
+        pitch = MathF.Asin(dir.Y);
 
         isFocusing = false;
         moveHoldTime = 0f;
@@ -84,10 +82,10 @@ internal sealed class CameraEditor : Camera {
         float dt = (float)deltaTime;
 
         if (Inputs.Actions[Reset].pressedDown) SetTransformDefault();
-        if (Inputs.Actions[CameraFocusMaterial].pressedDown) SetTransformT();
+        if (Inputs.Actions[CameraFocusMaterial].pressedDown) SetTransformMaterialPreview();
 
         cameraRot = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
-        Vector3 forward = Vector3.Transform(-Vector3.UnitZ, cameraRot);
+        Vector3 forward = Vector3.Transform(Vector3.UnitZ, cameraRot);
         Vector3 right = Vector3.Transform(Vector3.UnitX, cameraRot);
         Vector3 up = Vector3.Transform(Vector3.UnitY, cameraRot);
         Vector3 cameraPosDelta = Vector3.Zero;
@@ -208,15 +206,15 @@ internal sealed class CameraEditor : Camera {
             if (orbitDistance < 0.01f) orbitDistance = 5f;
 
             Vector3 offset = Vector3.Transform(Vector3.UnitZ * orbitDistance, rotation);
-            position = cameraOrbitCenterPos + offset;
-            forward  = Vector3.Normalize(cameraOrbitCenterPos - position);
+            position = cameraOrbitCenterPos - offset; /// was +offset
+            forward = Vector3.Normalize(cameraOrbitCenterPos - position); /// unchanged, now correctly = +offset/|offset| = Transform(UnitZ, rotation) direction
             cameraPos = position;
 
             Inputs.MouseShow();
         } else if (Inputs.Actions[RMB].pressed) {
             /// Center Rotation
             rotation = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
-            forward  = Vector3.Transform(-Vector3.UnitZ, rotation);
+            forward = Vector3.Transform(Vector3.UnitZ, rotation); /// was -UnitZ
             position = cameraPos;
 
             float orbitDistance = (cameraOrbitCenterPos - cameraPos).Length();
@@ -226,27 +224,27 @@ internal sealed class CameraEditor : Camera {
             Inputs.MouseShow();
         } else {
             rotation = cameraRot;
-            forward  = Vector3.Transform(-Vector3.UnitZ, rotation);
+            forward = Vector3.Transform(Vector3.UnitZ, rotation); /// was -UnitZ
             position = cameraPos;
 
             Inputs.MouseHide();
         }
 
-        Renderer.Instance.View = Matrix4x4.CreateLookAt(position, position + forward, worldUp);
+        Renderer.Instance.View = Utils.CreateLookAtLH(position, position + forward, worldUp);
         cameraRot = rotation;
     }
 
 
     private void LookAtOrbitCenter () {
-        Vector3 offset = cameraPos - cameraOrbitCenterPos;
+        Vector3 offset = cameraOrbitCenterPos - cameraPos;
         float dist = offset.Length();
         if (dist < 0.0001f) return;
 
-        Vector3 forward = -offset / dist;
+        Vector3 forward = offset / dist;
 
         pitch = MathF.Asin(Utils.Clamp(forward.Y, -1f, 1f));
         float cosPitch = MathF.Cos(pitch);
-        yaw = MathF.Atan2(-forward.X / cosPitch, -forward.Z / cosPitch);
+        yaw = -MathF.Atan2(forward.X / cosPitch, forward.Z / cosPitch);
 
         cameraRot = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
     }
@@ -274,7 +272,7 @@ internal sealed class CameraEditor : Camera {
         if (!bestT.HasValue) return;
 
         Vector3 hitPoint = rayOrigin + rayDirection * bestT.Value;
-        Vector3 currentForward = Vector3.Transform(-Vector3.UnitZ, cameraRot);
+        Vector3 currentForward = Vector3.Transform(Vector3.UnitZ, cameraRot);
 
         focusTargetOrbitCenterPos = hitPoint;
         focusTargetCameraPos = hitPoint - currentForward*_focusTargetDistance;

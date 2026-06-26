@@ -25,7 +25,7 @@ public static class ObjLoader {
             switch (tokens[0]) {
                 case "v":
                     positions.Add(new Vector3(
-                        ParseFloat(tokens[1]), ParseFloat(tokens[2]), ParseFloat(tokens[3])));
+                        ParseFloat(tokens[1]), ParseFloat(tokens[2]), -ParseFloat(tokens[3])));
                     break;
 
                 case "vt":
@@ -34,20 +34,19 @@ public static class ObjLoader {
 
                 case "vn":
                     normals.Add(new Vector3(
-                        ParseFloat(tokens[1]), ParseFloat(tokens[2]), ParseFloat(tokens[3])));
+                        ParseFloat(tokens[1]), ParseFloat(tokens[2]), -ParseFloat(tokens[3])));
                     hasAnyNormal = true;
                     break;
 
                 case "f": {
-                        /// Fan-triangulate any n-gon: (0, i, i+1) for i in [1, n-2].
                         var faceIndices = new uint[tokens.Length - 1];
                         for (int i = 1; i < tokens.Length; i++)
                             faceIndices[i - 1] = ResolveVertex(tokens[i]);
 
                         for (int i = 1; i < faceIndices.Length - 1; i++) {
                             indices.Add(faceIndices[0]);
-                            indices.Add(faceIndices[i]);
                             indices.Add(faceIndices[i + 1]);
+                            indices.Add(faceIndices[i]);
                         }
                         break;
                     }

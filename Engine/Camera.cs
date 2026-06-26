@@ -29,42 +29,14 @@ internal class Camera {
 
 
     protected virtual void Update (double deltaTime) {
-        if (Inputs.Actions[Inputs.NavBack].pressedDown) Engine.Window.Close();
-
-        float dt = (float)deltaTime;
-        float dx = Inputs.MouseDelta.X;
-        float dy = Inputs.MouseDelta.Y;
-
-        cameraRot = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
-        Vector3 forward = Vector3.Transform(-Vector3.UnitZ, cameraRot);
-        Vector3 right = Vector3.Transform(Vector3.UnitX, cameraRot);
-        Vector3 up = Vector3.Transform(Vector3.UnitY, cameraRot);
-        Vector3 cameraPosDelta = Vector3.Zero;
-
-        float flipSign = 1f;
-        yaw += -_sensetivityMultiplier*_sensetivity*dx*flipSign;
-        pitch += -_sensetivityMultiplier*_sensetivity*dy;
-        pitch = Utils.WrapAngle(pitch);
-
-        UpdateCamera(deltaTime);
+        
     }
 
 
     protected virtual void UpdateCamera (double deltaTime) {
-        Matrix4x4 rotation;
-        Vector3 forward;
-
-        Vector3 worldUp = MathF.Cos(pitch) < 0 ? -Vector3.UnitY : Vector3.UnitY;
-
-        /// Center Rotation
-        rotation = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
-        forward  = Vector3.Transform(-Vector3.UnitZ, rotation);
-
-        Inputs.MouseHide();
         
-        Renderer.Instance.View = Matrix4x4.CreateLookAt(cameraPos, cameraPos + forward, worldUp);
-        cameraRot = rotation;
     }
+
 
 
 }

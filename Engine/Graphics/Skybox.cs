@@ -31,12 +31,15 @@ public class Skybox : IDisposable {
         GL.DepthFunc(DepthFunction.Lequal);
         GL.DepthMask(false);
 
+        GL.Enable(EnableCap.CullFace);
+        GL.CullFace(TriangleFace.Front);
+
         _shader.Use();
-        _shader.SetMatrix4("uInvView", Utils.MatrixToArray(invView));
-        _shader.SetMatrix4("uInvProjection", Utils.MatrixToArray(invProjection));
+        _shader.SetMatrix4("uView", Utils.MatrixToArray(invView));
+        _shader.SetMatrix4("uProjection", Utils.MatrixToArray(invProjection));
 
         _texture.Bind(TextureUnit.Texture0);
-        _shader.SetInt("uSkyboxTexture", 0);
+        _shader.SetInt("uTexture", 0);
         _shader.SetFloat("uBlurScale", BlurScale);
 
         GL.BindVertexArray(_emptyVao);

@@ -25,7 +25,7 @@ internal static class Constants {
     internal static float _cameraPlaneClose = 0.1f;
     internal static float _cameraPlaneFar = 1000f;
 
-    internal static Vector3 sunLightDir = Vector3.Normalize(new Vector3(0.4f, -1f, -0.3f));
+    internal static Vector3 sunLightDir = Vector3.Normalize(new Vector3(-0.3f, -1f, 0.4f));
     internal static Vector3 sunLightColor = new Vector3(1f, 1f, 1f);
     internal static float sunLightIntensity = 5f;
     internal static float reflectionIntensity = 1f;

@@ -3,9 +3,9 @@
 in vec2 vScreenPos;
 out vec4 FragColor;
 
-uniform mat4 uInvView;
-uniform mat4 uInvProjection;
-uniform sampler2D uSkyboxTexture;
+uniform mat4 uView;
+uniform mat4 uProjection;
+uniform sampler2D uTexture;
 uniform float uBlurScale;
 
 const float PI = 3.14159265359;
@@ -29,12 +29,12 @@ vec3 Tonemap (vec3 color) {
 
 void main () {
     vec4 clipPos = vec4(vScreenPos, 1.0, 1.0);
-    vec4 viewPos = uInvProjection*clipPos;
+    vec4 viewPos = uProjection*clipPos;
     viewPos /= viewPos.w;
 
-    vec3 worldDir = normalize((uInvView*vec4(viewPos.xyz, 0.0)).xyz);
+    vec3 worldDir = normalize((uView*vec4(viewPos.xyz, 0.0)).xyz);
     vec2 uv = DirectionToEquirectUV(worldDir);
-    vec3 color = textureLod(uSkyboxTexture, uv, uBlurScale).rgb;
+    vec3 color = textureLod(uTexture, uv, uBlurScale).rgb;
 
     color = Tonemap(color);
     //color = color/(color + vec3(1.0)); /// Reinhard tone map

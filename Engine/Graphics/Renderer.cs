@@ -16,8 +16,6 @@ internal class Renderer {
         Engine.Window.FramebufferResize += OnFrameBufferResize;
 
         GL = Engine.Window.CreateOpenGL();
-        GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
-        GL.Enable(EnableCap.DepthTest);
 
         _mesh_GizmoCube = new Mesh(WireGizmos.Cube(Vector3.Zero, Vector3.One));
         _mesh_GizmoSphere = new Mesh(WireGizmos.Sphere(Vector3.Zero, 0.5f));
@@ -233,11 +231,15 @@ internal class Renderer {
 
     private void OnRender (double deltaTime) {
         UpdateProjection();
-        GL.Clear((uint)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
+
+        GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
+        GL.Enable(EnableCap.DepthTest);
+        //GL.Clear((uint)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
+        GL.FrontFace(FrontFaceDirection.CW);
+        GL.Enable(EnableCap.CullFace);
 
         if (renderSkybox) _skybox?.Draw(View, Projection);
 
-        GL.Enable(EnableCap.CullFace);
         GL.CullFace(TriangleFace.Back);
 
         /// Draw Scene
@@ -257,7 +259,7 @@ internal class Renderer {
     }
     private void UpdateProjection () {
         float aspect = Engine.Window.Size.X/(float)Engine.Window.Size.Y;
-        Projection = Matrix4x4.CreatePerspectiveFieldOfView(Constants._cameraFOV, aspect, Constants._cameraPlaneClose, Constants._cameraPlaneFar);
+        Projection = Utils.CreatePerspectiveFieldOfViewLH(Constants._cameraFOV, aspect, Constants._cameraPlaneClose, Constants._cameraPlaneFar);
         uView = Utils.MatrixToArray(View);
         uProjection = Utils.MatrixToArray(Projection);
     }
