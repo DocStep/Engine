@@ -4,6 +4,7 @@ namespace Engine.Graphics;
 
 
 public static class Sphere {
+
     public static MeshData Generate (float radius = 0.5f, int latSegments = 16, int lonSegments = 24) {
         var vertices = new List<Vertex>();
         var indices = new List<uint>();
@@ -48,4 +49,5 @@ public static class Sphere {
 
         return new MeshData(vertices.ToArray(), indices.ToArray());
     }
+
 }

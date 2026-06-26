@@ -2,6 +2,7 @@
 
 
 public static class Cube {
+
     public static MeshData Generate (float size = 1f) {
         float h = 0.5f*size;
 
@@ -54,4 +55,5 @@ public static class Cube {
 
         return new MeshData(vertices, indices);
     }
+
 }

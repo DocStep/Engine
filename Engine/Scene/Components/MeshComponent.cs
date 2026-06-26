@@ -8,7 +8,7 @@ public class MeshComponent : Component, IRenderComponent, IComponentUpdate {
 
     public Mesh? mesh = null;
     public Shader? shader = Renderer.Instance._sh_Lit;
-    public Material? material = Renderer.Instance._m_Lit;
+    public Material? material = Renderer.Instance._mat_Lit;
     public Silk.NET.OpenGL.PrimitiveType primitiveType = Silk.NET.OpenGL.PrimitiveType.Triangles;
 
     private RenderInfo renderInfo;

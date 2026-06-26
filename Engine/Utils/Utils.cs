@@ -35,19 +35,19 @@ internal static class Utils {
     extension(Matrix4x4) {
         public static Matrix4x4 RotationFromDirection (Vector3 direction, Vector3 up = default) {
             direction = Vector3.Normalize(direction);
-            if (up == default) up = Vector3.UnitZ; /// reference axis must differ from the mesh's pointing axis
+            if (up == default) up = Vector3.UnitY;
 
-            if (0.999f < MathF.Abs(Vector3.Dot(direction, up))) {
-                up = 0.999f < MathF.Abs(direction.Z) ? Vector3.UnitX : Vector3.UnitZ;
+            if (MathF.Abs(Vector3.Dot(direction, up)) > 0.999f) {
+                up = MathF.Abs(direction.Y) > 0.999f ? Vector3.UnitX : Vector3.UnitY;
             }
 
-            var right = Vector3.Normalize(Vector3.Cross(direction, up));
-            var fwd = Vector3.Cross(right, direction);
+            var right = Vector3.Normalize(Vector3.Cross(up, direction));
+            var localUp = Vector3.Cross(direction, right);
 
             return new Matrix4x4(
                 right.X, right.Y, right.Z, 0f,
-                direction.X, direction.Y, direction.Z, 0f, /// Y row = mesh's pointing axis
-                fwd.X, fwd.Y, fwd.Z, 0f,
+                localUp.X, localUp.Y, localUp.Z, 0f,
+                direction.X, direction.Y, direction.Z, 0f,
                 0f, 0f, 0f, 1f
             );
         }
