@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace Engine;
+namespace Engine.Bad;
 
 
 public struct AABB {

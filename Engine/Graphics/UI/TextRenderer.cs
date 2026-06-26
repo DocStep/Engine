@@ -5,18 +5,6 @@ namespace Engine.Graphics.UI;
 
 
 public class TextRenderer : IDisposable {
-    GL GL;
-    FontAtlas _atlas;
-    uint _vao, _vbo;
-    Shader _shader;
-
-    struct Vertex {
-        public Vector2 Pos;
-        public Vector2 UV;
-    }
-
-    List<Vertex> _vertices = new List<Vertex>();
-
     public unsafe TextRenderer () {
         GL = Renderer.Instance.GL;
         _atlas = FontAtlas.Load("src/Fonts/FuturaCyrillicMedium.ttf", 24);
@@ -35,9 +23,58 @@ public class TextRenderer : IDisposable {
         GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, stride, (void*)(2*sizeof(float)));
     }
 
-    public unsafe void DrawText (string text, float x, float y, float screenWidth, float screenHeight) {
+    struct Vertex {
+        public Vector2 Pos;
+        public Vector2 UV;
+    }
+
+    GL GL;
+    FontAtlas _atlas;
+    uint _vao, _vbo;
+    Shader _shader;
+
+    List<Vertex> _vertices = new List<Vertex>();
+    
+    private readonly static List<TextRenderInfo> Texts = new List<TextRenderInfo>();
+    public static void AddText (string _text, float _x, float _y) {
+        Texts.Add(new (_text, _x, _y));
+    }
+
+    private bool _renderF3 = true;
+    public bool renderF3 {
+        get => _renderF3;
+        set {
+            if (_renderF3 != value) {
+                _renderF3 = value;
+            }
+        }
+    }
+
+
+    internal void DrawUI () {
+        if (Input.Inputs.Actions[Input.Inputs.F3].pressedDown) _renderF3 = !_renderF3;
+        if (_renderF3) {
+            GL.Disable(EnableCap.CullFace);
+
+            Texts.Add(new TextRenderInfo($"FPS: {(int)(1/Engine.deltaTime)}", Constants.left, 20));
+            Texts.Add(new TextRenderInfo($"ms: {Engine.deltaTime*1000:F1}", Constants.left, 40));
+            Texts.Add(new TextRenderInfo($"Pos: {Camera.Instance.cameraPos:F2}", Constants.left, 60));
+            Texts.Add(new TextRenderInfo($"MousePos: {Camera.Instance.mousePos:F2}", Constants.left, 80));
+            Texts.Add(new TextRenderInfo($"Components: {ComponentManager.componentsCount}", Constants.left, 100));
+
+            int count = Texts.Count;
+            for (int i = 0; i < count; i++) {
+                DrawText(Texts[i].text, Texts[i].x, Texts[i].y);
+            }
+            Texts.Clear();
+        }
+    }
+
+    public unsafe void DrawText (string text, float x, float y) {
         _vertices.Clear();
         float cursorX = x;
+        float screenWidth = Engine.Window.Size.X;
+        float screenHeight = Engine.Window.Size.Y;
 
         foreach (char c in text) {
             if (!_atlas.Chars.TryGetValue(c, out var ci)) continue;
@@ -81,44 +118,6 @@ public class TextRenderer : IDisposable {
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, (uint)arr.Length);
 
-        GL.Enable(EnableCap.DepthTest);
-    }
-
-    public unsafe void DrawDebugQuad (float screenWidth, float screenHeight) {
-        GL.GetInteger(GetPName.DrawFramebufferBinding, out int fbo);
-        Console.WriteLine($"Current FBO: {fbo}");
-
-        var verts = new Vertex[] {
-            new Vertex { Pos = new Vector2(100, 100), UV = new Vector2(0, 0) },
-            new Vertex { Pos = new Vector2(300, 100), UV = new Vector2(1, 0) },
-            new Vertex { Pos = new Vector2(300, 300), UV = new Vector2(1, 1) },
-            new Vertex { Pos = new Vector2(100, 100), UV = new Vector2(0, 0) },
-            new Vertex { Pos = new Vector2(300, 300), UV = new Vector2(1, 1) },
-            new Vertex { Pos = new Vector2(100, 300), UV = new Vector2(0, 1) },
-        };
-
-        var ortho = Matrix4x4.CreateOrthographicOffCenter(0, screenWidth, screenHeight, 0, -1f, 1f);
-
-        GL.Disable(EnableCap.DepthTest);
-        GL.Enable(EnableCap.Blend);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-
-        _shader.Use();
-        _shader.SetMatrix4X4("uProjection", ortho);
-        _shader.SetInt("uTexture", 0);
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, _atlas.TextureId);
-
-        GL.BindVertexArray(_vao);
-        GL.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
-
-        fixed (Vertex* ptr = verts) {
-            GL.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(verts.Length*sizeof(Vertex)), ptr, BufferUsageARB.StreamDraw);
-        }
-
-        GL.DrawArrays(PrimitiveType.Triangles, 0, (uint)verts.Length);
-        var err = GL.GetError();
-        if (err != GLEnum.NoError) Console.WriteLine($"DrawDebugQuad Error: {err}");
         GL.Enable(EnableCap.DepthTest);
     }
 

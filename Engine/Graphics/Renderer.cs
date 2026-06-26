@@ -68,12 +68,12 @@ internal class Renderer {
         _mesh_Suzanne = new Mesh(ObjLoader.Load("src/Models/Suzanne.obj"));
         _mesh_SuzanneHighRes = new Mesh(ObjLoader.Load("src/Models/SuzanneHighRes.obj"));
 
-        _textRenderer = new TextRenderer();
+        TextRenderer = new TextRenderer();
     }
 
     public static Renderer Instance = null!;
 
-    public readonly TextRenderer _textRenderer = null!;
+    public readonly TextRenderer TextRenderer = null!;
 
     public Action? de_DrawGizmos = null;
 
@@ -135,26 +135,16 @@ internal class Renderer {
     private float[] uView = [];
     private float[] uProjection = [];
 
-    private bool _renderSkybox = true;
     private bool renderSkybox {
-        get => _renderSkybox;
+        get => Constants._renderSkybox;
         set {
-            if (_renderSkybox != value) {
-                _renderSkybox = value;
+            if (Constants._renderSkybox != value) {
+                Constants._renderSkybox = value;
                 renderSkyboxUpdate();
             }
         }
     }
     private void renderSkyboxUpdate () { }
-    private bool _renderFPS = true;
-    private bool renderFPS {
-        get => _renderFPS;
-        set {
-            if (_renderFPS != value) {
-                _renderFPS = value;
-            }
-        }
-    }
 
 
     private readonly List<RenderInfo> RenderList = new List<RenderInfo>();
@@ -253,13 +243,14 @@ internal class Renderer {
         if (Constants.drawGizmos) DrawGizmos();
 
         /// Draw UI
-        DrawUI();
+        TextRenderer.DrawUI();
 
         DrawEnd();
     }
     private void UpdateProjection () {
         float aspect = Engine.Window.Size.X/(float)Engine.Window.Size.Y;
-        Projection = Utils.CreatePerspectiveFieldOfViewLH(Constants._cameraFOV, aspect, Constants._cameraPlaneClose, Constants._cameraPlaneFar);
+        //Projection = Utils.CreatePerspectiveFieldOfViewLH(Constants._cameraFOV, aspect, Constants._cameraPlaneClose, Constants._cameraPlaneFar);
+        Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Constants._cameraFOV, aspect, Constants._cameraPlaneClose, Constants._cameraPlaneFar);
         uView = Utils.MatrixToArray(View);
         uProjection = Utils.MatrixToArray(Projection);
     }
@@ -314,17 +305,15 @@ internal class Renderer {
         GL.Clear(ClearBufferMask.DepthBufferBit);
 
         Matrix4x4 rotation = Camera.Instance.cameraRot;
-
         Vector3 forward = Vector3.Transform(Vector3.UnitZ, rotation);
         Vector3 up = Vector3.Transform(Vector3.UnitY, rotation);
-        Vector3 gizmoCamPos = forward * 2.5f;
-        Matrix4x4 gizmoView = Matrix4x4.CreateLookAt(
-            gizmoCamPos,
-            Vector3.Zero,
-            up
-        );
-
-        Matrix4x4 gizmoProjection = Matrix4x4.CreateOrthographic(2.2f, 2.2f, 0.1f, 10f);
+        Vector3 gizmoCamPos = -forward*5f;
+        Matrix4x4 gizmoView = Matrix4x4.CreateLookAtLeftHanded(gizmoCamPos, Vector3.Zero, up);
+        //Matrix4x4 gizmoProjection = Matrix4x4.CreateOrthographic(2.2f, 2.2f, 0.1f, 10f);
+        //Matrix4x4 gizmoProjection = Matrix4x4.CreateOrthographicLeftHanded(2.2f, 2.2f, 0.1f, 10f);
+        float aspect = Engine.Window.Size.X/(float)Engine.Window.Size.Y;
+        Matrix4x4 gizmoProjection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
+            Constants._cameraFOV, aspect, Constants._cameraPlaneClose, Constants._cameraPlaneFar);
 
         GL.Disable(EnableCap.DepthTest);
 
@@ -372,24 +361,7 @@ internal class Renderer {
 
         GL.Enable(EnableCap.CullFace);
     }
-    private void DrawUI () {
-        GL.Disable(EnableCap.CullFace);
-
-        if (Inputs.Actions[Inputs.F3].pressedDown) _renderFPS = !_renderFPS;
-        if (_renderFPS) {
-            int left = 10;
-            _textRenderer.DrawText($"FPS: {(int)(1/Engine.deltaTime)}", left, 20, Engine.Window.Size.X, Engine.Window.Size.Y);
-            _textRenderer.DrawText($"ms: {Engine.deltaTime*1000:F1}", left, 40, Engine.Window.Size.X, Engine.Window.Size.Y);
-            _textRenderer.DrawText($"Pos: {Camera.Instance.cameraPos:F2}", left, 60, Engine.Window.Size.X, Engine.Window.Size.Y);
-            _textRenderer.DrawText($"MousePos: {Camera.Instance.mousePos:F2}", left, 80, Engine.Window.Size.X, Engine.Window.Size.Y);
-            _textRenderer.DrawText($"Components: {ComponentManager.componentsCount}", left, 100, Engine.Window.Size.X, Engine.Window.Size.Y);
-            //_textRenderer.DrawText($"Wheel: {Inputs.Wheel:F2}", left, 100, Engine.Window.Size.X, Engine.Window.Size.Y);
-            
-            //Log.log(ComponentManager.NameAll);
-        }
-
-        GL.Enable(EnableCap.CullFace);
-    }
+    
 
     private void DrawEnd () {
         RenderList.Clear();
@@ -415,7 +387,7 @@ internal class Renderer {
         _skybox.Dispose();
         _hdrTexture_Skybox?.Dispose();
         _sh_Skybox.Dispose();
-        _textRenderer.Dispose();
+        TextRenderer.Dispose();
     }
 
 }

@@ -230,7 +230,8 @@ internal sealed class CameraEditor : Camera {
             Inputs.MouseHide();
         }
 
-        Renderer.Instance.View = Utils.CreateLookAtLH(position, position + forward, worldUp);
+        //Renderer.Instance.View = Utils.CreateLookAtLH(position, position + forward, worldUp);
+        Renderer.Instance.View = Matrix4x4.CreateLookAtLeftHanded(position, position + forward, worldUp);
         cameraRot = rotation;
     }
 

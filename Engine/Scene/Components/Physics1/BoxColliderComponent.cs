@@ -2,7 +2,7 @@
 using System.Numerics;
 using System.Collections.Generic;
 
-namespace Engine;
+namespace Engine.Bad;
 
 
 public class BoxColliderComponent : ColliderComponent {
@@ -89,7 +89,7 @@ public class BoxColliderComponent : ColliderComponent {
     }
 
     /// Simple AABB collision detection with proper normal calculation
-    public override bool Overlaps (ColliderComponent other, out Contact contact) {
+    public override bool Overlaps (ColliderComponent other, out Contact1 contact) {
         contact = default;
 
         if (other is BoxColliderComponent otherBox) {
@@ -99,7 +99,7 @@ public class BoxColliderComponent : ColliderComponent {
         return false;
     }
 
-    private bool OverlapsBoxOBB (BoxColliderComponent other, out Contact contact) {
+    private bool OverlapsBoxOBB (BoxColliderComponent other, out Contact1 contact) {
         contact = default;
 
         var (centerA, halfA, rotA) = GetOBB();
@@ -163,7 +163,7 @@ public class BoxColliderComponent : ColliderComponent {
         deepest += Vector3.Dot(axesA[1], -minAxis) > 0 ? axesA[1] * halfA.Y : -axesA[1] * halfA.Y;
         deepest += Vector3.Dot(axesA[2], -minAxis) > 0 ? axesA[2] * halfA.Z : -axesA[2] * halfA.Z;
 
-        contact = new Contact {
+        contact = new Contact1 {
             normal = minAxis,
             penetration = minPen,
             point = deepest

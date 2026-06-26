@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
 
-namespace Engine;
+namespace Engine.Bad;
 
 
 public class PhysicsComponent : Component, IComponentFixedUpdate {

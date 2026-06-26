@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
 
-namespace Engine;
+namespace Engine.Bad;
 
 
 public abstract class ColliderComponent : Component, IComponentUpdate {
@@ -16,8 +16,10 @@ public abstract class ColliderComponent : Component, IComponentUpdate {
         PhysicsManager.Unregister(this);
     }
 
+    public abstract Bounds GetWorldBounds ();
+    public abstract bool Overlaps (ColliderComponent other, out Contact1 contact);
+
 
     public abstract void Update ();
     //public abstract void FixedUpdate ();
-
 }

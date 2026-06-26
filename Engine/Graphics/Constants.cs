@@ -24,8 +24,12 @@ internal static class Constants {
     internal static float _cameraFOV = 0.25f*MathF.PI;
     internal static float _cameraPlaneClose = 0.1f;
     internal static float _cameraPlaneFar = 1000f;
+
+    internal static bool _renderSkybox = true;
+
     internal readonly static float _gridScale = _cameraPlaneFar;
     internal readonly static float _gridDivisionScale = 1f;
+
     internal static bool _drawArrowAsMesh = true;
 
     internal static Vector3 sunLightDir = Vector3.Normalize(new Vector3(-0.3f, -1f, 0.4f));
@@ -39,5 +43,8 @@ internal static class Constants {
 
     internal static bool drawGizmos = true;
     internal static bool drawGizmosSun = true;
+
+
+    internal static int left = 10;
 
 }
