@@ -3,6 +3,7 @@ using Silk.NET.OpenGL;
 using Engine.Graphics.UI;
 using Engine.Input;
 using static Engine.DataEngine;
+using static Engine.Input.Inputs;
 
 namespace Engine.Graphics;
 
@@ -212,6 +213,7 @@ internal class Renderer {
 
     private void OnRender (double deltaTime) {
         UpdateProjection();
+
         GL.Clear((uint)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
         GL.Enable(EnableCap.CullFace);
         GL.Enable(EnableCap.DepthTest);

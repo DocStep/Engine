@@ -26,20 +26,6 @@ public class BoxColliderComponent : ColliderComponent {
             };
             Graphics.Renderer.Instance.AddRenderInfo(renderInfo);
         }
-
-        /*PhysicsComponent? physicsComponent = owner.GetComponent<PhysicsComponent>();
-        if (physicsComponent is not null && !physicsComponent.isKinematic) {
-            Graphics.UI.TextRenderer.AddText(string.Empty);
-            string vel = $"{owner.Name} Vel: {physicsComponent.Velocity}";
-            string velAng = $"{owner.Name} VelAng: {physicsComponent.VelocityAngular}";
-            string size = $"{owner.Name} HalfExtents: {GetWorldOBB().HalfExtents}";
-            Graphics.UI.TextRenderer.AddText(vel);
-            Graphics.UI.TextRenderer.AddText(velAng);
-            Graphics.UI.TextRenderer.AddText(size);
-            //Log.log(vel);
-            //Log.log(velAng);
-            //Log.log(size);
-        }*/
     }
 
 }

@@ -10,4 +10,16 @@ public class TransformComponent : Component {
     public Vector3 Rotation = Vector3.Zero;
     public Vector3 Scale = Vector3.One;
 
+
+    public Matrix4x4 GetWorldMatrix () {
+        var scaleMat = Matrix4x4.CreateScale(Scale);
+        var rotMat = Matrix4x4.CreateFromYawPitchRoll(DegreesToRadians(Rotation.Y),
+            DegreesToRadians(Rotation.X), DegreesToRadians(Rotation.Z));
+        var transMat = Matrix4x4.CreateTranslation(Position);
+        return scaleMat*rotMat*transMat;
+    }
+
+    public const float eulerRad = MathF.PI/180f;
+    public static float DegreesToRadians (float angle) => angle*eulerRad;
+
 }

@@ -19,7 +19,7 @@ public static class PhysicsManager {
 
 
     public static void Init () {
-        World.SolverIterations = (solver: 10, relaxation: 5); /// def: 6, 4
+        World.SolverIterations = (solver: 15, relaxation: 10); /// def: 6, 4
         World.Gravity = Gravity;
     }
     public static void FixedUpdate () {

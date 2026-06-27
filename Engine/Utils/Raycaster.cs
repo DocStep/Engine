@@ -1,108 +1,140 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 
-namespace Engine;
+namespace Engine.Graphics;
+
 
 public static class Raycaster {
-    public static (Vector3 origin, Vector3 direction) ScreenPointToRay (
-        float mouseX, float mouseY, int viewportWidth, int viewportHeight,
-        Matrix4x4 view, Matrix4x4 projection) {
 
-        /// Pixels -> normalized device coordinates [-1, 1], Y flipped (screen Y is top-down).
-        float ndcX = (2f*mouseX)/viewportWidth - 1f;
-        float ndcY = 1f - (2f*mouseY)/viewportHeight;
+    public static Ray ScreenPointToRay (Vector2 mousePos, int screenWidth, int screenHeight, Matrix4x4 view, Matrix4x4 proj) {
+        float x = (2f*mousePos.X) / screenWidth - 1f;
+        float y = 1f - (2f*mousePos.Y) / screenHeight;
 
-        Matrix4x4.Invert(view*projection, out Matrix4x4 inverseViewProjection);
+        Matrix4x4.Invert(view*proj, out var invVP);
 
-        Vector4 nearPoint4 = Vector4.Transform(new Vector4(ndcX, ndcY, -1f, 1f), inverseViewProjection);
-        Vector4 farPoint4 = Vector4.Transform(new Vector4(ndcX, ndcY, 1f, 1f), inverseViewProjection);
+        var nearPoint = Vector4.Transform(new Vector4(x, y, -1f, 1f), invVP);
+        var farPoint = Vector4.Transform(new Vector4(x, y, 1f, 1f), invVP);
 
-        Vector3 nearPoint = new Vector3(nearPoint4.X, nearPoint4.Y, nearPoint4.Z)/nearPoint4.W;
-        Vector3 farPoint = new Vector3(farPoint4.X, farPoint4.Y, farPoint4.Z)/farPoint4.W;
+        nearPoint /= nearPoint.W;
+        farPoint /= farPoint.W;
 
-        Vector3 direction = Vector3.Normalize(farPoint - nearPoint);
-        return (nearPoint, direction);
+        var origin = new Vector3(nearPoint.X, nearPoint.Y, nearPoint.Z);
+        var dir = Vector3.Normalize(new Vector3(farPoint.X, farPoint.Y, farPoint.Z) - origin);
+
+        return new Ray(origin, dir);
     }
 
-    public static float? IntersectSphere (Vector3 origin, Vector3 direction, Vector3 center, float radius) {
-        Vector3 oc = origin - center;
-        float b = Vector3.Dot(oc, direction);
-        float c = Vector3.Dot(oc, oc) - radius*radius;
-        float discriminant = b*b - c;
-        if (discriminant < 0f) return null;
-
-        float sqrtDiscriminant = MathF.Sqrt(discriminant);
-        float t0 = -b - sqrtDiscriminant;
-        float t1 = -b + sqrtDiscriminant;
-
-        if (t0 >= 0f) return t0;
-        if (t1 >= 0f) return t1;
-        return null;
-    }
-
-    internal static float? IntersectAABB (Vector3 origin, Vector3 dir, Vector3 min, Vector3 max) {
-        float tMin = float.NegativeInfinity;
-        float tMax = float.PositiveInfinity;
-
-        Span<float> o = stackalloc float[] { origin.X, origin.Y, origin.Z };
-        Span<float> d = stackalloc float[] { dir.X, dir.Y, dir.Z };
-        Span<float> mn = stackalloc float[] { min.X, min.Y, min.Z };
-        Span<float> mx = stackalloc float[] { max.X, max.Y, max.Z };
+    public static bool RayAabb (Ray ray, AABB box, out float tHit) {
+        float tMin = 0f;
+        float tMax = float.MaxValue;
+        tHit = 0f;
 
         for (int i = 0; i < 3; i++) {
-            if (MathF.Abs(d[i]) < 1e-8f) {
-                if (o[i] < mn[i] || o[i] > mx[i]) return null;
-            } else {
-                float t1 = (mn[i] - o[i])/d[i];
-                float t2 = (mx[i] - o[i])/d[i];
-                if (t1 > t2) (t1, t2) = (t2, t1);
-                tMin = MathF.Max(tMin, t1);
-                tMax = MathF.Min(tMax, t2);
-                if (tMin > tMax) return null;
+            float origin = i == 0 ? ray.Origin.X : i == 1 ? ray.Origin.Y : ray.Origin.Z;
+            float dir = i == 0 ? ray.Direction.X : i == 1 ? ray.Direction.Y : ray.Direction.Z;
+            float min = i == 0 ? box.Min.X : i == 1 ? box.Min.Y : box.Min.Z;
+            float max = i == 0 ? box.Max.X : i == 1 ? box.Max.Y : box.Max.Z;
+
+            if (MathF.Abs(dir) < 1e-8f) {
+                if (origin < min || origin > max)
+                    return false; /// parallel and outside slab
+                continue;
+            }
+
+            float invD = 1f/dir;
+            float t1 = (min - origin)*invD;
+            float t2 = (max - origin)*invD;
+
+            if (t1 > t2)
+                (t1, t2) = (t2, t1);
+
+            tMin = MathF.Max(tMin, t1);
+            tMax = MathF.Min(tMax, t2);
+
+            if (tMin > tMax)
+                return false;
+        }
+
+        tHit = tMin;
+        return true;
+    }
+
+    public static bool RayTriangle (Ray ray, Vector3 v0, Vector3 v1, Vector3 v2, out float t) {
+        const float epsilon = 1e-6f;
+        t = 0f;
+
+        var edge1 = v1 - v0;
+        var edge2 = v2 - v0;
+        var h = Vector3.Cross(ray.Direction, edge2);
+        float a = Vector3.Dot(edge1, h);
+
+        if (a > -epsilon && a < epsilon)
+            return false; /// ray parallel to triangle
+
+        float f = 1f/a;
+        var s = ray.Origin - v0;
+        float u = f*Vector3.Dot(s, h);
+
+        if (u < 0f || u > 1f)
+            return false;
+
+        var q = Vector3.Cross(s, edge1);
+        float v = f*Vector3.Dot(ray.Direction, q);
+
+        if (v < 0f || u + v > 1f)
+            return false;
+
+        t = f*Vector3.Dot(edge2, q);
+
+        return t > epsilon;
+    }
+
+    public static bool RaycastMesh (Ray ray, MeshData mesh, Matrix4x4 worldMatrix, out Vector3 worldHit, out float closestT, out Vector3 worldNormal) {
+        closestT = float.MaxValue;
+        worldHit = default;
+        worldNormal = default;
+        bool hit = false;
+
+        for (int i = 0; i < mesh.Indices.Length; i += 3) {
+            var v0 = Vector3.Transform(mesh.Vertices[mesh.Indices[i]].Position, worldMatrix);
+            var v1 = Vector3.Transform(mesh.Vertices[mesh.Indices[i + 1]].Position, worldMatrix);
+            var v2 = Vector3.Transform(mesh.Vertices[mesh.Indices[i + 2]].Position, worldMatrix);
+
+            if (RayTriangle(ray, v0, v1, v2, out float t) && t < closestT) {
+                closestT = t;
+                worldHit = ray.Origin + ray.Direction*t;
+                worldNormal = Vector3.Normalize(Vector3.Cross(v1 - v0, v2 - v0));
+                hit = true;
             }
         }
 
-        if (tMin > 0f) return tMin;
-        if (tMax > 0f) return tMax;
-        return null;
+        return hit;
     }
 
-    /// Möller–Trumbore
-    internal static float? IntersectTriangle (
-        Vector3 origin, Vector3 dir,
-        Vector3 v0, Vector3 v1, Vector3 v2) {
-        const float EPSILON = 1e-8f;
+    public static bool RaycastScene (Scene scene, Ray ray, out GameObject? hitGo, out Vector3 hitPoint, out Vector3 hitNormal) {
+        hitGo = null;
+        hitPoint = default;
+        hitNormal = default;
+        float closestT = float.MaxValue;
+        bool hitAny = false;
 
-        Vector3 edge1 = v1 - v0;
-        Vector3 edge2 = v2 - v0;
-        Vector3 h = Vector3.Cross(dir, edge2);
-        float det = Vector3.Dot(edge1, h);
+        foreach (var go in scene.Objects) {
+            var meshComp = go.GetComponent<MeshComponent>();
+            if (meshComp?.mesh is null) continue;
 
-        if (MathF.Abs(det) < EPSILON) return null; /// parallel
+            var worldMatrix = go.Transform.GetWorldMatrix();
+            var worldAabb = meshComp.mesh.LocalAABB.Transformed(worldMatrix);
+            if (!RayAabb(ray, worldAabb, out float aabbT) || closestT < aabbT) continue; /// broadphase reject, can't be the closest hit
 
-        float invDet = 1f/det;
-        Vector3 s = origin - v0;
-        float u = invDet*Vector3.Dot(s, h);
-        if (u < 0f || u > 1f) return null;
+            if (RaycastMesh(ray, meshComp.mesh.Data, worldMatrix, out var localHitPoint, out float t, out var localNormal) && t < closestT) {
+                closestT = t;
+                hitGo = go;
+                hitPoint = localHitPoint;
+                hitNormal = localNormal;
+                hitAny = true;
+            }
+        }
 
-        Vector3 q = Vector3.Cross(s, edge1);
-        float v = invDet*Vector3.Dot(dir, q);
-        if (v < 0f || u + v > 1f) return null;
-
-        float t = invDet*Vector3.Dot(edge2, q);
-        return t > EPSILON ? t : null;
+        return hitAny;
     }
-
-    public static float? IntersectPlane (Vector3 origin, Vector3 direction, Vector3 planePoint, Vector3 planeNormal) {
-        float denominator = Vector3.Dot(direction, planeNormal);
-        if (MathF.Abs(denominator) < 1e-8f) return null; /// ray parallel to plane
-
-        float t = Vector3.Dot(planePoint - origin, planeNormal)/denominator;
-        return t >= 0f ? t : null;
-    }
-
-    private static float GetAxis (Vector3 v, int axis) => axis switch {
-        0 => v.X,
-        1 => v.Y,
-        _ => v.Z,
-    };
 }

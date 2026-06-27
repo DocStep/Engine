@@ -17,6 +17,7 @@ public class Scene {
     }
 
     protected readonly List<GameObject> objects = new();
+    public List<GameObject> Objects => objects;
     public void ObjectAdd (GameObject gameObject) {
         objects.Add(gameObject);
     }

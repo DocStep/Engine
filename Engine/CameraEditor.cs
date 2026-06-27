@@ -195,7 +195,6 @@ internal sealed class CameraEditor : Camera {
         Matrix4x4 rotation;
         Vector3 forward;
         Vector3 position;
-
         Vector3 worldUp = MathF.Cos(pitch) < 0 ? -Vector3.UnitY : Vector3.UnitY;
 
         if (Inputs.Actions[Alt].pressed && Inputs.Actions[LMB].pressed) {
@@ -233,6 +232,18 @@ internal sealed class CameraEditor : Camera {
         //Renderer.Instance.View = Utils.CreateLookAtLH(position, position + forward, worldUp);
         Renderer.Instance.View = Matrix4x4.CreateLookAtLeftHanded(position, position + forward, worldUp);
         cameraRot = rotation;
+
+        if (Renderer.Instance is not null) {
+            Ray ray = Raycaster.ScreenPointToRay(mousePos, Engine.Window.Size.X, Engine.Window.Size.Y,
+            Renderer.Instance.View, Renderer.Instance.Projection);
+            if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
+                Raycaster.RaycastScene(SceneManager.ActiveScene, ray, out GameObject? hitGO, out Vector3 hitPos, out Vector3 hitNormal);
+                if (hitGO is not null) {
+                    Log.log($"{hitGO.Name}: {hitPos} {hitNormal}");
+
+                }
+            }
+        }
     }
 
 
@@ -250,7 +261,7 @@ internal sealed class CameraEditor : Camera {
         cameraRot = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
     }
     private void TryFocusOnPoint (float mouseX, float mouseY, int viewportWidth, int viewportHeight) {
-        var (rayOrigin, rayDirection) = Raycaster.ScreenPointToRay(
+        var (rayOrigin, rayDirection) = Raycaster1.ScreenPointToRay(
             mouseX, mouseY, viewportWidth, viewportHeight,
             Renderer.Instance.View, Renderer.Instance.Projection);
 
@@ -265,7 +276,7 @@ internal sealed class CameraEditor : Camera {
 */
         // Fallback: ground plane at Y = 0
         if (!bestT.HasValue) {
-            float? planeT = Raycaster.IntersectPlane(
+            float? planeT = Raycaster1.IntersectPlane(
                 rayOrigin, rayDirection, Vector3.Zero, Vector3.UnitY);
             if (planeT.HasValue) bestT = planeT;
         }

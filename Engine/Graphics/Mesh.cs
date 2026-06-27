@@ -10,9 +10,14 @@ public class Mesh : IDisposable {
     private readonly uint _ebo;
     private readonly uint _indexCount;
 
+    public readonly MeshData Data;
+    public readonly AABB LocalAABB;
+
     public Mesh (MeshData data) {
         GL = Renderer.Instance.GL;
         _indexCount = (uint)data.Indices.Length;
+        Data = data;
+        LocalAABB = AABB.FromVertices(data.Vertices);
 
         float[] vertices = Flatten(data.Vertices);
 
@@ -85,9 +90,11 @@ public class Mesh : IDisposable {
         GL.BindVertexArray(0);
     }
 
+
     public void Dispose () {
         GL.DeleteBuffer(_vbo);
         GL.DeleteBuffer(_ebo);
         GL.DeleteVertexArray(_vao);
     }
+
 }
