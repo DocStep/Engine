@@ -7,14 +7,7 @@ namespace Engine;
 public abstract class ColliderComponent : Component, IComponentUpdate {
 
     public bool drawGizmos = true;
-    public bool isStatic = false;
-
-    public override void OnAdd () {
-        PhysicsManager.Register(this);
-    }
-    public override void OnDestroy () {
-        PhysicsManager.Unregister(this);
-    }
+    //public bool isStatic = false;
 
 
     public abstract void Update ();

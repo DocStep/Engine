@@ -33,6 +33,10 @@ public static class lib {
         return b ? f : 0;
     }
 
+    public static float Lerp (float a, float b, float t) {
+        return a + (b-a)*t;
+    }
+
 
     public static int Dictionary_countAll (IDictionary dictionary) {
         int count = 0;

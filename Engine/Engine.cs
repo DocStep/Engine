@@ -98,6 +98,7 @@ public class Engine : IDisposable {
 
 
         ComponentManager.Init();
+        PhysicsManager.Init();
 
         Renderer = new Renderer();
         SceneManager.Init();

@@ -27,7 +27,7 @@ public class BoxColliderComponent : ColliderComponent {
             Graphics.Renderer.Instance.AddRenderInfo(renderInfo);
         }
 
-        PhysicsComponent? physicsComponent = owner.GetComponent<PhysicsComponent>();
+        /*PhysicsComponent? physicsComponent = owner.GetComponent<PhysicsComponent>();
         if (physicsComponent is not null && !physicsComponent.isKinematic) {
             Graphics.UI.TextRenderer.AddText(string.Empty);
             string vel = $"{owner.Name} Vel: {physicsComponent.Velocity}";
@@ -39,23 +39,7 @@ public class BoxColliderComponent : ColliderComponent {
             //Log.log(vel);
             //Log.log(velAng);
             //Log.log(size);
-        }
-    }
-
-    public OBB GetWorldOBB () {
-        // Ignore local offsets as requested — just world transform.
-        Vector3 worldPos = owner.Transform.Position;
-        Vector3 worldScale = owner.Transform.Scale;
-
-        Matrix4x4 rotMatrix = Utils.Rotation(owner.Transform.Rotation);  // Extension method — degrees in, matrix out
-
-        return new OBB {
-            Center      = worldPos,
-            AxisX       = new Vector3(rotMatrix.M11, rotMatrix.M12, rotMatrix.M13),
-            AxisY       = new Vector3(rotMatrix.M21, rotMatrix.M22, rotMatrix.M23),
-            AxisZ       = new Vector3(rotMatrix.M31, rotMatrix.M32, rotMatrix.M33),
-            HalfExtents = worldScale * 0.5f,
-        };
+        }*/
     }
 
 }

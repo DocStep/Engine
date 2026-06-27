@@ -12,7 +12,7 @@ public abstract class ColliderComponent : Component, IComponentUpdate {
     public override void OnAdd () {
         PhysicsManager.Register(this);
     }
-    public override void OnDestroy () {
+    public override void OnRemove () {
         PhysicsManager.Unregister(this);
     }
 

@@ -1,76 +1,96 @@
 ﻿using System;
 using System.Numerics;
+using Jitter2;
+using Jitter2.Collision.Shapes;
+using Jitter2.Dynamics;
+using Jitter2.LinearMath;
 
 namespace Engine;
 
 
-public class PhysicsComponent : Component, IComponentUpdate {
-
-    public float mass = 1f;
-    public Vector3 massCenter = Vector3.Zero;
-    public float drag = 0.01f;
-    public float dragAngular = 0.01f;
-
-    public bool useGravity = true;
-    public bool isKinematic = false;
-
-    private Vector3 velocity = Vector3.Zero;
-    public Vector3 Velocity {
-        get {
-            return velocity;
-        }
-    }
-    private Vector3 velocityAngular = Vector3.Zero;
-    public Vector3 VelocityAngular {
-        get {
-            return velocityAngular;
-        }
+public class PhysicsComponent : Component, IComponentFixedUpdate {
+    public PhysicsComponent () {
+        Rigidbody = PhysicsManager.AddRigidbody(this);
+        Rigidbody.Restitution = 0.0f;
+        Rigidbody.Friction = 0.5f;
     }
 
+    public readonly RigidBody Rigidbody = null!;
 
-    public void Update () {
+
+
+    public void FixedUpdate () {
+
+    }
+
+    public override void OnAdd () {
+        Rigidbody.AddShape(new BoxShape(owner.Transform.Scale));
+        UpdateRigidbody();
+    }
+    public override void OnRemove () {
 
     }
 
 
-    public void Integrate (float dt) {
-        if (isKinematic) return;
-
-        if (useGravity)
-            velocity += PhysicsManager.Gravity * dt;
-
-        velocity *= 1f - drag*dt;
-        velocityAngular *= 1f - dragAngular*dt;
-
-        owner.Transform.Position += velocity * dt;
-
-        // Angular integration via quaternion
-        if (velocityAngular.LengthSquared() > 1e-10f) {
-            float angle = velocityAngular.Length() * dt;
-            Vector3 axis = velocityAngular / (angle / dt);   // = velocityAngular normalised
-            var dq = Quaternion.CreateFromAxisAngle(Vector3.Normalize(velocityAngular), angle);
-
-            // Euler rotation lives as degrees — convert, apply, convert back
-            var current = EulerToQuat(owner.Transform.Rotation);
-            var next = Quaternion.Normalize(dq * current);
-            owner.Transform.Rotation = QuatToEuler(next);
-        }
+    public void UpdateTransform () {
+        owner.Transform.Position = Rigidbody.Position;
+        owner.Transform.Rotation = ToEulerYXZ(Rigidbody.Orientation);
+    }
+    public void UpdateRigidbody () {
+        Rigidbody.Position = owner.Transform.Position;
+        Rigidbody.Orientation = FromEulerYXZ(owner.Transform.Rotation);
     }
 
-    public void ApplyImpulse (Vector3 impulse, Vector3 contactOffset) {
-        if (isKinematic) return;
-        float invMass = 1f / mass;
-        velocity        += impulse * invMass;
-        velocityAngular += Vector3.Cross(contactOffset, impulse) * invMass;
-        // (A real impl would multiply by inv-inertia tensor; this is the manager's job for accuracy.)
+
+    public const float Deg2Rad = MathF.PI/180f;
+    public const float Rad2Deg = 180f/MathF.PI;
+    public static Vector3 ToEulerYXZ (JQuaternion q) {
+        float x = q.X, y = q.Y, z = q.Z, w = q.W;
+
+        /// pitch (X)
+        float sinPitch = 2f*(w*x - y*z);
+        sinPitch = Math.Clamp(sinPitch, -1f, 1f);
+        float pitch = MathF.Asin(sinPitch);
+
+        /// yaw (Y)
+        float yaw = MathF.Atan2(2f*(w*y + x*z), 1f - 2f*(x*x + y*y));
+
+        /// roll (Z)
+        float roll = MathF.Atan2(2f*(w*z + x*y), 1f - 2f*(x*x + z*z));
+        
+        Vector3 eulerRadians = new Vector3(pitch, yaw, roll);
+        return eulerRadians*Rad2Deg;
+    }
+    public static JQuaternion FromEulerYXZ (Vector3 eulerDegrees) {
+        Vector3 euler = eulerDegrees*Deg2Rad;
+        float pitch = euler.X;
+        float yaw = euler.Y;
+        float roll = euler.Z;
+
+        float cy = MathF.Cos(yaw*0.5f);
+        float sy = MathF.Sin(yaw*0.5f);
+        float cx = MathF.Cos(pitch*0.5f);
+        float sx = MathF.Sin(pitch*0.5f);
+        float cz = MathF.Cos(roll*0.5f);
+        float sz = MathF.Sin(roll*0.5f);
+
+        /// q = qYaw * qPitch * qRoll, matching the YXZ composition order
+        /// used in ToEulerYXZ's decomposition.
+        JQuaternion q;
+        q.W = cy*cx*cz + sy*sx*sz;
+        q.X = cy*sx*cz + sy*cx*sz;
+        q.Y = sy*cx*cz - cy*sx*sz;
+        q.Z = cy*cx*sz - sy*sx*cz;
+
+        return q;
     }
 
-    static Quaternion EulerToQuat (Vector3 euler) {
+    /*public static Quaternion EulerToQuat (Vector3 euler) {
         const float d2r = MathF.PI / 180f;
         return Quaternion.CreateFromYawPitchRoll(euler.Y * d2r, euler.X * d2r, euler.Z * d2r);
     }
 
-    static Vector3 QuatToEuler (Quaternion q) {
+    public static Vector3 QuatToEuler (Quaternion q) {
         const float r2d = 180f / MathF.PI;
         // YPR → Euler XYZ (pitch/yaw/roll)
         float sinP = 2f * (q.W * q.X - q.Y * q.Z);
@@ -80,7 +100,6 @@ public class PhysicsComponent : Component, IComponentUpdate {
         float yaw = MathF.Atan2(2f * (q.W * q.Y + q.Z * q.X), 1f - 2f * (q.X * q.X + q.Y * q.Y));
         float roll = MathF.Atan2(2f * (q.W * q.Z + q.X * q.Y), 1f - 2f * (q.Y * q.Y + q.Z * q.Z));
         return new Vector3(pitch * r2d, yaw * r2d, roll * r2d);
-    }
-
+    }*/
 
 }

@@ -25,7 +25,15 @@ internal static class Constants {
     internal static float _cameraPlaneClose = 0.1f;
     internal static float _cameraPlaneFar = 1000f;
 
-    internal static bool _renderSkybox = true;
+    internal static bool _renderSkybox = false;
+    public static bool renderSkybox {
+        get => Constants._renderSkybox;
+        set {
+            if (Constants._renderSkybox != value) {
+                Constants._renderSkybox = value;
+            }
+        }
+    }
 
     internal readonly static float _gridScale = _cameraPlaneFar;
     internal readonly static float _gridDivisionScale = 1f;

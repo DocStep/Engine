@@ -31,11 +31,14 @@ public class GameObject {
         //throw new Exception($"Component of type {typeof(T)} not found in GameObject {Name}");
         return null;
     }
-    public void AddComponent (Component component) {
-        component.owner = this;
+    public T AddComponent<T> () where T : Component, new() {
+        T component = new T();
         Components.Add(component);
+        component.SetParent(this);
         ComponentManager.ComponentRegister(component);
+        return component;
     }
+
     public void RemoveComponent (Component component) {
         component.owner = null!;
         Components.Remove(component);

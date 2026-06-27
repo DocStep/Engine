@@ -16,18 +16,24 @@ public class ScenePhysics : Scene {
         GameObject ground = new GameObject() { Name = "Plane", };
         ground.Transform.Position = new Vector3(0, 0, 0);
         ground.Transform.Scale = new Vector3(10, 1f, 10);
-        ground.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_Cube, });
-        ground.AddComponent(new BoxColliderComponent() { scale = new Vector3(1, 1f, 1), isStatic = true, });
-        ground.AddComponent(new PhysicsComponent() { isKinematic = true, });
+        ground.AddComponent<MeshComponent>().mesh = Renderer.Instance._mesh_Cube;
+        ground.AddComponent<BoxColliderComponent>();
+        ground.AddComponent<PhysicsComponent>().Rigidbody.MotionType = Jitter2.Dynamics.MotionType.Static;
 
 
         GameObject cube = new GameObject() { Name = "Cube", };
         cube.Transform.Position = new Vector3(0, 10, 0);
+        //cube.Transform.Rotation = new Vector3(30, 0, 0);
+        cube.AddComponent<MeshComponent>().mesh = Renderer.Instance._mesh_Cube;
+        cube.AddComponent<BoxColliderComponent>();
+        cube.AddComponent<PhysicsComponent>().Rigidbody.MotionType = Jitter2.Dynamics.MotionType.Dynamic;
+
+        cube = new GameObject() { Name = "cube", };
+        cube.Transform.Position = new Vector3(0, 15, 0);
         cube.Transform.Rotation = new Vector3(30, 0, 0);
-        cube.AddComponent(new MeshComponent() { mesh = Renderer.Instance._mesh_Cube, });
-        cube.AddComponent(new BoxColliderComponent());
-        cube.AddComponent(new PhysicsComponent());
-        //cube.AddComponent(new BoxColliderComponent());
+        cube.AddComponent<MeshComponent>().mesh = Renderer.Instance._mesh_Cube;
+        cube.AddComponent<BoxColliderComponent>();
+        cube.AddComponent<PhysicsComponent>().Rigidbody.MotionType = Jitter2.Dynamics.MotionType.Dynamic;
 
     }
 

@@ -84,7 +84,7 @@ public static class ComponentManager {
             componentsFixedUpdate.Remove(iComponentFixedUpdate);
         }
 
-        component.OnDestroy();
+        component.OnRemove();
     }
     public static void ComponentRegister (List<Component> components) {
         for (int c = 0; c < components.Count; c++) {

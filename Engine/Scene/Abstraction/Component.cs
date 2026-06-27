@@ -6,7 +6,12 @@ public abstract class Component {
 
     public TransformComponent? parent = null;
 
+
+    public virtual void SetParent (GameObject gameObject) {
+        owner = gameObject;
+    }
+
     public virtual void OnAdd () { }
-    public virtual void OnDestroy () { }
+    public virtual void OnRemove () { }
 
 }

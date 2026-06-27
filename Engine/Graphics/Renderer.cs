@@ -16,6 +16,8 @@ internal class Renderer {
         Engine.Window.FramebufferResize += OnFrameBufferResize;
 
         GL = Engine.Window.CreateOpenGL();
+        GL.FrontFace(FrontFaceDirection.CW);
+        GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
 
         _mesh_Cube = new Mesh(Cube.Generate());
         _mesh_Sphere = new Mesh(Sphere.Generate());
@@ -135,17 +137,6 @@ internal class Renderer {
     private float[] uView = [];
     private float[] uProjection = [];
 
-    private bool renderSkybox {
-        get => Constants._renderSkybox;
-        set {
-            if (Constants._renderSkybox != value) {
-                Constants._renderSkybox = value;
-                renderSkyboxUpdate();
-            }
-        }
-    }
-    private void renderSkyboxUpdate () { }
-
 
     private readonly List<RenderInfo> RenderList = new List<RenderInfo>();
     public void AddRenderInfo (RenderInfo renderInfo) {
@@ -221,14 +212,11 @@ internal class Renderer {
 
     private void OnRender (double deltaTime) {
         UpdateProjection();
-
-        GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
-        GL.Enable(EnableCap.DepthTest);
-        //GL.Clear((uint)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
-        GL.FrontFace(FrontFaceDirection.CW);
+        GL.Clear((uint)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
         GL.Enable(EnableCap.CullFace);
+        GL.Enable(EnableCap.DepthTest);
 
-        if (renderSkybox) _skybox?.Draw(View, Projection);
+        if (Constants.renderSkybox) _skybox?.Draw(View, Projection);
 
         GL.CullFace(TriangleFace.Back);
 
