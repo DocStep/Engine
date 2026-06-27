@@ -7,8 +7,8 @@ namespace Engine.Graphics;
 public class MeshComponent : Component, IRenderComponent, IComponentUpdate {
 
     public Mesh? mesh = null;
-    public Shader? shader = Renderer.Instance._sh_Lit;
-    public Material? material = Renderer.Instance._mat_Lit;
+    public Shader shader = Renderer.Instance._sh_Lit;
+    public Material material = Renderer.Instance._mat_Lit;
     public Silk.NET.OpenGL.PrimitiveType primitiveType = Silk.NET.OpenGL.PrimitiveType.Triangles;
 
     private RenderInfo renderInfo;
@@ -17,17 +17,24 @@ public class MeshComponent : Component, IRenderComponent, IComponentUpdate {
     public void Update () {
         if (mesh is null || shader is null || material is null) return;
 
-        renderInfo = new RenderInfo() {
-            pos = owner.Transform.Position,
-            rot = owner.Transform.Rotation,
-            scale = owner.Transform.Scale,
+        Renderer.Instance.AddRenderInfo(CreateRenderInfo);
+    }
 
-            mesh = mesh,
-            shader = shader,
-            material = material,
-            primitiveType = primitiveType,
-        };
-        Renderer.Instance.AddRenderInfo(renderInfo);
+
+    public RenderInfo CreateRenderInfo {
+        get {
+            RenderInfo renderInfo = new RenderInfo() {
+                pos = owner.Transform.Position,
+                rot = owner.Transform.Rotation,
+                scale = owner.Transform.Scale,
+
+                mesh = mesh,
+                shader = shader,
+                material = material,
+                primitiveType = primitiveType,
+            };
+            return renderInfo;
+        }
     }
 
 }

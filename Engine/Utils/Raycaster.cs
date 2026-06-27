@@ -111,8 +111,8 @@ public static class Raycaster {
         return hit;
     }
 
-    public static bool RaycastScene (Scene scene, Ray ray, out GameObject? hitGo, out Vector3 hitPoint, out Vector3 hitNormal) {
-        hitGo = null;
+    public static bool RaycastScene (Scene scene, Ray ray, out MeshComponent? hitMesh, out Vector3 hitPoint, out Vector3 hitNormal) {
+        hitMesh = null;
         hitPoint = default;
         hitNormal = default;
         float closestT = float.MaxValue;
@@ -128,7 +128,7 @@ public static class Raycaster {
 
             if (RaycastMesh(ray, meshComp.mesh.Data, worldMatrix, out var localHitPoint, out float t, out var localNormal) && t < closestT) {
                 closestT = t;
-                hitGo = go;
+                hitMesh = meshComp;
                 hitPoint = localHitPoint;
                 hitNormal = localNormal;
                 hitAny = true;

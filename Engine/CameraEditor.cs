@@ -183,6 +183,7 @@ internal sealed class CameraEditor : Camera {
             }
 
             cameraPosDelta = moveDirection * baseSpeed * speedFactor * dt;
+            isFocusing = false;
         } else {
             moveHoldTime = 0f;
         }
@@ -235,12 +236,12 @@ internal sealed class CameraEditor : Camera {
 
         if (Renderer.Instance is not null) {
             Ray ray = Raycaster.ScreenPointToRay(mousePos, Engine.Window.Size.X, Engine.Window.Size.Y,
-            Renderer.Instance.View, Renderer.Instance.Projection);
+                Renderer.Instance.View, Renderer.Instance.Projection);
             if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
-                Raycaster.RaycastScene(SceneManager.ActiveScene, ray, out GameObject? hitGO, out Vector3 hitPos, out Vector3 hitNormal);
-                if (hitGO is not null) {
-                    Log.log($"{hitGO.Name}: {hitPos} {hitNormal}");
-
+                Raycaster.RaycastScene(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
+                if (hitMesh is not null) {
+                    Log.log($"{hitMesh.owner.Name}: {hitPos} {hitNormal}");
+                    Renderer.Instance.selectedMesh = hitMesh;
                 }
             }
         }
@@ -266,21 +267,23 @@ internal sealed class CameraEditor : Camera {
             Renderer.Instance.View, Renderer.Instance.Projection);
 
         float? bestT = null;
-/*
-        // Per-triangle raycast against all registered scene objects (BVH-accelerated)
-        foreach (var obj in Scene.Objects) {
-            float? t = obj.BVH.Intersect(rayOrigin, rayDirection, obj.Vertices, obj.Indices, obj.ModelMatrix);
-            if (t.HasValue && (!bestT.HasValue || t.Value < bestT.Value))
-                bestT = t;
+
+        if (Renderer.Instance is not null) {
+            Ray ray = Raycaster.ScreenPointToRay(mousePos, Engine.Window.Size.X, Engine.Window.Size.Y,
+                Renderer.Instance.View, Renderer.Instance.Projection);
+            Raycaster.RaycastScene(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
+            if (hitMesh is not null) {
+                Log.log($"Focus on {hitMesh.owner.Name}: {hitPos} {hitNormal}");
+                bestT = Vector3.Distance(cameraPos, hitPos);
+            }
         }
-*/
+
         // Fallback: ground plane at Y = 0
         if (!bestT.HasValue) {
             float? planeT = Raycaster1.IntersectPlane(
                 rayOrigin, rayDirection, Vector3.Zero, Vector3.UnitY);
             if (planeT.HasValue) bestT = planeT;
         }
-
         if (!bestT.HasValue) return;
 
         Vector3 hitPoint = rayOrigin + rayDirection * bestT.Value;

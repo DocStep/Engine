@@ -39,6 +39,7 @@ internal class Renderer {
         _sh_Unlit = new Shader(Utils.LoadSrc("src/Shaders/Unlit_Vertex.shader"), Utils.LoadSrc("src/Shaders/Unlit_Fragment.shader"), "Unlit");
         _sh_Grid = new Shader(Utils.LoadSrc("src/Shaders/Grid_Vertex.shader"), Utils.LoadSrc("src/Shaders/Grid_Fragment.shader"), "Grid");
         _sh_Axes = new Shader(Utils.LoadSrc("src/Shaders/Axes_Vertex.shader"), Utils.LoadSrc("src/Shaders/Axes_Fragment.shader"), "Axes");
+        _sh_Outline = new Shader(Utils.LoadSrc("src/Shaders/Outline_Vertex.shader"), Utils.LoadSrc("src/Shaders/Outline_Fragment.shader"), "Axes");
 
         _sh_Skybox = new Shader(Utils.LoadSrc("src/Shaders/Skybox_Vertex.shader"), Utils.LoadSrc("src/Shaders/Skybox_Fragment.shader"), "Skybox");
         //_hdrTexture = new HdrTexture("src/hdr/autumn_field_puresky_4k.hdr");
@@ -87,6 +88,7 @@ internal class Renderer {
     public readonly Shader _sh_Unlit = null!;
     public readonly Shader _sh_Grid = null!;
     public readonly Shader _sh_Axes = null!;
+    public readonly Shader _sh_Outline = null!;
 
     public readonly Shader _sh_Skybox = null!;
     public readonly Skybox _skybox = null!;
@@ -174,17 +176,25 @@ internal class Renderer {
 
         int count = RenderList.Count;
         for (int i = 0; i < RenderList.Count; i++) {
-            if (RenderList[i].mesh is null || RenderList[i].material is null) continue;
-
-            Matrix4x4 mesh_m4x4 = Matrix4x4.CreateScale(RenderList[i].scale)*Matrix4x4.Rotation(RenderList[i].rot)*Matrix4x4.Position(RenderList[i].pos);
-            float[] mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-
-            SetSceneUniforms(RenderList[i].shader);
-            RenderList[i].shader.SetMatrix4("uModel", mesh_uModel);
-            RenderList[i].material!.Apply(RenderList[i].shader);
-            RenderList[i].mesh!.Draw(RenderList[i].primitiveType);
+            DrawMesh(RenderList[i]);
         }
     }
+    internal void DrawMesh (RenderInfo renderInfo) {
+        if (renderInfo.mesh is null) return;
+        if (renderInfo.material is null) return;
+        if (renderInfo.shader is null) return;
+
+        Matrix4x4 mesh_m4x4 = Matrix4x4.CreateScale(renderInfo.scale)
+            *Matrix4x4.Rotation(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
+        float[] mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
+
+        SetSceneUniforms(renderInfo.shader);
+        renderInfo.shader.SetMatrix4("uModel", mesh_uModel);
+        renderInfo.material.Apply(renderInfo.shader);
+        renderInfo.mesh.Draw(renderInfo.primitiveType);
+    }
+
+
     private void DrawSphereTest (float offsetX, float offsetZ, int testGridCount, float testGridDensity) {
         GL.Enable(EnableCap.CullFace);
         GL.CullFace(TriangleFace.Back);
@@ -211,10 +221,50 @@ internal class Renderer {
     }
 
 
+    internal MeshComponent? selectedMesh = null;
+    public void DrawSelected () {
+        if (selectedMesh is null) return;
+
+        RenderInfo RenderInfo = selectedMesh.CreateRenderInfo;
+
+        GL.Enable(EnableCap.StencilTest);
+        GL.Enable(EnableCap.DepthTest);
+        GL.Enable(EnableCap.CullFace);
+        GL.CullFace(TriangleFace.Front);
+
+        /// Pass 1 — render mesh normally, mark stencil = 1 everywhere it's visible
+        GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
+        GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
+        GL.StencilMask(0xFF);
+        GL.DepthMask(true);
+
+        DrawMesh(RenderInfo);
+
+        /// Pass 2 — outline: draw inflated mesh ONLY where stencil != 1
+        GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
+        GL.StencilMask(0x00);     /// don't write stencil during outline pass
+        GL.DepthMask(false);      /// don't write depth either — avoids polluting depth buffer
+        //GL.Disable(EnableCap.DepthTest); /// outline ring should always show through, ignore depth entirely
+
+        RenderInfo.shader = _sh_Outline;
+        _sh_Outline.Use();
+        _sh_Outline.SetFloat("uOutlineWidth", 0.02f);
+        _sh_Outline.SetVector3("uOutlineColor", Constants.cyan);
+
+        DrawMesh(RenderInfo);
+
+        /// restore state
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthMask(true);
+        GL.StencilMask(0xFF);
+        GL.Disable(EnableCap.StencilTest);
+    }
+
+
     private void OnRender (double deltaTime) {
         UpdateProjection();
 
-        GL.Clear((uint)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
+        GL.Clear((uint)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit));
         GL.Enable(EnableCap.CullFace);
         GL.Enable(EnableCap.DepthTest);
 
@@ -225,6 +275,9 @@ internal class Renderer {
         /// Draw Scene
         Draw();
 
+        DrawSelected();
+
+        ///--- Stage Post-Scene ---///
         GL.Disable(EnableCap.CullFace);
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);

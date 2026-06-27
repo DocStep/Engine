@@ -23,6 +23,8 @@ public class GameObject {
     public readonly TransformComponent Transform = new TransformComponent();
     private readonly List<Component> Components = new List<Component>();
 
+    public const string GameObjectName = "GameObject";
+
 
     public T? GetComponent<T> () where T : Component {
         foreach (Component component in Components) {
@@ -44,10 +46,6 @@ public class GameObject {
         Components.Remove(component);
         ComponentManager.ComponentUnregister(component);
     }
-
-
-
-    public const string GameObjectName = "GameObject";
 
 
 }
