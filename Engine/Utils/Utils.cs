@@ -116,7 +116,7 @@ internal static class Utils {
         );
     }
 
-    internal static Matrix4x4 CreateLookAtLH (Vector3 eye, Vector3 target, Vector3 up) {
+    /*internal static Matrix4x4 CreateLookAtLH (Vector3 eye, Vector3 target, Vector3 up) {
         Vector3 zaxis = Vector3.Normalize(target - eye);        /// LH: forward = +Z, not -Z
         Vector3 xaxis = Vector3.Normalize(Vector3.Cross(up, zaxis));
         Vector3 yaxis = Vector3.Cross(zaxis, xaxis);
@@ -140,7 +140,7 @@ internal static class Utils {
             0f, 0f, zRange, 1f,
             0f, 0f, -near*zRange, 0f
         );
-    }
+    }*/
 
     /// Wraps an angle to [-pi, pi].
     internal static float WrapAngle (float angle) {

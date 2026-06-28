@@ -234,55 +234,31 @@ internal sealed class CameraEditor : Camera {
             Inputs.MouseHide();
         }
 
-        //Renderer.Instance.View = Utils.CreateLookAtLH(position, position + forward, worldUp);
-        Renderer.Instance.View = Matrix4x4.CreateLookAtLeftHanded(position, position + forward, worldUp);
-        cameraRot = rotation;
-
-        if (Renderer.Instance is not null) {
-            Ray ray = Raycaster.ScreenPointToRay(mousePos, Engine.Window.Size.X, Engine.Window.Size.Y,
-                Renderer.Instance.View, Renderer.Instance.Projection);
-            if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
-                Raycaster.RaycastScene(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
-                if (hitMesh is not null) {
-                    Log.log($"{hitMesh.owner.Name}: {hitPos} {hitNormal}");
-                    Renderer.Instance.selectedMesh = hitMesh;
-
-                } else {
-                    Renderer.Instance.selectedMesh = null;
-                }
+        /// Select
+        Ray ray = RaycastMouse();
+        if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
+            Raycaster.RaycastScene(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
+            if (hitMesh is not null) {
+                Renderer.Instance.selectedMesh = hitMesh;
+            } else {
+                Renderer.Instance.selectedMesh = null;
             }
         }
+
+        Renderer.Instance.View = Matrix4x4.CreateLookAtLeftHanded(position, position + forward, worldUp);
+        cameraRot = rotation;
     }
 
-
-    private void LookAtOrbitCenter () {
-        Vector3 offset = cameraOrbitCenterPos - cameraPos;
-        float dist = offset.Length();
-        if (dist < 0.0001f) return;
-
-        Vector3 forward = offset / dist;
-
-        pitch = MathF.Asin(Utils.Clamp(forward.Y, -1f, 1f));
-        float cosPitch = MathF.Cos(pitch);
-        yaw = -MathF.Atan2(forward.X / cosPitch, forward.Z / cosPitch);
-
-        cameraRot = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
-    }
     private void TryFocusOnPoint (float mouseX, float mouseY, int viewportWidth, int viewportHeight) {
         var (rayOrigin, rayDirection) = Raycaster1.ScreenPointToRay(
             mouseX, mouseY, viewportWidth, viewportHeight,
             Renderer.Instance.View, Renderer.Instance.Projection);
 
         float? bestT = null;
-
-        if (Renderer.Instance is not null) {
-            Ray ray = Raycaster.ScreenPointToRay(mousePos, Engine.Window.Size.X, Engine.Window.Size.Y,
-                Renderer.Instance.View, Renderer.Instance.Projection);
-            Raycaster.RaycastScene(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
-            if (hitMesh is not null) {
-                Log.log($"Focus on {hitMesh.owner.Name}: {hitPos} {hitNormal}");
-                bestT = Vector3.Distance(cameraPos, hitPos);
-            }
+        Ray ray = RaycastMouse();
+        Raycaster.RaycastScene(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
+        if (hitMesh is not null) {
+            bestT = Vector3.Distance(cameraPos, hitPos);
         }
 
         // Fallback: ground plane at Y = 0
@@ -298,8 +274,6 @@ internal sealed class CameraEditor : Camera {
         FocusAtPoint(hitPoint);
     }
 
-    public Vector3 forward => Vector3.Transform(Vector3.UnitZ, cameraRot);
-
     public void FocusAtPoint (Vector3 pos) {
         //float dist = _focusTargetDistance;
         float dist = _focusTargetDistance = Vector3.Distance(cameraPos, cameraOrbitCenterPos);
@@ -307,5 +281,25 @@ internal sealed class CameraEditor : Camera {
         focusTargetCameraPos = pos - forward*dist;
         isFocusing = true;
     }
+
+    public Ray RaycastMouse () {
+        Ray ray = Raycaster.ScreenPointToRay(mousePos, Engine.Window.Size.X, Engine.Window.Size.Y,
+                Renderer.Instance.View, Renderer.Instance.Projection);
+        return ray;
+    }
+
+    /*private void LookAtOrbitCenter () {
+        Vector3 offset = cameraOrbitCenterPos - cameraPos;
+        float dist = offset.Length();
+        if (dist < 0.0001f) return;
+
+        Vector3 forward = offset / dist;
+
+        pitch = MathF.Asin(Utils.Clamp(forward.Y, -1f, 1f));
+        float cosPitch = MathF.Cos(pitch);
+        yaw = -MathF.Atan2(forward.X / cosPitch, forward.Z / cosPitch);
+
+        cameraRot = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
+    }*/
 
 }

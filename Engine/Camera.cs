@@ -20,9 +20,11 @@ internal class Camera {
     protected const float _sensetivity = 0.15f;
     internal const float _sensetivityMultiplier = 0.01f;
 
-    internal Vector3 cameraPos = Vector3.Zero;
-    internal Matrix4x4 cameraRot = Matrix4x4.Identity;
-    internal Vector2 mousePos = Vector2.Zero;
+    public Vector3 cameraPos = Vector3.Zero;
+    public Matrix4x4 cameraRot = Matrix4x4.Identity;
+    public Vector2 mousePos = Vector2.Zero;
+
+    public Vector3 forward => Vector3.Transform(Vector3.UnitZ, cameraRot);
 
     protected float yaw;
     protected float pitch;
