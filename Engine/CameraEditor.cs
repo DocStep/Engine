@@ -33,7 +33,8 @@ internal sealed class CameraEditor : Camera {
 
     private const float _zoomSpeed = 0.1f;
 
-    private const float _focusTargetDistance = 3f;
+    //private const float _focusTargetDistance = 3f;
+    private float _focusTargetDistance;
 
     internal Vector3 cameraOrbitCenterPos = Vector3.Zero;
 
@@ -111,7 +112,6 @@ internal sealed class CameraEditor : Camera {
             cameraDragStartY = mousePos.Y;
             isCameraDragging = false;
         }
-
         if (Inputs.Actions[CameraDrag].pressed) {
             const float dragSpeed = 0.001f;
             float dx = Inputs.MouseDelta.X;
@@ -134,6 +134,10 @@ internal sealed class CameraEditor : Camera {
                 TryFocusOnPoint(mousePos.X, mousePos.Y, Engine.Window.Size.X, Engine.Window.Size.Y);
             }
         }
+
+        if (Inputs.Actions[Inputs.CameraFocus].pressedDown) 
+            if (Renderer.Instance.selectedMesh is not null) 
+                FocusAtPoint(Renderer.Instance.selectedMesh.owner.Transform.Position);
 
         /// Smoothly glide toward the focus target
         if (isFocusing) {
@@ -242,6 +246,9 @@ internal sealed class CameraEditor : Camera {
                 if (hitMesh is not null) {
                     Log.log($"{hitMesh.owner.Name}: {hitPos} {hitNormal}");
                     Renderer.Instance.selectedMesh = hitMesh;
+
+                } else {
+                    Renderer.Instance.selectedMesh = null;
                 }
             }
         }
@@ -287,12 +294,18 @@ internal sealed class CameraEditor : Camera {
         if (!bestT.HasValue) return;
 
         Vector3 hitPoint = rayOrigin + rayDirection * bestT.Value;
-        Vector3 currentForward = Vector3.Transform(Vector3.UnitZ, cameraRot);
 
-        focusTargetOrbitCenterPos = hitPoint;
-        focusTargetCameraPos = hitPoint - currentForward*_focusTargetDistance;
-        isFocusing = true;
+        FocusAtPoint(hitPoint);
     }
 
+    public Vector3 forward => Vector3.Transform(Vector3.UnitZ, cameraRot);
+
+    public void FocusAtPoint (Vector3 pos) {
+        //float dist = _focusTargetDistance;
+        float dist = _focusTargetDistance = Vector3.Distance(cameraPos, cameraOrbitCenterPos);
+        focusTargetOrbitCenterPos = pos;
+        focusTargetCameraPos = pos - forward*dist;
+        isFocusing = true;
+    }
 
 }
