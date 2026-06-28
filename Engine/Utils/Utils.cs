@@ -94,29 +94,35 @@ internal static class Utils {
             throw new FileNotFoundException($"File not found: {fullPath}.");
         return File.ReadAllText(fullPath);
     }
-
-    internal static float[] MatrixToArray (Matrix4x4 m) => new[] {
-        m.M11, m.M12, m.M13, m.M14,
-        m.M21, m.M22, m.M23, m.M24,
-        m.M31, m.M32, m.M33, m.M34,
-        m.M41, m.M42, m.M43, m.M44,
-    };
-    internal static Silk.NET.Maths.Matrix4X4<float> MatrixToMatrix (Matrix4x4 m) {
-        return new Silk.NET.Maths.Matrix4X4<float>(
+    extension(Matrix4x4) {
+        internal static float[] ToArray (Matrix4x4 m) => new[] {
             m.M11, m.M12, m.M13, m.M14,
             m.M21, m.M22, m.M23, m.M24,
             m.M31, m.M32, m.M33, m.M34,
-            m.M41, m.M42, m.M43, m.M44
-        );
+            m.M41, m.M42, m.M43, m.M44,
+        };
     }
-    internal static Matrix4x4 MatrixToMatrix (Silk.NET.Maths.Matrix4X4<float> m) {
-        return new Matrix4x4(
-            m.M11, m.M12, m.M13, m.M14,
-            m.M21, m.M22, m.M23, m.M24,
-            m.M31, m.M32, m.M33, m.M34,
-            m.M41, m.M42, m.M43, m.M44
-        );
+    extension(Silk.NET.Maths.Matrix4X4<float>) {
+        public static Silk.NET.Maths.Matrix4X4<float> MatrixToMatrix (Matrix4x4 m) {
+            return new Silk.NET.Maths.Matrix4X4<float>(
+                m.M11, m.M12, m.M13, m.M14,
+                m.M21, m.M22, m.M23, m.M24,
+                m.M31, m.M32, m.M33, m.M34,
+                m.M41, m.M42, m.M43, m.M44
+            );
+        }
     }
+    extension(Matrix4x4) {
+        internal static Matrix4x4 MatrixToMatrix (Silk.NET.Maths.Matrix4X4<float> m) {
+            return new Matrix4x4(
+                m.M11, m.M12, m.M13, m.M14,
+                m.M21, m.M22, m.M23, m.M24,
+                m.M31, m.M32, m.M33, m.M34,
+                m.M41, m.M42, m.M43, m.M44
+            );
+        }
+    }
+    
 
     /*internal static Matrix4x4 CreateLookAtLH (Vector3 eye, Vector3 target, Vector3 up) {
         Vector3 zaxis = Vector3.Normalize(target - eye);        /// LH: forward = +Z, not -Z

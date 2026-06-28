@@ -35,8 +35,8 @@ public class Skybox : IDisposable {
         GL.CullFace(TriangleFace.Front);
 
         _shader.Use();
-        _shader.SetMatrix4("uView", Utils.MatrixToArray(invView));
-        _shader.SetMatrix4("uProjection", Utils.MatrixToArray(invProjection));
+        _shader.SetMatrix4("uView", Utils.ToArray(invView));
+        _shader.SetMatrix4("uProjection", Utils.ToArray(invProjection));
 
         _texture.Bind(TextureUnit.Texture0);
         _shader.SetInt("uTexture", 0);
