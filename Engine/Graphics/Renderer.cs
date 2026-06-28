@@ -225,7 +225,7 @@ internal class Renderer {
     public void DrawSelected () {
         if (selectedMesh is null) return;
 
-        RenderInfo RenderInfo = selectedMesh.CreateRenderInfo;
+        RenderInfo renderInfo = selectedMesh.CreateRenderInfo;
 
         GL.Enable(EnableCap.StencilTest);
         GL.Enable(EnableCap.DepthTest);
@@ -238,7 +238,7 @@ internal class Renderer {
         GL.StencilMask(0xFF);
         GL.DepthMask(true);
 
-        DrawMesh(RenderInfo);
+        DrawMesh(renderInfo);
 
         /// Pass 2 — outline: draw inflated mesh ONLY where stencil != 1
         GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
@@ -246,12 +246,23 @@ internal class Renderer {
         GL.DepthMask(false);      /// don't write depth either — avoids polluting depth buffer
         //GL.Disable(EnableCap.DepthTest); /// outline ring should always show through, ignore depth entirely
 
-        RenderInfo.shader = _sh_Outline;
+        Vector3 objScale = renderInfo.scale;
+        float t = 0.02f;
+        Vector3 outlineScale = new Vector3(
+            objScale.X + t,
+            objScale.Y + t,
+            objScale.Z + t
+        );
+        Matrix4x4 mesh_m4x4 = Matrix4x4.CreateScale(outlineScale)
+            *Matrix4x4.Rotation(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
+        float[] mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
         _sh_Outline.Use();
-        _sh_Outline.SetFloat("uOutlineWidth", 0.02f);
+        _sh_Outline.SetMatrix4("uView", uView);
+        _sh_Outline.SetMatrix4("uProjection", uProjection);
+        _sh_Outline.SetMatrix4("uModel", mesh_uModel);
+        _sh_Outline.SetFloat("uOutlineWidth", t);
         _sh_Outline.SetVector3("uOutlineColor", Constants.cyan);
-
-        DrawMesh(RenderInfo);
+        renderInfo.mesh!.Draw(renderInfo.primitiveType);
 
         /// restore state
         GL.Enable(EnableCap.DepthTest);
