@@ -134,4 +134,8 @@ public class SceneMaterials : Scene {
 
     }
 
+    public override void DrawRaw () {
+        //Renderer.Instance.DrawMaterialsGrid(0, -10, Constants.materialsGridCount, Constants.materialsGridDensity);
+    }
+
 }

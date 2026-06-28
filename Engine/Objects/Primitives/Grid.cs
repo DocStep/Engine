@@ -3,14 +3,7 @@
 namespace Engine.Graphics;
 
 
-/// Debug gizmo: a flat grid of lines on the XZ plane, centered at the origin.
-/// Line-list topology only — Generate and GenerateWireframe both return the
-/// same data for API symmetry with Cube/Sphere/Plane/Cylinder/Capsule.
 public static class Grid {
-
-    public static MeshData Generate (float size = 10f, int divisions = 10) {
-        return GenerateWireframe(size, divisions);
-    }
 
     public static MeshData GenerateWireframe (float size = 10f, int divisions = 10) {
         int lines = divisions + 1;

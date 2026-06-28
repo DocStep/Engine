@@ -33,8 +33,9 @@ internal sealed class CameraEditor : Camera {
 
     private const float _zoomSpeed = 0.1f;
 
-    //private const float _focusTargetDistance = 3f;
-    private float _focusTargetDistance;
+    private const float _focusTargetDistanceMin = 2f;
+    private const float _focusTargetDistanceMax = 100f;
+    //private float _focusTargetDistance;
 
     internal Vector3 cameraOrbitCenterPos = Vector3.Zero;
 
@@ -63,7 +64,7 @@ internal sealed class CameraEditor : Camera {
         NewTransform();
     }
     private void NewTransform () {
-        cameraRot = Utils.CreateLookAtLH(cameraPos, cameraOrbitCenterPos, Vector3.UnitY);
+        cameraRot = Matrix4x4.CreateLookAtLeftHanded(cameraPos, cameraOrbitCenterPos, Vector3.UnitY);
 
         var dir = Vector3.Normalize(cameraOrbitCenterPos - cameraPos);
         yaw = -MathF.Atan2(dir.X, dir.Z);
@@ -275,8 +276,9 @@ internal sealed class CameraEditor : Camera {
     }
 
     public void FocusAtPoint (Vector3 pos) {
-        //float dist = _focusTargetDistance;
-        float dist = _focusTargetDistance = Vector3.Distance(cameraPos, cameraOrbitCenterPos);
+        float dist = Vector3.Distance(cameraPos, cameraOrbitCenterPos);
+        dist = MathF.Max(_focusTargetDistanceMin, dist);
+        dist = MathF.Min(dist, _focusTargetDistanceMax);
         focusTargetOrbitCenterPos = pos;
         focusTargetCameraPos = pos - forward*dist;
         isFocusing = true;

@@ -25,11 +25,11 @@ internal class Renderer {
         _mesh_Capsule = new Mesh(Capsule.Generate());
         _mesh_Plane = new Mesh(Plane.Generate());
 
-        _mesh_GizmoCube = new Mesh(WireGizmos.Cube(Vector3.Zero, Vector3.One));
-        _mesh_GizmoSphere = new Mesh(WireGizmos.Sphere(Vector3.Zero, 0.5f));
-        _mesh_GizmoCapsule = new Mesh(WireGizmos.Capsule(-0.5f*Vector3.UnitY, 0.5f*Vector3.UnitY, 0.5f));
+        _mesh_GizmoCube = new Mesh(Cube.GenerateWireframe());
+        _mesh_GizmoSphere = new Mesh(Sphere.GenerateWireframe());
+        _mesh_GizmoCapsule = new Mesh(Capsule.GenerateWireframe());
         _mesh_GizmoPlane = new Mesh(Plane.GenerateWireframe());
-        _mesh_GizmoGrid = new Mesh(Grid.GenerateWireframe(size: Constants._gridScale, 
+        _mesh_GizmoGrid = new Mesh(Plane.GenerateWireframe(size: Constants._gridScale, 
             divisions: (int)(Constants._gridScale*Constants._gridDivisionScale)));
         _mesh_GizmoAxes = new Mesh(Axes.GenerateWireframe(length: Constants._gridScale));
         _mesh_GizmoArrow = new Mesh(Arrow.Generate(length: 1f, shaftWidth: 0.01f, headLength: 0.2f, headWidth: 0.1f));
@@ -171,9 +171,6 @@ internal class Renderer {
 
 
     private void Draw () {
-        if (Constants.drawTestGrid) 
-            DrawSphereTest(0, -10, Constants.testGridCount, Constants.testGridDensity);
-
         int count = RenderList.Count;
         for (int i = 0; i < RenderList.Count; i++) {
             DrawMesh(RenderList[i]);
@@ -195,84 +192,6 @@ internal class Renderer {
     }
 
 
-    private void DrawSphereTest (float offsetX, float offsetZ, int testGridCount, float testGridDensity) {
-        GL.Enable(EnableCap.CullFace);
-        GL.CullFace(TriangleFace.Back);
-        SetSceneUniforms(_sh_Lit);
-        _sh_Lit.SetColor("uColor", Constants.black);
-        for (int x = 0; x < testGridCount*testGridDensity; x++) {
-            for (int z = 0; z < testGridCount*testGridDensity; z++) {
-                RenderList.Add(new() {
-                    pos = new Vector3(2f*x/testGridDensity + offsetX, 0f, -2f*z/testGridDensity + offsetZ),
-                    mesh = _mesh_Sphere,
-                    shader = _sh_Lit,
-                    material = _mat_Smooth,
-                });
-
-                Matrix4x4 mesh_m4x4 = Matrix4x4.CreateTranslation(
-                    new Vector3(2f*x/testGridDensity + offsetX, 0f, -2f*z/testGridDensity + offsetZ));
-                float[] mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-                _sh_Lit.SetMatrix4("uModel", mesh_uModel);
-                _sh_Lit.SetFloat("uRoughness", 1f - x/testGridDensity/testGridCount);
-                _sh_Lit.SetFloat("uMetallic", z/testGridDensity/testGridCount);
-                _mesh_Sphere.Draw();
-            }
-        }
-    }
-
-
-    internal MeshComponent? selectedMesh = null;
-    public void DrawSelected () {
-        if (selectedMesh is null) return;
-
-        RenderInfo renderInfo = selectedMesh.CreateRenderInfo;
-
-        GL.Enable(EnableCap.StencilTest);
-        GL.Enable(EnableCap.DepthTest);
-        GL.Enable(EnableCap.CullFace);
-        GL.CullFace(TriangleFace.Front);
-
-        /// Pass 1 — render mesh normally, mark stencil = 1 everywhere it's visible
-        GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
-        GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
-        GL.StencilMask(0xFF);
-        GL.DepthMask(true);
-
-        DrawMesh(renderInfo);
-
-        /// Pass 2 — outline: draw inflated mesh ONLY where stencil != 1
-        GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
-        GL.StencilMask(0x00);
-        GL.DepthMask(false);
-
-        float dist = Vector3.Distance(Camera.Instance.cameraPos, renderInfo.pos);
-        float t = 0.01f*MathF.Sqrt(dist); /// world-space outline thickness, fixed regardless of object scale
-        Vector3 outlineScale = new Vector3(
-            renderInfo.scale.X + t,
-            renderInfo.scale.Y + t,
-            renderInfo.scale.Z + t
-        );
-
-        Matrix4x4 mesh_m4x4 = Matrix4x4.CreateScale(outlineScale)
-            *Matrix4x4.Rotation(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
-        float[] mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
-
-        _sh_Outline.Use();
-        _sh_Outline.SetMatrix4("uView", uView);
-        _sh_Outline.SetMatrix4("uProjection", uProjection);
-        _sh_Outline.SetMatrix4("uModel", mesh_uModel);
-        _sh_Outline.SetVector3("uOutlineColor", Constants.cyan);
-
-        renderInfo.mesh!.Draw(renderInfo.primitiveType);
-
-        /// restore state
-        GL.Enable(EnableCap.DepthTest);
-        GL.DepthMask(true);
-        GL.StencilMask(0xFF);
-        GL.Disable(EnableCap.StencilTest);
-    }
-
-
     private void OnRender (double deltaTime) {
         UpdateProjection();
 
@@ -287,8 +206,10 @@ internal class Renderer {
         /// Draw Scene
         Draw();
 
-        DrawSelected();
+        DrawSelectedOutline();
 
+        SceneManager.ActiveScene?.DrawRaw();
+        
         ///--- Stage Post-Scene ---///
         GL.Disable(EnableCap.CullFace);
         GL.Enable(EnableCap.Blend);
@@ -416,11 +337,100 @@ internal class Renderer {
 
         GL.Enable(EnableCap.CullFace);
     }
-    
+
+    internal MeshComponent? selectedMesh = null;
+    public void DrawSelectedOutline () {
+        if (selectedMesh is null) return;
+
+        RenderInfo renderInfo = selectedMesh.CreateRenderInfo;
+
+        GL.Enable(EnableCap.StencilTest);
+        GL.Enable(EnableCap.DepthTest);
+        GL.Enable(EnableCap.CullFace);
+        GL.CullFace(TriangleFace.Front);
+
+        /// Pass 1 — render mesh normally, mark stencil = 1 everywhere it's visible
+        GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
+        GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
+        GL.StencilMask(0xFF);
+        GL.DepthMask(true);
+
+        DrawMesh(renderInfo);
+
+        /// Pass 2 — outline: draw inflated mesh ONLY where stencil != 1
+        GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
+        GL.StencilMask(0x00);
+        GL.DepthMask(false);
+
+        float dist = Vector3.Distance(Camera.Instance.cameraPos, renderInfo.pos);
+        float t = 0.01f*MathF.Sqrt(dist);
+        Vector3 outlineScale = new Vector3(
+            renderInfo.scale.X + t,
+            renderInfo.scale.Y + t,
+            renderInfo.scale.Z + t
+        );
+
+        Matrix4x4 mesh_m4x4 = Matrix4x4.CreateScale(outlineScale)
+            *Matrix4x4.Rotation(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
+        float[] mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
+
+        _sh_Outline.Use();
+        _sh_Outline.SetMatrix4("uView", uView);
+        _sh_Outline.SetMatrix4("uProjection", uProjection);
+        _sh_Outline.SetMatrix4("uModel", mesh_uModel);
+        _sh_Outline.SetVector3("uOutlineColor", Constants.cyan);
+
+        renderInfo.mesh!.Draw(renderInfo.primitiveType);
+
+        /// Restore state
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthMask(true);
+        GL.StencilMask(0xFF);
+        GL.Disable(EnableCap.StencilTest);
+    }
+
+    enum SelectedGizmoMode {
+        Position,
+        Rotation,
+        Scale,
+    }
+
+    public void DrawSelectedGizmo () {
+
+    }
 
     private void DrawEnd () {
         RenderList.Clear();
     }
+
+
+
+    public void DrawMaterialsGrid (float offsetX, float offsetZ, int testGridCount, float testGridDensity) {
+        GL.Enable(EnableCap.CullFace);
+        GL.CullFace(TriangleFace.Back);
+        SetSceneUniforms(_sh_Lit);
+        _sh_Lit.SetColor("uColor", Constants.black);
+        for (int x = 0; x < testGridCount*testGridDensity; x++) {
+            for (int z = 0; z < testGridCount*testGridDensity; z++) {
+                RenderList.Add(new() {
+                    pos = new Vector3(2f*x/testGridDensity + offsetX, 0f, -2f*z/testGridDensity + offsetZ),
+                    mesh = _mesh_Sphere,
+                    shader = _sh_Lit,
+                    material = _mat_Smooth,
+                });
+
+                Matrix4x4 mesh_m4x4 = Matrix4x4.CreateTranslation(
+                    new Vector3(2f*x/testGridDensity + offsetX, 0f, -2f*z/testGridDensity + offsetZ));
+                float[] mesh_uModel = Utils.MatrixToArray(mesh_m4x4);
+                _sh_Lit.SetMatrix4("uModel", mesh_uModel);
+                _sh_Lit.SetFloat("uRoughness", 1f - x/testGridDensity/testGridCount);
+                _sh_Lit.SetFloat("uMetallic", z/testGridDensity/testGridCount);
+                _mesh_Sphere.Draw();
+            }
+        }
+    }
+
+
 
     internal void OnFrameBufferResize (Silk.NET.Maths.Vector2D<int> newSize) {
         GL.Viewport(newSize);

@@ -113,79 +113,51 @@ public static class Capsule {
         return new MeshData(vertices.ToArray(), indices.ToArray());
     }
 
-    public static MeshData GenerateWireframe (float radius = 0.5f, float height = 1f, int lonSegments = 24) {
+    public static MeshData GenerateWireframe (float radius = 0.5f, int segments = 32) {
+        Vector3 p1 = -0.5f*Vector3.UnitY;
+        Vector3 p2 = 0.5f*Vector3.UnitY;
+        var axis = p2-p1;
+        var height = axis.Length();
+
+        var up = height > 1e-6f ? axis/height : Vector3.UnitY;
+        var (right, forward) = OrthonormalBasis(up);
+
         var vertices = new List<Vertex>();
         var indices = new List<uint>();
 
-        float halfHeight = 0.5f*height;
-
-        /// Equator rings (top and bottom of the straight section).
-        int topEquatorStart = vertices.Count;
-        for (int lon = 0; lon < lonSegments; lon++) {
-            float phi = 2f*MathF.PI*lon/lonSegments;
-            vertices.Add(new Vertex(new Vector3(radius*MathF.Cos(phi), halfHeight, radius*MathF.Sin(phi)), Vector3.UnitY, Vector2.Zero));
+        /// Side lines connecting the two caps, at 4 points around the radius.
+        for (int i = 0; i < 4; i++) {
+            float angle = i*MathF.PI*0.5f;
+            var offset = (right*MathF.Cos(angle)+forward*MathF.Sin(angle))*radius;
+            AppendLine(vertices, indices, p1+offset, p2+offset);
         }
 
-        int bottomEquatorStart = vertices.Count;
-        for (int lon = 0; lon < lonSegments; lon++) {
-            float phi = 2f*MathF.PI*lon/lonSegments;
-            vertices.Add(new Vertex(new Vector3(radius*MathF.Cos(phi), -halfHeight, radius*MathF.Sin(phi)), Vector3.UnitY, Vector2.Zero));
-        }
+        /// Equatorial ring around each cap, perpendicular to the axis.
+        Utils.AppendCircle(vertices, indices, p1, radius, segments, right, forward);
+        Utils.AppendCircle(vertices, indices, p2, radius, segments, right, forward);
 
-        for (int lon = 0; lon < lonSegments; lon++) {
-            uint a = (uint)(topEquatorStart + lon);
-            uint b = (uint)(topEquatorStart + (lon + 1)%lonSegments);
-            indices.Add(a);
-            indices.Add(b);
-
-            uint c = (uint)(bottomEquatorStart + lon);
-            uint d = (uint)(bottomEquatorStart + (lon + 1)%lonSegments);
-            indices.Add(c);
-            indices.Add(d);
-        }
-
-        /// Vertical struts between equators, every quarter turn.
-        int strutStep = Math.Max(1, lonSegments/4);
-        for (int lon = 0; lon < lonSegments; lon += strutStep) {
-            indices.Add((uint)(topEquatorStart + lon));
-            indices.Add((uint)(bottomEquatorStart + lon));
-        }
-
-        /// Two half-circle profile arcs (front XY-plane-ish, side ZY-plane-ish), each made of
-        /// a top hemisphere arc + straight side + bottom hemisphere arc, as a single polyline.
-        int arcSegments = Math.Max(4, lonSegments/2);
-        for (int axis = 0; axis < 2; axis++) {
-            var arc = new List<Vector3>();
-
-            for (int i = 0; i <= arcSegments; i++) {
-                float theta = MathF.PI*i/arcSegments - 0.5f*MathF.PI; /// -PI/2 .. PI/2 over the top half
-                float c = MathF.Cos(theta);
-                float s = MathF.Sin(theta);
-                float px = axis == 0 ? radius*c : 0f;
-                float pz = axis == 1 ? radius*c : 0f;
-                arc.Add(new Vector3(px, radius*s + halfHeight, pz));
-            }
-
-            for (int i = 0; i <= arcSegments; i++) {
-                float theta = MathF.PI*i/arcSegments - 0.5f*MathF.PI;
-                float c = MathF.Cos(theta);
-                float s = MathF.Sin(theta);
-                float px = axis == 0 ? -radius*c : 0f;
-                float pz = axis == 1 ? -radius*c : 0f;
-                arc.Add(new Vector3(px, -radius*s - halfHeight, pz));
-            }
-
-            int arcStart = vertices.Count;
-            foreach (var p in arc)
-                vertices.Add(new Vertex(p, Vector3.UnitY, Vector2.Zero));
-
-            for (int i = 0; i < arc.Count - 1; i++) {
-                indices.Add((uint)(arcStart + i));
-                indices.Add((uint)(arcStart + i + 1));
-            }
-        }
+        /// Hemisphere caps: two perpendicular half-circles per end, bulging away from the body.
+        Utils.AppendHalfCircle(vertices, indices, p1, radius, segments, right, up, flip: true);
+        Utils.AppendHalfCircle(vertices, indices, p1, radius, segments, forward, up, flip: true);
+        Utils.AppendHalfCircle(vertices, indices, p2, radius, segments, right, up, flip: false);
+        Utils.AppendHalfCircle(vertices, indices, p2, radius, segments, forward, up, flip: false);
 
         return new MeshData(vertices.ToArray(), indices.ToArray());
+    }
+
+    private static void AppendLine (List<Vertex> vertices, List<uint> indices, Vector3 a, Vector3 b) {
+        uint start = (uint)vertices.Count;
+        vertices.Add(new Vertex { Position = a });
+        vertices.Add(new Vertex { Position = b });
+        indices.Add(start);
+        indices.Add(start+1);
+    }
+
+    private static (Vector3 right, Vector3 forward) OrthonormalBasis (Vector3 up) {
+        var reference = MathF.Abs(Vector3.Dot(up, Vector3.UnitY)) > 0.99f ? Vector3.UnitX : Vector3.UnitY;
+        var right = Vector3.Normalize(Vector3.Cross(reference, up));
+        var forward = Vector3.Cross(up, right);
+        return (right, forward);
     }
 
 }

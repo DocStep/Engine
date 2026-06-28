@@ -50,4 +50,18 @@ public static class Sphere {
         return new MeshData(vertices.ToArray(), indices.ToArray());
     }
 
+    public static MeshData GenerateWireframe () {
+        Vector3 center = Vector3.Zero;
+        float radius = 0.5f;
+        int segments = 32;
+        var vertices = new List<Vertex>(segments*3);
+        var indices = new List<uint>(segments*6);
+
+        Utils.AppendCircle(vertices, indices, center, radius, segments, Axis.XY);
+        Utils.AppendCircle(vertices, indices, center, radius, segments, Axis.XZ);
+        Utils.AppendCircle(vertices, indices, center, radius, segments, Axis.YZ);
+
+        return new MeshData(vertices.ToArray(), indices.ToArray());
+    }
+
 }

@@ -39,6 +39,12 @@ public class Scene {
     }
 
 
+
+    public virtual void DrawRaw () {
+
+    }
+
+
     public void Destroy (GameObject go) {
         objects.Remove(go);
     }

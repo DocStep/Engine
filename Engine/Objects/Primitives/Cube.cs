@@ -1,4 +1,6 @@
-﻿namespace Engine.Graphics;
+﻿using System.Numerics;
+
+namespace Engine.Graphics;
 
 
 public static class Cube {
@@ -52,6 +54,34 @@ public static class Cube {
             16, 17, 18, 18, 19, 16,  /// top
             20, 22, 21, 22, 20, 23,  /// bottom
         };
+
+        return new MeshData(vertices, indices);
+    }
+
+
+    public static MeshData GenerateWireframe (float size = 1f) {
+        var half = 0.5f*size*Vector3.One;
+
+        Span<Vector3> corners = stackalloc Vector3[8];
+        corners[0] = new Vector3(-half.X, -half.Y, -half.Z);
+        corners[1] = new Vector3(half.X, -half.Y, -half.Z);
+        corners[2] = new Vector3(half.X, -half.Y, half.Z);
+        corners[3] = new Vector3(-half.X, -half.Y, half.Z);
+        corners[4] = new Vector3(-half.X, half.Y, -half.Z);
+        corners[5] = new Vector3(half.X, half.Y, -half.Z);
+        corners[6] = new Vector3(half.X, half.Y, half.Z);
+        corners[7] = new Vector3(-half.X, half.Y, half.Z);
+
+        var vertices = new Vertex[8];
+        for (int i = 0; i < 8; i++)
+            vertices[i] = new Vertex { Position = corners[i] };
+
+        /// 12 edges, 2 indices each = 24 indices for GL_LINES.
+        uint[] indices = [
+            0, 1, 1, 2, 2, 3, 3, 0, /// bottom face
+            4, 5, 5, 6, 6, 7, 7, 4, /// top face
+            0, 4, 1, 5, 2, 6, 3, 7  /// vertical edges
+        ];
 
         return new MeshData(vertices, indices);
     }
