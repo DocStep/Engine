@@ -21,9 +21,9 @@ public class Scene {
     public void ObjectAdd (GameObject gameObject) {
         objects.Add(gameObject);
     }
-    public void ObjectRemove (GameObject gameObject) {
+    /*public void ObjectRemove (GameObject gameObject) {
         objects.Remove(gameObject);
-    }
+    }*/
 
     public void Update () {
 
@@ -44,9 +44,5 @@ public class Scene {
 
     }
 
-
-    public void Destroy (GameObject go) {
-        objects.Remove(go);
-    }
 
 }

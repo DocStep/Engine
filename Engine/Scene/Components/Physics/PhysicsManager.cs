@@ -2,27 +2,25 @@
 using System.Numerics;
 using System.Collections.Generic;
 using Jitter2;
-using Jitter2.Collision.Shapes;
 using Jitter2.Dynamics;
-using Jitter2.LinearMath;
 
 namespace Engine;
 
 
-public static class PhysicsManager {
+public class PhysicsManager : Singleton<PhysicsManager> {
+    public PhysicsManager () {
+        World.SolverIterations = (solver: 15, relaxation: 10); /// def: 6, 4
+        World.Gravity = Gravity;
+    }
 
-    private readonly static World World = new World();
+    private readonly World World = new World();
 
     public static Vector3 Gravity = new(0f, -9.81f, 0f);
 
     static readonly List<PhysicsComponent> PhysicsComponents = new List<PhysicsComponent>();
 
 
-    public static void Init () {
-        World.SolverIterations = (solver: 15, relaxation: 10); /// def: 6, 4
-        World.Gravity = Gravity;
-    }
-    public static void FixedUpdate () {
+    public void FixedUpdate () {
         float dt = (float)Engine.fixedDeltaTime;
 
         World.Step(dt, multiThread: true);
@@ -34,10 +32,14 @@ public static class PhysicsManager {
     }
 
 
-    public static RigidBody AddRigidbody (PhysicsComponent physicsComponent) {
+    public RigidBody AddRigidbody (PhysicsComponent physicsComponent) {
         RigidBody rigidBody = World.CreateRigidBody();
         PhysicsComponents.Add(physicsComponent);
         return rigidBody;
+    }
+    public void RemoveRigidbody (PhysicsComponent physicsComponent, RigidBody rigidBody) {
+        PhysicsComponents.Remove(physicsComponent);
+        World.Remove(rigidBody);
     }
 
 

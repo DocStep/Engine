@@ -5,12 +5,7 @@ using Engine.Input;
 namespace Engine;
 
 
-public class Engine : IDisposable {
-    public Engine () {
-        Instance = this;
-    }
-
-    public static Engine Instance = null!;
+public class Engine : Singleton<Engine>, IDisposable {
 
     public Action? de_Update = null;
     public Action? de_FixedUpdate = null;
@@ -97,11 +92,11 @@ public class Engine : IDisposable {
         }*/
 
 
-        ComponentManager.Init();
-        PhysicsManager.Init();
+        PhysicsManager.InstanceNew();
+        ComponentManager.InstanceNew();
 
         Renderer = new Renderer();
-        SceneManager.Init();
+        SceneManager.InstanceNew();
 
         Camera = new CameraEditor();
 
@@ -126,7 +121,7 @@ public class Engine : IDisposable {
                 _accumulator -= fixedDeltaTime;
             }
         } else {
-            ComponentManager.UpdateRender();
+            ComponentManager.Instance.UpdateRender();
         }
 
         if (Inputs.Actions[Inputs.NavBack].pressed) Window.Close();
@@ -135,8 +130,8 @@ public class Engine : IDisposable {
     private void FixedUpdate () {
         DataEngine.global_audio_Mult = 1f;
 
-        ComponentManager.FixedUpdate();
-        PhysicsManager.FixedUpdate();
+        ComponentManager.Instance.FixedUpdate();
+        PhysicsManager.Instance.FixedUpdate();
         de_FixedUpdate?.Invoke();
     }
     private void Update () {
@@ -144,9 +139,9 @@ public class Engine : IDisposable {
         Graphics.UI.TextRenderer.AddText($"ms: {Engine.deltaTime*1000:F1}");
         Graphics.UI.TextRenderer.AddText($"Pos: {Camera.Instance?.cameraPos:F2}");
         Graphics.UI.TextRenderer.AddText($"MousePos: {Camera.Instance?.mousePos:F2}");
-        Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.componentsCount}");
+        Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.Instance.componentsCount}");
 
-        ComponentManager.Update();
+        ComponentManager.Instance.Update();
         //de_Update?.Invoke();
 
         /// Counters

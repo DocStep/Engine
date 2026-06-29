@@ -33,7 +33,7 @@ internal sealed class CameraEditor : Camera {
 
     private const float _zoomSpeed = 0.1f;
 
-    private const float _focusTargetDistanceMin = 1f;
+    private const float _focusTargetDistanceMin = 0f;
     private const float _focusTargetDistanceMax = 100f;
     //private float _focusTargetDistance;
 
@@ -280,11 +280,6 @@ internal sealed class CameraEditor : Camera {
         isFocusing = true;
     }
 
-    public Ray RaycastMouse () {
-        Ray ray = Raycaster.ScreenPointToRay(mousePos.X, mousePos.Y, Engine.Window.Size.X, Engine.Window.Size.Y,
-                Renderer.Instance.View, Renderer.Instance.Projection);
-        return ray;
-    }
 
     /*private void LookAtOrbitCenter () {
         Vector3 offset = cameraOrbitCenterPos - cameraPos;

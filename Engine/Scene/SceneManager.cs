@@ -7,16 +7,16 @@ using Engine.Graphics;
 namespace Engine;
 
 
-public static class SceneManager {
+public class SceneManager : Singleton<SceneManager> {
 
-    private static readonly List<Scene> scenes = new List<Scene>();
-    private static readonly int sceneActiveID = 0;
+    private readonly List<Scene> scenes = new List<Scene>();
+    private readonly int sceneActiveID = 0;
 
-    public static Scene ActiveScene => scenes[sceneActiveID];
-    public static int ActiveSceneID => sceneActiveID;
+    public static Scene ActiveScene => Instance.scenes[Instance.sceneActiveID];
+    public static int ActiveSceneID => Instance.sceneActiveID;
 
 
-    public static void Init () {
+    protected override void Init () {
         Scene scene;
         scene = new SceneMaterials();
         //scene = new ScenePhysics();
@@ -24,12 +24,11 @@ public static class SceneManager {
         scenes.Add(scene);
         scene.Load();
 
-
         Engine.Instance.de_Update += Update;
     }
 
 
-    public static void Update () {
+    public void Update () {
         int count = scenes.Count;
         for (int i = 0; i < count; i++) {
             scenes[i].Update();

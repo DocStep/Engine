@@ -5,7 +5,7 @@ namespace Engine.Graphics;
 
 
 public static class ObjLoader {
-    public static MeshData Load (string path) {
+    public static MeshData Load (string path, Silk.NET.OpenGL.PrimitiveType primitiveType = Silk.NET.OpenGL.PrimitiveType.Triangles) {
         var positions = new List<Vector3>();
         var uvs = new List<Vector2>();
         var normals = new List<Vector3>();
@@ -53,7 +53,7 @@ public static class ObjLoader {
             }
         }
 
-        var data = new MeshData(vertices.ToArray(), indices.ToArray());
+        var data = new MeshData(vertices.ToArray(), indices.ToArray(), primitiveType);
         if (!hasAnyNormal)
             data.RecalculateNormals();
 

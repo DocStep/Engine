@@ -14,62 +14,27 @@ public class SceneMaterials : Scene {
 
     public override void Load () {
         float x = 0;
-        MeshComponent mesh;
+        MeshComponent? mesh;
 
         x = 4;
-        GameObject plane = new GameObject() { Name = "Plane", };
-        plane.Transform.Position = new Vector3(x, 0, -2);
-        mesh = plane.AddComponent<MeshComponent>();
-        mesh.mesh = Renderer.Instance._mesh_Plane;
+        GameObject plane = new GameObject(PrimitiveTypes.Plane, position: new(x, 0, -2)) { Name = "Plane", };
+        plane.RemoveComponent<PhysicsComponent>();
 
-        GameObject cube = new GameObject() { Name = "Cube", };
-        cube.Transform.Position = new Vector3(x, 0, 0);
-        mesh = cube.AddComponent<MeshComponent>();
-        mesh.mesh = Renderer.Instance._mesh_Cube;
+        GameObject cube = new GameObject(PrimitiveTypes.Cube, position: new(x, 0, 0)) { Name = "Cube", };
+        cube.RemoveComponent<PhysicsComponent>();
 
-        GameObject sphere = new GameObject() { Name = "Sphere", };
-        sphere.Transform.Position = new Vector3(x, 0, 2);
-        mesh = sphere.AddComponent<MeshComponent>();
-        mesh.mesh = Renderer.Instance._mesh_Sphere;
+        GameObject sphere = new GameObject(PrimitiveTypes.Sphere, position: new(x, 0, 2)) { Name = "Sphere", };
+        sphere.RemoveComponent<PhysicsComponent>();
 
-        GameObject capsule = new GameObject() { Name = "Capsule", };
-        capsule.Transform.Position = new Vector3(x, 0, 4);
-        mesh = capsule.AddComponent<MeshComponent>();
-        mesh.mesh = Renderer.Instance._mesh_Capsule;
+        GameObject capsule = new GameObject(PrimitiveTypes.Capsule, position: new(x, 0, 4)) { Name = "Capsule", };
+        capsule.RemoveComponent<PhysicsComponent>();
 
         /// Gizmos
         x = 6;
-        GameObject gizmosPlane = new GameObject() { Name = "Gizmos Plane", };
-        gizmosPlane.Transform.Position = new Vector3(x, 0, -2);
-        mesh = gizmosPlane.AddComponent<MeshComponent>();
-        mesh.mesh = Renderer.Instance._mesh_GizmoPlane;
-        mesh.material = Renderer.Instance._mat_GizmosG;
-        mesh.shader = Renderer.Instance._sh_Unlit;
-        mesh.primitiveType = PrimitiveType.Lines;
-
-        GameObject gizmosCube = new GameObject() { Name = "Gizmos Cube", };
-        gizmosCube.Transform.Position = new Vector3(x, 0, 0);
-        mesh = gizmosCube.AddComponent<MeshComponent>();
-        mesh.mesh = Renderer.Instance._mesh_GizmoCube;
-        mesh.material = Renderer.Instance._mat_GizmosG;
-        mesh.shader = Renderer.Instance._sh_Unlit;
-        mesh.primitiveType = PrimitiveType.Lines;
-
-        GameObject gizmosSphere = new GameObject() { Name = "Gizmos Sphere", };
-        gizmosSphere.Transform.Position = new Vector3(x, 0, 2);
-        mesh = gizmosSphere.AddComponent<MeshComponent>();
-        mesh.mesh = Renderer.Instance._mesh_GizmoSphere;
-        mesh.material = Renderer.Instance._mat_GizmosG;
-        mesh.shader = Renderer.Instance._sh_Unlit;
-        mesh.primitiveType = PrimitiveType.Lines;
-
-        GameObject gizmosCapsule = new GameObject() { Name = "Gizmos Capsule", };
-        gizmosCapsule.Transform.Position = new Vector3(x, 0, 4);
-        mesh = gizmosCapsule.AddComponent<MeshComponent>();
-        mesh.mesh = Renderer.Instance._mesh_GizmoCapsule;
-        mesh.material = Renderer.Instance._mat_GizmosG;
-        mesh.shader = Renderer.Instance._sh_Unlit;
-        mesh.primitiveType = PrimitiveType.Lines;
+        GameObject gizmosPlane = new GameObject(PrimitiveTypes.GizmoPlane, position: new(x, 0, -2)) { Name = "Gizmos Plane", };
+        GameObject gizmosCube = new GameObject(PrimitiveTypes.GizmoCube, position: new(x, 0, 0)) { Name = "Gizmos Cube", };
+        GameObject gizmosSphere = new GameObject(PrimitiveTypes.GizmoSphere, position: new(x, 0, 2)) { Name = "Gizmos Sphere", };
+        GameObject gizmosCapsule = new GameObject(PrimitiveTypes.GizmoCapsule, position: new(x, 0, 4)) { Name = "Gizmos Capsule", };
 
         x = 8;
         GameObject sphereR = new GameObject() { Name = "Sphere R", };

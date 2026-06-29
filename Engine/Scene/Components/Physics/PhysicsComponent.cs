@@ -10,7 +10,7 @@ namespace Engine;
 
 public class PhysicsComponent : Component, IComponentFixedUpdate {
     public PhysicsComponent () {
-        Rigidbody = PhysicsManager.AddRigidbody(this);
+        Rigidbody = PhysicsManager.Instance.AddRigidbody(this);
         Rigidbody.Restitution = 0.0f;
         Rigidbody.Friction = 0.5f;
     }
@@ -28,7 +28,7 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
         UpdateRigidbody();
     }
     public override void OnRemove () {
-
+        PhysicsManager.Instance.RemoveRigidbody(this, Rigidbody);
     }
 
 

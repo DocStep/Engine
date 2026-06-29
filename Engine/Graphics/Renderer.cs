@@ -1,14 +1,11 @@
 ﻿using System.Numerics;
 using Silk.NET.OpenGL;
 using Engine.Graphics.UI;
-using Engine.Input;
-using static Engine.DataEngine;
-using static Engine.Input.Inputs;
 
 namespace Engine.Graphics;
 
 
-internal class Renderer {
+public class Renderer : Singleton<Renderer> {
     public Renderer () {
         Instance = this;
 
@@ -24,6 +21,7 @@ internal class Renderer {
         _mesh_Sphere = new Mesh(Sphere.Generate());
         _mesh_Capsule = new Mesh(Capsule.Generate());
         _mesh_Plane = new Mesh(Plane.Generate());
+        _mesh_PlaneSingle = new Mesh(Plane.Generate());
 
         _mesh_GizmoCube = new Mesh(Cube.GenerateWireframe());
         _mesh_GizmoSphere = new Mesh(Sphere.GenerateWireframe());
@@ -124,6 +122,7 @@ internal class Renderer {
     public readonly Mesh _mesh_Sphere = null!;
     public readonly Mesh _mesh_Capsule = null!;
     public readonly Mesh _mesh_Plane = null!;
+    public readonly Mesh _mesh_PlaneSingle = null!;
     public readonly Mesh _mesh_Torus = null!;
     public readonly Mesh _mesh_Suzanne = null!;
     public readonly Mesh _mesh_SuzanneHighRes = null!;

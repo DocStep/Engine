@@ -98,7 +98,7 @@ public static class Cylinder {
             indices.Add(b);
         }
 
-        return new MeshData(vertices.ToArray(), indices.ToArray());
+        return new MeshData(vertices.ToArray(), indices.ToArray(), Silk.NET.OpenGL.PrimitiveType.Triangles);
     }
 
     public static MeshData GenerateWireframe (float radius = 0.5f, float height = 1f, int segments = 24) {
@@ -139,7 +139,7 @@ public static class Cylinder {
             indices.Add((uint)(topStart + seg));
         }
 
-        return new MeshData(vertices.ToArray(), indices.ToArray());
+        return new MeshData(vertices.ToArray(), indices.ToArray(), Silk.NET.OpenGL.PrimitiveType.Lines);
     }
 
 }

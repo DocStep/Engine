@@ -6,16 +6,20 @@ namespace Engine.Graphics;
 public class MeshData {
     public Vertex[] Vertices;
     public uint[] Indices;
+    public Silk.NET.OpenGL.PrimitiveType PrimitiveType = Silk.NET.OpenGL.PrimitiveType.Triangles;
 
-    public MeshData (Vertex[] vertices, uint[] indices) {
+    public MeshData (Vertex[] vertices, uint[] indices, Silk.NET.OpenGL.PrimitiveType primitiveType) {
         Vertices = vertices;
         Indices = indices;
+        PrimitiveType = primitiveType;
     }
 
     /// Recomputes per-vertex normals from triangle faces (area-weighted via
     /// the unnormalized cross product, then normalized once accumulated).
     /// Use this after import when a source file has no normals.
     public void RecalculateNormals () {
+        if (PrimitiveType != Silk.NET.OpenGL.PrimitiveType.Triangles) return;
+
         for (int i = 0; i < Vertices.Length; i++)
             Vertices[i].Normal = Vector3.Zero;
 

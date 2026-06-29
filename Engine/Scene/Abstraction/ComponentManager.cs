@@ -3,12 +3,12 @@
 namespace Engine;
 
 
-public static class ComponentManager {
+public class ComponentManager : Singleton<ComponentManager> {
 
-    private readonly static Dictionary<Type, List<Component>> components =  new Dictionary<Type, List<Component>>();
-    private readonly static List<IComponentUpdate> componentsUpdate = new List<IComponentUpdate>();
-    private readonly static List<IComponentFixedUpdate> componentsFixedUpdate = new List<IComponentFixedUpdate>();
-    public static int componentsCount => components.Count;
+    private readonly Dictionary<Type, List<Component>> components =  new Dictionary<Type, List<Component>>();
+    private readonly List<IComponentUpdate> componentsUpdate = new List<IComponentUpdate>();
+    private readonly List<IComponentFixedUpdate> componentsFixedUpdate = new List<IComponentFixedUpdate>();
+    public int componentsCount => components.Count;
     /*public static string NameAll {
         get {
             string names = "All\n";
@@ -19,34 +19,34 @@ public static class ComponentManager {
         }
     }*/
 
-    private readonly static List<IComponentUpdate> componentsRender = new List<IComponentUpdate>();
+    private readonly List<IComponentUpdate> componentsRender = new List<IComponentUpdate>();
 
 
-    public static void Init () {
+    protected override void Init () {
         Type[] types = Reflection.FindAllSubclasses<Component>();
         for (int t = 0; t < types.Length; t++) {
             components.Add(types[t], new());
         }
     }
 
-    internal static void FixedUpdate () {
+    internal void FixedUpdate () {
         for (int c = 0; c < componentsFixedUpdate.Count; c++) {
             componentsFixedUpdate[c].FixedUpdate();
         }
     }
-    internal static void Update () {
+    internal void Update () {
         for (int c = 0; c < componentsUpdate.Count; c++) {
             componentsUpdate[c].Update();
         }
     }
-    internal static void UpdateRender () {
+    internal void UpdateRender () {
         for (int c = 0; c < componentsRender.Count; c++) {
             componentsRender[c].Update();
         }
     }
 
 
-    public static void ComponentRegister (Component component) {
+    public void ComponentRegister (Component component) {
         Type type = component.GetType();
 
         if (components.TryGetValue(type, out List<Component>? list)) {
@@ -66,7 +66,7 @@ public static class ComponentManager {
 
         component.OnAdd();
     }
-    public static void ComponentUnregister (Component component) {
+    public void ComponentUnregister (Component component) {
         Type type = component.GetType();
 
         if (components.TryGetValue(type, out List<Component>? list)) {
@@ -75,7 +75,6 @@ public static class ComponentManager {
 
         if (component is IComponentUpdate iComponentUpdate) {
             componentsUpdate.Remove(iComponentUpdate);
-
             if (component is IRenderComponent iRenderComponent) {
                 componentsRender.Remove(iComponentUpdate);
             }
@@ -86,12 +85,12 @@ public static class ComponentManager {
 
         component.OnRemove();
     }
-    public static void ComponentRegister (List<Component> components) {
+    public void ComponentRegister (List<Component> components) {
         for (int c = 0; c < components.Count; c++) {
             ComponentRegister(components[c]);
         }
     }
-    public static void ComponentRemove (List<Component> components) {
+    public void ComponentRemove (List<Component> components) {
         for (int c = 0; c < components.Count; c++) {
             ComponentUnregister(components[c]);
         }

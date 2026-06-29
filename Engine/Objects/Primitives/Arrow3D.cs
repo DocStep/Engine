@@ -21,7 +21,7 @@ public static class Arrow3D {
         BuildCrossPlanes(verts, indices, shaftWidth, shaftLength);
         BuildHead(verts, indices, shaftLength, headWidth, headLength, radialSegments);
 
-        var data = new MeshData(verts.ToArray(), indices.ToArray());
+        MeshData data = new MeshData(verts.ToArray(), indices.ToArray(), Silk.NET.OpenGL.PrimitiveType.Triangles);
         data.RecalculateNormals();
         return data;
     }
@@ -77,7 +77,7 @@ public static class Arrow3D {
         AddCrossPlaneWireframe(verts, indices, shaftWidth, shaftLength, new Vector3(1f, 0f, 0f));
         AddCrossPlaneWireframe(verts, indices, shaftWidth, shaftLength, new Vector3(0f, 0f, 1f));
 
-        return new MeshData(verts.ToArray(), indices.ToArray());
+        return new MeshData(verts.ToArray(), indices.ToArray(), Silk.NET.OpenGL.PrimitiveType.Lines);
     }
 
     private static void BuildShaft (List<Vertex> verts, List<uint> indices, float radius, float length, int segments) {

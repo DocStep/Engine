@@ -110,7 +110,7 @@ public static class Capsule {
             indices.Add(d);
         }
 
-        return new MeshData(vertices.ToArray(), indices.ToArray());
+        return new MeshData(vertices.ToArray(), indices.ToArray(), Silk.NET.OpenGL.PrimitiveType.Triangles);
     }
 
     public static MeshData GenerateWireframe (float radius = 0.5f, int segments = 32) {
@@ -142,7 +142,7 @@ public static class Capsule {
         Utils.AppendHalfCircle(vertices, indices, p2, radius, segments, right, up, flip: false);
         Utils.AppendHalfCircle(vertices, indices, p2, radius, segments, forward, up, flip: false);
 
-        return new MeshData(vertices.ToArray(), indices.ToArray());
+        return new MeshData(vertices.ToArray(), indices.ToArray(), Silk.NET.OpenGL.PrimitiveType.Lines);
     }
 
     private static void AppendLine (List<Vertex> vertices, List<uint> indices, Vector3 a, Vector3 b) {

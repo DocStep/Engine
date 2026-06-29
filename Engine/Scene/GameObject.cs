@@ -1,8 +1,21 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
+using Engine.Graphics;
 
 namespace Engine;
+
+public enum PrimitiveTypes {
+    Cube,
+    Sphere,
+    Capsule,
+    Plane,
+
+    GizmoCube,
+    GizmoSphere,
+    GizmoCapsule,
+    GizmoPlane,
+}
 
 
 public class GameObject {
@@ -10,13 +23,73 @@ public class GameObject {
         Id = GetHashCode();
         SceneManager.ActiveScene.ObjectAdd(this);
     }
-    public GameObject (List<Component> Components) : base() {
+    /*public GameObject (List<Component> Components) : base() {
         this.Components = Components;
-    }
-    public GameObject (TransformComponent Transform, List<Component> Components) : base() {
+    }*/
+    /*public GameObject (TransformComponent Transform, List<Component> Components) : base() {
         this.Transform = Transform;
         this.Components = Components;
+    }*/
+    public GameObject (PrimitiveTypes primitive, Vector3 position = new Vector3(), 
+        Vector3 rotation = new Vector3(), Vector3 scale = default, string? name = default) {
+        if (string.IsNullOrEmpty(name)) name = primitive.GetType().Name;
+        if (scale.Equals(default)) scale = Vector3.One;
+
+        Transform.Position = position;
+        Transform.Rotation = rotation;
+        Transform.Scale = scale;
+        
+        MeshComponent mesh = AddComponent<MeshComponent>();
+        switch (primitive) {
+            case PrimitiveTypes.Cube:
+                mesh.mesh = Renderer.Instance._mesh_Cube;
+                AddComponent<PhysicsComponent>();
+                break;
+            case PrimitiveTypes.Sphere:
+                mesh.mesh = Renderer.Instance._mesh_Sphere;
+                AddComponent<PhysicsComponent>();
+                break;
+            case PrimitiveTypes.Capsule:
+                mesh.mesh = Renderer.Instance._mesh_Capsule;
+                AddComponent<PhysicsComponent>();
+                break;
+            case PrimitiveTypes.Plane:
+                mesh.mesh = Renderer.Instance._mesh_Plane;
+                AddComponent<PhysicsComponent>();
+                break;
+            case PrimitiveTypes.GizmoCube:
+                MeshComponent colliderMesh = AddComponent<MeshComponent>();
+                colliderMesh.mesh = Renderer.Instance._mesh_GizmoCube;
+                colliderMesh.material = Renderer.Instance._mat_GizmosG;
+                colliderMesh.shader = Renderer.Instance._sh_Unlit;
+                break;
+            case PrimitiveTypes.GizmoSphere:
+                colliderMesh = AddComponent<MeshComponent>();
+                colliderMesh.mesh = Renderer.Instance._mesh_GizmoSphere;
+                colliderMesh.material = Renderer.Instance._mat_GizmosG;
+                colliderMesh.shader = Renderer.Instance._sh_Unlit;
+                break;
+            case PrimitiveTypes.GizmoCapsule:
+                colliderMesh = AddComponent<MeshComponent>();
+                colliderMesh.mesh = Renderer.Instance._mesh_GizmoCapsule;
+                colliderMesh.material = Renderer.Instance._mat_GizmosG;
+                colliderMesh.shader = Renderer.Instance._sh_Unlit;
+                break;
+            case PrimitiveTypes.GizmoPlane:
+                colliderMesh = AddComponent<MeshComponent>();
+                colliderMesh.mesh = Renderer.Instance._mesh_GizmoPlane;
+                colliderMesh.material = Renderer.Instance._mat_GizmosG;
+                colliderMesh.shader = Renderer.Instance._sh_Unlit;
+                break;
+            default:
+                break;
+        }
+
+        Id = GetHashCode();
+        SceneManager.ActiveScene.ObjectAdd(this);
     }
+
+
 
     public string Name = GameObject.GameObjectName;
     public readonly int Id = 0;
@@ -37,14 +110,25 @@ public class GameObject {
         T component = new T();
         Components.Add(component);
         component.SetParent(this);
-        ComponentManager.ComponentRegister(component);
+        ComponentManager.Instance.ComponentRegister(component);
         return component;
     }
 
+    public void RemoveComponent<T> () where T : Component, new() {
+        T? component = null;
+        foreach (Component comp in Components) {
+            if (comp is T match) {
+                component = match;
+                break;
+            }
+        }
+        if (component is not null) 
+            ComponentManager.Instance.ComponentUnregister(component);
+    }
     public void RemoveComponent (Component component) {
         component.owner = null!;
         Components.Remove(component);
-        ComponentManager.ComponentUnregister(component);
+        ComponentManager.Instance.ComponentUnregister(component);
     }
 
 

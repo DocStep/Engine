@@ -9,10 +9,6 @@ namespace Engine.Graphics;
 /// with Cube/Sphere/Plane/Cylinder/Capsule.
 public static class Axes {
 
-    public static MeshData Generate (float length = 1f) {
-        return GenerateWireframe(length);
-    }
-
     public static MeshData GenerateWireframe (float length = 1f) {
         Vertex[] vertices = {
             new(Vector3.Zero, Vector3.UnitX, Vector2.Zero),
@@ -31,7 +27,7 @@ public static class Axes {
             4, 5, /// Z axis
         };
 
-        return new MeshData(vertices, indices);
+        return new MeshData(vertices, indices, Silk.NET.OpenGL.PrimitiveType.Lines);
     }
 
 }

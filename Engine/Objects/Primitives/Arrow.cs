@@ -52,7 +52,7 @@ public static class Arrow {
             15, 13, 14,             /// top blade
         };
 
-        return new MeshData(vertices, indices);
+        return new MeshData(vertices, indices, Silk.NET.OpenGL.PrimitiveType.Triangles);
     }
 
 
@@ -106,7 +106,7 @@ public static class Arrow {
             13, 15, /// top inner edge → notch
         };
 
-        return new MeshData(vertices, indices);
+        return new MeshData(vertices, indices, Silk.NET.OpenGL.PrimitiveType.Lines);
     }
 
 }

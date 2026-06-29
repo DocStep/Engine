@@ -47,7 +47,7 @@ public static class Sphere {
             }
         }
 
-        return new MeshData(vertices.ToArray(), indices.ToArray());
+        return new MeshData(vertices.ToArray(), indices.ToArray(), Silk.NET.OpenGL.PrimitiveType.Triangles);
     }
 
     public static MeshData GenerateWireframe () {
@@ -61,7 +61,7 @@ public static class Sphere {
         Utils.AppendCircle(vertices, indices, center, radius, segments, Axis.XZ);
         Utils.AppendCircle(vertices, indices, center, radius, segments, Axis.YZ);
 
-        return new MeshData(vertices.ToArray(), indices.ToArray());
+        return new MeshData(vertices.ToArray(), indices.ToArray(), Silk.NET.OpenGL.PrimitiveType.Lines);
     }
 
 }

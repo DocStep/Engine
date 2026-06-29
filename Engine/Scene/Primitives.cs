@@ -1,6 +1,8 @@
-﻿namespace Engine.Graphics;
+﻿namespace Engine;
 
 
 public static class Primitives {
+
+
 
 }

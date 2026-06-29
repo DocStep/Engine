@@ -43,7 +43,7 @@ public static class Grid {
             ii += 2;
         }
 
-        return new MeshData(vertices, indices);
+        return new MeshData(vertices, indices, Silk.NET.OpenGL.PrimitiveType.Lines);
     }
 
 }

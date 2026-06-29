@@ -119,7 +119,7 @@ public static class Raycaster {
             MeshComponent? meshComponent = go.GetComponent<MeshComponent>();
             if (meshComponent is null) continue;
             if (meshComponent.mesh is null) continue;
-            if (meshComponent.primitiveType != Silk.NET.OpenGL.PrimitiveType.Triangles) continue;
+            if (meshComponent.mesh.Data.PrimitiveType != Silk.NET.OpenGL.PrimitiveType.Triangles) continue;
 
             Matrix4x4 worldMatrix = go.Transform.GetWorldMatrix();
             AABB worldAabb = meshComponent.mesh.LocalAABB.Transformed(worldMatrix);

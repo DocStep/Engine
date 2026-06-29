@@ -47,7 +47,7 @@ public static class Plane {
             }
         }
 
-        return new MeshData(vertices, indices);
+        return new MeshData(vertices, indices, Silk.NET.OpenGL.PrimitiveType.Triangles);
     }
 
     public static MeshData GenerateWireframe (float size = 1f, int divisions = 10) {
@@ -99,7 +99,7 @@ public static class Plane {
             }
         }
 
-        return new MeshData(vertices, indices.ToArray());
+        return new MeshData(vertices, indices.ToArray(), Silk.NET.OpenGL.PrimitiveType.Lines);
     }
 
 }
