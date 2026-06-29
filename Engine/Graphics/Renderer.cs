@@ -129,7 +129,7 @@ internal class Renderer {
     public readonly Mesh _mesh_SuzanneHighRes = null!;
 
     private readonly static Matrix4x4 _modelIdentity = Matrix4x4.Identity;
-    private readonly static float[] _uModelIdentity = Utils.ToArray(_modelIdentity);
+    private readonly static float[] _uModelIdentity = Matrix4x4.ToArray(_modelIdentity);
     
     /// Gizmos
     private float cameraOrbitCenterRadius = 0.5f;
@@ -181,9 +181,9 @@ internal class Renderer {
         if (renderInfo.material is null) return;
         if (renderInfo.shader is null) return;
 
-        Matrix4x4 mesh_m4x4 = Matrix4x4.CreateScale(renderInfo.scale)
+        Matrix4x4 mesh_m4x4 = Matrix4x4.CreateScale(renderInfo.scale) 
             *Matrix4x4.Rotation(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
-        float[] mesh_uModel = Utils.ToArray(mesh_m4x4);
+        float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
 
         SetSceneUniforms(renderInfo.shader);
         renderInfo.shader.SetMatrix4("uModel", mesh_uModel);
@@ -226,8 +226,8 @@ internal class Renderer {
     private void UpdateProjection () {
         float aspect = Engine.Window.Size.X/(float)Engine.Window.Size.Y;
         Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Constants._cameraFOV, aspect, Constants._cameraPlaneClose, Constants._cameraPlaneFar);
-        uView = Utils.ToArray(View);
-        uProjection = Utils.ToArray(Projection);
+        uView = Matrix4x4.ToArray(View);
+        uProjection = Matrix4x4.ToArray(Projection);
     }
 
     private void DrawGizmos () {
@@ -247,6 +247,8 @@ internal class Renderer {
 
         GL.DepthRange(0.0001, 1.0);
 
+        //Matrix4x4 gizmoSphereModel = Matrix4x4.CreateScale(Constants._gridScale);
+        //Matrix4x4.ToArray(gizmoSphereModel);
         _sh_Grid.Use();
         SetSceneUniforms(_sh_Grid);
         _sh_Grid.SetMatrix4("uModel", _uModelIdentity);
@@ -288,8 +290,6 @@ internal class Renderer {
         Vector3 up = Vector3.Transform(Vector3.UnitY, rotation);
         Vector3 gizmoCamPos = -forward*5f;
         Matrix4x4 gizmoView = Matrix4x4.CreateLookAtLeftHanded(gizmoCamPos, Vector3.Zero, up);
-        //Matrix4x4 gizmoProjection = Matrix4x4.CreateOrthographic(2.2f, 2.2f, 0.1f, 10f);
-        //Matrix4x4 gizmoProjection = Matrix4x4.CreateOrthographicLeftHanded(2.2f, 2.2f, 0.1f, 10f);
         float aspect = Engine.Window.Size.X/(float)Engine.Window.Size.Y;
         Matrix4x4 gizmoProjection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
             Constants._cameraFOV, aspect, Constants._cameraPlaneClose, Constants._cameraPlaneFar);
@@ -297,9 +297,9 @@ internal class Renderer {
         GL.Disable(EnableCap.DepthTest);
 
         _sh_Axes.Use();
-        _sh_Axes.SetMatrix4("uModel", Utils.ToArray(Matrix4x4.Identity));
-        _sh_Axes.SetMatrix4("uView", Utils.ToArray(gizmoView));
-        _sh_Axes.SetMatrix4("uProjection", Utils.ToArray(gizmoProjection));
+        _sh_Axes.SetMatrix4("uModel", Matrix4x4.ToArray(Matrix4x4.Identity));
+        _sh_Axes.SetMatrix4("uView", Matrix4x4.ToArray(gizmoView));
+        _sh_Axes.SetMatrix4("uProjection", Matrix4x4.ToArray(gizmoProjection));
 
         _mesh_GizmoAxes.Draw(PrimitiveType.Lines);
 
@@ -317,7 +317,7 @@ internal class Renderer {
         float dist = (CameraEditor.Instance.cameraOrbitCenterPos - Camera.Instance.cameraPos).Length();
         Matrix4x4 gizmoSphereModel = Matrix4x4.CreateScale(cameraOrbitCenterRadius*dist*0.01f)
             *Matrix4x4.CreateTranslation(CameraEditor.Instance.cameraOrbitCenterPos);
-        _sh_Unlit.SetMatrix4("uModel", Utils.ToArray(gizmoSphereModel));
+        _sh_Unlit.SetMatrix4("uModel", Matrix4x4.ToArray(gizmoSphereModel));
         _sh_Unlit.SetVector3("uColor", 0.5f, 0.5f, 0.5f);
         _sh_Unlit.SetFloat("uAlpha", 0.2f);
         _mesh_Sphere.Draw();
@@ -330,8 +330,8 @@ internal class Renderer {
         _sh_Unlit.Use();
         SetSceneUniforms(_sh_Unlit);
         //Matrix4x4 mesh_m4x4 = Utils.RotationFromDirection(Constants.sunLightDir)*Matrix4x4.Position(0f, 5f, 0f);
-        Matrix4x4 mesh_m4x4 = Utils.RotationFromDirection(Constants.sunLightDir)*Matrix4x4.Position(0f, 5f, 0f);
-        float[] mesh_uModel = Utils.ToArray(mesh_m4x4);
+        Matrix4x4 mesh_m4x4 = Matrix4x4.RotationFromDirection(Constants.sunLightDir)*Matrix4x4.Position(0f, 5f, 0f);
+        float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
         _sh_Unlit.SetMatrix4("uModel", mesh_uModel);
         _sh_Unlit.SetColor("uColor", Constants.yellow);
         _sh_Unlit.SetFloat("uAlpha", 0.5f);
@@ -376,7 +376,7 @@ internal class Renderer {
 
         Matrix4x4 mesh_m4x4 = Matrix4x4.CreateScale(outlineScale)
             *Matrix4x4.Rotation(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
-        float[] mesh_uModel = Utils.ToArray(mesh_m4x4);
+        float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
 
         _sh_Outline.Use();
         _sh_Outline.SetMatrix4("uView", uView);
@@ -384,7 +384,7 @@ internal class Renderer {
         _sh_Outline.SetMatrix4("uModel", mesh_uModel);
         _sh_Outline.SetVector3("uOutlineColor", Constants.cyan);
 
-        renderInfo.mesh!.Draw(renderInfo.primitiveType);
+        renderInfo.mesh!.Draw();
 
         /// Restore state
         GL.Enable(EnableCap.DepthTest);
@@ -404,7 +404,7 @@ internal class Renderer {
         if (selectedMesh is null) return;
 
         float dist = MathF.Sqrt(Vector3.Distance(Camera.Instance.cameraPos, selectedMesh.owner.Transform.Position));
-        Matrix4x4 mesh_m4x4 = Matrix4x4.CreateScale(dist*Vector3.One);
+        Matrix4x4 mesh_m4x4 = Matrix4x4.CreateScale(Vector3.One);
         if (selectedGizmoLocal) mesh_m4x4 = mesh_m4x4*Matrix4x4.Rotation(selectedMesh.owner.Transform.Rotation);
         mesh_m4x4 = mesh_m4x4*Matrix4x4.Position(selectedMesh.owner.Transform.Position);
         float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
@@ -416,8 +416,8 @@ internal class Renderer {
         _sh_Axes.SetMatrix4("uModel", mesh_uModel);
         _sh_Axes.SetVector3("uCameraPos", selectedMesh.owner.Transform.Position); /// <> rework
         _sh_Axes.SetFloat("uAlpha", 0.5f);
-        _sh_Axes.SetFloat("uRadius", 0.5f); /// <> rework
-        _sh_Axes.SetFloat("uFade", 0.5f); /// <> rework
+        _sh_Axes.SetFloat("uRadius", 0.5f*dist); /// <> rework
+        _sh_Axes.SetFloat("uFade", 0.5f*dist); /// <> rework
         _mesh_GizmoAxes.Draw(PrimitiveType.Lines);
 
         switch (selectedGizmoMode) {
@@ -455,7 +455,7 @@ internal class Renderer {
 
                 Matrix4x4 mesh_m4x4 = Matrix4x4.CreateTranslation(
                     new Vector3(2f*x/testGridDensity + offsetX, 0f, -2f*z/testGridDensity + offsetZ));
-                float[] mesh_uModel = Utils.ToArray(mesh_m4x4);
+                float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
                 _sh_Lit.SetMatrix4("uModel", mesh_uModel);
                 _sh_Lit.SetFloat("uRoughness", 1f - x/testGridDensity/testGridCount);
                 _sh_Lit.SetFloat("uMetallic", z/testGridDensity/testGridCount);

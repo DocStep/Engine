@@ -33,7 +33,7 @@ internal sealed class CameraEditor : Camera {
 
     private const float _zoomSpeed = 0.1f;
 
-    private const float _focusTargetDistanceMin = 2f;
+    private const float _focusTargetDistanceMin = 1f;
     private const float _focusTargetDistanceMax = 100f;
     //private float _focusTargetDistance;
 
@@ -251,10 +251,6 @@ internal sealed class CameraEditor : Camera {
     }
 
     private void TryFocusOnPoint (float mouseX, float mouseY, int viewportWidth, int viewportHeight) {
-        var (rayOrigin, rayDirection) = Raycaster1.ScreenPointToRay(
-            mouseX, mouseY, viewportWidth, viewportHeight,
-            Renderer.Instance.View, Renderer.Instance.Projection);
-
         float? bestT = null;
         Ray ray = RaycastMouse();
         Raycaster.RaycastScene(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
@@ -262,15 +258,15 @@ internal sealed class CameraEditor : Camera {
             bestT = Vector3.Distance(cameraPos, hitPos);
         }
 
-        // Fallback: ground plane at Y = 0
+        /// Fallback: ground plane at Y = 0
         if (!bestT.HasValue) {
-            float? planeT = Raycaster1.IntersectPlane(
-                rayOrigin, rayDirection, Vector3.Zero, Vector3.UnitY);
+            float? planeT = Raycaster.IntersectPlane(
+                ray.Origin, ray.Direction, Vector3.Zero, Vector3.UnitY);
             if (planeT.HasValue) bestT = planeT;
         }
         if (!bestT.HasValue) return;
 
-        Vector3 hitPoint = rayOrigin + rayDirection * bestT.Value;
+        Vector3 hitPoint = ray.Origin + ray.Direction * bestT.Value;
 
         FocusAtPoint(hitPoint);
     }
@@ -285,7 +281,7 @@ internal sealed class CameraEditor : Camera {
     }
 
     public Ray RaycastMouse () {
-        Ray ray = Raycaster.ScreenPointToRay(mousePos, Engine.Window.Size.X, Engine.Window.Size.Y,
+        Ray ray = Raycaster.ScreenPointToRay(mousePos.X, mousePos.Y, Engine.Window.Size.X, Engine.Window.Size.Y,
                 Renderer.Instance.View, Renderer.Instance.Projection);
         return ray;
     }

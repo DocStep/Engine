@@ -36,8 +36,8 @@ internal static class Utils {
 
     extension(Matrix4x4) {
         public static Matrix4x4 RotationFromDirection (Vector3 direction, Vector3 up = default) {
-            direction = Vector3.Normalize(direction);
             if (up == default) up = Vector3.UnitY;
+            direction = Vector3.Normalize(direction);
 
             if (MathF.Abs(Vector3.Dot(direction, up)) > 0.999f) {
                 up = MathF.Abs(direction.Y) > 0.999f ? Vector3.UnitX : Vector3.UnitY;

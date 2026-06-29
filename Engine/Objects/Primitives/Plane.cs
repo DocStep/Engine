@@ -73,23 +73,29 @@ public static class Plane {
 
         var indices = new List<uint>();
 
-        /// Horizontal lines: one full row of segments per z, (verticesPerSide-1) segments each.
-        for (int z = 0; z < verticesPerSide; z++) {
+        /// Each cell draws its own 4 edges independently.
+        for (int z = 0; z < cells; z++) {
             for (int x = 0; x < cells; x++) {
-                uint a = (uint)(z*verticesPerSide+x);
-                uint b = a+1;
-                indices.Add(a);
-                indices.Add(b);
-            }
-        }
+                uint topLeft = (uint)(z*verticesPerSide+x);
+                uint topRight = topLeft+1;
+                uint bottomLeft = (uint)((z+1)*verticesPerSide+x);
+                uint bottomRight = bottomLeft+1;
 
-        /// Vertical lines: one full column of segments per x, (verticesPerSide-1) segments each.
-        for (int x = 0; x < verticesPerSide; x++) {
-            for (int z = 0; z < cells; z++) {
-                uint a = (uint)(z*verticesPerSide+x);
-                uint b = (uint)((z+1)*verticesPerSide+x);
-                indices.Add(a);
-                indices.Add(b);
+                /// Top edge
+                indices.Add(topLeft);
+                indices.Add(topRight);
+
+                /// Bottom edge
+                indices.Add(bottomLeft);
+                indices.Add(bottomRight);
+
+                /// Left edge
+                indices.Add(topLeft);
+                indices.Add(bottomLeft);
+
+                /// Right edge
+                indices.Add(topRight);
+                indices.Add(bottomRight);
             }
         }
 
