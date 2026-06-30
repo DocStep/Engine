@@ -137,8 +137,8 @@ internal sealed class CameraEditor : Camera {
         }
 
         if (Inputs.Actions[Inputs.CameraFocus].pressedDown) 
-            if (Renderer.Instance.selectedMesh is not null) 
-                FocusAtPoint(Renderer.Instance.selectedMesh.owner.Transform.Position);
+            if (Renderer.Instance._gizmo_Selected.selectedMesh is not null) 
+                FocusAtPoint(Renderer.Instance._gizmo_Selected.selectedMesh.owner.Transform.Position);
 
         /// Smoothly glide toward the focus target
         if (isFocusing) {
@@ -240,13 +240,13 @@ internal sealed class CameraEditor : Camera {
         if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
             Raycaster.RaycastScene(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
             if (hitMesh is not null) {
-                Renderer.Instance.selectedMesh = hitMesh;
+                Renderer.Instance._gizmo_Selected.selectedMesh = hitMesh;
             } else {
-                Renderer.Instance.selectedMesh = null;
+                Renderer.Instance._gizmo_Selected.selectedMesh = null;
             }
         }
 
-        Renderer.Instance.View = Matrix4x4.CreateLookAtLeftHanded(position, position + forward, worldUp);
+        Renderer.Instance.m4x4_View = Matrix4x4.CreateLookAtLeftHanded(position, position + forward, worldUp);
         cameraRot = rotation;
     }
 

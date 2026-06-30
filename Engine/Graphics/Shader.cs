@@ -32,7 +32,7 @@ public class Shader : IDisposable {
         GL.DeleteShader(vertex);
         GL.DeleteShader(fragment);
     }
-
+    
     private uint CompileShader (ShaderType type, string source) {
         uint shader = GL.CreateShader(type);
         GL.ShaderSource(shader, source);
@@ -46,6 +46,33 @@ public class Shader : IDisposable {
 
         return shader;
     }
+
+
+    public const string View = "uView";
+    public const string Projection = "uProjection";
+    public const string ViewPos = "uViewPos";
+    public const string Model = "uModel";
+    public const string CameraPos = "uCameraPos";
+
+    public const string SunLightColor = "uSunLightColor";
+    public const string SunLightDir = "uSunLightDir";
+    public const string AmbientColor = "uAmbientColor";
+    public const string SunLightIntensity = "uSunLightIntensity";
+    public const string ReflectionIntensity = "uReflectionIntensity";
+
+
+    public const string MaxReflectionLod = "uMaxReflectionLod";
+    public const string Skybox = "uSkybox";
+
+    public const string Color = "uColor";
+    public const string Roughness = "uRoughness";
+    public const string Metallic = "uMetallic";
+    public const string Alpha = "uAlpha";
+    public const string Radius = "uRadius";
+    public const string Fade = "uFade";
+
+
+
 
     public void Use () {
         GL.UseProgram(_program);

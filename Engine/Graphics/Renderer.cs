@@ -2,11 +2,12 @@
 using Silk.NET.OpenGL;
 using Engine.Graphics.UI;
 using Engine.Input;
+using static Engine.Graphics.Shader;
 
 namespace Engine.Graphics;
 
 
-public class Renderer : Singleton<Renderer> {
+public class Renderer {
     public Renderer () {
         Instance = this;
 
@@ -72,17 +73,17 @@ public class Renderer : Singleton<Renderer> {
         _mesh_Suzanne = new Mesh(ObjLoader.Load("src/Models/Suzanne.obj"));
         _mesh_SuzanneHighRes = new Mesh(ObjLoader.Load("src/Models/SuzanneHighRes.obj"));
 
+        _gizmo_Selected = new GizmoSelected();
+
         TextRenderer = new TextRenderer();
     }
-
     public static Renderer Instance = null!;
 
+    public readonly GL GL = null!;
     public readonly TextRenderer TextRenderer = null!;
 
     public Action? de_DrawGizmos = null;
 
-
-    internal readonly GL GL = null!;
 
     public readonly Shader _sh_Lit = null!;
     public readonly Shader _sh_Unlit = null!;
@@ -131,6 +132,7 @@ public class Renderer : Singleton<Renderer> {
     public readonly Mesh _mesh_Arrow3D = null!;
     public readonly Mesh _mesh_ArrowWireframe = null!;
 
+    public readonly GizmoSelected _gizmo_Selected = null!;
     private readonly static Matrix4x4 _modelIdentity = Matrix4x4.Identity;
     private readonly static float[] _uModelIdentity = Matrix4x4.ToArray(_modelIdentity);
     
@@ -138,10 +140,13 @@ public class Renderer : Singleton<Renderer> {
     private float cameraOrbitCenterRadius = 0.5f;
 
     /// Debug
-    internal Matrix4x4 View = Matrix4x4.Identity;
-    internal Matrix4x4 Projection = Matrix4x4.Identity;
+    internal Matrix4x4 m4x4_View = Matrix4x4.Identity;
+    internal Matrix4x4 m4x4Projection = Matrix4x4.Identity;
     private float[] uView = [];
+    public float[] UView => uView;
+
     private float[] uProjection = [];
+    public float[] UProjection => uProjection;
 
 
     private readonly List<RenderInfo> RenderList = new List<RenderInfo>();
@@ -153,22 +158,22 @@ public class Renderer : Singleton<Renderer> {
 
     private void SetSceneUniforms (Shader shader) {
         shader.Use();
-        shader.SetMatrix4("uView", uView);
-        shader.SetMatrix4("uProjection", uProjection);
-        shader.SetVector3("uViewPos", Camera.Instance.cameraPos);
-        shader.SetVector3("uSunLightColor", Constants.sunLightColor);
-        shader.SetVector3("uSunLightDir", Constants.sunLightDir);
-        shader.SetVector3("uAmbientColor", 0.05f, 0.05f, 0.06f);
-        shader.SetFloat("uSunLightIntensity", Constants.sunLightIntensity);
-        shader.SetFloat("uReflectionIntensity", Constants.reflectionIntensity);
+        shader.SetMatrix4(View, uView);
+        shader.SetMatrix4(Projection, uProjection);
+        shader.SetVector3(ViewPos, Camera.Instance.cameraPos);
+        shader.SetVector3(SunLightColor, Constants.sunLightColor);
+        shader.SetVector3(SunLightDir, Constants.sunLightDir);
+        shader.SetVector3(AmbientColor, 0.05f, 0.05f, 0.06f);
+        shader.SetFloat(SunLightIntensity, Constants.sunLightIntensity);
+        shader.SetFloat(ReflectionIntensity, Constants.reflectionIntensity);
         //shader.SetFloat("uExposure", 1f);
 
         if (_hdrTexture_Skybox is not null) {
             _hdrTexture_Skybox.Bind(TextureUnit.Texture0);
-            shader.SetInt("uSkybox", 0);
+            shader.SetInt(Shader.Skybox, 0);
 
             float maxLod = MathF.Log2(MathF.Max(_hdrTexture_Skybox.Width, _hdrTexture_Skybox.Height));
-            shader.SetFloat("uMaxReflectionLod", maxLod);
+            shader.SetFloat(MaxReflectionLod, maxLod);
         }
     }
 
@@ -189,7 +194,7 @@ public class Renderer : Singleton<Renderer> {
         float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
 
         SetSceneUniforms(renderInfo.shader);
-        renderInfo.shader.SetMatrix4("uModel", mesh_uModel);
+        renderInfo.shader.SetMatrix4(Model, mesh_uModel);
         renderInfo.material.Apply(renderInfo.shader);
         renderInfo.mesh.Draw(renderInfo.primitiveType);
     }
@@ -202,14 +207,14 @@ public class Renderer : Singleton<Renderer> {
         GL.Enable(EnableCap.CullFace);
         GL.Enable(EnableCap.DepthTest);
 
-        if (Constants.renderSkybox) _skybox?.Draw(View, Projection);
+        if (Constants.renderSkybox) _skybox?.Draw(m4x4_View, m4x4Projection);
 
         GL.CullFace(TriangleFace.Back);
 
         /// Draw Scene
         Draw();
 
-        DrawSelectedOutline();
+        //DrawSelectedOutline();
 
         SceneManager.ActiveScene?.DrawRaw();
 
@@ -228,9 +233,9 @@ public class Renderer : Singleton<Renderer> {
     }
     private void UpdateProjection () {
         float aspect = Engine.Window.Size.X/(float)Engine.Window.Size.Y;
-        Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Constants._cameraFOV, aspect, Constants._cameraPlaneClose, Constants._cameraPlaneFar);
-        uView = Matrix4x4.ToArray(View);
-        uProjection = Matrix4x4.ToArray(Projection);
+        m4x4Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Constants._cameraFOV, aspect, Constants._cameraPlaneClose, Constants._cameraPlaneFar);
+        uView = Matrix4x4.ToArray(m4x4_View);
+        uProjection = Matrix4x4.ToArray(m4x4Projection);
     }
 
     private void DrawGizmos () {
@@ -240,7 +245,9 @@ public class Renderer : Singleton<Renderer> {
 
         DrawGizmoCameraOrbitCenter();
 
-        DrawSelectedGizmo();
+        _gizmo_Selected.Update();
+        _gizmo_Selected.Draw();
+
 
         /// UI Layer
         DrawGizmoAxesWidget();
@@ -250,16 +257,14 @@ public class Renderer : Singleton<Renderer> {
 
         GL.DepthRange(0.0001, 1.0);
 
-        //Matrix4x4 gizmoSphereModel = Matrix4x4.CreateScale(Constants._gridScale);
-        //Matrix4x4.ToArray(gizmoSphereModel);
         _sh_Grid.Use();
         SetSceneUniforms(_sh_Grid);
-        _sh_Grid.SetMatrix4("uModel", _uModelIdentity);
-        _sh_Grid.SetVector3("uCameraPos", Camera.Instance.cameraPos);
-        _sh_Grid.SetVector3("uColor", Constants.lightGray);
-        _sh_Grid.SetFloat("uAlpha", 0.5f);
-        _sh_Grid.SetFloat("uRadius", 200f);
-        _sh_Grid.SetFloat("uFade", 50f);
+        _sh_Grid.SetMatrix4(Model, _uModelIdentity);
+        _sh_Grid.SetVector3(CameraPos, Camera.Instance.cameraPos);
+        _sh_Grid.SetVector3(Color, Constants.lightGray);
+        _sh_Grid.SetFloat(Alpha, 0.5f);
+        _sh_Grid.SetFloat(Radius, 200f);
+        _sh_Grid.SetFloat(Fade, 50f);
         _mesh_GridWireframe.Draw(PrimitiveType.Lines);
 
         GL.DepthRange(0.0, 1.0);
@@ -268,11 +273,11 @@ public class Renderer : Singleton<Renderer> {
     private void DrawGizmoAxes () {
         _sh_Axes.Use();
         SetSceneUniforms(_sh_Axes);
-        _sh_Axes.SetMatrix4("uModel", _uModelIdentity);
-        _sh_Axes.SetVector3("uCameraPos", Camera.Instance.cameraPos);
-        _sh_Axes.SetFloat("uAlpha", 0.5f);
-        _sh_Axes.SetFloat("uRadius", 200f);
-        _sh_Axes.SetFloat("uFade", 50f);
+        _sh_Axes.SetMatrix4(Model, _uModelIdentity);
+        _sh_Axes.SetVector3(CameraPos, Camera.Instance.cameraPos);
+        _sh_Axes.SetFloat(Alpha, 0.5f);
+        _sh_Axes.SetFloat(Radius, 200f);
+        _sh_Axes.SetFloat(Fade, 50f);
         _mesh_AxesWireframe.Draw(PrimitiveType.Lines);
     }
     private void DrawGizmoAxesWidget () {
@@ -285,6 +290,7 @@ public class Renderer : Singleton<Renderer> {
         int gizmoX = windowWidth - gizmoSize - gizmoMargin;
         int gizmoY = windowHeight - gizmoSize - gizmoMargin;
 
+        GL.Disable(EnableCap.DepthTest);
         GL.Viewport(gizmoX, gizmoY, (uint)gizmoSize, (uint)gizmoSize);
         GL.Clear(ClearBufferMask.DepthBufferBit);
 
@@ -297,17 +303,14 @@ public class Renderer : Singleton<Renderer> {
         Matrix4x4 gizmoProjection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
             Constants._cameraFOV, aspect, Constants._cameraPlaneClose, Constants._cameraPlaneFar);
 
-        GL.Disable(EnableCap.DepthTest);
-
         _sh_Axes.Use();
-        _sh_Axes.SetMatrix4("uModel", Matrix4x4.ToArray(Matrix4x4.Identity));
-        _sh_Axes.SetMatrix4("uView", Matrix4x4.ToArray(gizmoView));
-        _sh_Axes.SetMatrix4("uProjection", Matrix4x4.ToArray(gizmoProjection));
+        _sh_Axes.SetMatrix4(View, Matrix4x4.ToArray(gizmoView));
+        _sh_Axes.SetMatrix4(Projection, Matrix4x4.ToArray(gizmoProjection));
+        _sh_Axes.SetMatrix4(Model, Matrix4x4.ToArray(Matrix4x4.Identity));
 
         _mesh_AxesWireframe.Draw(PrimitiveType.Lines);
 
         GL.Enable(EnableCap.DepthTest);
-
         GL.Viewport(Engine.Window.Size);
     }
     private void DrawGizmoCameraOrbitCenter () {
@@ -320,9 +323,9 @@ public class Renderer : Singleton<Renderer> {
         float dist = (CameraEditor.Instance.cameraOrbitCenterPos - Camera.Instance.cameraPos).Length();
         Matrix4x4 gizmoSphereModel = Matrix4x4.CreateScale(cameraOrbitCenterRadius*dist*0.01f)
             *Matrix4x4.CreateTranslation(CameraEditor.Instance.cameraOrbitCenterPos);
-        _sh_Unlit.SetMatrix4("uModel", Matrix4x4.ToArray(gizmoSphereModel));
-        _sh_Unlit.SetVector3("uColor", 0.5f, 0.5f, 0.5f);
-        _sh_Unlit.SetFloat("uAlpha", 0.2f);
+        _sh_Unlit.SetMatrix4(Model, Matrix4x4.ToArray(gizmoSphereModel));
+        _sh_Unlit.SetVector3(Color, 0.5f, 0.5f, 0.5f);
+        _sh_Unlit.SetFloat(Alpha, 0.2f);
         _mesh_Sphere.Draw();
 
         GL.DepthMask(true);
@@ -335,257 +338,19 @@ public class Renderer : Singleton<Renderer> {
         //Matrix4x4 mesh_m4x4 = Utils.RotationFromDirection(Constants.sunLightDir)*Matrix4x4.Position(0f, 5f, 0f);
         Matrix4x4 mesh_m4x4 = Matrix4x4.RotationFromDirection(Constants.sunLightDir)*Matrix4x4.Position(0f, 5f, 0f);
         float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
-        _sh_Unlit.SetMatrix4("uModel", mesh_uModel);
-        _sh_Unlit.SetColor("uColor", Constants.yellow);
-        _sh_Unlit.SetFloat("uAlpha", 0.5f);
+        _sh_Unlit.SetMatrix4(Model, mesh_uModel);
+        _sh_Unlit.SetColor(Color, Constants.yellow);
+        _sh_Unlit.SetFloat(Alpha, 0.5f);
         if (Constants._drawArrowAsMesh) _mesh_Arrow3D.Draw();
         else _mesh_ArrowWireframe.Draw(PrimitiveType.Lines);
 
         GL.Enable(EnableCap.CullFace);
     }
 
-    internal MeshComponent? selectedMesh = null;
-    public void DrawSelectedOutline () {
-        if (selectedMesh is null) return;
-
-        RenderInfo renderInfo = selectedMesh.CreateRenderInfo;
-
-        GL.Enable(EnableCap.StencilTest);
-        GL.Enable(EnableCap.DepthTest);
-        GL.Enable(EnableCap.CullFace);
-        GL.CullFace(TriangleFace.Front);
-
-        /// Pass 1 — render mesh normally, mark stencil = 1 everywhere it's visible
-        GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
-        GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
-        GL.StencilMask(0xFF);
-        GL.DepthMask(true);
-
-        DrawMesh(renderInfo);
-
-        /// Pass 2 — outline: draw inflated mesh ONLY where stencil != 1
-        GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
-        GL.StencilMask(0x00);
-        GL.DepthMask(false);
-
-        float width = 2.5f;
-        float dist = Vector3.Distance(Camera.Instance.cameraPos, renderInfo.pos);
-        float t = width*0.001f*MathF.Sqrt(dist);
-        Vector3 outlineScale = new Vector3(
-            renderInfo.scale.X + t,
-            renderInfo.scale.Y + t,
-            renderInfo.scale.Z + t
-        );
-
-        Matrix4x4 mesh_m4x4 = Matrix4x4.CreateScale(outlineScale)
-            *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
-        float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
-
-        _sh_Outline.Use();
-        _sh_Outline.SetMatrix4("uView", uView);
-        _sh_Outline.SetMatrix4("uProjection", uProjection);
-        _sh_Outline.SetMatrix4("uModel", mesh_uModel);
-        _sh_Outline.SetVector3("uOutlineColor", Constants.cyan);
-
-        renderInfo.mesh!.Draw();
-
-        /// Restore state
-        GL.Enable(EnableCap.DepthTest);
-        GL.DepthMask(true);
-        GL.StencilMask(0xFF);
-        GL.Disable(EnableCap.StencilTest);
-    }
 
 
-    public SelectedGizmoMode selectedGizmoMode = SelectedGizmoMode.Position;
-    public bool selectedGizmoLocal = false;
-    public bool xOver = false;
-    public bool yOver = false;
-    public bool zOver = false;
-    public bool xyOver = false;
-    public bool xzOver = false;
-    public bool yzOver = false;
 
-    public SelectedPositionGizmoMode selectedPositionMode;
-    public SelectedRotationGizmoMode selectedRotationMode;
-    public SelectedScaleGizmoMode selectedScaleMode;
-    public Vector3 selectedDragPos;
-    public Vector3 selectedDragRot;
-    public Vector3 selectedDragMargin;
-
-
-    public void DrawSelectedGizmo () {
-        if (selectedMesh is null) return;
-
-        GL.Disable(EnableCap.DepthTest);
-        GL.Disable(EnableCap.CullFace);
-
-        TransformComponent tr_obj = selectedMesh.owner.Transform;
-        Vector3 camPos = Camera.Instance.cameraPos;
-        Vector3 _objPos = tr_obj.Position;
-        Vector3 _objRot = tr_obj.Rotation;
-        float _dist = Vector3.Distance(camPos, _objPos);
-
-        _sh_Unlit.Use();
-        _sh_Unlit.SetMatrix4("uView", uView);
-        _sh_Unlit.SetMatrix4("uProjection", uProjection);
-        _sh_Unlit.SetVector3("uViewPos", camPos);
-
-        Ray ray = Camera.Instance.RaycastMouse();
-        float _squareSize = 0.025f;
-        float half = 0.5f*_squareSize;
-        Vector3 quadXYOffset;
-        Vector3 quadXZOffset;
-        Vector3 quadYZOffset;
-        Vector3 quadXYRot;
-        Vector3 quadXZRot;
-        Vector3 quadYZRot;
-        Vector3? squarePickXYPos;
-        Vector3? squarePickXZPos;
-        Vector3? squarePickYZPos;
-        Matrix4x4 _m4x4_selectedCommon = Matrix4x4.CreateScale(_dist*_squareSize*Vector3.One);
-        Matrix4x4 m4x4_selected;
-        float[] mesh_uModel;
-        if (selectedGizmoLocal) _m4x4_selectedCommon *= Matrix4x4.RotationEuler(_objRot);
-        switch (selectedGizmoMode) {
-            case SelectedGizmoMode.Position:
-                quadXYOffset = new Vector3(0.5f, 0.5f, 0);
-                quadXZOffset = new Vector3(0.5f, 0, 0.5f);
-                quadYZOffset = new Vector3(0, 0.5f, 0.5f);
-                if (camPos.X < _objPos.X) {
-                    quadXYOffset.X *= -1;
-                    quadXZOffset.X *= -1;
-                }
-                if (camPos.Y < _objPos.Y) {
-                    quadXYOffset.Y *= -1;
-                    quadYZOffset.Y *= -1;
-                }
-                if (camPos.Z < _objPos.Z) {
-                    quadXZOffset.Z *= -1;
-                    quadYZOffset.Z *= -1;
-                }
-                quadXYRot = new(90, 0, 0);
-                quadXZRot = Vector3.Zero;
-                quadYZRot = new(0, 0, 90);
-
-                /// XY
-                squarePickXYPos = TryPickQuad(quadXYOffset, Vector3.UnitZ, Vector3.UnitX, Vector3.UnitY);
-                xyOver = squarePickXYPos is not null;
-                if (squarePickXYPos is not null) {
-                    if (Inputs.Actions[Inputs.LMB].pressedDown) {
-                        Log.log("XY");
-                        selectedPositionMode = SelectedPositionGizmoMode.XY;
-                        selectedDragMargin = _objPos - squarePickXYPos!.Value;
-                        //DragStartValues();
-                    }
-                }
-
-                /// XZ
-                squarePickXZPos = TryPickQuad(quadXZOffset, Vector3.UnitY, Vector3.UnitX, Vector3.UnitZ);
-                xzOver = squarePickXZPos is not null;
-                if (squarePickXZPos is not null) {
-                    if (Inputs.Actions[Inputs.LMB].pressedDown) {
-                        Log.log("XZ");
-                        selectedPositionMode = SelectedPositionGizmoMode.XZ;
-                        selectedDragMargin = _objPos - squarePickXZPos!.Value;
-                        //DragStartValues();
-                    }
-                }
-
-                /// YZ
-                squarePickYZPos = TryPickQuad(quadYZOffset, Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ);
-                yzOver = squarePickYZPos is not null;
-                if (squarePickYZPos is not null) {
-                    if (Inputs.Actions[Inputs.LMB].pressedDown) {
-                        Log.log("YZ");
-                        selectedPositionMode = SelectedPositionGizmoMode.YZ;
-                        selectedDragMargin = _objPos - squarePickYZPos!.Value;
-                        //DragStartValues();
-                    }
-                }
-
-                if (Inputs.Actions[Inputs.LMB].pressed) {
-                    Vector3? pos = null;
-                    switch (selectedPositionMode) {
-                        /*case SelectedPositionGizmoMode.X:
-                            break;
-                        case SelectedPositionGizmoMode.Y:
-                            break;
-                        case SelectedPositionGizmoMode.Z:
-                            break;*/
-                        case SelectedPositionGizmoMode.XY:
-                            pos = Raycaster.IntersectPlane(ray, _objPos, tr_obj.Forward);
-                            break;
-                        case SelectedPositionGizmoMode.XZ:
-                            pos = Raycaster.IntersectPlane(ray, _objPos, tr_obj.Up);
-                            break;
-                        case SelectedPositionGizmoMode.YZ:
-                            pos = Raycaster.IntersectPlane(ray, _objPos, tr_obj.Right);
-                            break;
-                    }
-                    if (pos is not null) {
-                        selectedMesh.owner.Transform.Position = pos.Value + selectedDragMargin;
-                    }
-                } else if (Inputs.Actions[Inputs.LMB].pressedUp) {
-                    selectedPositionMode = SelectedPositionGizmoMode.None;
-                }
-
-                if (xyOver) drawQuad(quadXYOffset, quadXYRot, Constants.blueLight);
-                else drawQuad(quadXYOffset, quadXYRot, Constants.blue);
-                if (xzOver) drawQuad(quadXZOffset, quadXZRot, Constants.greenLight);
-                else drawQuad(quadXZOffset, quadXZRot, Constants.green);
-                if (yzOver) drawQuad(quadYZOffset, quadYZRot, Constants.redLight);
-                else drawQuad(quadYZOffset, quadYZRot, Constants.red);
-                break;
-
-                void DragStartValues () {
-                    selectedDragPos = _objPos;
-                    selectedDragRot = _objRot;
-                }
-            /*case SelectedGizmoMode.Rotation:
-                break;*/
-            /*case SelectedGizmoMode.Scale:
-                break;*/
-        }
-        Vector3? TryPickQuad (Vector3 offset, Vector3 normal, Vector3 axisA, Vector3 axisB) {
-            Vector3 quadCenter = _objPos + _dist*offset*_squareSize;
-            float halfExtent = _dist*half;
-            Vector3? hit = Raycaster.IntersectPlane(ray, quadCenter, normal);
-            if (hit is null) return null;
-
-            Vector3 local = hit.Value - quadCenter;
-            float a = Vector3.Dot(local, axisA);
-            float b = Vector3.Dot(local, axisB);
-
-            if (MathF.Abs(a) <= halfExtent && MathF.Abs(b) <= halfExtent) return hit;
-            else return null;
-        }
-        void drawQuad (Vector3 offset, Vector3 rot, Vector3 color) {
-            m4x4_selected = _m4x4_selectedCommon*Matrix4x4.RotationEuler(rot);
-            m4x4_selected = m4x4_selected*Matrix4x4.Position(_objPos + _dist*_squareSize*offset);
-            _sh_Unlit.SetMatrix4("uModel", Matrix4x4.ToArray(m4x4_selected));
-            _sh_Unlit.SetFloat("uAlpha", 0.5f);
-            _sh_Unlit.SetColor("uColor", color);
-            _mesh_PlaneQuad.Draw();
-        }
-
-        /// <> change to 3-lines
-        float _axesSize = 0.1f;
-        m4x4_selected = Matrix4x4.CreateScale(Vector3.One);
-        if (selectedGizmoLocal) m4x4_selected = m4x4_selected*Matrix4x4.RotationEuler(_objRot);
-        m4x4_selected = m4x4_selected*Matrix4x4.Position(_objPos);
-        mesh_uModel = Matrix4x4.ToArray(m4x4_selected);
-        _sh_Axes.Use();
-        _sh_Axes.SetMatrix4("uView", uView);
-        _sh_Axes.SetMatrix4("uProjection", uProjection);
-        _sh_Axes.SetVector3("uViewPos", camPos);
-        _sh_Axes.SetMatrix4("uModel", mesh_uModel);
-        _sh_Axes.SetVector3("uCameraPos", _objPos); /// <> rework
-        _sh_Axes.SetFloat("uAlpha", 0.5f);
-        _sh_Axes.SetFloat("uRadius", _axesSize*_dist); /// <> rework
-        _sh_Axes.SetFloat("uFade", _axesSize*_dist); /// <> rework
-        _mesh_AxesWireframe.Draw(PrimitiveType.Lines);
-    }
+    
 
     private void DrawEnd () {
         RenderList.Clear();
@@ -597,7 +362,7 @@ public class Renderer : Singleton<Renderer> {
         GL.Enable(EnableCap.CullFace);
         GL.CullFace(TriangleFace.Back);
         SetSceneUniforms(_sh_Lit);
-        _sh_Lit.SetColor("uColor", Constants.black);
+        _sh_Lit.SetColor(Color, Constants.black);
         for (int x = 0; x < testGridCount*testGridDensity; x++) {
             for (int z = 0; z < testGridCount*testGridDensity; z++) {
                 RenderList.Add(new() {
@@ -610,9 +375,9 @@ public class Renderer : Singleton<Renderer> {
                 Matrix4x4 mesh_m4x4 = Matrix4x4.CreateTranslation(
                     new Vector3(2f*x/testGridDensity + offsetX, 0f, -2f*z/testGridDensity + offsetZ));
                 float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
-                _sh_Lit.SetMatrix4("uModel", mesh_uModel);
-                _sh_Lit.SetFloat("uRoughness", 1f - x/testGridDensity/testGridCount);
-                _sh_Lit.SetFloat("uMetallic", z/testGridDensity/testGridCount);
+                _sh_Lit.SetMatrix4(Model, mesh_uModel);
+                _sh_Lit.SetFloat(Roughness, 1f - x/testGridDensity/testGridCount);
+                _sh_Lit.SetFloat(Metallic, z/testGridDensity/testGridCount);
                 _mesh_Sphere.Draw();
             }
         }

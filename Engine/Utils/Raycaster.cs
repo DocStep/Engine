@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
 
-namespace Engine.Graphics;
+namespace Engine;
 
 
 public static class Raycaster {
@@ -114,7 +114,33 @@ public static class Raycaster {
         return epsilon < t;
     }
 
-    public static bool RaycastMesh (Ray ray, MeshData mesh, Matrix4x4 worldMatrix, out Vector3 worldHit, out float closestT, out Vector3 worldNormal) {
+    /// Möller–Trumbore
+    internal static float? IntersectTriangle (
+        Vector3 origin, Vector3 dir,
+        Vector3 v0, Vector3 v1, Vector3 v2) {
+        const float EPSILON = 1e-8f;
+
+        Vector3 edge1 = v1 - v0;
+        Vector3 edge2 = v2 - v0;
+        Vector3 h = Vector3.Cross(dir, edge2);
+        float det = Vector3.Dot(edge1, h);
+
+        if (MathF.Abs(det) < EPSILON) return null; /// parallel
+
+        float invDet = 1f/det;
+        Vector3 s = origin - v0;
+        float u = invDet*Vector3.Dot(s, h);
+        if (u < 0f || 1 < u) return null;
+
+        Vector3 q = Vector3.Cross(s, edge1);
+        float v = invDet*Vector3.Dot(dir, q);
+        if (0 < v || 1 < u + v) return null;
+
+        float t = invDet*Vector3.Dot(edge2, q);
+        return EPSILON < t ? t : null;
+    }
+
+    public static bool RaycastMesh (Ray ray, Graphics.MeshData mesh, Matrix4x4 worldMatrix, out Vector3 worldHit, out float closestT, out Vector3 worldNormal) {
         closestT = float.MaxValue;
         worldHit = default;
         worldNormal = default;
@@ -136,7 +162,7 @@ public static class Raycaster {
         return hit;
     }
 
-    public static bool RaycastScene (Scene scene, Ray ray, out MeshComponent? hitMesh, out Vector3 hitPoint, out Vector3 hitNormal) {
+    public static bool RaycastScene (Scene scene, Ray ray, out Graphics.MeshComponent? hitMesh, out Vector3 hitPoint, out Vector3 hitNormal) {
         hitMesh = null;
         hitPoint = default;
         hitNormal = default;
@@ -144,7 +170,7 @@ public static class Raycaster {
         bool hitAny = false;
 
         foreach (var go in scene.Objects) {
-            MeshComponent? meshComponent = go.GetComponent<MeshComponent>();
+            Graphics.MeshComponent? meshComponent = go.GetComponent<Graphics.MeshComponent>();
             if (meshComponent is null) continue;
             if (meshComponent.mesh is null) continue;
             if (meshComponent.mesh.Data.PrimitiveType != Silk.NET.OpenGL.PrimitiveType.Triangles) continue;
@@ -209,31 +235,11 @@ public static class Raycaster {
         return null;
     }
 
-    /// Möller–Trumbore
-    internal static float? IntersectTriangle (
-        Vector3 origin, Vector3 dir,
-        Vector3 v0, Vector3 v1, Vector3 v2) {
-        const float EPSILON = 1e-8f;
 
-        Vector3 edge1 = v1 - v0;
-        Vector3 edge2 = v2 - v0;
-        Vector3 h = Vector3.Cross(dir, edge2);
-        float det = Vector3.Dot(edge1, h);
-
-        if (MathF.Abs(det) < EPSILON) return null; /// parallel
-
-        float invDet = 1f/det;
-        Vector3 s = origin - v0;
-        float u = invDet*Vector3.Dot(s, h);
-        if (u < 0f || 1 < u) return null;
-
-        Vector3 q = Vector3.Cross(s, edge1);
-        float v = invDet*Vector3.Dot(dir, q);
-        if (0 < v || 1 < u + v) return null;
-
-        float t = invDet*Vector3.Dot(edge2, q);
-        return EPSILON < t ? t : null;
-    }
-
+    private static float GetAxis (Vector3 v, int axis) => axis switch {
+        0 => v.X,
+        1 => v.Y,
+        _ => v.Z,
+    };
 
 }
