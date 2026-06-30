@@ -58,6 +58,26 @@ public static class Raycaster {
         return true;
     }
 
+    public static float? IntersectPlane (Vector3 origin, Vector3 direction, Vector3 planePoint, Vector3 planeNormal) {
+        float denominator = Vector3.Dot(direction, planeNormal);
+        if (MathF.Abs(denominator) < 1e-8f) return null; /// ray parallel to plane
+
+        float t = Vector3.Dot(planePoint - origin, planeNormal)/denominator;
+        return 0 <= t ? t : null;
+    }
+    public static Vector3? IntersectPlaneEuler (Ray ray, Vector3 planePoint, Vector3 planeEulerDeg) {
+        Matrix4x4 rot = Matrix4x4.RotationEuler(planeEulerDeg);
+        Vector3 planeNormal = Vector3.Normalize(Vector3.TransformNormal(Vector3.UnitZ, rot));
+
+        float denominator = Vector3.Dot(ray.Direction, planeNormal);
+        if (MathF.Abs(denominator) < 1e-8f) return null; /// ray parallel to plane
+
+        float t = Vector3.Dot(planePoint - ray.Origin, planeNormal)/denominator;
+        if (t < 0) return null;
+
+        return ray.Origin + ray.Direction*t;
+    }
+
     public static bool RayTriangle (Ray ray, Vector3 v0, Vector3 v1, Vector3 v2, out float t) {
         const float epsilon = 1e-6f;
         t = 0f;
@@ -205,14 +225,6 @@ public static class Raycaster {
 
         float t = invDet*Vector3.Dot(edge2, q);
         return EPSILON < t ? t : null;
-    }
-
-    public static float? IntersectPlane (Vector3 origin, Vector3 direction, Vector3 planePoint, Vector3 planeNormal) {
-        float denominator = Vector3.Dot(direction, planeNormal);
-        if (MathF.Abs(denominator) < 1e-8f) return null; /// ray parallel to plane
-
-        float t = Vector3.Dot(planePoint - origin, planeNormal)/denominator;
-        return 0 <= t ? t : null;
     }
 
 

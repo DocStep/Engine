@@ -10,6 +10,10 @@ public class TransformComponent : Component {
     public Vector3 Rotation = Vector3.Zero;
     public Vector3 Scale = Vector3.One;
 
+    public Vector3 Right => Vector3.Normalize(Vector3.TransformNormal(Vector3.UnitX, Matrix4x4.RotationEuler(Rotation)));
+    public Vector3 Up => Vector3.Normalize(Vector3.TransformNormal(Vector3.UnitY, Matrix4x4.RotationEuler(Rotation)));
+    public Vector3 Forward => Vector3.Normalize(Vector3.TransformNormal(Vector3.UnitZ, Matrix4x4.RotationEuler(Rotation)));
+
 
     public Matrix4x4 GetWorldMatrix () {
         var scaleMat = Matrix4x4.CreateScale(Scale);

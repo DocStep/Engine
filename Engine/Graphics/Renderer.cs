@@ -396,15 +396,23 @@ public class Renderer : Singleton<Renderer> {
         GL.Disable(EnableCap.StencilTest);
     }
 
-    enum SelectedGizmoMode {
-        Position,
-        Rotation,
-        Scale,
-    }
 
-    SelectedGizmoMode selectedGizmoMode = SelectedGizmoMode.Position;
-    bool selectedGizmoLocal = false;
-    
+    public SelectedGizmoMode selectedGizmoMode = SelectedGizmoMode.Position;
+    public bool selectedGizmoLocal = false;
+    public bool xOver = false;
+    public bool yOver = false;
+    public bool zOver = false;
+    public bool xyOver = false;
+    public bool xzOver = false;
+    public bool yzOver = false;
+
+    public SelectedPositionGizmoMode selectedPositionMode;
+    public SelectedRotationGizmoMode selectedRotationMode;
+    public SelectedScaleGizmoMode selectedScaleMode;
+    public Vector3 selectedDragPos;
+    public Vector3 selectedDragRot;
+    public Vector3 selectedDragMargin;
+
 
     public void DrawSelectedGizmo () {
         if (selectedMesh is null) return;
@@ -412,8 +420,10 @@ public class Renderer : Singleton<Renderer> {
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
 
+        TransformComponent tr_obj = selectedMesh.owner.Transform;
         Vector3 camPos = Camera.Instance.cameraPos;
-        Vector3 objPos = selectedMesh.owner.Transform.Position;
+        Vector3 objPos = tr_obj.Position;
+        Vector3 objRot = tr_obj.Rotation;
         float dist = MathF.Sqrt(Vector3.Distance(camPos, objPos));
 
         _sh_Unlit.Use();
@@ -426,55 +436,98 @@ public class Renderer : Singleton<Renderer> {
         float half = 0.5f*squareSize;
         Vector3 squareOffset;
         Vector3 squareRot;
+        Vector3? squarePickPos;
         Matrix4x4 _m4x4_selectedCommon = Matrix4x4.CreateScale(dist*squareSize*Vector3.One);
         Matrix4x4 m4x4_selected;
         float[] mesh_uModel;
-        bool xy = false;
-        bool xz = false;
-        bool yz = false;
-        bool xyOver = false;
-        bool xzOver = false;
-        bool yzOver = false;
-        if (selectedGizmoLocal) _m4x4_selectedCommon *= Matrix4x4.RotationEuler(selectedMesh.owner.Transform.Rotation);
+        if (selectedGizmoLocal) _m4x4_selectedCommon *= Matrix4x4.RotationEuler(objRot);
         switch (selectedGizmoMode) {
             case SelectedGizmoMode.Position:
                 /// XY
                 squareOffset = new Vector3(0.5f, 0.5f, 0);
                 CheckSide();
                 squareRot = new(90, 0, 0);
-                xy = TryPickQuad(Vector3.UnitZ, Vector3.UnitX, Vector3.UnitY);
-                if (xy) {
+                squarePickPos = TryPickQuad(Vector3.UnitZ, Vector3.UnitX, Vector3.UnitY);
+                xyOver = squarePickPos is not null;
+                if (squarePickPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         Log.log("XY");
+                        selectedPositionMode = SelectedPositionGizmoMode.XY;
+                        selectedDragPos = objPos;
+                        selectedDragRot = objRot;
+                        selectedDragMargin = objPos - squarePickPos!.Value;
                     }
-
-                    drawQuad(Constants.blueLight);
-                } else drawQuad(Constants.blue);
+                }
+                if (xyOver) drawQuad(Constants.blueLight);
+                else drawQuad(Constants.blue);
 
                 /// XZ
                 squareOffset = new Vector3(0.5f, 0, 0.5f);
                 CheckSide();
                 squareRot = new(0, 90, 0);
-                xz = TryPickQuad(Vector3.UnitY, Vector3.UnitX, Vector3.UnitZ);
-                if (xz) {
+                squarePickPos = TryPickQuad(Vector3.UnitY, Vector3.UnitX, Vector3.UnitZ);
+                xzOver = squarePickPos is not null;
+                if (squarePickPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         Log.log("XZ");
+                        selectedPositionMode = SelectedPositionGizmoMode.XZ;
+                        selectedDragPos = objPos;
+                        selectedDragRot = objRot;
+                        selectedDragMargin = objPos - squarePickPos!.Value;
                     }
-                    drawQuad(Constants.greenLight);
-                } else drawQuad(Constants.green);
+                }
+                if (xzOver) drawQuad(Constants.greenLight);
+                else drawQuad(Constants.green);
 
                 /// YZ
                 squareOffset = new Vector3(0, 0.5f, 0.5f);
                 CheckSide();
                 squareRot = new(0, 0, 90);
-                yz = TryPickQuad(Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ);
-                if (yz) {
+                squarePickPos = TryPickQuad(Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ);
+                yzOver = squarePickPos is not null;
+                if (squarePickPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         Log.log("YZ");
+                        selectedPositionMode = SelectedPositionGizmoMode.YZ;
+                        selectedDragPos = objPos;
+                        selectedDragRot = objRot;
+                        selectedDragMargin = objPos - squarePickPos!.Value;
                     }
-                    drawQuad(Constants.redLight);
-                } else drawQuad(Constants.red);
+                }
+                if (yzOver) drawQuad(Constants.redLight);
+                else drawQuad(Constants.red);
 
+                if (Inputs.Actions[Inputs.LMB].pressed) {
+                    switch (selectedPositionMode) {
+                        /*case SelectedPositionGizmoMode.X:
+                            break;
+                        case SelectedPositionGizmoMode.Y:
+                            break;
+                        case SelectedPositionGizmoMode.Z:
+                            break;*/
+                        case SelectedPositionGizmoMode.XY:
+                            float? t = Raycaster.IntersectPlane(ray.Origin, ray.Direction, objPos, tr_obj.Forward);
+                            if (t is not null) {
+                                Vector3 pos = ray.Origin + t.Value*ray.Direction;
+                                selectedMesh.owner.Transform.Position = pos + selectedDragMargin;
+                            }
+                            break;
+                        case SelectedPositionGizmoMode.XZ:
+                            t = Raycaster.IntersectPlane(ray.Origin, ray.Direction, objPos, tr_obj.Up);
+                            if (t is not null) {
+                                Vector3 pos = ray.Origin + t.Value*ray.Direction;
+                                selectedMesh.owner.Transform.Position = pos + selectedDragMargin;
+                            }
+                            break;
+                        case SelectedPositionGizmoMode.YZ:
+                            t = Raycaster.IntersectPlane(ray.Origin, ray.Direction, objPos, tr_obj.Right);
+                            if (t is not null) {
+                                Vector3 pos = ray.Origin + t.Value*ray.Direction;
+                                selectedMesh.owner.Transform.Position = pos + selectedDragMargin;
+                            }
+                            break;
+                    }
+                }
                 break;
             /*case SelectedGizmoMode.Rotation:
                 break;*/
@@ -486,11 +539,11 @@ public class Renderer : Singleton<Renderer> {
             if (camPos.Y < objPos.Y) squareOffset.Y *= -1;
             if (camPos.Z < objPos.Z) squareOffset.Z *= -1;
         }
-        bool TryPickQuad (Vector3 normal, Vector3 axisA, Vector3 axisB) {
+        Vector3? TryPickQuad (Vector3 normal, Vector3 axisA, Vector3 axisB) {
             Vector3 quadCenter = objPos + dist*squareSize*squareOffset;
             float halfExtent = dist*half;
             float? t = Raycaster.IntersectPlane(ray.Origin, ray.Direction, quadCenter, normal);
-            if (t is null) return false;
+            if (t is null) return null;
 
             Vector3 hit = ray.Origin + ray.Direction*t.Value;
             Vector3 local = hit - quadCenter;
@@ -498,7 +551,9 @@ public class Renderer : Singleton<Renderer> {
             float a = Vector3.Dot(local, axisA);
             float b = Vector3.Dot(local, axisB);
 
-            return MathF.Abs(a) <= halfExtent && MathF.Abs(b) <= halfExtent;
+            if (MathF.Abs(a) <= halfExtent && MathF.Abs(b) <= halfExtent) return hit;
+            else return null;
+            //return MathF.Abs(a) <= halfExtent && MathF.Abs(b) <= halfExtent;
         }
         void drawQuad (Vector3 color) {
             m4x4_selected = _m4x4_selectedCommon*Matrix4x4.RotationEuler(squareRot);
