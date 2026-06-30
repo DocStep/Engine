@@ -27,7 +27,7 @@ public class Renderer : Singleton<Renderer> {
         
         _mesh_Plane = new Mesh(Plane.Generate());
         _mesh_PlaneWireframe = new Mesh(Plane.GenerateWireframe());
-        _mesh_PlaneSingle = new Mesh(Plane.Generate(divisions: 1));
+        _mesh_PlaneQuad = new Mesh(Plane.Generate(divisions: 1));
         _mesh_GridWireframe = new Mesh(Plane.GenerateWireframe(size: Constants._gridScale, 
             divisions: (int)(Constants._gridScale*Constants._gridDivisionScale)));
 
@@ -120,7 +120,7 @@ public class Renderer : Singleton<Renderer> {
 
     public readonly Mesh _mesh_Plane = null!;
     public readonly Mesh _mesh_PlaneWireframe = null!;
-    public readonly Mesh _mesh_PlaneSingle = null!;
+    public readonly Mesh _mesh_PlaneQuad = null!;
     public readonly Mesh _mesh_GridWireframe = null!;
 
     public readonly Mesh _mesh_Torus = null!;
@@ -155,9 +155,9 @@ public class Renderer : Singleton<Renderer> {
         shader.Use();
         shader.SetMatrix4("uView", uView);
         shader.SetMatrix4("uProjection", uProjection);
-        shader.SetVector3("uViewPos", Camera.Instance.cameraPos.X, Camera.Instance.cameraPos.Y, Camera.Instance.cameraPos.Z);
-        shader.SetVector3("uSunLightColor", Constants.sunLightColor.X, Constants.sunLightColor.Y, Constants.sunLightColor.Z);
-        shader.SetVector3("uSunLightDir", Constants.sunLightDir.X, Constants.sunLightDir.Y, Constants.sunLightDir.Z);
+        shader.SetVector3("uViewPos", Camera.Instance.cameraPos);
+        shader.SetVector3("uSunLightColor", Constants.sunLightColor);
+        shader.SetVector3("uSunLightDir", Constants.sunLightDir);
         shader.SetVector3("uAmbientColor", 0.05f, 0.05f, 0.06f);
         shader.SetFloat("uSunLightIntensity", Constants.sunLightIntensity);
         shader.SetFloat("uReflectionIntensity", Constants.reflectionIntensity);
@@ -422,9 +422,9 @@ public class Renderer : Singleton<Renderer> {
 
         TransformComponent tr_obj = selectedMesh.owner.Transform;
         Vector3 camPos = Camera.Instance.cameraPos;
-        Vector3 objPos = tr_obj.Position;
-        Vector3 objRot = tr_obj.Rotation;
-        float dist = MathF.Sqrt(Vector3.Distance(camPos, objPos));
+        Vector3 _objPos = tr_obj.Position;
+        Vector3 _objRot = tr_obj.Rotation;
+        float _dist = Vector3.Distance(camPos, _objPos);
 
         _sh_Unlit.Use();
         _sh_Unlit.SetMatrix4("uView", uView);
@@ -432,72 +432,80 @@ public class Renderer : Singleton<Renderer> {
         _sh_Unlit.SetVector3("uViewPos", camPos);
 
         Ray ray = Camera.Instance.RaycastMouse();
-        float squareSize = 0.08f;
-        float half = 0.5f*squareSize;
-        Vector3 squareOffset;
-        Vector3 squareRot;
-        Vector3? squarePickPos;
-        Matrix4x4 _m4x4_selectedCommon = Matrix4x4.CreateScale(dist*squareSize*Vector3.One);
+        float _squareSize = 0.025f;
+        float half = 0.5f*_squareSize;
+        Vector3 quadXYOffset;
+        Vector3 quadXZOffset;
+        Vector3 quadYZOffset;
+        Vector3 quadXYRot;
+        Vector3 quadXZRot;
+        Vector3 quadYZRot;
+        Vector3? squarePickXYPos;
+        Vector3? squarePickXZPos;
+        Vector3? squarePickYZPos;
+        Matrix4x4 _m4x4_selectedCommon = Matrix4x4.CreateScale(_dist*_squareSize*Vector3.One);
         Matrix4x4 m4x4_selected;
         float[] mesh_uModel;
-        if (selectedGizmoLocal) _m4x4_selectedCommon *= Matrix4x4.RotationEuler(objRot);
+        if (selectedGizmoLocal) _m4x4_selectedCommon *= Matrix4x4.RotationEuler(_objRot);
         switch (selectedGizmoMode) {
             case SelectedGizmoMode.Position:
+                quadXYOffset = new Vector3(0.5f, 0.5f, 0);
+                quadXZOffset = new Vector3(0.5f, 0, 0.5f);
+                quadYZOffset = new Vector3(0, 0.5f, 0.5f);
+                if (camPos.X < _objPos.X) {
+                    quadXYOffset.X *= -1;
+                    quadXZOffset.X *= -1;
+                }
+                if (camPos.Y < _objPos.Y) {
+                    quadXYOffset.Y *= -1;
+                    quadYZOffset.Y *= -1;
+                }
+                if (camPos.Z < _objPos.Z) {
+                    quadXZOffset.Z *= -1;
+                    quadYZOffset.Z *= -1;
+                }
+                quadXYRot = new(90, 0, 0);
+                quadXZRot = Vector3.Zero;
+                quadYZRot = new(0, 0, 90);
+
                 /// XY
-                squareOffset = new Vector3(0.5f, 0.5f, 0);
-                CheckSide();
-                squareRot = new(90, 0, 0);
-                squarePickPos = TryPickQuad(Vector3.UnitZ, Vector3.UnitX, Vector3.UnitY);
-                xyOver = squarePickPos is not null;
-                if (squarePickPos is not null) {
+                squarePickXYPos = TryPickQuad(quadXYOffset, Vector3.UnitZ, Vector3.UnitX, Vector3.UnitY);
+                xyOver = squarePickXYPos is not null;
+                if (squarePickXYPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         Log.log("XY");
                         selectedPositionMode = SelectedPositionGizmoMode.XY;
-                        selectedDragPos = objPos;
-                        selectedDragRot = objRot;
-                        selectedDragMargin = objPos - squarePickPos!.Value;
+                        selectedDragMargin = _objPos - squarePickXYPos!.Value;
+                        //DragStartValues();
                     }
                 }
-                if (xyOver) drawQuad(Constants.blueLight);
-                else drawQuad(Constants.blue);
 
                 /// XZ
-                squareOffset = new Vector3(0.5f, 0, 0.5f);
-                CheckSide();
-                squareRot = new(0, 90, 0);
-                squarePickPos = TryPickQuad(Vector3.UnitY, Vector3.UnitX, Vector3.UnitZ);
-                xzOver = squarePickPos is not null;
-                if (squarePickPos is not null) {
+                squarePickXZPos = TryPickQuad(quadXZOffset, Vector3.UnitY, Vector3.UnitX, Vector3.UnitZ);
+                xzOver = squarePickXZPos is not null;
+                if (squarePickXZPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         Log.log("XZ");
                         selectedPositionMode = SelectedPositionGizmoMode.XZ;
-                        selectedDragPos = objPos;
-                        selectedDragRot = objRot;
-                        selectedDragMargin = objPos - squarePickPos!.Value;
+                        selectedDragMargin = _objPos - squarePickXZPos!.Value;
+                        //DragStartValues();
                     }
                 }
-                if (xzOver) drawQuad(Constants.greenLight);
-                else drawQuad(Constants.green);
 
                 /// YZ
-                squareOffset = new Vector3(0, 0.5f, 0.5f);
-                CheckSide();
-                squareRot = new(0, 0, 90);
-                squarePickPos = TryPickQuad(Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ);
-                yzOver = squarePickPos is not null;
-                if (squarePickPos is not null) {
+                squarePickYZPos = TryPickQuad(quadYZOffset, Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ);
+                yzOver = squarePickYZPos is not null;
+                if (squarePickYZPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         Log.log("YZ");
                         selectedPositionMode = SelectedPositionGizmoMode.YZ;
-                        selectedDragPos = objPos;
-                        selectedDragRot = objRot;
-                        selectedDragMargin = objPos - squarePickPos!.Value;
+                        selectedDragMargin = _objPos - squarePickYZPos!.Value;
+                        //DragStartValues();
                     }
                 }
-                if (yzOver) drawQuad(Constants.redLight);
-                else drawQuad(Constants.red);
 
                 if (Inputs.Actions[Inputs.LMB].pressed) {
+                    Vector3? pos = null;
                     switch (selectedPositionMode) {
                         /*case SelectedPositionGizmoMode.X:
                             break;
@@ -506,76 +514,76 @@ public class Renderer : Singleton<Renderer> {
                         case SelectedPositionGizmoMode.Z:
                             break;*/
                         case SelectedPositionGizmoMode.XY:
-                            float? t = Raycaster.IntersectPlane(ray.Origin, ray.Direction, objPos, tr_obj.Forward);
-                            if (t is not null) {
-                                Vector3 pos = ray.Origin + t.Value*ray.Direction;
-                                selectedMesh.owner.Transform.Position = pos + selectedDragMargin;
-                            }
+                            pos = Raycaster.IntersectPlane(ray, _objPos, tr_obj.Forward);
                             break;
                         case SelectedPositionGizmoMode.XZ:
-                            t = Raycaster.IntersectPlane(ray.Origin, ray.Direction, objPos, tr_obj.Up);
-                            if (t is not null) {
-                                Vector3 pos = ray.Origin + t.Value*ray.Direction;
-                                selectedMesh.owner.Transform.Position = pos + selectedDragMargin;
-                            }
+                            pos = Raycaster.IntersectPlane(ray, _objPos, tr_obj.Up);
                             break;
                         case SelectedPositionGizmoMode.YZ:
-                            t = Raycaster.IntersectPlane(ray.Origin, ray.Direction, objPos, tr_obj.Right);
-                            if (t is not null) {
-                                Vector3 pos = ray.Origin + t.Value*ray.Direction;
-                                selectedMesh.owner.Transform.Position = pos + selectedDragMargin;
-                            }
+                            pos = Raycaster.IntersectPlane(ray, _objPos, tr_obj.Right);
                             break;
                     }
+                    if (pos is not null) {
+                        selectedMesh.owner.Transform.Position = pos.Value + selectedDragMargin;
+                    }
+                } else if (Inputs.Actions[Inputs.LMB].pressedUp) {
+                    selectedPositionMode = SelectedPositionGizmoMode.None;
                 }
+
+                if (xyOver) drawQuad(quadXYOffset, quadXYRot, Constants.blueLight);
+                else drawQuad(quadXYOffset, quadXYRot, Constants.blue);
+                if (xzOver) drawQuad(quadXZOffset, quadXZRot, Constants.greenLight);
+                else drawQuad(quadXZOffset, quadXZRot, Constants.green);
+                if (yzOver) drawQuad(quadYZOffset, quadYZRot, Constants.redLight);
+                else drawQuad(quadYZOffset, quadYZRot, Constants.red);
                 break;
+
+                void DragStartValues () {
+                    selectedDragPos = _objPos;
+                    selectedDragRot = _objRot;
+                }
             /*case SelectedGizmoMode.Rotation:
                 break;*/
             /*case SelectedGizmoMode.Scale:
                 break;*/
         }
-        void CheckSide () {
-            if (camPos.X < objPos.X) squareOffset.X *= -1;
-            if (camPos.Y < objPos.Y) squareOffset.Y *= -1;
-            if (camPos.Z < objPos.Z) squareOffset.Z *= -1;
-        }
-        Vector3? TryPickQuad (Vector3 normal, Vector3 axisA, Vector3 axisB) {
-            Vector3 quadCenter = objPos + dist*squareSize*squareOffset;
-            float halfExtent = dist*half;
-            float? t = Raycaster.IntersectPlane(ray.Origin, ray.Direction, quadCenter, normal);
-            if (t is null) return null;
+        Vector3? TryPickQuad (Vector3 offset, Vector3 normal, Vector3 axisA, Vector3 axisB) {
+            Vector3 quadCenter = _objPos + _dist*offset*_squareSize;
+            float halfExtent = _dist*half;
+            Vector3? hit = Raycaster.IntersectPlane(ray, quadCenter, normal);
+            if (hit is null) return null;
 
-            Vector3 hit = ray.Origin + ray.Direction*t.Value;
-            Vector3 local = hit - quadCenter;
-
+            Vector3 local = hit.Value - quadCenter;
             float a = Vector3.Dot(local, axisA);
             float b = Vector3.Dot(local, axisB);
 
             if (MathF.Abs(a) <= halfExtent && MathF.Abs(b) <= halfExtent) return hit;
             else return null;
-            //return MathF.Abs(a) <= halfExtent && MathF.Abs(b) <= halfExtent;
         }
-        void drawQuad (Vector3 color) {
-            m4x4_selected = _m4x4_selectedCommon*Matrix4x4.RotationEuler(squareRot);
-            m4x4_selected = m4x4_selected*Matrix4x4.Position(objPos + dist*squareSize*squareOffset);
+        void drawQuad (Vector3 offset, Vector3 rot, Vector3 color) {
+            m4x4_selected = _m4x4_selectedCommon*Matrix4x4.RotationEuler(rot);
+            m4x4_selected = m4x4_selected*Matrix4x4.Position(_objPos + _dist*_squareSize*offset);
             _sh_Unlit.SetMatrix4("uModel", Matrix4x4.ToArray(m4x4_selected));
             _sh_Unlit.SetFloat("uAlpha", 0.5f);
             _sh_Unlit.SetColor("uColor", color);
-            _mesh_PlaneSingle.Draw();
+            _mesh_PlaneQuad.Draw();
         }
 
         /// <> change to 3-lines
+        float _axesSize = 0.1f;
         m4x4_selected = Matrix4x4.CreateScale(Vector3.One);
-        if (selectedGizmoLocal) m4x4_selected = m4x4_selected*Matrix4x4.RotationEuler(selectedMesh.owner.Transform.Rotation);
-        m4x4_selected = m4x4_selected*Matrix4x4.Position(objPos);
+        if (selectedGizmoLocal) m4x4_selected = m4x4_selected*Matrix4x4.RotationEuler(_objRot);
+        m4x4_selected = m4x4_selected*Matrix4x4.Position(_objPos);
         mesh_uModel = Matrix4x4.ToArray(m4x4_selected);
         _sh_Axes.Use();
-        SetSceneUniforms(_sh_Axes);
+        _sh_Axes.SetMatrix4("uView", uView);
+        _sh_Axes.SetMatrix4("uProjection", uProjection);
+        _sh_Axes.SetVector3("uViewPos", camPos);
         _sh_Axes.SetMatrix4("uModel", mesh_uModel);
-        _sh_Axes.SetVector3("uCameraPos", objPos); /// <> rework
+        _sh_Axes.SetVector3("uCameraPos", _objPos); /// <> rework
         _sh_Axes.SetFloat("uAlpha", 0.5f);
-        _sh_Axes.SetFloat("uRadius", 0.5f*dist); /// <> rework
-        _sh_Axes.SetFloat("uFade", 0.5f*dist); /// <> rework
+        _sh_Axes.SetFloat("uRadius", _axesSize*_dist); /// <> rework
+        _sh_Axes.SetFloat("uFade", _axesSize*_dist); /// <> rework
         _mesh_AxesWireframe.Draw(PrimitiveType.Lines);
     }
 

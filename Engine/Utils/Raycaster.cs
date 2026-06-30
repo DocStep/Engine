@@ -58,6 +58,14 @@ public static class Raycaster {
         return true;
     }
 
+    public static Vector3? IntersectPlane (Ray ray, Vector3 planePoint, Vector3 planeNormal) {
+        float denominator = Vector3.Dot(ray.Direction, planeNormal);
+        if (MathF.Abs(denominator) < 1e-8f) return null; /// ray parallel to plane
+
+        float t = Vector3.Dot(planePoint - ray.Origin, planeNormal)/denominator;
+        if (0 <= t) return ray.Origin + t*ray.Direction;
+        return null;
+    }
     public static float? IntersectPlane (Vector3 origin, Vector3 direction, Vector3 planePoint, Vector3 planeNormal) {
         float denominator = Vector3.Dot(direction, planeNormal);
         if (MathF.Abs(denominator) < 1e-8f) return null; /// ray parallel to plane
