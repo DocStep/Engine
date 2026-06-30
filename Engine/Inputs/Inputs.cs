@@ -162,7 +162,7 @@ public static class Inputs {
         [MoveRight] = new InputsGroup(new List<Keys>() { Keys.D }),
         [MoveLeft] = new InputsGroup(new List<Keys>() { Keys.A }),
         [MoveUp] = new InputsGroup(new List<Keys>() { Keys.Space }),
-        [MoveDown] = new InputsGroup(new List<Keys>() { Keys.C, Keys.LeftControl }),
+        [MoveDown] = new InputsGroup(new List<Keys>() { Keys.C }),
         [Jump] = new InputsGroup(new List<Keys>() { Keys.Space }),
         [Crouch] = new InputsGroup(new List<Keys>() { Keys.C, Keys.LeftControl }),
 
@@ -268,6 +268,13 @@ public static class Inputs {
     public static void AddActions (Dictionary<string, InputsGroup> keyset) {
         foreach (var actionKV in keyset) {
             ActionsDef.TryAdd(actionKV.Key, actionKV.Value);
+        }
+    }
+    public static void OverrideActions (Dictionary<string, InputsGroup> keyset) {
+        foreach (var actionKV in keyset) {
+            if (ActionsDef.ContainsKey(actionKV.Key)) {
+                ActionsDef[actionKV.Key] = actionKV.Value;
+            } else ActionsDef.TryAdd(actionKV.Key, actionKV.Value);
         }
     }
 

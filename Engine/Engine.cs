@@ -58,7 +58,7 @@ public class Engine : Singleton<Engine>, IDisposable {
         Reflection.InstanceNew();
         Json.InstanceNew();
 
-        Inputs.AddActionsFirst(DataEngine.InputsData);
+        Inputs.OverrideActions(DataEngine.InputsData);
 
         Inputs.KeysInit();
 
