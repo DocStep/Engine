@@ -21,6 +21,7 @@ public enum PrimitiveTypes {
 public class GameObject {
     public GameObject() {
         Id = GetHashCode();
+        Transform.owner = this;
         SceneManager.ActiveScene.ObjectAdd(this);
     }
     /*public GameObject (List<Component> Components) : base() {
@@ -35,6 +36,9 @@ public class GameObject {
         if (string.IsNullOrEmpty(name)) name = primitive.GetType().Name;
         if (scale.Equals(default)) scale = Vector3.One;
 
+        Id = GetHashCode();
+
+        Transform.owner = this;
         Transform.Position = position;
         Transform.Rotation = rotation;
         Transform.Scale = scale;
@@ -84,8 +88,6 @@ public class GameObject {
             default:
                 break;
         }
-
-        Id = GetHashCode();
         SceneManager.ActiveScene.ObjectAdd(this);
     }
 

@@ -15,6 +15,25 @@ public class TransformComponent : Component {
     public Vector3 Forward => Vector3.Normalize(Vector3.TransformNormal(Vector3.UnitZ, Matrix4x4.RotationEuler(Rotation)));
 
 
+    public void SetPosition (Vector3 position) {
+        Position = position;
+
+        PhysicsComponent? physicsComponent = owner.GetComponent<PhysicsComponent>();
+        if (physicsComponent is not null) {
+            physicsComponent.Rigidbody.Position = Position;
+            if (physicsComponent.Rigidbody.MotionType == Jitter2.Dynamics.MotionType.Dynamic) {
+                physicsComponent.Rigidbody.Velocity = Vector3.Zero;
+                physicsComponent.Rigidbody.AngularVelocity = Vector3.Zero;
+            }
+        }
+    }
+    public void SetRotation (Vector3 rotation) {
+        Rotation = rotation;
+    }
+    public void SetScale (Vector3 scale) {
+        Scale = scale;
+    }
+
     public Matrix4x4 GetWorldMatrix () {
         var scaleMat = Matrix4x4.CreateScale(Scale);
         var rotMat = Matrix4x4.CreateFromYawPitchRoll(DegreesToRadians(Rotation.Y),

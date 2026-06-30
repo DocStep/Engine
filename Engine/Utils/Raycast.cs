@@ -4,7 +4,7 @@ using System.Numerics;
 namespace Engine;
 
 
-public static class Raycaster {
+public static class Raycast {
 
     public static Ray ScreenPointToRay (float _x, float _y, int screenWidth, int screenHeight, Matrix4x4 view, Matrix4x4 proj) {
         float x = (2f*_x) / screenWidth - 1f;

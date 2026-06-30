@@ -19,6 +19,8 @@ public class Renderer {
         GL.FrontFace(FrontFaceDirection.CW);
         GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
 
+        Debug.Init();
+
         _mesh_Cube = new Mesh(Cube.Generate());
         _mesh_CubeWireframe = new Mesh(Cube.GenerateWireframe());
         _mesh_Sphere = new Mesh(Sphere.Generate());
@@ -156,11 +158,8 @@ public class Renderer {
 
 
 
-    private void SetSceneUniforms (Shader shader) {
-        shader.Use();
-        shader.SetMatrix4(View, uView);
-        shader.SetMatrix4(Projection, uProjection);
-        shader.SetVector3(ViewPos, Camera.Instance.cameraPos);
+    public void SetSceneUniformsLit (Shader shader) {
+        SetSceneUniformsUnlit(shader);
         shader.SetVector3(SunLightColor, Constants.sunLightColor);
         shader.SetVector3(SunLightDir, Constants.sunLightDir);
         shader.SetVector3(AmbientColor, 0.05f, 0.05f, 0.06f);
@@ -176,7 +175,12 @@ public class Renderer {
             shader.SetFloat(MaxReflectionLod, maxLod);
         }
     }
-
+    public void SetSceneUniformsUnlit (Shader shader) {
+        shader.Use();
+        shader.SetMatrix4(View, uView);
+        shader.SetMatrix4(Projection, uProjection);
+        shader.SetVector3(ViewPos, Camera.Instance.cameraPos);
+    }
 
     private void Draw () {
         int count = RenderList.Count;
@@ -193,12 +197,12 @@ public class Renderer {
             *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
         float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
 
-        SetSceneUniforms(renderInfo.shader);
+        SetSceneUniformsLit(renderInfo.shader);
         renderInfo.shader.SetMatrix4(Model, mesh_uModel);
         renderInfo.material.Apply(renderInfo.shader);
         renderInfo.mesh.Draw(renderInfo.primitiveType);
     }
-
+    
 
     private void OnRender (double deltaTime) {
         UpdateProjection();
@@ -243,10 +247,11 @@ public class Renderer {
         DrawGizmoAxes();
         if (Constants.drawGizmosSun) DrawGizmoSun();
 
+        Debug.DrawAll();
+
         DrawGizmoCameraOrbitCenter();
 
         _gizmo_Selected.Draw();
-
 
         /// UI Layer
         DrawGizmoAxesWidget();
@@ -257,7 +262,7 @@ public class Renderer {
         GL.DepthRange(0.0001, 1.0);
 
         _sh_Grid.Use();
-        SetSceneUniforms(_sh_Grid);
+        SetSceneUniformsLit(_sh_Grid);
         _sh_Grid.SetMatrix4(Model, _uModelIdentity);
         _sh_Grid.SetVector3(CameraPos, Camera.Instance.cameraPos);
         _sh_Grid.SetVector3(Color, Constants.lightGray);
@@ -271,7 +276,7 @@ public class Renderer {
     }
     private void DrawGizmoAxes () {
         _sh_Axes.Use();
-        SetSceneUniforms(_sh_Axes);
+        SetSceneUniformsLit(_sh_Axes);
         _sh_Axes.SetMatrix4(Model, _uModelIdentity);
         _sh_Axes.SetVector3(CameraPos, Camera.Instance.cameraPos);
         _sh_Axes.SetFloat(Alpha, 0.5f);
@@ -318,7 +323,7 @@ public class Renderer {
         GL.DepthMask(false);
 
         _sh_Unlit.Use();
-        SetSceneUniforms(_sh_Unlit);
+        SetSceneUniformsLit(_sh_Unlit);
         float dist = (CameraEditor.Instance.cameraOrbitCenterPos - Camera.Instance.cameraPos).Length();
         Matrix4x4 gizmoSphereModel = Matrix4x4.CreateScale(cameraOrbitCenterRadius*dist*0.01f)
             *Matrix4x4.CreateTranslation(CameraEditor.Instance.cameraOrbitCenterPos);
@@ -333,7 +338,7 @@ public class Renderer {
         GL.Disable(EnableCap.CullFace);
 
         _sh_Unlit.Use();
-        SetSceneUniforms(_sh_Unlit);
+        SetSceneUniformsLit(_sh_Unlit);
         //Matrix4x4 mesh_m4x4 = Utils.RotationFromDirection(Constants.sunLightDir)*Matrix4x4.Position(0f, 5f, 0f);
         Matrix4x4 mesh_m4x4 = Matrix4x4.RotationFromDirection(Constants.sunLightDir)*Matrix4x4.Position(0f, 5f, 0f);
         float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
@@ -360,7 +365,7 @@ public class Renderer {
     public void DrawMaterialsGrid (float offsetX, float offsetZ, int testGridCount, float testGridDensity) {
         GL.Enable(EnableCap.CullFace);
         GL.CullFace(TriangleFace.Back);
-        SetSceneUniforms(_sh_Lit);
+        SetSceneUniformsLit(_sh_Lit);
         _sh_Lit.SetColor(Color, Constants.black);
         for (int x = 0; x < testGridCount*testGridDensity; x++) {
             for (int z = 0; z < testGridCount*testGridDensity; z++) {

@@ -41,7 +41,7 @@ internal class Camera {
 
 
     public Ray RaycastMouse () {
-        Ray ray = Raycaster.ScreenPointToRay(mousePos.X, mousePos.Y, Engine.Window.Size.X, Engine.Window.Size.Y,
+        Ray ray = Raycast.ScreenPointToRay(mousePos.X, mousePos.Y, Engine.Window.Size.X, Engine.Window.Size.Y,
                 Renderer.Instance.m4x4_View, Renderer.Instance.m4x4Projection);
         return ray;
     }
