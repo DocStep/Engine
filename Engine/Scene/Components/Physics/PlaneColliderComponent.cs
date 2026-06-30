@@ -19,7 +19,7 @@ public class PlaneColliderComponent : ColliderComponent {
                 rot = rotation + owner.Transform.Rotation,
                 scale = scale*owner.Transform.Scale,
 
-                mesh = Graphics.Renderer.Instance._mesh_GizmoPlane,
+                mesh = Graphics.Renderer.Instance._mesh_PlaneWireframe,
                 shader = Graphics.Renderer.Instance._sh_Unlit,
                 material = Graphics.Renderer.Instance._mat_GizmosG,
                 primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,

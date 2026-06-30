@@ -21,13 +21,13 @@ internal static class Utils {
 
     const float Deg2Rad = MathF.PI/180f;
     extension(Matrix4x4) {
-        public static Matrix4x4 Rotation (float x, float y, float z) {
+        public static Matrix4x4 RotationEuler (float x, float y, float z) {
             var q = Quaternion.CreateFromYawPitchRoll(y*Deg2Rad, x*Deg2Rad, z*Deg2Rad);
             return Matrix4x4.CreateFromQuaternion(q);
         }
     }
     extension(Matrix4x4) {
-        public static Matrix4x4 Rotation (Vector3 euler) {
+        public static Matrix4x4 RotationEuler (Vector3 euler) {
             euler *= Deg2Rad;
             var q = Quaternion.CreateFromYawPitchRoll(euler.Y, euler.X, euler.Z);
             return Matrix4x4.CreateFromQuaternion(q);

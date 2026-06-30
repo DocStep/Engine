@@ -46,8 +46,10 @@ public class Engine : Singleton<Engine>, IDisposable {
     }
 
     public void Run () {
-        ConsoleUtils.SetConsolePosition(10, 10);
+        ArgsUtils.Args();
+
         Console.WriteLine($"========== Init ==========");
+        Console.WriteLine($"===== Utils Layer =====");
 
         ThreadUtils.Init();
         Log.InstanceNew();
@@ -59,12 +61,14 @@ public class Engine : Singleton<Engine>, IDisposable {
         Inputs.AddActionsFirst(DataEngine.InputsData);
 
         Inputs.KeysInit();
-        Console.WriteLine($"========== Init Finish ==========");
+
+        //Console.WriteLine($"========== Init Finish ==========");
 
         var options = WindowOptions.Default with {
             Size = new Silk.NET.Maths.Vector2D<int>(1280, 720),
             Title = "Engine",
             VSync = false,
+            WindowBorder = WindowBorder.Resizable,
         };
 
         Window = Silk.NET.Windowing.Window.Create(options);
@@ -92,6 +96,8 @@ public class Engine : Singleton<Engine>, IDisposable {
         }*/
 
 
+        Console.WriteLine($"===== Systems Layer =====");
+
         PhysicsManager.InstanceNew();
         ComponentManager.InstanceNew();
 
@@ -99,6 +105,8 @@ public class Engine : Singleton<Engine>, IDisposable {
         SceneManager.InstanceNew();
 
         Camera = new CameraEditor();
+
+        Console.WriteLine($"========== Init Finish ==========");
 
         engineState = EngineStates.Ready;
     }

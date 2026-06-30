@@ -19,7 +19,7 @@ public class CapsuleColliderComponent : ColliderComponent {
                 rot = rotation + owner.Transform.Rotation,
                 scale = scale*owner.Transform.Scale,
 
-                mesh = Graphics.Renderer.Instance._mesh_GizmoCapsule,
+                mesh = Graphics.Renderer.Instance._mesh_CapsuleWireframe,
                 shader = Graphics.Renderer.Instance._sh_Unlit,
                 material = Graphics.Renderer.Instance._mat_GizmosG,
                 primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,

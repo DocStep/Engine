@@ -19,7 +19,7 @@ public class SphereColliderComponent : ColliderComponent {
                 rot = rotation + owner.Transform.Rotation,
                 scale = scale*owner.Transform.Scale,
 
-                mesh = Graphics.Renderer.Instance._mesh_GizmoSphere,
+                mesh = Graphics.Renderer.Instance._mesh_SphereWireframe,
                 shader = Graphics.Renderer.Instance._sh_Unlit,
                 material = Graphics.Renderer.Instance._mat_GizmosG,
                 primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,

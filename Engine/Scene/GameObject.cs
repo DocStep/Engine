@@ -59,25 +59,25 @@ public class GameObject {
                 break;
             case PrimitiveTypes.GizmoCube:
                 MeshComponent colliderMesh = AddComponent<MeshComponent>();
-                colliderMesh.mesh = Renderer.Instance._mesh_GizmoCube;
+                colliderMesh.mesh = Renderer.Instance._mesh_CubeWireframe;
                 colliderMesh.material = Renderer.Instance._mat_GizmosG;
                 colliderMesh.shader = Renderer.Instance._sh_Unlit;
                 break;
             case PrimitiveTypes.GizmoSphere:
                 colliderMesh = AddComponent<MeshComponent>();
-                colliderMesh.mesh = Renderer.Instance._mesh_GizmoSphere;
+                colliderMesh.mesh = Renderer.Instance._mesh_SphereWireframe;
                 colliderMesh.material = Renderer.Instance._mat_GizmosG;
                 colliderMesh.shader = Renderer.Instance._sh_Unlit;
                 break;
             case PrimitiveTypes.GizmoCapsule:
                 colliderMesh = AddComponent<MeshComponent>();
-                colliderMesh.mesh = Renderer.Instance._mesh_GizmoCapsule;
+                colliderMesh.mesh = Renderer.Instance._mesh_CapsuleWireframe;
                 colliderMesh.material = Renderer.Instance._mat_GizmosG;
                 colliderMesh.shader = Renderer.Instance._sh_Unlit;
                 break;
             case PrimitiveTypes.GizmoPlane:
                 colliderMesh = AddComponent<MeshComponent>();
-                colliderMesh.mesh = Renderer.Instance._mesh_GizmoPlane;
+                colliderMesh.mesh = Renderer.Instance._mesh_PlaneWireframe;
                 colliderMesh.material = Renderer.Instance._mat_GizmosG;
                 colliderMesh.shader = Renderer.Instance._sh_Unlit;
                 break;

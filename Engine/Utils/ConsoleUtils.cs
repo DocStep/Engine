@@ -1,12 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Runtime.InteropServices;
 
 namespace Engine;
 
 
 public class ConsoleUtils {
+
+
+    [DllImport("kernel32.dll")]
+    private static extern bool AllocConsole ();
+    public static bool usesConsole = false;
+    public static void ConsoleStart () {
+        usesConsole = true;
+        AllocConsole();
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
+        Console.InputEncoding = System.Text.Encoding.UTF8;
+        ConsoleUtils.SetConsolePosition(10, 10);
+        Console.WriteLine($"Console started");
+    }
+
 
     [DllImport("kernel32.dll")]
     static extern IntPtr GetConsoleWindow ();

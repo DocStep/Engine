@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using Silk.NET.OpenGL;
 using Engine.Graphics.UI;
+using Engine.Input;
 
 namespace Engine.Graphics;
 
@@ -18,20 +19,21 @@ public class Renderer : Singleton<Renderer> {
         GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
 
         _mesh_Cube = new Mesh(Cube.Generate());
+        _mesh_CubeWireframe = new Mesh(Cube.GenerateWireframe());
         _mesh_Sphere = new Mesh(Sphere.Generate());
+        _mesh_SphereWireframe = new Mesh(Sphere.GenerateWireframe());
         _mesh_Capsule = new Mesh(Capsule.Generate());
+        _mesh_CapsuleWireframe = new Mesh(Capsule.GenerateWireframe());
+        
         _mesh_Plane = new Mesh(Plane.Generate());
-        _mesh_PlaneSingle = new Mesh(Plane.Generate());
-
-        _mesh_GizmoCube = new Mesh(Cube.GenerateWireframe());
-        _mesh_GizmoSphere = new Mesh(Sphere.GenerateWireframe());
-        _mesh_GizmoCapsule = new Mesh(Capsule.GenerateWireframe());
-        _mesh_GizmoPlane = new Mesh(Plane.GenerateWireframe());
-        _mesh_GizmoGrid = new Mesh(Plane.GenerateWireframe(size: Constants._gridScale, 
+        _mesh_PlaneWireframe = new Mesh(Plane.GenerateWireframe());
+        _mesh_PlaneSingle = new Mesh(Plane.Generate(divisions: 1));
+        _mesh_GridWireframe = new Mesh(Plane.GenerateWireframe(size: Constants._gridScale, 
             divisions: (int)(Constants._gridScale*Constants._gridDivisionScale)));
-        _mesh_GizmoAxes = new Mesh(Axes.GenerateWireframe(length: Constants._gridScale));
-        _mesh_GizmoArrow = new Mesh(Arrow.Generate(length: 1f, shaftWidth: 0.01f, headLength: 0.2f, headWidth: 0.1f));
-        _mesh_GizmoArrowWireframe = new Mesh(Arrow.GenerateWireframe(length: 1f, shaftWidth: 0.01f, headLength: 0.2f, headWidth: 0.1f));
+
+        _mesh_AxesWireframe = new Mesh(Axes.GenerateWireframe(length: Constants._gridScale));
+        _mesh_Arrow3D = new Mesh(Arrow.Generate(length: 1f, shaftWidth: 0.01f, headLength: 0.2f, headWidth: 0.1f));
+        _mesh_ArrowWireframe = new Mesh(Arrow.GenerateWireframe(length: 1f, shaftWidth: 0.01f, headLength: 0.2f, headWidth: 0.1f));
 
         _sh_Lit = new Shader(Utils.LoadSrc("src/Shaders/Lit_Vertex.shader"), Utils.LoadSrc("src/Shaders/Lit_Fragment.shader"), "Lit");
         _sh_Unlit = new Shader(Utils.LoadSrc("src/Shaders/Unlit_Vertex.shader"), Utils.LoadSrc("src/Shaders/Unlit_Fragment.shader"), "Unlit");
@@ -109,23 +111,25 @@ public class Renderer : Singleton<Renderer> {
     public readonly Material _mat_LitGreen = null!;
     public readonly Material _mat_LitBlue = null!;
 
-    public readonly Mesh _mesh_GizmoCube = null!;
-    public readonly Mesh _mesh_GizmoSphere = null!;
-    public readonly Mesh _mesh_GizmoCapsule = null!;
-    public readonly Mesh _mesh_GizmoPlane = null!;
-    public readonly Mesh _mesh_GizmoGrid = null!;
-    public readonly Mesh _mesh_GizmoAxes = null!;
-    public readonly Mesh _mesh_GizmoArrow = null!;
-    public readonly Mesh _mesh_GizmoArrowWireframe = null!;
-
     public readonly Mesh _mesh_Cube = null!;
+    public readonly Mesh _mesh_CubeWireframe = null!;
     public readonly Mesh _mesh_Sphere = null!;
+    public readonly Mesh _mesh_SphereWireframe = null!;
     public readonly Mesh _mesh_Capsule = null!;
+    public readonly Mesh _mesh_CapsuleWireframe = null!;
+
     public readonly Mesh _mesh_Plane = null!;
+    public readonly Mesh _mesh_PlaneWireframe = null!;
     public readonly Mesh _mesh_PlaneSingle = null!;
+    public readonly Mesh _mesh_GridWireframe = null!;
+
     public readonly Mesh _mesh_Torus = null!;
     public readonly Mesh _mesh_Suzanne = null!;
     public readonly Mesh _mesh_SuzanneHighRes = null!;
+
+    public readonly Mesh _mesh_AxesWireframe = null!;
+    public readonly Mesh _mesh_Arrow3D = null!;
+    public readonly Mesh _mesh_ArrowWireframe = null!;
 
     private readonly static Matrix4x4 _modelIdentity = Matrix4x4.Identity;
     private readonly static float[] _uModelIdentity = Matrix4x4.ToArray(_modelIdentity);
@@ -151,9 +155,9 @@ public class Renderer : Singleton<Renderer> {
         shader.Use();
         shader.SetMatrix4("uView", uView);
         shader.SetMatrix4("uProjection", uProjection);
+        shader.SetVector3("uViewPos", Camera.Instance.cameraPos.X, Camera.Instance.cameraPos.Y, Camera.Instance.cameraPos.Z);
         shader.SetVector3("uSunLightColor", Constants.sunLightColor.X, Constants.sunLightColor.Y, Constants.sunLightColor.Z);
         shader.SetVector3("uSunLightDir", Constants.sunLightDir.X, Constants.sunLightDir.Y, Constants.sunLightDir.Z);
-        shader.SetVector3("uViewPos", Camera.Instance.cameraPos.X, Camera.Instance.cameraPos.Y, Camera.Instance.cameraPos.Z);
         shader.SetVector3("uAmbientColor", 0.05f, 0.05f, 0.06f);
         shader.SetFloat("uSunLightIntensity", Constants.sunLightIntensity);
         shader.SetFloat("uReflectionIntensity", Constants.reflectionIntensity);
@@ -181,7 +185,7 @@ public class Renderer : Singleton<Renderer> {
         if (renderInfo.shader is null) return;
 
         Matrix4x4 mesh_m4x4 = Matrix4x4.CreateScale(renderInfo.scale) 
-            *Matrix4x4.Rotation(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
+            *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
         float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
 
         SetSceneUniforms(renderInfo.shader);
@@ -256,7 +260,7 @@ public class Renderer : Singleton<Renderer> {
         _sh_Grid.SetFloat("uAlpha", 0.5f);
         _sh_Grid.SetFloat("uRadius", 200f);
         _sh_Grid.SetFloat("uFade", 50f);
-        _mesh_GizmoGrid.Draw(PrimitiveType.Lines);
+        _mesh_GridWireframe.Draw(PrimitiveType.Lines);
 
         GL.DepthRange(0.0, 1.0);
         GL.DepthMask(true);
@@ -269,7 +273,7 @@ public class Renderer : Singleton<Renderer> {
         _sh_Axes.SetFloat("uAlpha", 0.5f);
         _sh_Axes.SetFloat("uRadius", 200f);
         _sh_Axes.SetFloat("uFade", 50f);
-        _mesh_GizmoAxes.Draw(PrimitiveType.Lines);
+        _mesh_AxesWireframe.Draw(PrimitiveType.Lines);
     }
     private void DrawGizmoAxesWidget () {
         const int gizmoSize = 90;
@@ -300,7 +304,7 @@ public class Renderer : Singleton<Renderer> {
         _sh_Axes.SetMatrix4("uView", Matrix4x4.ToArray(gizmoView));
         _sh_Axes.SetMatrix4("uProjection", Matrix4x4.ToArray(gizmoProjection));
 
-        _mesh_GizmoAxes.Draw(PrimitiveType.Lines);
+        _mesh_AxesWireframe.Draw(PrimitiveType.Lines);
 
         GL.Enable(EnableCap.DepthTest);
 
@@ -334,8 +338,8 @@ public class Renderer : Singleton<Renderer> {
         _sh_Unlit.SetMatrix4("uModel", mesh_uModel);
         _sh_Unlit.SetColor("uColor", Constants.yellow);
         _sh_Unlit.SetFloat("uAlpha", 0.5f);
-        if (Constants._drawArrowAsMesh) _mesh_GizmoArrow.Draw();
-        else _mesh_GizmoArrowWireframe.Draw(PrimitiveType.Lines);
+        if (Constants._drawArrowAsMesh) _mesh_Arrow3D.Draw();
+        else _mesh_ArrowWireframe.Draw(PrimitiveType.Lines);
 
         GL.Enable(EnableCap.CullFace);
     }
@@ -374,7 +378,7 @@ public class Renderer : Singleton<Renderer> {
         );
 
         Matrix4x4 mesh_m4x4 = Matrix4x4.CreateScale(outlineScale)
-            *Matrix4x4.Rotation(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
+            *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
         float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
 
         _sh_Outline.Use();
@@ -397,19 +401,91 @@ public class Renderer : Singleton<Renderer> {
         Rotation,
         Scale,
     }
+
     SelectedGizmoMode selectedGizmoMode = SelectedGizmoMode.Position;
     bool selectedGizmoLocal = false;
+    
+
     public void DrawSelectedGizmo () {
         if (selectedMesh is null) return;
 
-        float dist = MathF.Sqrt(Vector3.Distance(Camera.Instance.cameraPos, selectedMesh.owner.Transform.Position));
-        Matrix4x4 mesh_m4x4 = Matrix4x4.CreateScale(Vector3.One);
-        if (selectedGizmoLocal) mesh_m4x4 = mesh_m4x4*Matrix4x4.Rotation(selectedMesh.owner.Transform.Rotation);
-        mesh_m4x4 = mesh_m4x4*Matrix4x4.Position(selectedMesh.owner.Transform.Position);
-        float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
-
         GL.Disable(EnableCap.DepthTest);
+        GL.Disable(EnableCap.CullFace);
 
+        float dist = MathF.Sqrt(Vector3.Distance(Camera.Instance.cameraPos, selectedMesh.owner.Transform.Position));
+
+        _sh_Unlit.Use();
+        _sh_Unlit.SetMatrix4("uView", uView);
+        _sh_Unlit.SetMatrix4("uProjection", uProjection);
+        _sh_Unlit.SetVector3("uViewPos", Camera.Instance.cameraPos.X, Camera.Instance.cameraPos.Y, Camera.Instance.cameraPos.Z);
+
+        Ray ray = Camera.Instance.RaycastMouse();
+        Vector3 objPos = selectedMesh.owner.Transform.Position;
+        float squareSize = 0.08f;
+        float half = 0.5f*squareSize;
+        Vector3 squareOffset;
+        Matrix4x4 _m4x4_selectedCommon = Matrix4x4.CreateScale(dist*squareSize*Vector3.One);
+        Matrix4x4 m4x4_selected;
+        float[] mesh_uModel;
+        if (selectedGizmoLocal) _m4x4_selectedCommon *= Matrix4x4.RotationEuler(selectedMesh.owner.Transform.Rotation);
+        switch (selectedGizmoMode) {
+            case SelectedGizmoMode.Position:
+                /// XY
+                squareOffset = new Vector3(0.5f*squareSize, 0.5f*squareSize, 0);
+                if (Inputs.Actions[Inputs.LMB].pressedDown) {
+                    if (TryPickQuad(ray, objPos + dist*squareOffset,
+                        Vector3.UnitZ, Vector3.UnitX, Vector3.UnitY, half)) Log.log("XY");
+                }
+                drawQuad(new(0.5f, 0.5f, 0), new(90, 0, 0), Constants.blue);
+                
+                /// XZ
+                squareOffset = new Vector3(0.5f*squareSize, 0, 0.5f*squareSize);
+                if (Inputs.Actions[Inputs.LMB].pressedDown) {
+                    if (TryPickQuad(ray, objPos + dist*squareOffset, 
+                        Vector3.UnitY, Vector3.UnitX, Vector3.UnitZ, half)) Log.log("XZ");
+                }
+                drawQuad(new(0.5f, 0, 0.5f), new(0, 90, 0), Constants.green);
+
+                /// YZ
+                squareOffset = new Vector3(0, 0.5f*squareSize, 0.5f*squareSize);
+                if (Inputs.Actions[Inputs.LMB].pressedDown) {
+                    if (TryPickQuad(ray, objPos + dist*squareOffset,
+                        Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ, half)) Log.log("YZ");
+                }
+                drawQuad(new(0, 0.5f, 0.5f), new(0, 0, 90), Constants.red);
+
+                break;
+            /*case SelectedGizmoMode.Rotation:
+                break;*/
+            /*case SelectedGizmoMode.Scale:
+                break;*/
+        }
+        bool TryPickQuad (Ray ray, Vector3 quadCenter, Vector3 normal, Vector3 axisA, Vector3 axisB, float halfExtent) {
+            float? t = Raycaster.IntersectPlane(ray.Origin, ray.Direction, quadCenter, normal);
+            if (t is null) return false;
+
+            Vector3 hit = ray.Origin + ray.Direction*t.Value;
+            Vector3 local = hit - quadCenter;
+
+            float a = Vector3.Dot(local, axisA);
+            float b = Vector3.Dot(local, axisB);
+
+            return MathF.Abs(a) <= halfExtent && MathF.Abs(b) <= halfExtent;
+        }
+        void drawQuad (Vector3 offset, Vector3 rot, Vector3 color) {
+            m4x4_selected = _m4x4_selectedCommon*Matrix4x4.RotationEuler(rot);
+            m4x4_selected = m4x4_selected*Matrix4x4.Position(selectedMesh.owner.Transform.Position + dist*squareSize*offset);
+            _sh_Unlit.SetMatrix4("uModel", Matrix4x4.ToArray(m4x4_selected));
+            _sh_Unlit.SetFloat("uAlpha", 0.5f);
+            _sh_Unlit.SetColor("uColor", color);
+            _mesh_PlaneSingle.Draw();
+        }
+
+        /// <> change to 3-lines
+        m4x4_selected = Matrix4x4.CreateScale(Vector3.One);
+        if (selectedGizmoLocal) m4x4_selected = m4x4_selected*Matrix4x4.RotationEuler(selectedMesh.owner.Transform.Rotation);
+        m4x4_selected = m4x4_selected*Matrix4x4.Position(selectedMesh.owner.Transform.Position);
+        mesh_uModel = Matrix4x4.ToArray(m4x4_selected);
         _sh_Axes.Use();
         SetSceneUniforms(_sh_Axes);
         _sh_Axes.SetMatrix4("uModel", mesh_uModel);
@@ -417,19 +493,7 @@ public class Renderer : Singleton<Renderer> {
         _sh_Axes.SetFloat("uAlpha", 0.5f);
         _sh_Axes.SetFloat("uRadius", 0.5f*dist); /// <> rework
         _sh_Axes.SetFloat("uFade", 0.5f*dist); /// <> rework
-        _mesh_GizmoAxes.Draw(PrimitiveType.Lines);
-
-        switch (selectedGizmoMode) {
-            case SelectedGizmoMode.Position:
-
-                break;
-            case SelectedGizmoMode.Rotation:
-
-                break;
-            case SelectedGizmoMode.Scale:
-
-                break;
-        }
+        _mesh_AxesWireframe.Draw(PrimitiveType.Lines);
     }
 
     private void DrawEnd () {
@@ -477,7 +541,7 @@ public class Renderer : Singleton<Renderer> {
         //_GizmoGrid.Dispose();
         //_GizmoAxes.Dispose();
         //_GizmoAxesWidget.Dispose();
-        _mesh_GizmoArrow.Dispose();
+        _mesh_Arrow3D.Dispose();
         _sh_Lit.Dispose();
         _sh_Unlit.Dispose();
         _sh_Grid.Dispose();

@@ -18,9 +18,9 @@ public class SceneManager : Singleton<SceneManager> {
 
     protected override void Init () {
         Scene scene;
-        scene = new SceneMaterials();
+        //scene = new SceneMaterials();
         //scene = new ScenePhysics();
-        //scene = new SceneGizmos();
+        scene = new SceneGizmos();
         scenes.Add(scene);
         scene.Load();
 
