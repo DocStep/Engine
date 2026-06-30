@@ -66,7 +66,7 @@ public class Singleton<T> : ISingleton where T : Singleton<T>, new() {
         SingletonManager.Add_NoLock(instance);
 
         if (instance.debugLog) {
-            string text = $"[{Name}] Inited: {typeof(T)}";
+            string text = $"[{Name}] Inited: {typeof(T)} ({Instance.GetHashCode()})";
             Log.log(text);
         }
     }

@@ -35,7 +35,10 @@ public class Engine : Singleton<Engine>, IDisposable {
 
     private double _deltaTime;
     public static double deltaTime {
-        get => Instance._deltaTime;
+        get {
+            Log.log($"Instance id: {Instance.GetHashCode()}");
+            return Instance._deltaTime;
+        }
         private set => Instance._deltaTime = value;
     }
 
@@ -111,7 +114,7 @@ public class Engine : Singleton<Engine>, IDisposable {
         engineState = EngineStates.Ready;
     }
 
-    private void OnUpdate (double deltaTime) {
+    private void OnUpdate (double dt) {
         InputState.Update();
         Inputs.Update();
 
@@ -120,8 +123,8 @@ public class Engine : Singleton<Engine>, IDisposable {
             else if (engineState == EngineStates.Paused) engineState = EngineStates.Ready;
         }
         if (engineState == EngineStates.Ready) {
-            _deltaTime = deltaTime;
-            _accumulator += deltaTime;
+            _deltaTime = dt;
+            _accumulator += dt;
 
             Update();
             while (fixedDeltaTime <= _accumulator) {
@@ -143,17 +146,18 @@ public class Engine : Singleton<Engine>, IDisposable {
         de_FixedUpdate?.Invoke();
     }
     private void Update () {
-        Graphics.UI.TextRenderer.AddText($"FPS: {(int)(1/Engine.deltaTime)}");
-        Graphics.UI.TextRenderer.AddText($"ms: {Engine.deltaTime*1000:F1}");
-        Graphics.UI.TextRenderer.AddText($"Pos: {Camera.Instance?.cameraPos:F2}");
-        Graphics.UI.TextRenderer.AddText($"MousePos: {Camera.Instance?.mousePos:F2}");
-        Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.Instance.componentsCount}");
-
         ComponentManager.Instance.Update();
         //de_Update?.Invoke();
 
+        Graphics.UI.TextRenderer.AddText($"Time: {time:F2}");
+        Graphics.UI.TextRenderer.AddText($"FPS: {(int)(1/Engine.Instance._deltaTime)}");
+        Graphics.UI.TextRenderer.AddText($"ms: {_deltaTime*1000:F3}");
+        Graphics.UI.TextRenderer.AddText($"Pos: {Camera.Instance?.cameraPos:F3}");
+        Graphics.UI.TextRenderer.AddText($"MousePos: {Camera.Instance?.mousePos}");
+        Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.Instance.componentsCount}");
+
         /// Counters
-        time += deltaTime;
+        time += _deltaTime;
     }
 
 

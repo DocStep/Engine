@@ -245,7 +245,6 @@ public class Renderer {
 
         DrawGizmoCameraOrbitCenter();
 
-        _gizmo_Selected.Update();
         _gizmo_Selected.Draw();
 
 

@@ -246,6 +246,8 @@ internal sealed class CameraEditor : Camera {
             }
         }
 
+        Renderer.Instance._gizmo_Selected.Update();
+
         Renderer.Instance.m4x4_View = Matrix4x4.CreateLookAtLeftHanded(position, position + forward, worldUp);
         cameraRot = rotation;
     }
