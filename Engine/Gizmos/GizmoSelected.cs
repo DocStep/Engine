@@ -47,6 +47,7 @@ public class GizmoSelected : IGizmoWorld {
     public Matrix4x4 quadXZBasis = Matrix4x4.Identity;
     public Matrix4x4 quadYZBasis = Matrix4x4.Identity;
     public Vector3 quadScale = Vector3.Zero;
+    private bool isMouseBlocked = false;
 
 
     static Matrix4x4 BasisToWorld (Vector3 localX, Vector3 localY, Vector3 localZ) {
@@ -108,6 +109,7 @@ public class GizmoSelected : IGizmoWorld {
                         selectedDragPos = _objPos;
                         selectedDragRot = _objRot;
                         selectedDragMargin = _objPos - axisPickXPos.Value;
+                        isMouseBlocked |= true;
                     }
                 }
 
@@ -119,6 +121,7 @@ public class GizmoSelected : IGizmoWorld {
                         selectedDragPos = _objPos;
                         selectedDragRot = _objRot;
                         selectedDragMargin = _objPos - axisPickYPos.Value;
+                        isMouseBlocked |= true;
                     }
                 }
 
@@ -130,6 +133,7 @@ public class GizmoSelected : IGizmoWorld {
                         selectedDragPos = _objPos;
                         selectedDragRot = _objRot;
                         selectedDragMargin = _objPos - axisPickZPos.Value;
+                        isMouseBlocked |= true;
                     }
                 }
 
@@ -158,6 +162,7 @@ public class GizmoSelected : IGizmoWorld {
                         selectedDragPos = _objPos;
                         selectedDragRot = _objRot;
                         selectedDragMargin = _objPos - squarePickXYPos.Value;
+                        isMouseBlocked |= true;
                     }
                 }
                 /// XZ
@@ -169,6 +174,7 @@ public class GizmoSelected : IGizmoWorld {
                         selectedDragPos = _objPos;
                         selectedDragRot = _objRot;
                         selectedDragMargin = _objPos - squarePickXZPos!.Value;
+                        isMouseBlocked |= true;
                     }
                 }
                 /// YZ
@@ -180,6 +186,7 @@ public class GizmoSelected : IGizmoWorld {
                         selectedDragPos = _objPos;
                         selectedDragRot = _objRot;
                         selectedDragMargin = _objPos - squarePickYZPos!.Value;
+                        isMouseBlocked |= true;
                     }
                 }
 
@@ -212,6 +219,10 @@ public class GizmoSelected : IGizmoWorld {
                     }
                 } else if (Inputs.Actions[Inputs.LMB].pressedUp) {
                     selectedPositionMode = SelectedPositionGizmoMode.None;
+                    if (isMouseBlocked) {
+                        isMouseBlocked = false;
+                        CameraEditor.Instance?.UnblockMouse(this);
+                    }
                 }
 
                 quadXYPos = _objPos + _dist*_squareSize*quadXYOffset;
@@ -223,6 +234,11 @@ public class GizmoSelected : IGizmoWorld {
                 /*case SelectedGizmoMode.Scale:
                     break;*/
         }
+
+        if (isMouseBlocked) 
+            CameraEditor.Instance?.BlockMouse(this);
+        else 
+            CameraEditor.Instance?.UnblockMouse(this);
 
         TextRenderer.AddText($"Selected:");
         TextRenderer.AddText($"Position: {tr_obj.Position:F3}");

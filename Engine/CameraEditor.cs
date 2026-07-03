@@ -50,6 +50,17 @@ internal sealed class CameraEditor : Camera {
 
     private float moveHoldTime;
 
+    private List<object> mouseBlockingObjects = new List<object>();
+    public bool mouseAllowed => mouseBlockingObjects.Count == 0;
+    public void BlockMouse (object obj) {
+        if (!mouseBlockingObjects.Contains(obj))
+            mouseBlockingObjects.Add(obj);
+    }
+    public void UnblockMouse (object obj) {
+        if (mouseBlockingObjects.Contains(obj)) 
+            mouseBlockingObjects.Remove(obj);
+    }
+
 
     private void SetTransformDefault () {
         cameraPos = _cameraPos;
@@ -93,7 +104,7 @@ internal sealed class CameraEditor : Camera {
         Vector3 cameraPosDelta = Vector3.Zero;
         float posDeltaL = MathF.Max(0, (cameraOrbitCenterPos - cameraPos).Length());
 
-        if (Inputs.Actions[LMB].pressed && Inputs.Actions[Alt].pressed || Inputs.Actions[RMB].pressed) {
+        if ((Inputs.Actions[LMB].pressed && Inputs.Actions[Alt].pressed || Inputs.Actions[RMB].pressed) && mouseAllowed) {
             float dx = Inputs.MouseDelta.X;
             float dy = Inputs.MouseDelta.Y;
 
@@ -108,7 +119,7 @@ internal sealed class CameraEditor : Camera {
         UpdateCamera(deltaTime);
 
         /// Middle Mouse: drag to pan, clean click (no drag) to focus
-        if (Inputs.Actions[CameraDrag].pressedDown) {
+        if (Inputs.Actions[CameraDrag].pressedDown && mouseAllowed) {
             cameraDragStartX = mousePos.X;
             cameraDragStartY = mousePos.Y;
             isCameraDragging = false;
@@ -136,7 +147,7 @@ internal sealed class CameraEditor : Camera {
             }
         }
 
-        if (Inputs.Actions[Inputs.CameraFocus].pressedDown) 
+        if (Inputs.Actions[Inputs.CameraFocus].pressedDown && mouseAllowed) 
             if (Renderer.Instance._gizmo_Selected.selectedMesh is not null) 
                 FocusAtPoint(Renderer.Instance._gizmo_Selected.selectedMesh.owner.Transform.Position);
 
