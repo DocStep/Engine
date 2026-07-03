@@ -86,6 +86,22 @@ public static class Raycast {
         return ray.Origin + ray.Direction*t;
     }
 
+    public static Vector3? ClosestPointRayToAxis (Ray r, Vector3 axisOrigin, Vector3 axisDir) {
+        Vector3 rDir = Vector3.Normalize(r.Direction);
+        Vector3 aDir = Vector3.Normalize(axisDir);
+
+        Vector3 w0 = r.Origin - axisOrigin;
+        float b = Vector3.Dot(rDir, aDir);
+        float d = Vector3.Dot(rDir, w0);
+        float e = Vector3.Dot(aDir, w0);
+        float denom = 1f - b*b;
+
+        if (MathF.Abs(denom) < 1e-6f) return null; /// ray parallel to axis
+
+        float tAxis = (e - b*d)/denom;
+        return axisOrigin + tAxis*aDir;
+    }
+
     public static bool RayTriangle (Ray ray, Vector3 v0, Vector3 v1, Vector3 v2, out float t) {
         const float epsilon = 1e-6f;
         t = 0f;

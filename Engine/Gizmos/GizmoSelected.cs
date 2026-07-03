@@ -16,10 +16,13 @@ public class GizmoSelected : IGizmoWorld {
     GL GL = null!;
     Shader _sh_Outline = null!;
 
-
     public MeshComponent? selectedMesh = null;
     public bool selectedGizmoLocal = true;
     private const string OutlineColor = "uOutlineColor";
+
+    private const float _squareSize = 0.025f;
+    private const float _axisLength = 0.15f;
+    private const float _axisRadius = 0.005f;
 
     public Vector3 selectedDragPos;
     public Vector3 selectedDragRot;
@@ -75,8 +78,10 @@ public class GizmoSelected : IGizmoWorld {
         _sh_Unlit.SetVector3(ViewPos, camPos);
 
         Ray ray = Camera.Instance.RaycastMouse();
-        float _squareSize = 0.025f;
         float half = 0.5f*_squareSize;
+        Vector3 axisCapsuleXOffset;
+        Vector3 axisCapsuleYOffset;
+        Vector3 axisCapsuleZOffset;
         Vector3 quadXYOffset;
         Vector3 quadXZOffset;
         Vector3 quadYZOffset;
@@ -90,6 +95,43 @@ public class GizmoSelected : IGizmoWorld {
                 Vector3 right = selectedGizmoLocal ? tr_obj.Right : Vector3.UnitX;
                 Vector3 up = selectedGizmoLocal ? tr_obj.Up : Vector3.UnitY;
                 Vector3 forward = selectedGizmoLocal ? tr_obj.Forward : Vector3.UnitZ;
+
+                axisCapsuleXOffset = tr_obj.Position + right*0.5f*_dist*_axisLength;
+                axisCapsuleYOffset = tr_obj.Position + up*0.5f*_dist*_axisLength;
+                axisCapsuleZOffset = tr_obj.Position + forward*0.5f*_dist*_axisLength;
+
+                Vector3? axisPickXPos = TryPickCapsule(right, _axisLength, _axisRadius);
+                xOver = axisPickXPos is not null;
+                if (axisPickXPos is not null) {
+                    if (Inputs.Actions[Inputs.LMB].pressedDown) {
+                        selectedPositionMode = SelectedPositionGizmoMode.X;
+                        selectedDragPos = _objPos;
+                        selectedDragRot = _objRot;
+                        selectedDragMargin = _objPos - axisPickXPos.Value;
+                    }
+                }
+
+                Vector3? axisPickYPos = TryPickCapsule(up, _axisLength, _axisRadius);
+                yOver = axisPickYPos is not null;
+                if (axisPickYPos is not null) {
+                    if (Inputs.Actions[Inputs.LMB].pressedDown) {
+                        selectedPositionMode = SelectedPositionGizmoMode.Y;
+                        selectedDragPos = _objPos;
+                        selectedDragRot = _objRot;
+                        selectedDragMargin = _objPos - axisPickYPos.Value;
+                    }
+                }
+
+                Vector3? axisPickZPos = TryPickCapsule(forward, _axisLength, _axisRadius);
+                zOver = axisPickZPos is not null;
+                if (axisPickZPos is not null) {
+                    if (Inputs.Actions[Inputs.LMB].pressedDown) {
+                        selectedPositionMode = SelectedPositionGizmoMode.Z;
+                        selectedDragPos = _objPos;
+                        selectedDragRot = _objRot;
+                        selectedDragMargin = _objPos - axisPickZPos.Value;
+                    }
+                }
 
                 Vector3 toCam = camPos - _objPos;
                 float signR = Vector3.Dot(toCam, right) < 0 ? -1f : 1f;
@@ -106,11 +148,6 @@ public class GizmoSelected : IGizmoWorld {
                 quadXZBasis = BasisToWorld(right, up, forward);
                 /// YZ plane -> normal = right, in-plane axes = up/forward
                 quadYZBasis = BasisToWorld(up, right, forward);
-
-                //Vector3 debugPos = Vector3.One;
-                //Debug.Line(debugPos, debugPos + right, Constants.red);
-                //Debug.Line(debugPos, debugPos + up, Constants.green);
-                //Debug.Line(debugPos, debugPos + forward, Constants.blue);
 
                 /// XY
                 squarePickXYPos = TryPickQuad(quadXYOffset, forward, right, up);
@@ -150,6 +187,15 @@ public class GizmoSelected : IGizmoWorld {
                     if (selectedPositionMode != SelectedPositionGizmoMode.None) {
                         Vector3? pos = null;
                         switch (selectedPositionMode) {
+                            case SelectedPositionGizmoMode.X:
+                                pos = Raycast.ClosestPointRayToAxis(ray, selectedDragPos, right);
+                                break;
+                            case SelectedPositionGizmoMode.Y:
+                                pos = Raycast.ClosestPointRayToAxis(ray, selectedDragPos, up);
+                                break;
+                            case SelectedPositionGizmoMode.Z:
+                                pos = Raycast.ClosestPointRayToAxis(ray, selectedDragPos, forward);
+                                break;
                             case SelectedPositionGizmoMode.XY:
                                 pos = Raycast.IntersectPlane(ray, selectedDragPos, forward);
                                 break;
@@ -162,10 +208,6 @@ public class GizmoSelected : IGizmoWorld {
                         }
                         if (pos is not null) {
                             selectedMesh.owner.Transform.SetPosition(pos.Value + selectedDragMargin);
-                            //Log.log(pos.Value + selectedDragMargin);
-                            //Debug.Line(debugPos, debugPos - selectedDragMargin, Constants.black);
-                            //Debug.Line(pos.Value, pos.Value + selectedDragMargin, Constants.black);
-                            //TextRenderer.AddText($"_margin: {selectedDragMargin:F3}");
                         }
                     }
                 } else if (Inputs.Actions[Inputs.LMB].pressedUp) {
@@ -186,7 +228,40 @@ public class GizmoSelected : IGizmoWorld {
         TextRenderer.AddText($"Position: {tr_obj.Position:F3}");
         TextRenderer.AddText($"Rotation: {tr_obj.Rotation:F3}");
         TextRenderer.AddText($"Scale: {tr_obj.Scale:F3}");
+        
+        
+        Vector3? TryPickCapsule (Vector3 axisDir, float length, float radius) {
+            Vector3 segStart = _objPos;
+            Vector3 segDir = Vector3.Normalize(axisDir);
+            float segLen = _dist*length;
+            float capRadius = _dist*radius;
 
+            Vector3 rDir = Vector3.Normalize(ray.Direction);
+            Vector3 w0 = ray.Origin - segStart;
+
+            float b = Vector3.Dot(rDir, segDir);
+            float d = Vector3.Dot(rDir, w0);
+            float e = Vector3.Dot(segDir, w0);
+            float denom = 1f - b*b;
+
+            float tRay, tSeg;
+            if (MathF.Abs(denom) < 1e-6f) {
+                tRay = 0f;
+                tSeg = e;
+            } else {
+                tRay = (b*e - d)/denom;
+                tSeg = (e - b*d)/denom;
+            }
+
+            tSeg = Math.Clamp(tSeg, 0f, segLen);
+            tRay = MathF.Max(tRay, 0f);
+
+            Vector3 pointOnRay = ray.Origin + tRay*rDir;
+            Vector3 pointOnSeg = segStart + tSeg*segDir;
+
+            if (Vector3.Distance(pointOnRay, pointOnSeg) <= capRadius) return pointOnSeg;
+            return null;
+        }
         Vector3? TryPickQuad (Vector3 offset, Vector3 normal, Vector3 axisA, Vector3 axisB) {
             Vector3 quadCenter = _objPos + _dist*offset*_squareSize;
             float halfExtent = _dist*half;
@@ -239,13 +314,12 @@ public class GizmoSelected : IGizmoWorld {
         }
 
         /// Axes
-        float _axesSize = 0.15f;
         Vector3 pos2 = selectedMesh.owner.Transform.Position;
-        Matrix4x4 _m4x4_selectedScale = Matrix4x4.CreateScale(_dist*_axesSize);
+        Matrix4x4 _m4x4_selectedScale = Matrix4x4.CreateScale(_dist*_axisLength);
 
-        Draw(Vector3.Zero, Constants.blue);
-        Draw(new Vector3(-90, 0, 0), Constants.green);
-        Draw(new Vector3(0, 90, 0), Constants.red);
+        Draw(new Vector3(0, 90, 0), xOver ? Constants.redLight : Constants.red);
+        Draw(new Vector3(-90, 0, 0), yOver ? Constants.greenLight : Constants.green);
+        Draw(Vector3.Zero, zOver ? Constants.blueLight : Constants.blue);
 
         void Draw (Vector3 rot, Vector3 color) {
             Matrix4x4 m4x4_selected = _m4x4_selectedScale
