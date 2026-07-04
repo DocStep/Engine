@@ -17,8 +17,12 @@ public class GizmoSelected : IGizmoWorld {
     Shader _sh_Outline = null!;
 
     public MeshComponent? selectedMesh = null;
-    public bool selectedGizmoLocal = true;
     private const string OutlineColor = "uOutlineColor";
+
+    public SelectedGizmoMode selectedGizmoMode = SelectedGizmoMode.Position;
+    public SelectedPositionGizmoMode selectedPositionMode;
+    public SelectedRotationGizmoMode selectedRotationMode;
+    public SelectedScaleGizmoMode selectedScaleMode;
 
     private const float _squareSize = 0.025f;
     private const float _axisLength = 0.15f;
@@ -27,30 +31,39 @@ public class GizmoSelected : IGizmoWorld {
     public Vector3 selectedDragPos;
     public Vector3 selectedDragRot;
     public Vector3 selectedDragMargin;
-
-    public SelectedGizmoMode selectedGizmoMode = SelectedGizmoMode.Position;
-    public SelectedPositionGizmoMode selectedPositionMode;
-    public SelectedRotationGizmoMode selectedRotationMode;
-    public SelectedScaleGizmoMode selectedScaleMode;
-
-    /// Draw Info
-    public bool xOver = false;
-    public bool yOver = false;
-    public bool zOver = false;
-    public bool xyOver = false;
-    public bool xzOver = false;
-    public bool yzOver = false;
-    public Vector3 quadXYPos = Vector3.Zero;
-    public Vector3 quadXZPos = Vector3.Zero;
-    public Vector3 quadYZPos = Vector3.Zero;
-    public Matrix4x4 quadXYBasis = Matrix4x4.Identity;
-    public Matrix4x4 quadXZBasis = Matrix4x4.Identity;
-    public Matrix4x4 quadYZBasis = Matrix4x4.Identity;
-    public Vector3 quadScale = Vector3.Zero;
+    public bool selectedGizmoLocal = true;
     private bool isMouseBlocked = false;
 
+    private Vector3 dragRight;
+    private Vector3 dragUp;
+    private Vector3 dragForward;
 
-    static Matrix4x4 BasisToWorld (Vector3 localX, Vector3 localY, Vector3 localZ) {
+    /// Draw Gizmos
+    private bool xOver;
+    private bool yOver;
+    private bool zOver;
+    private bool xyOver;
+    private bool xzOver;
+    private bool yzOver;
+    private Vector3 quadXYPos;
+    private Vector3 quadXZPos;
+    private Vector3 quadYZPos;
+    private Matrix4x4 quadXYBasis;
+    private Matrix4x4 quadXZBasis;
+    private Matrix4x4 quadYZBasis;
+    private Vector3 grabbedRot;
+    private Vector3 quadScale = Vector3.Zero;
+    private Vector3 gizmoRight;
+    private Vector3 gizmoUp;
+    private Vector3 gizmoForward;
+
+    /// Draw
+    //private Vector3 drawPos;
+    //private Vector3 drawRot;
+    //private Vector3 drawScale;
+
+
+    public static Matrix4x4 BasisToWorld (Vector3 localX, Vector3 localY, Vector3 localZ) {
         return new Matrix4x4(
             localX.X, localX.Y, localX.Z, 0,
             localY.X, localY.Y, localY.Z, 0,
@@ -63,20 +76,11 @@ public class GizmoSelected : IGizmoWorld {
     public void Update () {
         if (selectedMesh is null) return;
 
-        Shader _sh_Unlit = Renderer.Instance._sh_Unlit;
-        Renderer.Instance.GL.Disable(EnableCap.DepthTest);
-        Renderer.Instance.GL.Disable(EnableCap.CullFace);
-
         TransformComponent tr_obj = selectedMesh.owner.Transform;
         Vector3 camPos = Camera.Instance.cameraPos;
         Vector3 _objPos = tr_obj.Position;
         Vector3 _objRot = tr_obj.Rotation;
         float _dist = Vector3.Distance(camPos, _objPos);
-
-        _sh_Unlit.Use();
-        _sh_Unlit.SetMatrix4(View, Renderer.Instance.UView);
-        _sh_Unlit.SetMatrix4(Projection, Renderer.Instance.UProjection);
-        _sh_Unlit.SetVector3(ViewPos, camPos);
 
         Ray ray = Camera.Instance.RaycastMouse();
         float half = 0.5f*_squareSize;
@@ -86,107 +90,88 @@ public class GizmoSelected : IGizmoWorld {
         Vector3 quadXYOffset;
         Vector3 quadXZOffset;
         Vector3 quadYZOffset;
-        Vector3? squarePickXYPos;
-        Vector3? squarePickXZPos;
-        Vector3? squarePickYZPos;
         quadScale = _dist*_squareSize*Vector3.One;
 
         switch (selectedGizmoMode) {
             case SelectedGizmoMode.Position:
-                Vector3 right = selectedGizmoLocal ? tr_obj.Right : Vector3.UnitX;
-                Vector3 up = selectedGizmoLocal ? tr_obj.Up : Vector3.UnitY;
-                Vector3 forward = selectedGizmoLocal ? tr_obj.Forward : Vector3.UnitZ;
+                if (selectedPositionMode == SelectedPositionGizmoMode.None) {
+                    gizmoRight = selectedGizmoLocal ? tr_obj.Right : Vector3.UnitX;
+                    gizmoUp = selectedGizmoLocal ? tr_obj.Up : Vector3.UnitY;
+                    gizmoForward = selectedGizmoLocal ? tr_obj.Forward : Vector3.UnitZ;
+                }
+                
+                axisCapsuleXOffset = tr_obj.Position + gizmoRight*0.5f*_dist*_axisLength;
+                axisCapsuleYOffset = tr_obj.Position + gizmoUp*0.5f*_dist*_axisLength;
+                axisCapsuleZOffset = tr_obj.Position + gizmoForward*0.5f*_dist*_axisLength;
 
-                axisCapsuleXOffset = tr_obj.Position + right*0.5f*_dist*_axisLength;
-                axisCapsuleYOffset = tr_obj.Position + up*0.5f*_dist*_axisLength;
-                axisCapsuleZOffset = tr_obj.Position + forward*0.5f*_dist*_axisLength;
-
-                Vector3? axisPickXPos = TryPickCapsule(right, _axisLength, _axisRadius);
+                Vector3? axisPickXPos = TryPickCapsule(gizmoRight, _axisLength, _axisRadius);
                 xOver = axisPickXPos is not null;
                 if (axisPickXPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         selectedPositionMode = SelectedPositionGizmoMode.X;
-                        selectedDragPos = _objPos;
-                        selectedDragRot = _objRot;
-                        selectedDragMargin = _objPos - axisPickXPos.Value;
-                        isMouseBlocked |= true;
                     }
                 }
 
-                Vector3? axisPickYPos = TryPickCapsule(up, _axisLength, _axisRadius);
+                Vector3? axisPickYPos = TryPickCapsule(gizmoUp, _axisLength, _axisRadius);
                 yOver = axisPickYPos is not null;
                 if (axisPickYPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         selectedPositionMode = SelectedPositionGizmoMode.Y;
-                        selectedDragPos = _objPos;
-                        selectedDragRot = _objRot;
                         selectedDragMargin = _objPos - axisPickYPos.Value;
-                        isMouseBlocked |= true;
                     }
                 }
 
-                Vector3? axisPickZPos = TryPickCapsule(forward, _axisLength, _axisRadius);
+                Vector3? axisPickZPos = TryPickCapsule(gizmoForward, _axisLength, _axisRadius);
                 zOver = axisPickZPos is not null;
                 if (axisPickZPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         selectedPositionMode = SelectedPositionGizmoMode.Z;
-                        selectedDragPos = _objPos;
-                        selectedDragRot = _objRot;
                         selectedDragMargin = _objPos - axisPickZPos.Value;
-                        isMouseBlocked |= true;
                     }
                 }
 
+                /// Planes
                 Vector3 toCam = camPos - _objPos;
-                float signR = Vector3.Dot(toCam, right) < 0 ? -1f : 1f;
-                float signU = Vector3.Dot(toCam, up) < 0 ? -1f : 1f;
-                float signF = Vector3.Dot(toCam, forward) < 0 ? -1f : 1f;
+                float signRight = Vector3.Dot(toCam, gizmoRight) < 0 ? -1 : 1;
+                float signUp = Vector3.Dot(toCam, gizmoUp) < 0 ? -1 : 1;
+                float signFront = Vector3.Dot(toCam, gizmoForward) < 0 ? -1 : 1;
 
-                quadXYOffset = signR*right*0.5f + signU*up*0.5f;
-                quadXZOffset = signR*right*0.5f + signF*forward*0.5f;
-                quadYZOffset = signU*up*0.5f + signF*forward*0.5f;
+                quadXYOffset = signRight*gizmoRight*0.5f + signUp*gizmoUp*0.5f;
+                quadXZOffset = signRight*gizmoRight*0.5f + signFront*gizmoForward*0.5f;
+                quadYZOffset = signUp*gizmoUp*0.5f + signFront*gizmoForward*0.5f;
 
-                /// XY plane -> normal = forward, in-plane axes = right/up
-                quadXYBasis = BasisToWorld(right, forward, up);
-                /// XZ plane -> normal = up, in-plane axes = right/forward
-                quadXZBasis = BasisToWorld(right, up, forward);
-                /// YZ plane -> normal = right, in-plane axes = up/forward
-                quadYZBasis = BasisToWorld(up, right, forward);
+                /// Plane XY, Normal = forward
+                quadXYBasis = BasisToWorld(gizmoRight, gizmoForward, gizmoUp);
+                /// Plane XZ, Normal = up
+                quadXZBasis = BasisToWorld(gizmoRight, gizmoUp, gizmoForward);
+                /// Plane YZ, Normal = right
+                quadYZBasis = BasisToWorld(gizmoUp, gizmoRight, gizmoForward);
 
                 /// XY
-                squarePickXYPos = TryPickQuad(quadXYOffset, forward, right, up);
+                Vector3? squarePickXYPos = TryPickQuad(quadXYOffset, gizmoForward, gizmoRight, gizmoUp);
                 xyOver = squarePickXYPos is not null;
                 if (squarePickXYPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         selectedPositionMode = SelectedPositionGizmoMode.XY;
-                        selectedDragPos = _objPos;
-                        selectedDragRot = _objRot;
                         selectedDragMargin = _objPos - squarePickXYPos.Value;
-                        isMouseBlocked |= true;
                     }
                 }
                 /// XZ
-                squarePickXZPos = TryPickQuad(quadXZOffset, up, right, forward);
+                Vector3? squarePickXZPos = TryPickQuad(quadXZOffset, gizmoUp, gizmoRight, gizmoForward);
                 xzOver = squarePickXZPos is not null;
                 if (squarePickXZPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         selectedPositionMode = SelectedPositionGizmoMode.XZ;
-                        selectedDragPos = _objPos;
-                        selectedDragRot = _objRot;
                         selectedDragMargin = _objPos - squarePickXZPos!.Value;
-                        isMouseBlocked |= true;
                     }
                 }
                 /// YZ
-                squarePickYZPos = TryPickQuad(quadYZOffset, right, up, forward);
+                Vector3? squarePickYZPos = TryPickQuad(quadYZOffset, gizmoRight, gizmoUp, gizmoForward);
                 yzOver = squarePickYZPos is not null;
                 if (squarePickYZPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         selectedPositionMode = SelectedPositionGizmoMode.YZ;
-                        selectedDragPos = _objPos;
-                        selectedDragRot = _objRot;
                         selectedDragMargin = _objPos - squarePickYZPos!.Value;
-                        isMouseBlocked |= true;
                     }
                 }
 
@@ -195,30 +180,33 @@ public class GizmoSelected : IGizmoWorld {
                         Vector3? pos = null;
                         switch (selectedPositionMode) {
                             case SelectedPositionGizmoMode.X:
-                                pos = Raycast.ClosestPointRayToAxis(ray, selectedDragPos, right);
+                                pos = Raycast.ClosestPointRayToAxis(ray, selectedDragPos, gizmoRight);
                                 break;
                             case SelectedPositionGizmoMode.Y:
-                                pos = Raycast.ClosestPointRayToAxis(ray, selectedDragPos, up);
+                                pos = Raycast.ClosestPointRayToAxis(ray, selectedDragPos, gizmoUp);
                                 break;
                             case SelectedPositionGizmoMode.Z:
-                                pos = Raycast.ClosestPointRayToAxis(ray, selectedDragPos, forward);
+                                pos = Raycast.ClosestPointRayToAxis(ray, selectedDragPos, gizmoForward);
                                 break;
                             case SelectedPositionGizmoMode.XY:
-                                pos = Raycast.IntersectPlane(ray, selectedDragPos, forward);
+                                pos = Raycast.IntersectPlane(ray, selectedDragPos, gizmoForward);
                                 break;
                             case SelectedPositionGizmoMode.XZ:
-                                pos = Raycast.IntersectPlane(ray, selectedDragPos, up);
+                                pos = Raycast.IntersectPlane(ray, selectedDragPos, gizmoUp);
                                 break;
                             case SelectedPositionGizmoMode.YZ:
-                                pos = Raycast.IntersectPlane(ray, selectedDragPos, right);
+                                pos = Raycast.IntersectPlane(ray, selectedDragPos, gizmoRight);
                                 break;
                         }
                         if (pos is not null) {
+                            selectedMesh.owner.Transform.Stop();
                             selectedMesh.owner.Transform.SetPosition(pos.Value + selectedDragMargin);
+                            selectedMesh.owner.Transform.SetRotation(selectedDragRot);
                         }
                     }
                 } else if (Inputs.Actions[Inputs.LMB].pressedUp) {
                     selectedPositionMode = SelectedPositionGizmoMode.None;
+                    selectedMesh.owner.Transform.SetRotation(selectedDragRot);
                     if (isMouseBlocked) {
                         isMouseBlocked = false;
                         CameraEditor.Instance?.UnblockMouse(this);
@@ -228,6 +216,13 @@ public class GizmoSelected : IGizmoWorld {
                 quadXYPos = _objPos + _dist*_squareSize*quadXYOffset;
                 quadXZPos = _objPos + _dist*_squareSize*quadXZOffset;
                 quadYZPos = _objPos + _dist*_squareSize*quadYZOffset;
+
+                if (Inputs.Actions[Inputs.LMB].pressedDown) {
+                    if (selectedPositionMode != SelectedPositionGizmoMode.None) 
+                        isMouseBlocked |= true;
+                    selectedDragPos = _objPos;
+                    selectedDragRot = _objRot;
+                }
                 break;
                 /*case SelectedGizmoMode.Rotation:
                     break;*/
@@ -295,6 +290,15 @@ public class GizmoSelected : IGizmoWorld {
 
 
     public void Draw () {
+        Shader _sh_Unlit = Renderer.Instance._sh_Unlit;
+        Renderer.Instance.GL.Disable(EnableCap.DepthTest);
+        Renderer.Instance.GL.Disable(EnableCap.CullFace);
+
+        _sh_Unlit.Use();
+        _sh_Unlit.SetMatrix4(View, Renderer.Instance.UView);
+        _sh_Unlit.SetMatrix4(Projection, Renderer.Instance.UProjection);
+        _sh_Unlit.SetVector3(ViewPos, Camera.Instance.cameraPos);
+
         DrawSelectedOutline();
         DrawSelectedGizmo();
     }

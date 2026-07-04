@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Numerics;
+using JQuaternion = Jitter2.LinearMath.JQuaternion;
+using JVector = Jitter2.LinearMath.JVector;
 
 namespace Engine;
 
@@ -58,8 +60,8 @@ internal static class Utils {
         direction = Vector3.Normalize(direction);
         if (up == default) up = Vector3.UnitY;
 
-        if (MathF.Abs(Vector3.Dot(direction, up)) > 0.999f) {
-            up = MathF.Abs(direction.Y) > 0.999f ? Vector3.UnitX : Vector3.UnitY;
+        if (0.999f < MathF.Abs(Vector3.Dot(direction, up))) {
+            up = 0.999f < MathF.Abs(direction.Y) ? Vector3.UnitX : Vector3.UnitY;
         }
 
         var right = Vector3.Normalize(Vector3.Cross(up, direction));
@@ -72,6 +74,15 @@ internal static class Utils {
             0f, 0f, 0f, 1f
         );
         return Quaternion.CreateFromRotationMatrix(m);
+    }
+
+
+    public static JQuaternion QuaternionFromEuler (Vector3 rot) {
+        Vector3 rad = rot*(MathF.PI/180f);
+        JQuaternion qx = JQuaternion.CreateFromAxisAngle(JVector.UnitX, rad.X);
+        JQuaternion qy = JQuaternion.CreateFromAxisAngle(JVector.UnitY, rad.Y);
+        JQuaternion qz = JQuaternion.CreateFromAxisAngle(JVector.UnitZ, rad.Z);
+        return qx*qy*qz;
     }
 
 

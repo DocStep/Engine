@@ -40,6 +40,12 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
         Rigidbody.Position = owner.Transform.Position;
         Rigidbody.Orientation = FromEulerYXZ(owner.Transform.Rotation);
     }
+    public void Stop () {
+        if (Rigidbody.MotionType != MotionType.Dynamic) return;
+
+        Rigidbody.Velocity = Vector3.Zero;
+        Rigidbody.AngularVelocity = Vector3.Zero;
+    }
 
 
     public const float Deg2Rad = MathF.PI/180f;

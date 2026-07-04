@@ -21,18 +21,24 @@ public class TransformComponent : Component {
         PhysicsComponent? physicsComponent = owner.GetComponent<PhysicsComponent>();
         if (physicsComponent is not null) {
             physicsComponent.Rigidbody.Position = Position;
-            if (physicsComponent.Rigidbody.MotionType == Jitter2.Dynamics.MotionType.Dynamic) {
-                physicsComponent.Rigidbody.Velocity = Vector3.Zero;
-                physicsComponent.Rigidbody.AngularVelocity = Vector3.Zero;
-            }
         }
     }
     public void SetRotation (Vector3 rotation) {
         Rotation = rotation;
+
+        PhysicsComponent? physicsComponent = owner.GetComponent<PhysicsComponent>();
+        if (physicsComponent is not null) {
+            physicsComponent.Rigidbody.Orientation = Utils.QuaternionFromEuler(rotation);
+        }
     }
     public void SetScale (Vector3 scale) {
         Scale = scale;
     }
+    public void Stop () {
+        PhysicsComponent? physicsComponent = owner.GetComponent<PhysicsComponent>();
+        physicsComponent?.Stop();
+    }
+
 
     public Matrix4x4 GetWorldMatrix () {
         var scaleMat = Matrix4x4.CreateScale(Scale);

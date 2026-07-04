@@ -9,8 +9,9 @@ namespace Engine;
 
 public class PhysicsManager : Singleton<PhysicsManager> {
     public PhysicsManager () {
-        World.SolverIterations = (solver: 15, relaxation: 10); /// def: 6, 4
+        World.SolverIterations = (solver: 100, relaxation: 100); /// def: 6, 4
         World.Gravity = Gravity;
+        World.SubstepCount = 5; /// def: 4
     }
 
     private readonly World World = new World();
