@@ -11,5 +11,6 @@ public class ThreadUtils {
 
     private static int mainThreadId; 
     public static bool isMainThread => Thread.CurrentThread.ManagedThreadId == mainThreadId;
+    public static int currThread => Thread.CurrentThread.ManagedThreadId;
 
 }

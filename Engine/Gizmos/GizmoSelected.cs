@@ -39,6 +39,7 @@ public class GizmoSelected : IGizmoWorld {
     private Vector3 dragForward;
 
     /// Draw Gizmos
+    public SelectedPositionGizmoMode selectedPositionOverMode;
     private bool xOver;
     private bool yOver;
     private bool zOver;
@@ -63,16 +64,6 @@ public class GizmoSelected : IGizmoWorld {
     //private Vector3 drawScale;
 
 
-    public static Matrix4x4 BasisToWorld (Vector3 localX, Vector3 localY, Vector3 localZ) {
-        return new Matrix4x4(
-            localX.X, localX.Y, localX.Z, 0,
-            localY.X, localY.Y, localY.Z, 0,
-            localZ.X, localZ.Y, localZ.Z, 0,
-            0, 0, 0, 1
-        );
-    }
-
-
     public void Update () {
         if (selectedMesh is null) return;
 
@@ -92,6 +83,10 @@ public class GizmoSelected : IGizmoWorld {
         Vector3 quadYZOffset;
         quadScale = _dist*_squareSize*Vector3.One;
 
+        if (Inputs.Actions[Inputs.GizmoLocal].pressedDown) {
+            selectedGizmoLocal = !selectedGizmoLocal;
+        }
+
         switch (selectedGizmoMode) {
             case SelectedGizmoMode.Position:
                 if (selectedPositionMode == SelectedPositionGizmoMode.None) {
@@ -106,14 +101,17 @@ public class GizmoSelected : IGizmoWorld {
 
                 Vector3? axisPickXPos = TryPickCapsule(gizmoRight, _axisLength, _axisRadius);
                 xOver = axisPickXPos is not null;
+                selectedPositionOverMode = SelectedPositionGizmoMode.X;
                 if (axisPickXPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         selectedPositionMode = SelectedPositionGizmoMode.X;
+                        selectedDragMargin = _objPos - axisPickXPos.Value;
                     }
                 }
 
                 Vector3? axisPickYPos = TryPickCapsule(gizmoUp, _axisLength, _axisRadius);
                 yOver = axisPickYPos is not null;
+                selectedPositionOverMode = SelectedPositionGizmoMode.Y;
                 if (axisPickYPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         selectedPositionMode = SelectedPositionGizmoMode.Y;
@@ -123,6 +121,7 @@ public class GizmoSelected : IGizmoWorld {
 
                 Vector3? axisPickZPos = TryPickCapsule(gizmoForward, _axisLength, _axisRadius);
                 zOver = axisPickZPos is not null;
+                selectedPositionOverMode = SelectedPositionGizmoMode.Z;
                 if (axisPickZPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         selectedPositionMode = SelectedPositionGizmoMode.Z;
@@ -150,6 +149,7 @@ public class GizmoSelected : IGizmoWorld {
                 /// XY
                 Vector3? squarePickXYPos = TryPickQuad(quadXYOffset, gizmoForward, gizmoRight, gizmoUp);
                 xyOver = squarePickXYPos is not null;
+                selectedPositionOverMode = SelectedPositionGizmoMode.XY;
                 if (squarePickXYPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         selectedPositionMode = SelectedPositionGizmoMode.XY;
@@ -159,6 +159,7 @@ public class GizmoSelected : IGizmoWorld {
                 /// XZ
                 Vector3? squarePickXZPos = TryPickQuad(quadXZOffset, gizmoUp, gizmoRight, gizmoForward);
                 xzOver = squarePickXZPos is not null;
+                selectedPositionOverMode = SelectedPositionGizmoMode.XZ;
                 if (squarePickXZPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
                         selectedPositionMode = SelectedPositionGizmoMode.XZ;
@@ -168,14 +169,17 @@ public class GizmoSelected : IGizmoWorld {
                 /// YZ
                 Vector3? squarePickYZPos = TryPickQuad(quadYZOffset, gizmoRight, gizmoUp, gizmoForward);
                 yzOver = squarePickYZPos is not null;
+                selectedPositionOverMode = SelectedPositionGizmoMode.YZ;
                 if (squarePickYZPos is not null) {
                     if (Inputs.Actions[Inputs.LMB].pressedDown) {
+                        /// Start
                         selectedPositionMode = SelectedPositionGizmoMode.YZ;
                         selectedDragMargin = _objPos - squarePickYZPos!.Value;
                     }
                 }
 
                 if (Inputs.Actions[Inputs.LMB].pressed) {
+                    /// Hold
                     if (selectedPositionMode != SelectedPositionGizmoMode.None) {
                         Vector3? pos = null;
                         switch (selectedPositionMode) {
@@ -205,8 +209,9 @@ public class GizmoSelected : IGizmoWorld {
                         }
                     }
                 } else if (Inputs.Actions[Inputs.LMB].pressedUp) {
+                    /// Release
                     selectedPositionMode = SelectedPositionGizmoMode.None;
-                    selectedMesh.owner.Transform.SetRotation(selectedDragRot);
+                    //selectedMesh.owner.Transform.SetRotation(selectedDragRot);
                     if (isMouseBlocked) {
                         isMouseBlocked = false;
                         CameraEditor.Instance?.UnblockMouse(this);
@@ -230,10 +235,11 @@ public class GizmoSelected : IGizmoWorld {
                     break;*/
         }
 
-        if (isMouseBlocked) 
+        if (isMouseBlocked) {
             CameraEditor.Instance?.BlockMouse(this);
-        else 
+        } else {
             CameraEditor.Instance?.UnblockMouse(this);
+        }
 
         TextRenderer.AddText($"Selected:");
         TextRenderer.AddText($"Position: {tr_obj.Position:F3}");
@@ -289,6 +295,16 @@ public class GizmoSelected : IGizmoWorld {
     }
 
 
+    public static Matrix4x4 BasisToWorld (Vector3 localX, Vector3 localY, Vector3 localZ) {
+        return new Matrix4x4(
+            localX.X, localX.Y, localX.Z, 0,
+            localY.X, localY.Y, localY.Z, 0,
+            localZ.X, localZ.Y, localZ.Z, 0,
+            0, 0, 0, 1
+        );
+    }
+
+
     public void Draw () {
         Shader _sh_Unlit = Renderer.Instance._sh_Unlit;
         Renderer.Instance.GL.Disable(EnableCap.DepthTest);
@@ -324,6 +340,9 @@ public class GizmoSelected : IGizmoWorld {
         drawQuad(quadXYPos, quadXYBasis, xyOver ? Constants.blueLight : Constants.blue);
         drawQuad(quadXZPos, quadXZBasis, xzOver ? Constants.greenLight : Constants.green);
         drawQuad(quadYZPos, quadYZBasis, yzOver ? Constants.redLight : Constants.red);
+        //drawQuad(quadXYPos, quadXYBasis, selectedPositionOverMode == SelectedPositionGizmoMode.XY ? Constants.blueLight : Constants.blue);
+        //drawQuad(quadXZPos, quadXZBasis, selectedPositionOverMode == SelectedPositionGizmoMode.XZ ? Constants.greenLight : Constants.green);
+        //drawQuad(quadYZPos, quadYZBasis, selectedPositionOverMode == SelectedPositionGizmoMode.YZ ? Constants.redLight : Constants.red);
 
         void drawQuad (Vector3 pos, Matrix4x4 basis, Vector3 color) {
             Matrix4x4 m4x4_selected = Matrix4x4.CreateScale(quadScale)*basis*Matrix4x4.Position(pos);
@@ -334,16 +353,20 @@ public class GizmoSelected : IGizmoWorld {
         }
 
         /// Axes
+        Matrix4x4 gizmoBasis = BasisToWorld(gizmoRight, gizmoUp, gizmoForward);
         Vector3 pos2 = selectedMesh.owner.Transform.Position;
         Matrix4x4 _m4x4_selectedScale = Matrix4x4.CreateScale(_dist*_axisLength);
 
         Draw(new Vector3(0, 90, 0), xOver ? Constants.redLight : Constants.red);
         Draw(new Vector3(-90, 0, 0), yOver ? Constants.greenLight : Constants.green);
         Draw(Vector3.Zero, zOver ? Constants.blueLight : Constants.blue);
+        //Draw(new Vector3(0, 90, 0), selectedPositionOverMode == SelectedPositionGizmoMode.X ? Constants.redLight : Constants.red);
+        //Draw(new Vector3(-90, 0, 0), selectedPositionOverMode == SelectedPositionGizmoMode.Y ? Constants.greenLight : Constants.green);
+        //Draw(Vector3.Zero, selectedPositionOverMode == SelectedPositionGizmoMode.Z ? Constants.blueLight : Constants.blue);
 
         void Draw (Vector3 rot, Vector3 color) {
-            Matrix4x4 m4x4_selected = _m4x4_selectedScale
-                *Matrix4x4.RotationEuler(rot)*Matrix4x4.RotationEuler(_objRot)*Matrix4x4.Position(pos2);
+            Matrix4x4 m4x4_selected = _m4x4_selectedScale*Matrix4x4.RotationEuler(rot)
+                *gizmoBasis*Matrix4x4.Position(pos2);
             float[] mesh_uModel = Matrix4x4.ToArray(m4x4_selected);
             _sh_Unlit.SetMatrix4(Model, mesh_uModel);
             _sh_Unlit.SetFloat(Alpha, 0.5f);
@@ -361,7 +384,7 @@ public class GizmoSelected : IGizmoWorld {
         GL.Enable(EnableCap.StencilTest);
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.CullFace);
-        GL.CullFace(TriangleFace.Front);
+        GL.CullFace(TriangleFace.Back);   // normal culling for the actual mesh
 
         /// Pass 1 — Render mesh normally, mark stencil = 1 everywhere it's visible
         GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
@@ -372,6 +395,7 @@ public class GizmoSelected : IGizmoWorld {
         Renderer.Instance.DrawMesh(renderInfo);
 
         /// Pass 2 — Outline: draw inflated mesh ONLY where stencil != 1
+        GL.CullFace(TriangleFace.Front);  // now cull front so inflated backfaces show as outline
         GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
         GL.StencilMask(0x00);
         GL.DepthMask(false);
@@ -401,6 +425,7 @@ public class GizmoSelected : IGizmoWorld {
         GL.Enable(EnableCap.DepthTest);
         GL.DepthMask(true);
         GL.StencilMask(0xFF);
+        GL.CullFace(TriangleFace.Back);
         GL.Disable(EnableCap.StencilTest);
     }
 

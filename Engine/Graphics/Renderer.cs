@@ -78,13 +78,20 @@ public class Renderer {
         _gizmo_Selected = new GizmoSelected();
 
         TextRenderer = new TextRenderer();
+
+        /// Delegates
+        de_GizmosUpdate += _gizmo_Selected.Update;
+        de_GizmosDraw += _gizmo_Selected.Draw;
+
+        Engine.Instance.de_Update += de_GizmosUpdate;
     }
     public static Renderer Instance = null!;
 
     public readonly GL GL = null!;
     public readonly TextRenderer TextRenderer = null!;
 
-    public Action? de_DrawGizmos = null;
+    public Action? de_GizmosUpdate = null;
+    public Action? de_GizmosDraw = null;
 
 
     public readonly Shader _sh_Lit = null!;
@@ -251,7 +258,9 @@ public class Renderer {
 
         DrawGizmoCameraOrbitCenter();
 
-        _gizmo_Selected.Draw();
+        de_GizmosDraw?.Invoke();
+
+        //_gizmo_Selected.Draw();
 
         /// UI Layer
         DrawGizmoAxesWidget();

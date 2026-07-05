@@ -178,7 +178,7 @@ public static class Raycast {
         return hit;
     }
 
-    public static bool RaycastScene (Scene scene, Ray ray, out Graphics.MeshComponent? hitMesh, out Vector3 hitPoint, out Vector3 hitNormal) {
+    public static bool RaycastSceneMesh (Scene scene, Ray ray, out Graphics.MeshComponent? hitMesh, out Vector3 hitPoint, out Vector3 hitNormal) {
         hitMesh = null;
         hitPoint = default;
         hitNormal = default;

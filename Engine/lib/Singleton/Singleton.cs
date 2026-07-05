@@ -32,10 +32,6 @@ public class Singleton<T> : ISingleton where T : Singleton<T>, new() {
         lock (SingletonManager._lock)
             instance = null!;
     }
-    public void ReInstanceNew () {
-        Log.log($"[{Name}] ReInstanceNew: {typeof(T)}");
-        InstanceNew();
-    }
     //protected virtual void Dispose () { }
 
     public static bool HasSingleton () {
@@ -49,8 +45,15 @@ public class Singleton<T> : ISingleton where T : Singleton<T>, new() {
     /*public static void InstanceNull () {
         if (instance is null) InstanceNewRaw();
     }*/
+    public static void InstanceCheck () {
+        lock (SingletonManager._lock) {
+            if (instance is not null) return;
+            InstanceNewRaw_NoLock();
+        }
+    }
     public static void InstanceNew () {
         lock (SingletonManager._lock) {
+            Log.log($"[{Name}] ReInstanceNew: {typeof(T)}");
             if (instance is not null) SingletonManager.Remove(instance);
             InstanceNewRaw_NoLock();
         }

@@ -23,9 +23,7 @@ public class Log : Singleton<Log> {
     void Update () {
         while (Queue.TryDequeue(out var entry)) {
             //string log = entry.text + entry.timestamp + Environment.NewLine + Environment.NewLine +
-            string log = entry.text + Environment.NewLine + Environment.NewLine + 
-                ParseLight(entry.stackTrace.ToString());
-                //Parse(entry.stackTrace.ToString());
+            string log = entry.text;
             
             switch (entry.type) {
                 case LogType.log:
@@ -35,7 +33,10 @@ public class Log : Singleton<Log> {
                     Console.WriteLine("? " + log);
                     break;
                 case LogType.error:
-                    Console.WriteLine("! " + log);
+                    log += Environment.NewLine + Environment.NewLine +
+                        ParseLight(entry.stackTrace.ToString());
+                    //Parse(entry.stackTrace.ToString());
+                    Console.WriteLine("! " + $"/({ThreadUtils.currThread})> " + log);
                     break;
                 default:
                     break;
@@ -47,7 +48,7 @@ public class Log : Singleton<Log> {
     public static void log (string text, LogType type = LogType.log) {
         if (ThreadUtils.isMainThread) Console.WriteLine("> " + text);
         else {
-            LogEntry log = new LogEntry("/> " + text, type);
+            LogEntry log = new LogEntry(text, type);
             Instance.Queue.Enqueue(log);
         }
     }

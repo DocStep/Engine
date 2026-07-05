@@ -5,7 +5,7 @@ using System.Text;
 using Engine.Graphics;
 using Silk.NET.OpenGL;
 
-namespace Engine;
+namespace Engine.Graphics;
 
 
 public static class Debug {

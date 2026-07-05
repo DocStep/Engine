@@ -128,6 +128,7 @@ public static class Inputs {
     public const string CameraDrag = nameof(CameraDrag);
     public const string CameraFocus = nameof(CameraFocus);
     public const string CameraFocusMaterial = nameof(CameraFocusMaterial);
+    public const string GizmoLocal = nameof(GizmoLocal);
 
     public const string F3 = nameof(F3);
     public const string Debug = nameof(Debug);
@@ -177,6 +178,7 @@ public static class Inputs {
         [CameraDrag] = new([Keys.Mouse2], hidden: true),
         [CameraFocus] = new([Keys.F], hidden: true),
         [CameraFocusMaterial] = new([Keys.T], hidden: true),
+        [GizmoLocal] = new([Keys.X], hidden: true),
 
         [F3] = new InputsGroup(new List<Keys>() { Keys.F3 }, hidden: true),
         [Debug] = new InputsGroup(new List<Keys>() { Keys.L }, hidden: true),

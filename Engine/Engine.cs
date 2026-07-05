@@ -12,13 +12,9 @@ public class Engine : Singleton<Engine>, IDisposable {
     public static string savesFolder = "Data";
 
     internal static IWindow Window = null!;
-    //internal static IKeyboard? keyboard;
-    //internal static IMouse? mouse;
 
     private Renderer Renderer = null!;
-    //internal IInputContext Input = null!;
     private Camera Camera = null!;
-
     /// Debug
     public EngineStates engineState = EngineStates.Loading;
     public bool debug = false;
@@ -55,11 +51,11 @@ public class Engine : Singleton<Engine>, IDisposable {
         Console.WriteLine($"===== Utils Layer =====");
 
         ThreadUtils.Init();
-        Log.InstanceNew();
+        Log.InstanceCheck();
         TimeUtils.Init();
         Log.log($"Time: {TimeUtils.getCurrentTime}");
-        Reflection.InstanceNew();
-        Json.InstanceNew();
+        Reflection.InstanceCheck();
+        Json.InstanceCheck();
 
         Inputs.OverrideActions(DataEngine.InputsData);
 
@@ -101,13 +97,15 @@ public class Engine : Singleton<Engine>, IDisposable {
 
         Console.WriteLine($"===== Systems Layer =====");
 
-        PhysicsManager.InstanceNew();
-        ComponentManager.InstanceNew();
-
         Renderer = new Renderer();
-        SceneManager.InstanceNew();
+
+        PhysicsManager.InstanceCheck();
+        ComponentManager.InstanceCheck();
+        SceneManager.InstanceCheck();
 
         Camera = new CameraEditor();
+
+        de_Update?.Invoke();
 
         Console.WriteLine($"========== Init Finish ==========");
 
@@ -147,17 +145,21 @@ public class Engine : Singleton<Engine>, IDisposable {
     }
     private void Update () {
         ComponentManager.Instance.Update();
-        //de_Update?.Invoke();
+        de_Update?.Invoke();
 
+        /// Counters
+        time += _deltaTime;
+
+        f3log();
+    }
+
+    void f3log () {
         Graphics.UI.TextRenderer.AddText($"Time: {time:F2}");
         Graphics.UI.TextRenderer.AddText($"FPS: {(int)(1/Engine.Instance._deltaTime)}");
         Graphics.UI.TextRenderer.AddText($"ms: {_deltaTime*1000:F3}");
         Graphics.UI.TextRenderer.AddText($"Pos: {Camera.Instance?.cameraPos:F3}");
         Graphics.UI.TextRenderer.AddText($"MousePos: {Camera.Instance?.mousePos}");
         Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.Instance.componentsCount}");
-
-        /// Counters
-        time += _deltaTime;
     }
 
 

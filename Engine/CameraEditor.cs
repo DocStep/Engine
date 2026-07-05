@@ -87,8 +87,6 @@ internal sealed class CameraEditor : Camera {
 
 
     protected override void Update (double deltaTime) {
-        if (Inputs.Actions[NavBack].pressedDown) Engine.Window.Close();
-
         mousePos.X = Inputs.MousePos.X;
         mousePos.Y = Inputs.MousePos.Y;
         //Log.log($"mousePos {mousePos}");
@@ -247,18 +245,18 @@ internal sealed class CameraEditor : Camera {
         }
 
         /// Select
-        Ray ray = RaycastMouse();
-        if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
-            Raycast.RaycastScene(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
-            if (hitMesh is not null) {
-                Renderer.Instance._gizmo_Selected.selectedMesh = hitMesh;
-            } else {
-                Renderer.Instance._gizmo_Selected.selectedMesh = null;
+        if (mouseAllowed) {
+            Ray ray = RaycastMouse();
+            if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
+                Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
+                if (hitMesh is not null) {
+                    Renderer.Instance._gizmo_Selected.selectedMesh = hitMesh;
+                } else {
+                    Renderer.Instance._gizmo_Selected.selectedMesh = null;
+                }
             }
         }
-
-        Renderer.Instance._gizmo_Selected.Update();
-
+        
         Renderer.Instance.m4x4_View = Matrix4x4.CreateLookAtLeftHanded(position, position + forward, worldUp);
         cameraRot = rotation;
     }
@@ -266,7 +264,7 @@ internal sealed class CameraEditor : Camera {
     private void TryFocusOnPoint (float mouseX, float mouseY, int viewportWidth, int viewportHeight) {
         float? bestT = null;
         Ray ray = RaycastMouse();
-        Raycast.RaycastScene(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
+        Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
         if (hitMesh is not null) {
             bestT = Vector3.Distance(cameraPos, hitPos);
         }
