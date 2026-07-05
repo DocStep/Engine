@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Engine.Input;
+﻿using Engine.Input;
 
 namespace Engine;
 

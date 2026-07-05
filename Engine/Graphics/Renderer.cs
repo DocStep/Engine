@@ -1,7 +1,5 @@
-﻿using System.Numerics;
-using Silk.NET.OpenGL;
+﻿using Silk.NET.OpenGL;
 using Engine.Graphics.UI;
-using Engine.Input;
 using static Engine.Graphics.Shader;
 
 namespace Engine.Graphics;

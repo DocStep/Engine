@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Engine;
+﻿namespace Engine;
 
 
 [Serializable]

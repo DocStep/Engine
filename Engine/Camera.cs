@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-using Engine.Graphics;
-using Engine.Input;
+﻿//using Engine.Graphics;
 
 namespace Engine;
 
@@ -42,7 +40,7 @@ internal class Camera {
 
     public Ray RaycastMouse () {
         Ray ray = Raycast.ScreenPointToRay(mousePos.X, mousePos.Y, Engine.Window.Size.X, Engine.Window.Size.Y,
-                Renderer.Instance.m4x4_View, Renderer.Instance.m4x4Projection);
+                Graphics.Renderer.Instance.m4x4_View, Graphics.Renderer.Instance.m4x4Projection);
         return ray;
     }
 

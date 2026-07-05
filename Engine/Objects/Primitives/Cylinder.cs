@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-
-namespace Engine.Graphics;
+﻿namespace Engine.Graphics;
 
 
 public static class Cylinder {

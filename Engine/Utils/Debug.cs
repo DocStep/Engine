@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
-using Engine.Graphics;
-using Silk.NET.OpenGL;
+﻿using Silk.NET.OpenGL;
 
 namespace Engine.Graphics;
 

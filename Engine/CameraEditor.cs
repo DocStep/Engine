@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using Engine.Graphics;
+﻿using Engine.Graphics;
 using Engine.Input;
 using static Engine.Input.Inputs;
 

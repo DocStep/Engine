@@ -1,7 +1,4 @@
-﻿using System;
-using System.Numerics;
-using System.Collections.Generic;
-using Engine.Graphics;
+﻿using Engine.Graphics;
 
 namespace Engine;
 

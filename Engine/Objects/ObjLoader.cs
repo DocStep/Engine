@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace Engine.Graphics;
 

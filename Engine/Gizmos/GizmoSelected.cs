@@ -1,7 +1,5 @@
-﻿using System.Numerics;
-using Silk.NET.OpenGL;
+﻿using Silk.NET.OpenGL;
 using Engine.Input;
-using Engine.Graphics.UI;
 using static Engine.Graphics.Shader;
 
 namespace Engine.Graphics;
@@ -225,10 +223,10 @@ public class GizmoSelected : IGizmoWorld {
             CameraEditor.Instance?.UnblockMouse(this);
         }
 
-        TextRenderer.AddText($"Selected:");
-        TextRenderer.AddText($"Position: {tr_obj.Position:F3}");
-        TextRenderer.AddText($"Rotation: {tr_obj.Rotation:F3}");
-        TextRenderer.AddText($"Scale: {tr_obj.Scale:F3}");
+        UI.TextRenderer.AddText($"Selected:");
+        UI.TextRenderer.AddText($"Position: {tr_obj.Position:F3}");
+        UI.TextRenderer.AddText($"Rotation: {tr_obj.Rotation:F3}");
+        UI.TextRenderer.AddText($"Scale: {tr_obj.Scale:F3}");
         
         
         Vector3? TryPickCapsule (Vector3 axisDir, float length, float radius) {

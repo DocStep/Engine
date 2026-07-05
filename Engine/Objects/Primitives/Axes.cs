@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-
-namespace Engine.Graphics;
+﻿namespace Engine.Graphics;
 
 
 /// Debug gizmo: three lines from the origin along +X, +Y, +Z.

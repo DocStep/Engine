@@ -1,5 +1,4 @@
-using Silk.NET.Windowing;
-using Engine.Graphics;
+using System.Linq;
 using Engine.Input;
 
 namespace Engine;
@@ -11,9 +10,9 @@ public class Engine : Singleton<Engine>, IDisposable {
     public Action? de_FixedUpdate = null;
     public static string savesFolder = "Data";
 
-    internal static IWindow Window = null!;
+    internal static Silk.NET.Windowing.IWindow Window = null!;
 
-    private Renderer Renderer = null!;
+    private Graphics.Renderer Renderer = null!;
     private Camera Camera = null!;
     /// Debug
     public EngineStates engineState = EngineStates.Loading;
@@ -63,11 +62,11 @@ public class Engine : Singleton<Engine>, IDisposable {
 
         //Console.WriteLine($"========== Init Finish ==========");
 
-        var options = WindowOptions.Default with {
+        var options = Silk.NET.Windowing.WindowOptions.Default with {
             Size = new Silk.NET.Maths.Vector2D<int>(1280, 720),
             Title = "Engine",
             VSync = false,
-            WindowBorder = WindowBorder.Resizable,
+            WindowBorder = Silk.NET.Windowing.WindowBorder.Resizable,
         };
 
         Window = Silk.NET.Windowing.Window.Create(options);
@@ -83,7 +82,7 @@ public class Engine : Singleton<Engine>, IDisposable {
         Window.Update += OnUpdate;
         Window.Closing += OnClosing;
 
-        Window.Run();
+        Silk.NET.Windowing.WindowExtensions.Run(Window);
     }
 
     private void OnLoad () {
@@ -97,7 +96,7 @@ public class Engine : Singleton<Engine>, IDisposable {
 
         Console.WriteLine($"===== Systems Layer =====");
 
-        Renderer = new Renderer();
+        Renderer = new Graphics.Renderer();
 
         PhysicsManager.InstanceCheck();
         ComponentManager.InstanceCheck();

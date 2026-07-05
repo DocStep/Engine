@@ -1,10 +1,4 @@
-﻿using System.Numerics;
-using Silk.NET.OpenGL;
-using Silk.NET.Windowing;
-using Silk.NET.Input;
-using Engine.Graphics;
-
-namespace Engine;
+﻿namespace Engine;
 
 
 public class SceneManager : Singleton<SceneManager> {

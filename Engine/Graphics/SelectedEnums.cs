@@ -2,6 +2,7 @@
 
 
 public enum SelectedGizmoMode {
+    None,
     Position,
     Rotation,
     Scale,

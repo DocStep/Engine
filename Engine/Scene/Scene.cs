@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-
-namespace Engine;
+﻿namespace Engine;
 
 
 public class Scene {

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Numerics;
-using JQuaternion = Jitter2.LinearMath.JQuaternion;
+﻿using JQuaternion = Jitter2.LinearMath.JQuaternion;
 using JVector = Jitter2.LinearMath.JVector;
 
 namespace Engine;

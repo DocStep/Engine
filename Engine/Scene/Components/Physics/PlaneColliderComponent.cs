@@ -1,8 +1,4 @@
-﻿using System;
-using System.Numerics;
-using System.Collections.Generic;
-
-namespace Engine;
+﻿namespace Engine;
 
 
 public class PlaneColliderComponent : ColliderComponent {

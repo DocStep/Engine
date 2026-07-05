@@ -1,7 +1,4 @@
-﻿using System.Numerics;
-using Silk.NET.OpenGL;
-
-namespace Engine.Graphics;
+﻿namespace Engine.Graphics;
 
 
 public class Material {
@@ -9,7 +6,7 @@ public class Material {
     public Shader? shader = null;
 
     public Vector3 Color = Constants.lightGray;
-    public Texture? AlbedoMap = null;
+    public Silk.NET.OpenGL.Texture? AlbedoMap = null;
     public float Roughness = 0.5f;
     public float Metallic = 0f;
     public float Ambient = 0.08f;

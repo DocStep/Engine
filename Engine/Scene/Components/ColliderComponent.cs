@@ -1,7 +1,4 @@
-﻿using System;
-using System.Numerics;
-
-namespace Engine;
+﻿namespace Engine;
 
 
 public abstract class ColliderComponent : Component, IComponentUpdate {

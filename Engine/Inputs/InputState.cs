@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-
-namespace Engine.Input;
+﻿namespace Engine.Input;
 
 
 public static class InputState {

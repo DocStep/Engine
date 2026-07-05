@@ -1,7 +1,4 @@
-﻿using System;
-using System.Numerics;
-using System.Collections.Generic;
-using Jitter2;
+﻿using Jitter2;
 using Jitter2.Dynamics;
 
 namespace Engine;

@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections;
-using System.Text;
-using System.Reflection;
-using System.Linq;
-
-namespace Engine;
+﻿namespace Engine;
 
 
 public class ReflectionScripts : Singleton<ReflectionScripts> {

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Numerics;
-
-namespace Engine.Graphics;
+﻿namespace Engine.Graphics;
 
 
 public struct RenderInfo () {

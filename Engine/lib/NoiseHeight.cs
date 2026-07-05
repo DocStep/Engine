@@ -1,9 +1,7 @@
-﻿using System.Numerics;
-
-namespace Engine;
+﻿namespace Engine;
 
 
-[System.Serializable]
+[Serializable]
 public class NoiseHeight : Noise {
     public NoiseHeight (float frequency = 1f, float strength = 100f, int octaves = 1,
         FastNoiseLite.NoiseType mode = FastNoiseLite.NoiseType.OpenSimplex2) : base(frequency, octaves, mode) {

@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace Engine.Graphics;
+﻿namespace Engine.Graphics;
 
 
 /// Loads Radiance (.hdr) images — the de-facto standard format for HDR
@@ -45,7 +43,7 @@ public static class HdrLoader {
     }
 
     private static string? ReadLine (Stream stream) {
-        var sb = new StringBuilder();
+        var sb = new System.Text.StringBuilder();
         int b;
         bool any = false;
         while ((b = stream.ReadByte()) != -1) {

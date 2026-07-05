@@ -1,5 +1,7 @@
 ﻿using System.Runtime.InteropServices;
-using Silk.NET.Windowing;
+
+namespace Engine;
+
 
 public static class WindowUtils {
 
@@ -18,7 +20,7 @@ public static class WindowUtils {
     private const uint SWP_NOZORDER = 0x0004;
     private const uint SWP_FRAMECHANGED = 0x0020;
 
-    public static void EnableDarkTitleBar (IWindow window) {
+    public static void EnableDarkTitleBar (Silk.NET.Windowing.IWindow window) {
         if (!OperatingSystem.IsWindows())
             return;
 
