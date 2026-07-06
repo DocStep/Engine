@@ -55,6 +55,7 @@ public class Engine : Singleton<Engine>, IDisposable {
         Log.log($"Time: {TimeUtils.getCurrentTime}");
         Reflection.InstanceCheck();
         Json.InstanceCheck();
+        AssetsManager.Init();
 
         Inputs.OverrideActions(DataEngine.InputsData);
 
@@ -92,7 +93,6 @@ public class Engine : Singleton<Engine>, IDisposable {
         /*foreach (var keyboard in Input.Keyboards) {
             keyboard.KeyDown += OnKeyDown;
         }*/
-
 
         Console.WriteLine($"===== Systems Layer =====");
 

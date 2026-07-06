@@ -29,7 +29,7 @@ public class GizmoSelected : IGizmoWorld {
     public Vector3 selectedDragPos;
     public Vector3 selectedDragRot;
     public Vector3 selectedDragMargin;
-    public bool selectedGizmoLocal = true;
+    public bool selectedGizmoWorldSpace = true;
     private bool isMouseBlocked = false;
 
     /// Draw Gizmos
@@ -72,15 +72,15 @@ public class GizmoSelected : IGizmoWorld {
         quadScale = _dist*_squareSize*Vector3.One;
 
         if (Inputs.Actions[Inputs.GizmoLocal].pressedDown) {
-            selectedGizmoLocal = !selectedGizmoLocal;
+            selectedGizmoWorldSpace = !selectedGizmoWorldSpace;
         }
 
         switch (selectedGizmoMode) {
             case SelectedGizmoMode.Position:
                 if (selectedPositionMode == SelectedPositionGizmoMode.None) {
-                    gizmoRight = selectedGizmoLocal ? tr_obj.Right : Vector3.UnitX;
-                    gizmoUp = selectedGizmoLocal ? tr_obj.Up : Vector3.UnitY;
-                    gizmoForward = selectedGizmoLocal ? tr_obj.Forward : Vector3.UnitZ;
+                    gizmoRight = selectedGizmoWorldSpace ? Vector3.UnitX : tr_obj.Right;
+                    gizmoUp = selectedGizmoWorldSpace ? Vector3.UnitY : tr_obj.Up;
+                    gizmoForward = selectedGizmoWorldSpace ? Vector3.UnitZ : tr_obj.Forward;
                 }
                 selectedPositionOverMode = SelectedPositionGizmoMode.None;
 
@@ -222,12 +222,6 @@ public class GizmoSelected : IGizmoWorld {
         } else {
             CameraEditor.Instance?.UnblockMouse(this);
         }
-
-        UI.TextRenderer.AddText($"Selected:");
-        UI.TextRenderer.AddText($"Position: {tr_obj.Position:F3}");
-        UI.TextRenderer.AddText($"Rotation: {tr_obj.Rotation:F3}");
-        UI.TextRenderer.AddText($"Scale: {tr_obj.Scale:F3}");
-        
         
         Vector3? TryPickCapsule (Vector3 axisDir, float length, float radius) {
             Vector3 segStart = _objPos;
@@ -288,6 +282,9 @@ public class GizmoSelected : IGizmoWorld {
 
 
     public void Draw () {
+        TransformComponent? tr_obj = selectedMesh?.owner.Transform;
+        if (tr_obj is null) return;
+
         Shader _sh_Unlit = Renderer.Instance._sh_Unlit;
         Renderer.Instance.GL.Disable(EnableCap.DepthTest);
         Renderer.Instance.GL.Disable(EnableCap.CullFace);
@@ -299,6 +296,11 @@ public class GizmoSelected : IGizmoWorld {
 
         DrawSelectedOutline();
         DrawSelectedGizmo();
+
+        UI.TextRenderer.AddText($"Selected:");
+        UI.TextRenderer.AddText($"Position: {tr_obj.Position:F3}");
+        UI.TextRenderer.AddText($"Rotation: {tr_obj.Rotation:F3}");
+        UI.TextRenderer.AddText($"Scale: {tr_obj.Scale:F3}");
     }
 
     void DrawSelectedGizmo () {

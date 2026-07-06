@@ -3,16 +3,10 @@
 namespace Engine.Graphics;
 
 
-public class Mesh : IDisposable {
-    private readonly GL GL;
-    private readonly uint _vao;
-    private readonly uint _vbo;
-    private readonly uint _ebo;
-    private readonly uint _indexCount;
-
-    public readonly MeshData Data;
-    public readonly AABB LocalAABB;
-
+public class Mesh : IAsset {
+    public Mesh () {
+        GL = Renderer.Instance.GL;
+    }
     public Mesh (MeshData data) {
         GL = Renderer.Instance.GL;
         _indexCount = (uint)data.Indices.Length;
@@ -65,6 +59,17 @@ public class Mesh : IDisposable {
 
         GL.BindVertexArray(0);
     }
+
+
+    private readonly GL GL = null!;
+    private readonly uint _vao;
+    private readonly uint _vbo;
+    private readonly uint _ebo;
+    private readonly uint _indexCount;
+
+    public readonly MeshData? Data;
+    public readonly AABB LocalAABB;
+
 
     private static float[] Flatten (Vertex[] verts) {
         var result = new float[verts.Length*Vertex.FloatStride];

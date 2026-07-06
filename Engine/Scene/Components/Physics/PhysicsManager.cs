@@ -11,7 +11,7 @@ public class PhysicsManager : Singleton<PhysicsManager> {
         World.SubstepCount = 5; /// def: 4
     }
 
-    private readonly World World = new World();
+    public readonly World World = new World();
 
     public static Vector3 Gravity = new(0f, -9.81f, 0f);
 

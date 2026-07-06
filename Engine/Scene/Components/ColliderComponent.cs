@@ -1,13 +1,16 @@
-﻿namespace Engine;
+﻿using Newtonsoft.Json;
+
+namespace Engine;
 
 
 public abstract class ColliderComponent : Component, IComponentUpdate {
 
-    public bool drawGizmos = true;
+    [JsonIgnore] public bool drawGizmos = true;
     //public bool isStatic = false;
 
 
     public abstract void Update ();
     //public abstract void FixedUpdate ();
+
 
 }

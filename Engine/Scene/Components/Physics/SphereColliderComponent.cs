@@ -1,19 +1,22 @@
-﻿namespace Engine;
+﻿using Newtonsoft.Json;
+
+namespace Engine;
 
 
 public class SphereColliderComponent : ColliderComponent {
 
-    public Vector3 position = Vector3.Zero;
-    public Vector3 rotation = Vector3.Zero;
-    public Vector3 scale = Vector3.One;
+    [JsonIgnore] public readonly static string typeName = typeof(SphereColliderComponent).Name;
+
+    public Vector3 Position = Vector3.Zero;
+    public float Radius = 0.5f;
 
 
     public override void Update () {
         if (drawGizmos) {
             Graphics.RenderInfo renderInfo = new Graphics.RenderInfo() {
-                pos = position + owner.Transform.Position,
-                rot = rotation + owner.Transform.Rotation,
-                scale = scale*owner.Transform.Scale,
+                pos = Position + owner.Transform.Position,
+                rot = Vector3.Zero,
+                scale = 2f*Radius*owner.Transform.Scale,
 
                 mesh = Graphics.Renderer.Instance._mesh_SphereWireframe,
                 shader = Graphics.Renderer.Instance._sh_Unlit,

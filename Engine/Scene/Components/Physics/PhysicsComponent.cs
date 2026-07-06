@@ -1,6 +1,7 @@
 ﻿using Jitter2.Collision.Shapes;
 using Jitter2.Dynamics;
 using Jitter2.LinearMath;
+using Newtonsoft.Json;
 
 namespace Engine;
 
@@ -12,7 +13,9 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
         Rigidbody.Friction = 0.5f;
     }
 
-    public readonly RigidBody Rigidbody = null!;
+    [JsonIgnore] public readonly static string typeName = typeof(PhysicsComponent).Name;
+
+    [JsonIgnore] public readonly RigidBody Rigidbody = null!;
 
 
 
@@ -45,8 +48,6 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
     }
 
 
-    public const float Deg2Rad = MathF.PI/180f;
-    public const float Rad2Deg = 180f/MathF.PI;
     public static Vector3 ToEulerYXZ (JQuaternion q) {
         float x = q.X, y = q.Y, z = q.Z, w = q.W;
 
@@ -62,10 +63,10 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
         float roll = MathF.Atan2(2f*(w*z + x*y), 1f - 2f*(x*x + z*z));
         
         Vector3 eulerRadians = new Vector3(pitch, yaw, roll);
-        return eulerRadians*Rad2Deg;
+        return lib.Rad2Deg*eulerRadians;
     }
     public static JQuaternion FromEulerYXZ (Vector3 eulerDegrees) {
-        Vector3 euler = eulerDegrees*Deg2Rad;
+        Vector3 euler = eulerDegrees*lib.Deg2Rad;
         float pitch = euler.X;
         float yaw = euler.Y;
         float roll = euler.Z;
@@ -104,5 +105,6 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
         float roll = MathF.Atan2(2f * (q.W * q.Z + q.X * q.Y), 1f - 2f * (q.Y * q.Y + q.Z * q.Z));
         return new Vector3(pitch * r2d, yaw * r2d, roll * r2d);
     }*/
+
 
 }

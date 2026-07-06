@@ -62,16 +62,16 @@ public class Renderer {
         _mat_Axes = new Material { Color = Constants.gray, };
         _mat_GizmosG = new Material { Color = Constants.green, Alpha = 0.5f, };
 
-        _mat_LitWhite = new Material { Color = Vector3.One, };
-        _mat_LitBlack = new Material { Color = Vector3.Zero, };
-        _mat_LitGray = new Material { Color = 0.5f*Vector3.One, };
-        _mat_LitRed = new Material { Color = new(1, 0, 0), };
-        _mat_LitGreen = new Material { Color = new(0, 1, 0), };
-        _mat_LitBlue = new Material { Color = new(0, 0, 1), };
+        _mat_LitWhite = new Material { Color = Constants.white, };
+        _mat_LitBlack = new Material { Color = Constants.black, };
+        _mat_LitGray = new Material { Color = Constants.gray, };
+        _mat_LitRed = new Material { Color = Constants.red, };
+        _mat_LitGreen = new Material { Color = Constants.green, };
+        _mat_LitBlue = new Material { Color = Constants.blue, };
 
-        _mesh_Torus = new Mesh(ObjLoader.Load("src/Models/Torus.obj"));
-        _mesh_Suzanne = new Mesh(ObjLoader.Load("src/Models/Suzanne.obj"));
-        _mesh_SuzanneHighRes = new Mesh(ObjLoader.Load("src/Models/SuzanneHighRes.obj"));
+        _mesh_Torus = AssetsManager.Get<Mesh>(Dirs.Resolve(Dirs.Models, "Torus.obj"));
+        _mesh_Suzanne = AssetsManager.Get<Mesh>(Dirs.Resolve(Dirs.Models, "Suzanne.obj"));
+        _mesh_SuzanneHighRes = AssetsManager.Get<Mesh>(Dirs.Resolve(Dirs.Models, "SuzanneHighRes.obj"));
 
         _gizmo_Selected = new GizmoSelected();
 

@@ -1,4 +1,5 @@
 ﻿using Engine.Graphics;
+using Newtonsoft.Json;
 
 namespace Engine;
 
@@ -15,9 +16,9 @@ public enum PrimitiveTypes {
 }
 
 
-public class GameObject {
+public class GameObject : ISavable {
     public GameObject() {
-        Id = GetHashCode();
+        Id = lib.Id;
         Transform.owner = this;
         SceneManager.ActiveScene.ObjectAdd(this);
     }
@@ -88,14 +89,14 @@ public class GameObject {
         SceneManager.ActiveScene.ObjectAdd(this);
     }
 
-
+    [JsonIgnore] public readonly static string typeName = typeof(GameObject).Name;
 
     public string Name = GameObject.GameObjectName;
-    public readonly int Id = 0;
+    public readonly long Id = 0;
     public readonly TransformComponent Transform = new TransformComponent();
-    private readonly List<Component> Components = new List<Component>();
+    public readonly List<Component> Components = new List<Component>();
 
-    public const string GameObjectName = "GameObject";
+    [JsonIgnore] public const string GameObjectName = "GameObject";
 
 
     public T? GetComponent<T> () where T : Component {
@@ -130,5 +131,19 @@ public class GameObject {
         ComponentManager.Instance.ComponentUnregister(component);
     }
 
+
+    public void PreSave () {
+        /// Own
+        /// ...
+
+        int count = Components.Count;
+        for (int i = 0; i < count; i++) {
+            Components[i].PreSave();
+        }
+    }
+
+    public void PostLoad () {
+        
+    }
 
 }

@@ -9,15 +9,14 @@ public static class lib {
     //public static FastNoiseLite Noise = new FastNoiseLite();
 
     public const float TAU = 6.2831855f;
+    public const float Deg2Rad = MathF.PI/180f;
+    public const float Rad2Deg = 180f/MathF.PI;
 
     public static Random random = new Random(25565);
     public static float R () => (float)random.NextDouble();
     public static int R (int max) => random.Next(0, max);
     public static int R (int min, int max) => random.Next(min, max);
     public static float R (float min, float max) => min + (float)random.NextDouble()*(max - min);
-
-    public static StringBuilder StringBuilder = new StringBuilder("", 1000);
-
 
     public static float Booly1 (this float f, bool b) {
         return b ? f : 1;
@@ -34,7 +33,15 @@ public static class lib {
     }
 
 
-    public static int Dictionary_countAll (IDictionary dictionary) {
+    public static Guid Guid => Guid.NewGuid();
+    public static string Uuid => Guid.ToString("N");
+    public static long Id => BitConverter.ToInt64(Guid.NewGuid().ToByteArray(), 0);
+
+    public static StringBuilder StringBuilder = new StringBuilder("", 1000);
+
+
+
+    public static int Dictionary_CountAll (IDictionary dictionary) {
         int count = 0;
         foreach (DictionaryEntry itemKV in dictionary)
             if (itemKV.Value is ICollection collection)
@@ -122,8 +129,11 @@ public static class lib {
 
 
     public static bool ArrayConstains<T> (T[] array, T value) {
-        for (int i = 0; i < array.Length; i++) 
-            if (array[i].Equals(value)) return true;
+        for (int i = 0; i < array.Length; i++) {
+            T t = array[i];
+            if (t is null) continue;
+            if (t.Equals(value)) return true;
+        }
         return false;
     }
 
