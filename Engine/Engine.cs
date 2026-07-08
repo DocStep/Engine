@@ -1,7 +1,25 @@
 using System.Linq;
+using Silk.NET.OpenGL.Extensions.ImGui;
 using Engine.Input;
 
 namespace Engine;
+
+
+/// Window events
+/// FixedUpdate:
+///	    Inputs
+///     Physics
+///     Sync
+/// Update
+/// Render:
+///     Camera Matrix
+///     Skybox
+///     Opaque
+///     Transparent
+///     PP
+///     Gizmos
+///     UI
+
 
 
 public class Engine : Singleton<Engine>, IDisposable {
@@ -10,10 +28,10 @@ public class Engine : Singleton<Engine>, IDisposable {
     public Action? de_FixedUpdate = null;
     public static string savesFolder = "Data";
 
-    internal static Silk.NET.Windowing.IWindow Window = null!;
+    public static Silk.NET.Windowing.IWindow Window = null!;
+    public static Silk.NET.Input.IInputContext Input = null!;
 
     private Graphics.Renderer Renderer = null!;
-    private Camera Camera = null!;
     /// Debug
     public EngineStates engineState = EngineStates.Loading;
     public bool debug = false;
@@ -31,7 +49,7 @@ public class Engine : Singleton<Engine>, IDisposable {
     private double _deltaTime;
     public static double deltaTime {
         get {
-            Log.log($"Instance id: {Instance.GetHashCode()}");
+            //Log.log($"Instance id: {Instance.GetHashCode()}");
             return Instance._deltaTime;
         }
         private set => Instance._deltaTime = value;
@@ -87,7 +105,7 @@ public class Engine : Singleton<Engine>, IDisposable {
     }
 
     private void OnLoad () {
-        Silk.NET.Input.IInputContext Input = Silk.NET.Input.InputWindowExtensions.CreateInput(Window);
+        Input = Silk.NET.Input.InputWindowExtensions.CreateInput(Window);
         InputState.Init(Input);
 
         /*foreach (var keyboard in Input.Keyboards) {
@@ -101,8 +119,6 @@ public class Engine : Singleton<Engine>, IDisposable {
         PhysicsManager.InstanceCheck();
         ComponentManager.InstanceCheck();
         SceneManager.InstanceCheck();
-
-        Camera = new CameraEditor();
 
         de_Update?.Invoke();
 
@@ -146,6 +162,9 @@ public class Engine : Singleton<Engine>, IDisposable {
         ComponentManager.Instance.Update();
         de_Update?.Invoke();
 
+        Graphics.Renderer.Instance.ImGUI.Update((float)deltaTime);
+        // your normal scene rendering here
+
         /// Counters
         time += _deltaTime;
 
@@ -156,8 +175,8 @@ public class Engine : Singleton<Engine>, IDisposable {
         Graphics.UI.TextRenderer.AddText($"Time: {time:F2}");
         Graphics.UI.TextRenderer.AddText($"FPS: {(int)(1/Engine.Instance._deltaTime)}");
         Graphics.UI.TextRenderer.AddText($"ms: {_deltaTime*1000:F3}");
-        Graphics.UI.TextRenderer.AddText($"Pos: {Camera.Instance?.cameraPos:F3}");
-        Graphics.UI.TextRenderer.AddText($"MousePos: {Camera.Instance?.mousePos}");
+        Graphics.UI.TextRenderer.AddText($"Pos: {Graphics.Camera.Instance?.cameraPos:F3}");
+        Graphics.UI.TextRenderer.AddText($"MousePos: {Graphics.Camera.Instance?.mousePos}");
         Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.Instance.componentsCount}");
     }
 

@@ -2,7 +2,7 @@
 using Engine.Input;
 using static Engine.Input.Inputs;
 
-namespace Engine;
+namespace Engine.Graphics;
 
 
 internal sealed class CameraEditor : Camera {

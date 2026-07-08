@@ -1,6 +1,6 @@
 ﻿//using Engine.Graphics;
 
-namespace Engine;
+namespace Engine.Graphics;
 
 
 internal class Camera {

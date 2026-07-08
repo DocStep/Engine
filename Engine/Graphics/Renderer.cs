@@ -1,4 +1,6 @@
 ﻿using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Extensions.ImGui;
+using ImGuiNET;
 using Engine.Graphics.UI;
 using static Engine.Graphics.Shader;
 
@@ -14,10 +16,10 @@ public class Renderer {
         Engine.Window.FramebufferResize += OnFrameBufferResize;
 
         GL = Engine.Window.CreateOpenGL();
+        Debug.Init();
         GL.FrontFace(FrontFaceDirection.CW);
         GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
-
-        Debug.Init();
+        ImGUI = new ImGuiController(GL, Engine.Window, Engine.Input);
 
         _mesh_Cube = new Mesh(Cube.Generate());
         _mesh_CubeWireframe = new Mesh(Cube.GenerateWireframe());
@@ -82,10 +84,13 @@ public class Renderer {
         de_GizmosDraw += _gizmo_Selected.Draw;
 
         Engine.Instance.de_Update += de_GizmosUpdate;
+
+        new CameraEditor();
     }
     public static Renderer Instance = null!;
 
     public readonly GL GL = null!;
+    public ImGuiController ImGUI = null!;
     public readonly TextRenderer TextRenderer = null!;
 
     public Action? de_GizmosUpdate = null;
@@ -237,6 +242,20 @@ public class Renderer {
 
         /// Draw UI
         TextRenderer.DrawUI();
+
+
+        ImGui.Begin("Inspector");
+        GameObject? selectedGO = _gizmo_Selected.selectedMesh?.owner;
+        if (selectedGO is not null) {
+            ImGui.Text("Selected: " + _gizmo_Selected.selectedMesh?.owner.Name);
+            ImGui.DragFloat3("Position", ref selectedGO.Transform.Position);
+        }
+        var io = ImGui.GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
+        ImGui.End();
+
+        ImGUI.Render();
+
 
         DrawEnd();
     }
@@ -403,11 +422,10 @@ public class Renderer {
     }
 
     internal void OnClosing () {
+        ImGUI.Dispose();
+
         _mesh_Cube.Dispose();
         _mesh_Sphere.Dispose();
-        //_GizmoGrid.Dispose();
-        //_GizmoAxes.Dispose();
-        //_GizmoAxesWidget.Dispose();
         _mesh_Arrow3D.Dispose();
         _sh_Lit.Dispose();
         _sh_Unlit.Dispose();
