@@ -62,17 +62,17 @@ public class Engine : Singleton<Engine>, IDisposable {
     }
 
     public void Run () {
-        ArgsUtils.Args();
+        ArgsUtils.Init();
 
         Console.WriteLine($"========== Init ==========");
         Console.WriteLine($"===== Utils Layer =====");
-
         ThreadUtils.Init();
-        Log.InstanceCheck();
         TimeUtils.Init();
-        Log.log($"Time: {TimeUtils.getCurrentTime}");
-        Reflection.InstanceCheck();
-        Json.InstanceCheck();
+        /// Log auto-called from Singleton
+        Log.log($"[{TimeUtils.getCurrentTime}]");
+
+        new Reflection();
+        new Json();
         AssetsManager.Init();
 
         Inputs.OverrideActions(DataEngine.InputsData);
@@ -116,9 +116,9 @@ public class Engine : Singleton<Engine>, IDisposable {
 
         Renderer = new Graphics.Renderer();
 
-        PhysicsManager.InstanceCheck();
-        ComponentManager.InstanceCheck();
-        SceneManager.InstanceCheck();
+        new PhysicsManager();
+        new ComponentManager();
+        new SceneManager();
 
         de_Update?.Invoke();
 
@@ -162,7 +162,7 @@ public class Engine : Singleton<Engine>, IDisposable {
         ComponentManager.Instance.Update();
         de_Update?.Invoke();
 
-        Graphics.Renderer.Instance.ImGUI.Update((float)deltaTime);
+        Graphics.EditorUI.Instance?.Update();
         // your normal scene rendering here
 
         /// Counters

@@ -244,7 +244,7 @@ internal sealed class CameraEditor : Camera {
         }
 
         /// Select
-        if (mouseAllowed) {
+        if (mouseAllowed && !EditorUI.Instance.isUIClick) {
             Ray ray = RaycastMouse();
             if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
                 Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);

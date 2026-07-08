@@ -1,7 +1,26 @@
-﻿namespace Engine;
+﻿using System.Diagnostics;
+
+namespace Engine;
 
 
 public class Singleton<T> : ISingleton where T : Singleton<T>, new() {
+    public Singleton () {
+        lock (SingletonManager._lock) {
+            if (instance is not null) 
+                throw new InvalidOperationException($"[{Name}] {instance} ({instance.GetHashCode()}<-{GetHashCode()}) already has an active instance. " +
+                    $"Use InstanceNew() to replace it, or Instance to access it.");
+
+            instance = (T)this;
+            instance.Init();
+            SingletonManager.Add_NoLock(instance);
+
+            if (instance.debugLog) {
+                string text = $"[{Name}] Inited: {typeof(T)} ({instance.GetHashCode()})";
+                Log.log(text);
+            }
+        }
+    }
+
 
     public const string Name = "Singleton";
     protected readonly bool debugLog = true;
@@ -11,8 +30,7 @@ public class Singleton<T> : ISingleton where T : Singleton<T>, new() {
         get {
             if (instance is null) {
                 lock (SingletonManager._lock) {
-                    if (instance is null) 
-                        InstanceNewRaw_NoLock();
+                    if (instance is null) new T();
                     return instance!;
                 }
             }
@@ -28,7 +46,6 @@ public class Singleton<T> : ISingleton where T : Singleton<T>, new() {
         lock (SingletonManager._lock)
             instance = null!;
     }
-    //protected virtual void Dispose () { }
 
     public static bool HasSingleton () {
         lock (SingletonManager._lock)
@@ -38,49 +55,21 @@ public class Singleton<T> : ISingleton where T : Singleton<T>, new() {
         return instance is not null;
     }
 
-    /*public static void InstanceNull () {
-        if (instance is null) InstanceNewRaw();
-    }*/
     public static void InstanceCheck () {
         lock (SingletonManager._lock) {
-            if (instance is not null) return;
-            InstanceNewRaw_NoLock();
+            if (instance is null)
+                _ = new T();
         }
     }
     public static void InstanceNew () {
         lock (SingletonManager._lock) {
-            Log.log($"[{Name}] ReInstanceNew: {typeof(T)}");
-            if (instance is not null) SingletonManager.Remove(instance);
-            InstanceNewRaw_NoLock();
+            if (instance is not null) {
+                Log.log($"[{Name}] ReInstanceNew: {typeof(T)}");
+                SingletonManager.Remove(instance);
+                instance = null!;
+            }
+            _ = new T();
         }
     }
-    /*private static void InstanceNewRaw () {
-        lock (SingletonManager._lock) {
-            InstanceNewRaw_NoLock();
-        }
-    }*/
-    private static void InstanceNewRaw_NoLock () {
-        instance = new T();
-        instance.Init();
-        SingletonManager.Add_NoLock(instance);
-
-        if (instance.debugLog) {
-            string text = $"[{Name}] Inited: {typeof(T)} ({Instance.GetHashCode()})";
-            Log.log(text);
-        }
-    }
-
-
-    /*public void Dispose_ () {
-        Dispose();
-        instance = null;
-
-        Log.log($"[{Name}] Disposed: {GetType()}");
-    }
-    public static void DisposeAll () {
-        foreach (var singleton in SingletonManager.Singletons) {
-            singleton.Dispose_();
-        }
-    }*/
 
 }

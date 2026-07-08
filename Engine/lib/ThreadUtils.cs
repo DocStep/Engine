@@ -5,6 +5,7 @@ public class ThreadUtils {
 
     public static void Init () {
         mainThreadId = Thread.CurrentThread.ManagedThreadId;
+        //Console.WriteLine($"{Log.logSymbolSpace}Inited: {nameof(ThreadUtils)}");
     }
 
 

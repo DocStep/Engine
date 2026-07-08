@@ -6,7 +6,7 @@ public static class ArgsUtils {
     private static bool isConsole = true;
 
 
-    public static void Args () {
+    public static void Init () {
         string[] args = Environment.GetCommandLineArgs();
 
         if (args.Contains("-console")) {

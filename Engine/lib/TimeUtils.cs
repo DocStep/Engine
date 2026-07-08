@@ -8,7 +8,7 @@ public static class TimeUtils {
     public static void Init () {
         startTick = Stopwatch.GetTimestamp();
         startTime = DateTime.UtcNow;
-        Log.log($"Inited: {nameof(TimeUtils)}");
+        //Console.WriteLine($"Inited: {nameof(TimeUtils)}");
     }
 
 

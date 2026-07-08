@@ -1,6 +1,4 @@
 ﻿using Silk.NET.OpenGL;
-using Silk.NET.OpenGL.Extensions.ImGui;
-using ImGuiNET;
 using Engine.Graphics.UI;
 using static Engine.Graphics.Shader;
 
@@ -9,6 +7,7 @@ namespace Engine.Graphics;
 
 public class Renderer {
     public Renderer () {
+        Log.log($"Renderer ctor called, hash {GetHashCode()}");
         Instance = this;
 
         Engine.Window.Render += OnRender;
@@ -19,8 +18,8 @@ public class Renderer {
         Debug.Init();
         GL.FrontFace(FrontFaceDirection.CW);
         GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
-        ImGUI = new ImGuiController(GL, Engine.Window, Engine.Input);
 
+        //new EditorUI();
         _mesh_Cube = new Mesh(Cube.Generate());
         _mesh_CubeWireframe = new Mesh(Cube.GenerateWireframe());
         _mesh_Sphere = new Mesh(Sphere.Generate());
@@ -85,16 +84,18 @@ public class Renderer {
 
         Engine.Instance.de_Update += de_GizmosUpdate;
 
+        new EditorUI();
+
         new CameraEditor();
     }
     public static Renderer Instance = null!;
 
     public readonly GL GL = null!;
-    public ImGuiController ImGUI = null!;
     public readonly TextRenderer TextRenderer = null!;
 
     public Action? de_GizmosUpdate = null;
     public Action? de_GizmosDraw = null;
+    public Action? de_Dispose = null;
 
 
     public readonly Shader _sh_Lit = null!;
@@ -243,18 +244,7 @@ public class Renderer {
         /// Draw UI
         TextRenderer.DrawUI();
 
-
-        ImGui.Begin("Inspector");
-        GameObject? selectedGO = _gizmo_Selected.selectedMesh?.owner;
-        if (selectedGO is not null) {
-            ImGui.Text("Selected: " + _gizmo_Selected.selectedMesh?.owner.Name);
-            ImGui.DragFloat3("Position", ref selectedGO.Transform.Position);
-        }
-        var io = ImGui.GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
-        ImGui.End();
-
-        ImGUI.Render();
+        EditorUI.Instance.Draw();
 
 
         DrawEnd();
@@ -422,19 +412,22 @@ public class Renderer {
     }
 
     internal void OnClosing () {
-        ImGUI.Dispose();
-
         _mesh_Cube.Dispose();
         _mesh_Sphere.Dispose();
         _mesh_Arrow3D.Dispose();
+
         _sh_Lit.Dispose();
         _sh_Unlit.Dispose();
         _sh_Grid.Dispose();
         _sh_Axes.Dispose();
+
+        _sh_Skybox.Dispose();
         _skybox.Dispose();
         _hdrTexture_Skybox?.Dispose();
-        _sh_Skybox.Dispose();
+
         TextRenderer.Dispose();
+
+        de_Dispose?.Invoke();
     }
 
 }

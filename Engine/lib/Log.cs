@@ -15,6 +15,8 @@ public class Log : Singleton<Log> {
     private readonly ConcurrentQueue<LogEntry> Queue = new ConcurrentQueue<LogEntry>();
 
     string timestamp (string timestamp) => $" (t: {timestamp})";
+    public const string logSymbol = ">";
+    public const string logSymbolSpace = "> ";
     
 
     void Update () {
@@ -33,7 +35,7 @@ public class Log : Singleton<Log> {
                     log += Environment.NewLine + Environment.NewLine +
                         ParseLight(entry.stackTrace.ToString());
                     //Parse(entry.stackTrace.ToString());
-                    Console.WriteLine("! " + $"/({ThreadUtils.currThread})> " + log);
+                    Console.WriteLine("! " + $"/({ThreadUtils.currThread})" + logSymbolSpace + log);
                     break;
                 default:
                     break;
@@ -43,7 +45,7 @@ public class Log : Singleton<Log> {
 
 
     public static void log (string text, LogType type = LogType.log) {
-        if (ThreadUtils.isMainThread) Console.WriteLine("> " + text);
+        if (ThreadUtils.isMainThread) Console.WriteLine(logSymbolSpace + text);
         else {
             LogEntry log = new LogEntry(text, type);
             Instance.Queue.Enqueue(log);

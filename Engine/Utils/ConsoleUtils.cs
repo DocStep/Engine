@@ -15,7 +15,7 @@ public class ConsoleUtils {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
         Console.InputEncoding = System.Text.Encoding.UTF8;
         ConsoleUtils.SetConsolePosition(10, 10);
-        Console.WriteLine($"Console started");
+        Console.WriteLine(Log.logSymbolSpace + "Console started");
     }
 
 
