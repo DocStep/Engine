@@ -12,8 +12,8 @@ public static class Arrow3D {
 
         float shaftLength = length - headLength;
 
-        var verts = new List<Vertex>();
-        var indices = new List<uint>();
+        List<Vertex> verts = new List<Vertex>();
+        List<uint> indices = new List<uint>();
 
         BuildShaft(verts, indices, shaftWidth, shaftLength, radialSegments);
         BuildCrossPlanes(verts, indices, shaftWidth, shaftLength);
@@ -30,8 +30,8 @@ public static class Arrow3D {
         float headWidth = 0.2f,
         int radialSegments = 12) {
 
-        var verts = new List<Vertex>();
-        var indices = new List<uint>();
+        List<Vertex> verts = new List<Vertex>();
+        List<uint> indices = new List<uint>();
 
         // Bottom ring
         uint bottomRing = (uint)verts.Count;

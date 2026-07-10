@@ -7,10 +7,10 @@ public static class Plane {
         int cells = divisions;
         int verticesPerSide = cells+1;
 
-        var vertices = new Vertex[verticesPerSide*verticesPerSide];
-        var indices = new uint[cells*cells*6];
+        Vertex[] vertices = new Vertex[verticesPerSide*verticesPerSide];
+        uint[] indices = new uint[cells*cells*6];
 
-        var half = size*0.5f;
+        float half = size*0.5f;
 
         for (int z = 0; z < verticesPerSide; z++) {
             for (int x = 0; x < verticesPerSide; x++) {
@@ -52,8 +52,8 @@ public static class Plane {
         int cells = divisions;
         int verticesPerSide = cells+1;
 
-        var vertices = new Vertex[verticesPerSide*verticesPerSide];
-        var half = size*0.5f;
+        Vertex[] vertices = new Vertex[verticesPerSide*verticesPerSide];
+        float half = size*0.5f;
 
         for (int z = 0; z < verticesPerSide; z++) {
             for (int x = 0; x < verticesPerSide; x++) {
@@ -69,7 +69,7 @@ public static class Plane {
             }
         }
 
-        var indices = new List<uint>();
+        List<uint> indices = new List<uint>();
 
         /// Each cell draws its own 4 edges independently.
         for (int z = 0; z < cells; z++) {

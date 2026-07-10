@@ -6,8 +6,8 @@ public static class Capsule {
     /// height is the distance between hemisphere centers (the straight cylindrical
     /// section); total capsule length is height + 2*radius.
     public static MeshData Generate (float radius = 0.5f, float height = 1f, int latSegments = 8, int lonSegments = 24) {
-        var vertices = new List<Vertex>();
-        var indices = new List<uint>();
+        List<Vertex> vertices = new List<Vertex>();
+        List<uint> indices = new List<uint>();
 
         float halfHeight = 0.5f*height;
         int lonStride = lonSegments + 1;
@@ -28,9 +28,9 @@ public static class Capsule {
                 float y = cosTheta;
                 float z = sinPhi*sinTheta;
 
-                var normal = new Vector3(x, y, z);
-                var position = new Vector3(radius*x, radius*y + halfHeight, radius*z);
-                var uv = new Vector2((float)lon/lonSegments, 1f - 0.5f*(float)lat/latSegments);
+                Vector3 normal = new Vector3(x, y, z);
+                Vector3 position = new Vector3(radius*x, radius*y + halfHeight, radius*z);
+                Vector2 uv = new Vector2((float)lon/lonSegments, 1f - 0.5f*(float)lat/latSegments);
 
                 vertices.Add(new Vertex(position, normal, uv));
             }
@@ -67,9 +67,9 @@ public static class Capsule {
                 float y = cosTheta;
                 float z = sinPhi*sinTheta;
 
-                var normal = new Vector3(x, y, z);
-                var position = new Vector3(radius*x, radius*y - halfHeight, radius*z);
-                var uv = new Vector2((float)lon/lonSegments, 0.5f - 0.5f*(float)lat/latSegments);
+                Vector3 normal = new Vector3(x, y, z);
+                Vector3 position = new Vector3(radius*x, radius*y - halfHeight, radius*z);
+                Vector2 uv = new Vector2((float)lon/lonSegments, 0.5f - 0.5f*(float)lat/latSegments);
 
                 vertices.Add(new Vertex(position, normal, uv));
             }
@@ -114,19 +114,19 @@ public static class Capsule {
     public static MeshData GenerateWireframe (float radius = 0.5f, int segments = 32) {
         Vector3 p1 = -0.5f*Vector3.UnitY;
         Vector3 p2 = 0.5f*Vector3.UnitY;
-        var axis = p2-p1;
-        var height = axis.Length();
+        Vector3 axis = p2-p1;
+        float height = axis.Length();
 
-        var up = height > 1e-6f ? axis/height : Vector3.UnitY;
-        var (right, forward) = OrthonormalBasis(up);
+        Vector3 up = 1e-6f < height ? axis/height : Vector3.UnitY;
+        (Vector3 right, Vector3 forward) = OrthonormalBasis(up);
 
-        var vertices = new List<Vertex>();
-        var indices = new List<uint>();
+        List<Vertex> vertices = new List<Vertex>();
+        List<uint> indices = new List<uint>();
 
         /// Side lines connecting the two caps, at 4 points around the radius.
         for (int i = 0; i < 4; i++) {
             float angle = i*MathF.PI*0.5f;
-            var offset = (right*MathF.Cos(angle)+forward*MathF.Sin(angle))*radius;
+            Vector3 offset = (right*MathF.Cos(angle)+forward*MathF.Sin(angle))*radius;
             AppendLine(vertices, indices, p1+offset, p2+offset);
         }
 
@@ -152,9 +152,9 @@ public static class Capsule {
     }
 
     private static (Vector3 right, Vector3 forward) OrthonormalBasis (Vector3 up) {
-        var reference = MathF.Abs(Vector3.Dot(up, Vector3.UnitY)) > 0.99f ? Vector3.UnitX : Vector3.UnitY;
-        var right = Vector3.Normalize(Vector3.Cross(reference, up));
-        var forward = Vector3.Cross(up, right);
+        Vector3 reference = MathF.Abs(Vector3.Dot(up, Vector3.UnitY)) > 0.99f ? Vector3.UnitX : Vector3.UnitY;
+        Vector3 right = Vector3.Normalize(Vector3.Cross(reference, up));
+        Vector3 forward = Vector3.Cross(up, right);
         return (right, forward);
     }
 

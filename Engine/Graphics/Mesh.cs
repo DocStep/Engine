@@ -72,7 +72,7 @@ public class Mesh : IAsset {
 
 
     private static float[] Flatten (Vertex[] verts) {
-        var result = new float[verts.Length*Vertex.FloatStride];
+        float[] result = new float[verts.Length*Vertex.FloatStride];
         for (int i = 0; i < verts.Length; i++) {
             int o = i*(int)Vertex.FloatStride;
             result[o + 0] = verts[i].Position.X;

@@ -15,7 +15,7 @@ public sealed class WorldGrid : IDisposable {
             LightingEnabled = false
         };
 
-        var verts = new List<VertexPositionColor>();
+        List<VertexPositionColor> verts = new List<VertexPositionColor>();
 
         Color minor = new Color(40, 40, 40);
         Color major = new Color(80, 80, 80);
@@ -55,7 +55,7 @@ public sealed class WorldGrid : IDisposable {
 
         gd.SetVertexBuffer(_vb);
 
-        foreach (var pass in _effect.CurrentTechnique.Passes) {
+        foreach (EffectPass pass in _effect.CurrentTechnique.Passes) {
             pass.Apply();
 
             gd.DrawPrimitives(

@@ -7,15 +7,15 @@ public static class Raycast {
         float x = (2f*_x) / screenWidth - 1f;
         float y = 1f - (2f*_y) / screenHeight;
 
-        Matrix4x4.Invert(view*proj, out var invVP);
+        Matrix4x4.Invert(view*proj, out Matrix4x4 invVP);
 
         Vector4 nearPoint = Vector4.Transform(new Vector4(x, y, -1f, 1f), invVP);
         Vector4 farPoint = Vector4.Transform(new Vector4(x, y, 1f, 1f), invVP);
         nearPoint /= nearPoint.W;
         farPoint /= farPoint.W;
 
-        var origin = new Vector3(nearPoint.X, nearPoint.Y, nearPoint.Z);
-        var dir = Vector3.Normalize(new Vector3(farPoint.X, farPoint.Y, farPoint.Z) - origin);
+        Vector3 origin = new Vector3(nearPoint.X, nearPoint.Y, nearPoint.Z);
+        Vector3 dir = Vector3.Normalize(new Vector3(farPoint.X, farPoint.Y, farPoint.Z) - origin);
 
         return new Ray(origin, dir);
     }
@@ -103,21 +103,21 @@ public static class Raycast {
         const float epsilon = 1e-6f;
         t = 0f;
 
-        var edge1 = v1 - v0;
-        var edge2 = v2 - v0;
-        var h = Vector3.Cross(ray.Direction, edge2);
+        Vector3 edge1 = v1 - v0;
+        Vector3 edge2 = v2 - v0;
+        Vector3 h = Vector3.Cross(ray.Direction, edge2);
         float a = Vector3.Dot(edge1, h);
 
         if (-epsilon < a && a < epsilon)
             return false; /// ray parallel to triangle
 
         float f = 1f/a;
-        var s = ray.Origin - v0;
+        Vector3 s = ray.Origin - v0;
         float u = f*Vector3.Dot(s, h);
 
         if (u < 0f || 1 < u) return false;
 
-        var q = Vector3.Cross(s, edge1);
+        Vector3 q = Vector3.Cross(s, edge1);
         float v = f*Vector3.Dot(ray.Direction, q);
 
         if (v < 0 || 1 < u + v) return false;
@@ -160,9 +160,9 @@ public static class Raycast {
         bool hit = false;
 
         for (int i = 0; i < mesh.Indices.Length; i += 3) {
-            var v0 = Vector3.Transform(mesh.Vertices[mesh.Indices[i]].Position, worldMatrix);
-            var v1 = Vector3.Transform(mesh.Vertices[mesh.Indices[i + 1]].Position, worldMatrix);
-            var v2 = Vector3.Transform(mesh.Vertices[mesh.Indices[i + 2]].Position, worldMatrix);
+            Vector3 v0 = Vector3.Transform(mesh.Vertices[mesh.Indices[i]].Position, worldMatrix);
+            Vector3 v1 = Vector3.Transform(mesh.Vertices[mesh.Indices[i + 1]].Position, worldMatrix);
+            Vector3 v2 = Vector3.Transform(mesh.Vertices[mesh.Indices[i + 2]].Position, worldMatrix);
 
             if (RayTriangle(ray, v0, v1, v2, out float t) && t < closestT) {
                 closestT = t;
@@ -182,17 +182,18 @@ public static class Raycast {
         float closestT = float.MaxValue;
         bool hitAny = false;
 
-        foreach (var go in scene.Objects) {
+        foreach (GameObject go in scene.Objects) {
             Graphics.MeshComponent? meshComponent = go.GetComponent<Graphics.MeshComponent>();
             if (meshComponent is null) continue;
             if (meshComponent.mesh is null) continue;
+            if (meshComponent.mesh.Data is null) continue;
             if (meshComponent.mesh.Data.PrimitiveType != Silk.NET.OpenGL.PrimitiveType.Triangles) continue;
 
             Matrix4x4 worldMatrix = go.Transform.GetWorldMatrix();
             AABB worldAabb = meshComponent.mesh.LocalAABB.Transformed(worldMatrix);
             if (!RayAABB(ray, worldAabb, out float aabbT) || closestT < aabbT) continue; /// broadphase reject, can't be the closest hit
 
-            if (RaycastMesh(ray, meshComponent.mesh.Data, worldMatrix, out var localHitPoint, out float t, out var localNormal) && t < closestT) {
+            if (RaycastMesh(ray, meshComponent.mesh.Data, worldMatrix, out Vector3 localHitPoint, out float t, out Vector3 localNormal) && t < closestT) {
                 closestT = t;
                 hitMesh = meshComponent;
                 hitPoint = localHitPoint;

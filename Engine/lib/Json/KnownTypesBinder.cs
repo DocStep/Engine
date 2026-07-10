@@ -14,7 +14,7 @@ public class KnownTypesBinder : ISerializationBinder {
     private Dictionary<Type, string> typeToName = new Dictionary<Type, string>();
 
 
-    public void BindToName (Type serializedType, out string assemblyName, out string typeName) {
+    public void BindToName (Type serializedType, out string? assemblyName, out string? typeName) {
         if (!typeToName.TryGetValue(serializedType, out typeName)) {
             typeName = serializedType.FullName;
             typeToName[serializedType] = typeName;
@@ -24,8 +24,8 @@ public class KnownTypesBinder : ISerializationBinder {
     }
 
     public Type BindToType (string assemblyName, string typeName) {
-        if (!nameToType.TryGetValue(typeName, out var type)) {
-            foreach (var known in KnownTypes) {
+        if (!nameToType.TryGetValue(typeName, out Type? type)) {
+            foreach (Type known in KnownTypes) {
                 if (known.FullName == typeName) {
                     type = known;
                     nameToType[typeName] = type;

@@ -7,15 +7,6 @@ public class ComponentManager : Singleton<ComponentManager> {
     private readonly List<IComponentUpdate> componentsUpdate = new List<IComponentUpdate>();
     private readonly List<IComponentFixedUpdate> componentsFixedUpdate = new List<IComponentFixedUpdate>();
     public int componentsCount => components.Count;
-    /*public static string NameAll {
-        get {
-            string names = "All\n";
-            foreach (var component in components) {
-                names += " " + component.Key.Name;
-            }
-            return names;
-        }
-    }*/
 
     private readonly List<IComponentUpdate> componentsRender = new List<IComponentUpdate>();
 

@@ -7,8 +7,8 @@ public static class Grid {
         int lines = divisions + 1;
         float half = size*0.5f;
 
-        var vertices = new Vertex[lines*4];
-        var indices = new uint[lines*4];
+        Vertex[] vertices = new Vertex[lines*4];
+        uint[] indices = new uint[lines*4];
 
         int vi = 0;
         int ii = 0;

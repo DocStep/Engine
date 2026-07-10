@@ -11,11 +11,11 @@ public struct AABB {
     }
 
     public static AABB FromVertices (Graphics.Vertex[] verts) {
-        var min = verts[0].Position;
-        var max = verts[0].Position;
+        Vector3 min = verts[0].Position;
+        Vector3 max = verts[0].Position;
 
         for (int i = 1; i < verts.Length; i++) {
-            var p = verts[i].Position;
+            Vector3 p = verts[i].Position;
             min = Vector3.Min(min, p);
             max = Vector3.Max(max, p);
         }
@@ -35,11 +35,11 @@ public struct AABB {
         corners[6] = new Vector3(Min.X, Max.Y, Max.Z);
         corners[7] = new Vector3(Max.X, Max.Y, Max.Z);
 
-        var newMin = Vector3.Transform(corners[0], worldMatrix);
-        var newMax = newMin;
+        Vector3 newMin = Vector3.Transform(corners[0], worldMatrix);
+        Vector3 newMax = newMin;
 
         for (int i = 1; i < 8; i++) {
-            var p = Vector3.Transform(corners[i], worldMatrix);
+            Vector3 p = Vector3.Transform(corners[i], worldMatrix);
             newMin = Vector3.Min(newMin, p);
             newMax = Vector3.Max(newMax, p);
         }

@@ -24,8 +24,8 @@ public class Skybox : IDisposable {
     public void Draw (Matrix4x4 view, Matrix4x4 projection) {
         if (_texture is null) return;
 
-        Matrix4x4.Invert(view, out var invView);
-        Matrix4x4.Invert(projection, out var invProjection);
+        Matrix4x4.Invert(view, out Matrix4x4 invView);
+        Matrix4x4.Invert(projection, out Matrix4x4 invProjection);
 
         GL.DepthFunc(DepthFunction.Lequal);
         GL.DepthMask(false);

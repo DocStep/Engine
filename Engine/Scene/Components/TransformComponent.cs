@@ -46,10 +46,10 @@ public class TransformComponent : Component {
 
 
     public Matrix4x4 GetWorldMatrix () {
-        var scaleMat = Matrix4x4.CreateScale(Scale);
-        var rotMat = Matrix4x4.CreateFromYawPitchRoll(lib.Deg2Rad*Rotation.Y, 
+        Matrix4x4 scaleMat = Matrix4x4.CreateScale(Scale);
+        Matrix4x4 rotMat = Matrix4x4.CreateFromYawPitchRoll(lib.Deg2Rad*Rotation.Y, 
             lib.Deg2Rad*Rotation.X, lib.Deg2Rad*Rotation.Z);
-        var transMat = Matrix4x4.CreateTranslation(Position);
+        Matrix4x4 transMat = Matrix4x4.CreateTranslation(Position);
         return scaleMat*rotMat*transMat;
     }
 

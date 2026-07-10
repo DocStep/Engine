@@ -36,32 +36,32 @@ public class ReflectionScripts : Singleton<ReflectionScripts> {
     public IEnumerator RunScriptActions_Start () {
         if (de_Actions_Start is null) yield break;
 
-        foreach (var delegat in de_Actions_Start.GetInvocationList()) {
-            var func = (Func<IEnumerator>)delegat;
+        foreach (Delegate delegat in de_Actions_Start.GetInvocationList()) {
+            Func<IEnumerator> func = (Func<IEnumerator>)delegat;
             yield return func();
         }
     }
     public IEnumerator RunScriptActions_FixedUpdate () {
         if (de_Actions_FixedUpdate is null) yield break;
 
-        foreach (var delegat in de_Actions_FixedUpdate.GetInvocationList()) {
-            var func = (Func<IEnumerator>)delegat;
+        foreach (Delegate delegat in de_Actions_FixedUpdate.GetInvocationList()) {
+            Func<IEnumerator> func = (Func<IEnumerator>)delegat;
             yield return func();
         }
     }
     public IEnumerator RunScriptActions_Update () {
         if (de_Actions_Update is null) yield break;
 
-        foreach (var delegat in de_Actions_Update.GetInvocationList()) {
-            var func = (Func<IEnumerator>)delegat;
+        foreach (Delegate delegat in de_Actions_Update.GetInvocationList()) {
+            Func<IEnumerator> func = (Func<IEnumerator>)delegat;
             yield return func();
         }
     }
     public IEnumerator RunScriptActions_Exits () {
         if (de_Actions_Exit is null) yield break;
 
-        foreach (var delegat in de_Actions_Exit.GetInvocationList()) {
-            var func = (Func<IEnumerator>)delegat;
+        foreach (Delegate delegat in de_Actions_Exit.GetInvocationList()) {
+            Func<IEnumerator> func = (Func<IEnumerator>)delegat;
             yield return func();
         }
     }

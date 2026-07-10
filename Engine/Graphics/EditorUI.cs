@@ -30,7 +30,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             ImGui.Text("Selected: " + Renderer.Instance._gizmo_Selected.selectedMesh?.owner.Name);
             ImGui.DragFloat3("Position", ref selectedGO.Transform.Position);
         }
-        var io = ImGui.GetIO();
+        ImGuiIOPtr io = ImGui.GetIO();
         io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
         ImGui.End();
 

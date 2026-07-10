@@ -191,7 +191,7 @@ public static class Inputs {
         foreach (Keys key in Enum.GetValues(typeof(Keys)))
             keysNames[key] = key.ToString();
         /// Override
-        foreach (var itemKV in KeysNameOverride)
+        foreach (KeyValuePair<Keys, string> itemKV in KeysNameOverride)
             keysNames[itemKV.Key] = itemKV.Value;
         return keysNames;
     }
@@ -266,12 +266,12 @@ public static class Inputs {
         Inputs.AddActions(keyset);
     }
     public static void AddActions (Dictionary<string, InputsGroup> keyset) {
-        foreach (var actionKV in keyset) {
+        foreach (KeyValuePair<string, InputsGroup> actionKV in keyset) {
             ActionsDef.TryAdd(actionKV.Key, actionKV.Value);
         }
     }
     public static void OverrideActions (Dictionary<string, InputsGroup> keyset) {
-        foreach (var actionKV in keyset) {
+        foreach (KeyValuePair<string, InputsGroup> actionKV in keyset) {
             if (ActionsDef.ContainsKey(actionKV.Key)) {
                 ActionsDef[actionKV.Key] = actionKV.Value;
             } else ActionsDef.TryAdd(actionKV.Key, actionKV.Value);
@@ -282,7 +282,7 @@ public static class Inputs {
 
     /// <summary> de_distance <-? </summary>
     public static void Update () {
-        foreach (var actionKV in Actions) {
+        foreach (KeyValuePair<string, InputsGroup> actionKV in Actions) {
             InputsGroup group = actionKV.Value;
             group.pressedDown = false;
             group.pressed = false;
@@ -353,7 +353,7 @@ public static class Inputs {
 
         void Group (Dictionary<string, InputsGroup> group, string name) {
             text += $"[{name}]\n";
-            foreach (var actsKV in group) {
+            foreach (KeyValuePair<string, InputsGroup> actsKV in group) {
                 text += actsKV.Key + ": ";
                 List<Keys> list = actsKV.Value.Keys;
                 for (int k = 0; k < list.Count; k++) {

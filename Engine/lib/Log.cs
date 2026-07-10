@@ -20,7 +20,7 @@ public class Log : Singleton<Log> {
     
 
     void Update () {
-        while (Queue.TryDequeue(out var entry)) {
+        while (Queue.TryDequeue(out LogEntry entry)) {
             //string log = entry.text + entry.timestamp + Environment.NewLine + Environment.NewLine +
             string log = entry.text;
             
@@ -69,7 +69,7 @@ public class Log : Singleton<Log> {
         if (string.IsNullOrEmpty(raw))
             return string.Empty;
 
-        var lines = raw.Split('\n');
+        string[] lines = raw.Split('\n');
         System.Text.StringBuilder sb = new System.Text.StringBuilder(256);
 
         for (int i = 0; i < lines.Length; i++) {
@@ -152,7 +152,7 @@ public class Log : Singleton<Log> {
         if (string.IsNullOrEmpty(raw))
             return string.Empty;
 
-        var lines = raw.Split('\n');
+        string[] lines = raw.Split('\n');
         System.Text.StringBuilder sb = new System.Text.StringBuilder(256);
 
         for (int i = 0; i < lines.Length; i++) {

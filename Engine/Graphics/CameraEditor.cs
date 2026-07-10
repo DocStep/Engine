@@ -76,7 +76,7 @@ internal sealed class CameraEditor : Camera {
     private void NewTransform () {
         cameraRot = Matrix4x4.CreateLookAtLeftHanded(cameraPos, cameraOrbitCenterPos, Vector3.UnitY);
 
-        var dir = Vector3.Normalize(cameraOrbitCenterPos - cameraPos);
+        Vector3 dir = Vector3.Normalize(cameraOrbitCenterPos - cameraPos);
         yaw = -MathF.Atan2(dir.X, dir.Z);
         pitch = MathF.Asin(dir.Y);
 

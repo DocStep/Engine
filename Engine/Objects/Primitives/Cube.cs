@@ -58,7 +58,7 @@ public static class Cube {
 
 
     public static MeshData GenerateWireframe (float size = 1f) {
-        var half = 0.5f*size*Vector3.One;
+        Vector3 half = 0.5f*size*Vector3.One;
 
         Span<Vector3> corners = stackalloc Vector3[8];
         corners[0] = new Vector3(-half.X, -half.Y, -half.Z);
@@ -70,7 +70,7 @@ public static class Cube {
         corners[6] = new Vector3(half.X, half.Y, half.Z);
         corners[7] = new Vector3(-half.X, half.Y, half.Z);
 
-        var vertices = new Vertex[8];
+        Vertex[] vertices = new Vertex[8];
         for (int i = 0; i < 8; i++)
             vertices[i] = new Vertex { Position = corners[i] };
 

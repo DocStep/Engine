@@ -7,12 +7,12 @@
 /// the image stays equirectangular.
 public static class HdrLoader {
     public static (float[] Data, int Width, int Height) Load (string path) {
-        using var stream = File.OpenRead(path);
+        using FileStream stream = File.OpenRead(path);
 
         int width = 0, height = 0;
         ReadHeader(stream, out width, out height);
 
-        var data = new float[width*height*3];
+        float[] data = new float[width*height*3];
 
         for (int y = 0; y < height; y++) {
             float[] scanline = ReadScanline(stream, width);
@@ -43,7 +43,7 @@ public static class HdrLoader {
     }
 
     private static string? ReadLine (Stream stream) {
-        var sb = new System.Text.StringBuilder();
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
         int b;
         bool any = false;
         while ((b = stream.ReadByte()) != -1) {
@@ -55,7 +55,7 @@ public static class HdrLoader {
     }
 
     private static float[] ReadScanline (Stream stream, int width) {
-        var rgbe = new byte[width*4];
+        byte[] rgbe = new byte[width*4];
 
         /// New-format RLE scanlines start with a 4-byte marker: 2,2,hi,lo
         /// where (hi<<8)|lo == width. Anything else falls back to old-format
@@ -98,7 +98,7 @@ public static class HdrLoader {
             Array.Copy(rest, 0, rgbe, 4, rest.Length);
         }
 
-        var result = new float[width*3];
+        float[] result = new float[width*3];
         for (int x = 0; x < width; x++) {
             byte r = rgbe[x*4 + 0];
             byte g = rgbe[x*4 + 1];
@@ -121,7 +121,7 @@ public static class HdrLoader {
     }
 
     private static byte[] ReadExact (Stream stream, int count) {
-        var buffer = new byte[count];
+        byte[] buffer = new byte[count];
         int read = 0;
         while (read < count) {
             int n = stream.Read(buffer, read, count - read);
@@ -136,4 +136,5 @@ public static class HdrLoader {
         if (b == -1) throw new EndOfStreamException("Unexpected end of HDR file.");
         return (byte)b;
     }
+
 }

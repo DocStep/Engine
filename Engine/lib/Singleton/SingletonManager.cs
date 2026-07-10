@@ -23,7 +23,7 @@ public class SingletonManager {
 
     public static void ClearAll () {
         lock (_lock) {
-            foreach (var singleton in Singletons) {
+            foreach (ISingleton singleton in Singletons) {
                 singleton.Clear();
             }
             Singletons.Clear();
@@ -32,7 +32,7 @@ public class SingletonManager {
 
 
     /*public static void DisposeAll () {
-        foreach (var singleton in Singletons) {
+        foreach (ISingleton singleton in Singletons) {
             singleton.Dispose_();
         }
     }*/

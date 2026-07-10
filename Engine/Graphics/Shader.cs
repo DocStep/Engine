@@ -75,7 +75,7 @@ public class Shader : IDisposable {
 
     public void Use () {
         GL.UseProgram(_program);
-        //var err = GL.GetError();
+        //GLEnum err = GL.GetError();
         //if (err != GLEnum.NoError) 
         //    Console.WriteLine($"UseProgram({_program}, {Name}) Error: {err}");
     }

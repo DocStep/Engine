@@ -29,7 +29,7 @@ public sealed class Cube : IDisposable {
         _effect.DirectionalLight0.DiffuseColor = Vector3.One; // white light
         _effect.AmbientLightColor = new Vector3(0.25f, 0.25f, 0.25f);
 
-        var (vertices, indices) = BuildMesh();
+        (VertexPositionNormalColor[] vertices, short[] indices) = BuildMesh();
 
         _vertexBuffer = new VertexBuffer(
             graphicsDevice,
@@ -54,7 +54,7 @@ public sealed class Cube : IDisposable {
         graphicsDevice.SetVertexBuffer(_vertexBuffer);
         graphicsDevice.Indices = _indexBuffer;
 
-        foreach (var pass in _effect.CurrentTechnique.Passes) {
+        foreach (EffectPass pass in _effect.CurrentTechnique.Passes) {
             pass.Apply();
             graphicsDevice.DrawIndexedPrimitives(
                 PrimitiveType.TriangleList,
@@ -65,7 +65,7 @@ public sealed class Cube : IDisposable {
     }
 
     private static (VertexPositionNormalColor[] vertices, short[] indices) BuildMesh () {
-        var faces = new[] {
+        (Vector3 normal, Vector3 right, Vector3 up)[] faces = new[] {
             (normal: Vector3.Forward, right: Vector3.Right, up: Vector3.Up),       // +Z front
             (normal: Vector3.Backward, right: Vector3.Left, up: Vector3.Up),       // -Z back
             (normal: Vector3.Right, right: Vector3.Backward, up: Vector3.Up),      // +X right
@@ -74,12 +74,12 @@ public sealed class Cube : IDisposable {
             (normal: Vector3.Down, right: Vector3.Right, up: Vector3.Forward),     // -Y bottom
         };
 
-        var vertices = new VertexPositionNormalColor[24];
-        var indices = new short[36];
+        VertexPositionNormalColor[] vertices = new VertexPositionNormalColor[24];
+        short[] indices = new short[36];
         Color color = Color.LightGray;
 
         for (int f = 0; f < faces.Length; f++) {
-            var (normal, right, up) = faces[f];
+            (Vector3 normal, Vector3 right, Vector3 up) = faces[f];
             Vector3 center = normal * 0.5f;
 
             Vector3 bl = center - right * 0.5f - up * 0.5f;

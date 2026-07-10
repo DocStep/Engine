@@ -22,14 +22,14 @@ internal static class Utils {
     const float Deg2Rad = MathF.PI/180f;
     extension(Matrix4x4) {
         public static Matrix4x4 RotationEuler (float x, float y, float z) {
-            var q = Quaternion.CreateFromYawPitchRoll(y*Deg2Rad, x*Deg2Rad, z*Deg2Rad);
+            Quaternion q = Quaternion.CreateFromYawPitchRoll(y*Deg2Rad, x*Deg2Rad, z*Deg2Rad);
             return Matrix4x4.CreateFromQuaternion(q);
         }
     }
     extension(Matrix4x4) {
         public static Matrix4x4 RotationEuler (Vector3 euler) {
             euler *= Deg2Rad;
-            var q = Quaternion.CreateFromYawPitchRoll(euler.Y, euler.X, euler.Z);
+            Quaternion q = Quaternion.CreateFromYawPitchRoll(euler.Y, euler.X, euler.Z);
             return Matrix4x4.CreateFromQuaternion(q);
         }
     }
@@ -43,8 +43,8 @@ internal static class Utils {
                 up = MathF.Abs(direction.Y) > 0.999f ? Vector3.UnitX : Vector3.UnitY;
             }
 
-            var right = Vector3.Normalize(Vector3.Cross(up, direction));
-            var localUp = Vector3.Cross(direction, right);
+            Vector3 right = Vector3.Normalize(Vector3.Cross(up, direction));
+            Vector3 localUp = Vector3.Cross(direction, right);
 
             return new Matrix4x4(
                 right.X, right.Y, right.Z, 0f,
@@ -62,10 +62,10 @@ internal static class Utils {
             up = 0.999f < MathF.Abs(direction.Y) ? Vector3.UnitX : Vector3.UnitY;
         }
 
-        var right = Vector3.Normalize(Vector3.Cross(up, direction));
-        var newUp = Vector3.Cross(direction, right);
+        Vector3 right = Vector3.Normalize(Vector3.Cross(up, direction));
+        Vector3 newUp = Vector3.Cross(direction, right);
 
-        var m = new Matrix4x4(
+        Matrix4x4 m = new Matrix4x4(
             right.X, right.Y, right.Z, 0f,
             newUp.X, newUp.Y, newUp.Z, 0f,
             direction.X, direction.Y, direction.Z, 0f,
@@ -182,7 +182,7 @@ internal static class Utils {
 
         for (int i = 0; i < segments; i++) {
             float t = i*MathF.Tau/segments;
-            var pos = center+radius*(MathF.Cos(t)*u+MathF.Sin(t)*v);
+            Vector3 pos = center+radius*(MathF.Cos(t)*u+MathF.Sin(t)*v);
             vertices.Add(new Graphics.Vertex { Position = pos });
         }
 
@@ -194,12 +194,12 @@ internal static class Utils {
 
     public static void AppendHalfCircle (List<Graphics.Vertex> vertices, List<uint> indices, Vector3 center, float radius, int segments, Vector3 u, Vector3 up, bool flip) {
         uint start = (uint)vertices.Count;
-        var upDir = flip ? -up : up;
+        Vector3 upDir = flip ? -up : up;
         int steps = Math.Max(segments/2, 2);
 
         for (int i = 0; i <= steps; i++) {
             float t = i*MathF.PI/steps;
-            var pos = center+radius*(MathF.Cos(t)*u+MathF.Sin(t)*upDir);
+            Vector3 pos = center+radius*(MathF.Cos(t)*u+MathF.Sin(t)*upDir);
             vertices.Add(new Graphics.Vertex { Position = pos });
         }
 

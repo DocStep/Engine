@@ -73,7 +73,7 @@ public class TextRenderer : IDisposable {
         float screenHeight = Engine.Window.Size.Y;
 
         foreach (char c in text) {
-            if (!_atlas.Chars.TryGetValue(c, out var ci)) continue;
+            if (!_atlas.Chars.TryGetValue(c, out FontAtlas.CharInfo ci)) continue;
 
             float x0 = cursorX + ci.XOffset;
             float y0 = y + ci.YOffset;
@@ -92,7 +92,7 @@ public class TextRenderer : IDisposable {
             cursorX += ci.XAdvance;
         }
 
-        var ortho = Matrix4x4.CreateOrthographicOffCenter(0, screenWidth, screenHeight, 0, -1f, 1f);
+        Matrix4x4 ortho = Matrix4x4.CreateOrthographicOffCenter(0, screenWidth, screenHeight, 0, -1f, 1f);
 
         GL.Disable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Blend);
@@ -107,7 +107,7 @@ public class TextRenderer : IDisposable {
         GL.BindVertexArray(_vao);
         GL.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
 
-        var arr = _vertices.ToArray();
+        Vertex[] arr = _vertices.ToArray();
         fixed (Vertex* ptr = arr) {
             GL.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(arr.Length*sizeof(Vertex)), ptr, BufferUsageARB.StreamDraw);
         }

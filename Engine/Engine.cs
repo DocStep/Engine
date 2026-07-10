@@ -81,7 +81,7 @@ public class Engine : Singleton<Engine>, IDisposable {
 
         //Console.WriteLine($"========== Init Finish ==========");
 
-        var options = Silk.NET.Windowing.WindowOptions.Default with {
+        Silk.NET.Windowing.WindowOptions options = Silk.NET.Windowing.WindowOptions.Default with {
             Size = new Silk.NET.Maths.Vector2D<int>(1280, 720),
             Title = "Engine",
             VSync = false,
@@ -90,9 +90,9 @@ public class Engine : Singleton<Engine>, IDisposable {
 
         Window = Silk.NET.Windowing.Window.Create(options);
 
-        var monitors = Silk.NET.Windowing.Monitor.GetMonitors(Window);
-        var monitor = monitors.First();
-        var screenSize = monitor.VideoMode.Resolution ?? new Silk.NET.Maths.Vector2D<int>(1920, 1080);
+        IEnumerable<Silk.NET.Windowing.IMonitor> monitors = Silk.NET.Windowing.Monitor.GetMonitors(Window);
+        Silk.NET.Windowing.IMonitor monitor = monitors.First();
+        Silk.NET.Maths.Vector2D<int> screenSize = monitor.VideoMode.Resolution ?? new Silk.NET.Maths.Vector2D<int>(1920, 1080);
         Window.Position = new Silk.NET.Maths.Vector2D<int>(
             (screenSize.X - options.Size.X)/2,
             (screenSize.Y - options.Size.Y)/2);
@@ -107,10 +107,6 @@ public class Engine : Singleton<Engine>, IDisposable {
     private void OnLoad () {
         Input = Silk.NET.Input.InputWindowExtensions.CreateInput(Window);
         InputState.Init(Input);
-
-        /*foreach (var keyboard in Input.Keyboards) {
-            keyboard.KeyDown += OnKeyDown;
-        }*/
 
         Console.WriteLine($"===== Systems Layer =====");
 

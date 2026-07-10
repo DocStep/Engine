@@ -56,7 +56,7 @@ public class Json : Singleton<Json> {
     static readonly Dictionary<string, object> FileLocks = new();
 
     static object GetLock (string path) {
-        if (!FileLocks.TryGetValue(path, out var locker)) {
+        if (!FileLocks.TryGetValue(path, out object? locker)) {
             locker = new object();
             FileLocks[path] = locker;
         }

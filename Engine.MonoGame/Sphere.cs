@@ -27,7 +27,7 @@ public sealed class Sphere : IDisposable {
         //_effect.DirectionalLight0.Direction = new Vector3(-1, -1, -1);
         //_effect.DirectionalLight0.DiffuseColor = Color.White.ToVector3();
 
-        var (vertices, indices) = BuildMesh(radius, segments, color ?? Color.Yellow);
+        (VertexPositionNormalColor[] vertices, short[] indices) = BuildMesh(radius, segments, color ?? Color.Yellow);
         _indexCount = indices.Length;
 
         _vertexBuffer = new VertexBuffer(
@@ -84,7 +84,7 @@ public sealed class Sphere : IDisposable {
         graphicsDevice.SetVertexBuffer(_vertexBuffer);
         graphicsDevice.Indices = _indexBuffer;
 
-        foreach (var pass in _effect.CurrentTechnique.Passes) {
+        foreach (EffectPass pass in _effect.CurrentTechnique.Passes) {
             pass.Apply();
 
             graphicsDevice.DrawIndexedPrimitives(
@@ -99,7 +99,7 @@ public sealed class Sphere : IDisposable {
         int rings = segments;
         int sectors = segments;
 
-        var vertices = new List<VertexPositionNormalColor>();
+        List<VertexPositionNormalColor> vertices = new List<VertexPositionNormalColor>();
 
         for (int r = 0; r <= rings; r++) {
             float v = (float)r / rings;
@@ -123,7 +123,7 @@ public sealed class Sphere : IDisposable {
             }
         }
 
-        var indices = new List<short>();
+        List<short> indices = new List<short>();
         int rowStride = sectors + 1;
 
         for (int r = 0; r < rings; r++) {
@@ -138,8 +138,8 @@ public sealed class Sphere : IDisposable {
             }
         }
 
-        var vArr = vertices.ToArray();
-        var iArr = indices.ToArray();
+        VertexPositionNormalColor[] vArr = vertices.ToArray();
+        short[] iArr = indices.ToArray();
 
         //BuildSmoothNormals(vArr, iArr);
 

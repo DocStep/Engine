@@ -4,8 +4,8 @@
 public static class Cylinder {
 
     public static MeshData Generate (float radius = 0.5f, float height = 1f, int segments = 24) {
-        var vertices = new List<Vertex>();
-        var indices = new List<uint>();
+        List<Vertex> vertices = new List<Vertex>();
+        List<uint> indices = new List<uint>();
 
         float halfHeight = 0.5f*height;
 
@@ -20,9 +20,9 @@ public static class Cylinder {
                 float cosPhi = MathF.Cos(phi);
                 float sinPhi = MathF.Sin(phi);
 
-                var position = new Vector3(radius*cosPhi, y, radius*sinPhi);
-                var normal = new Vector3(cosPhi, 0f, sinPhi);
-                var uv = new Vector2((float)seg/segments, v);
+                Vector3 position = new Vector3(radius*cosPhi, y, radius*sinPhi);
+                Vector3 normal = new Vector3(cosPhi, 0f, sinPhi);
+                Vector2 uv = new Vector2((float)seg/segments, v);
 
                 vertices.Add(new Vertex(position, normal, uv));
             }
@@ -54,9 +54,9 @@ public static class Cylinder {
             float cosPhi = MathF.Cos(phi);
             float sinPhi = MathF.Sin(phi);
 
-            var position = new Vector3(radius*cosPhi, -halfHeight, radius*sinPhi);
-            var normal = new Vector3(0f, -1f, 0f);
-            var uv = new Vector2(0.5f + 0.5f*cosPhi, 0.5f + 0.5f*sinPhi);
+            Vector3 position = new Vector3(radius*cosPhi, -halfHeight, radius*sinPhi);
+            Vector3 normal = new Vector3(0f, -1f, 0f);
+            Vector2 uv = new Vector2(0.5f + 0.5f*cosPhi, 0.5f + 0.5f*sinPhi);
 
             vertices.Add(new Vertex(position, normal, uv));
         }
@@ -80,9 +80,9 @@ public static class Cylinder {
             float cosPhi = MathF.Cos(phi);
             float sinPhi = MathF.Sin(phi);
 
-            var position = new Vector3(radius*cosPhi, halfHeight, radius*sinPhi);
-            var normal = new Vector3(0f, 1f, 0f);
-            var uv = new Vector2(0.5f + 0.5f*cosPhi, 0.5f + 0.5f*sinPhi);
+            Vector3 position = new Vector3(radius*cosPhi, halfHeight, radius*sinPhi);
+            Vector3 normal = new Vector3(0f, 1f, 0f);
+            Vector2 uv = new Vector2(0.5f + 0.5f*cosPhi, 0.5f + 0.5f*sinPhi);
 
             vertices.Add(new Vertex(position, normal, uv));
         }
@@ -100,8 +100,8 @@ public static class Cylinder {
     }
 
     public static MeshData GenerateWireframe (float radius = 0.5f, float height = 1f, int segments = 24) {
-        var vertices = new List<Vertex>();
-        var indices = new List<uint>();
+        List<Vertex> vertices = new List<Vertex>();
+        List<uint> indices = new List<uint>();
 
         float halfHeight = 0.5f*height;
 

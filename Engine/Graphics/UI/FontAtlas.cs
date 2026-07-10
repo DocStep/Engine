@@ -23,16 +23,16 @@ public class FontAtlas : IDisposable {
         GL gl = Renderer.Instance.GL;
         int atlasWidth = 512;
         int atlasHeight = 512;
-        var fontData = File.ReadAllBytes(ttfPath);
-        var atlas = new FontAtlas {
+        byte[] fontData = File.ReadAllBytes(ttfPath);
+        FontAtlas atlas = new FontAtlas {
             GL = Renderer.Instance.GL,
             AtlasWidth = atlasWidth,
             AtlasHeight = atlasHeight,
             FontSize = fontSize,
         };
 
-        var bakedChars = new StbTrueType.stbtt_bakedchar[96]; /// ASCII 32-127
-        var bitmap = new byte[atlasWidth*atlasHeight];
+        StbTrueType.stbtt_bakedchar[] bakedChars = new StbTrueType.stbtt_bakedchar[96]; /// ASCII 32-127
+        byte[] bitmap = new byte[atlasWidth*atlasHeight];
 
         fixed (byte* fontPtr = fontData)
         fixed (byte* bitmapPtr = bitmap)
@@ -41,7 +41,7 @@ public class FontAtlas : IDisposable {
         }
 
         /// expand single-channel bitmap to RGBA so it samples correctly in the shader
-        var rgba = new byte[atlasWidth*atlasHeight*4];
+        byte[] rgba = new byte[atlasWidth*atlasHeight*4];
         for (int i = 0; i < atlasWidth*atlasHeight; i++) {
             rgba[i*4+0] = 255;
             rgba[i*4+1] = 255;
@@ -58,7 +58,7 @@ public class FontAtlas : IDisposable {
         gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
 
         for (int i = 0; i < 96; i++) {
-            var bc = bakedChars[i];
+            StbTrueType.stbtt_bakedchar bc = bakedChars[i];
             atlas.Chars[(char)(32 + i)] = new CharInfo {
                 U0 = bc.x0 / (float)atlasWidth,
                 V0 = bc.y0 / (float)atlasHeight,

@@ -26,11 +26,11 @@ public class MeshData {
             uint ib = Indices[i + 1];
             uint ic = Indices[i + 2];
 
-            var a = Vertices[ia].Position;
-            var b = Vertices[ib].Position;
-            var c = Vertices[ic].Position;
+            Vector3 a = Vertices[ia].Position;
+            Vector3 b = Vertices[ib].Position;
+            Vector3 c = Vertices[ic].Position;
 
-            var faceNormal = Vector3.Cross(b - a, c - a);
+            Vector3 faceNormal = Vector3.Cross(b - a, c - a);
 
             Vertices[ia].Normal += faceNormal;
             Vertices[ib].Normal += faceNormal;
@@ -38,7 +38,7 @@ public class MeshData {
         }
 
         for (int i = 0; i < Vertices.Length; i++) {
-            var n = Vertices[i].Normal;
+            Vector3 n = Vertices[i].Normal;
             if (0 < n.LengthSquared())
                 Vertices[i].Normal = Vector3.Normalize(n);
         }

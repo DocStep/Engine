@@ -4,8 +4,8 @@
 public static class Sphere {
 
     public static MeshData Generate (float radius = 0.5f, int latSegments = 16, int lonSegments = 24) {
-        var vertices = new List<Vertex>();
-        var indices = new List<uint>();
+        List<Vertex> vertices = new List<Vertex>();
+        List<uint> indices = new List<uint>();
 
         for (int lat = 0; lat <= latSegments; lat++) {
             float theta = MathF.PI*lat/latSegments; /// 0 (top) .. PI (bottom)
@@ -21,9 +21,9 @@ public static class Sphere {
                 float y = cosTheta;
                 float z = sinPhi*sinTheta;
 
-                var position = new Vector3(radius*x, radius*y, radius*z);
-                var normal = new Vector3(x, y, z);
-                var uv = new Vector2((float)lon/lonSegments, 1f - (float)lat/latSegments);
+                Vector3 position = new Vector3(radius*x, radius*y, radius*z);
+                Vector3 normal = new Vector3(x, y, z);
+                Vector2 uv = new Vector2((float)lon/lonSegments, 1f - (float)lat/latSegments);
 
                 vertices.Add(new Vertex(position, normal, uv));
             }
@@ -52,8 +52,8 @@ public static class Sphere {
         Vector3 center = Vector3.Zero;
         float radius = 0.5f;
         int segments = 32;
-        var vertices = new List<Vertex>(segments*3);
-        var indices = new List<uint>(segments*6);
+        List<Vertex> vertices = new List<Vertex>(segments*3);
+        List<uint> indices = new List<uint>(segments*6);
 
         Utils.AppendCircle(vertices, indices, center, radius, segments, Axis.XY);
         Utils.AppendCircle(vertices, indices, center, radius, segments, Axis.XZ);

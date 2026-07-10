@@ -55,7 +55,7 @@ public sealed class WireframeCube : IDisposable {
         // keep skybox centered on camera
         _effect.World = Matrix.CreateTranslation(cameraPos);
 
-        foreach (var pass in _effect.CurrentTechnique.Passes) {
+        foreach (EffectPass pass in _effect.CurrentTechnique.Passes) {
             pass.Apply();
             gd.DrawIndexedPrimitives(PrimitiveType.LineList, 0, 0, _indexCount / 2);
         }

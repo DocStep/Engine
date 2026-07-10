@@ -58,7 +58,7 @@ public static class lib {
     }
     public static string enum_string (IEnumerable ienum) {
         string str = string.Empty;
-        foreach (var item in ienum)
+        foreach (object item in ienum)
             str += item.ToString() + Environment.NewLine;
         return str;
     }
@@ -73,7 +73,7 @@ public static class lib {
     }
     public static Dictionary<string, TEnum> Name_Enum_Dict<TEnum> (Dictionary<TEnum, string> dictSrc) where TEnum : Enum {
         Dictionary<string, TEnum> dictDst = new();
-        foreach (var enumKV in dictSrc)
+        foreach (KeyValuePair<TEnum, string> enumKV in dictSrc)
             dictDst.Add(enumKV.Value, enumKV.Key);
         return dictDst;
     }

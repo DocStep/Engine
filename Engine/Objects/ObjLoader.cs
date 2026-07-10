@@ -5,13 +5,13 @@ namespace Engine.Graphics;
 
 public static class ObjLoader {
     public static MeshData Load (string path, Silk.NET.OpenGL.PrimitiveType primitiveType = Silk.NET.OpenGL.PrimitiveType.Triangles) {
-        var positions = new List<Vector3>();
-        var uvs = new List<Vector2>();
-        var normals = new List<Vector3>();
+        List<Vector3> positions = new List<Vector3>();
+        List<Vector2> uvs = new List<Vector2>();
+        List<Vector3> normals = new List<Vector3>();
 
-        var vertices = new List<Vertex>();
-        var indices = new List<uint>();
-        var cache = new Dictionary<(int, int, int), uint>();
+        List<Vertex> vertices = new List<Vertex>();
+        List<uint> indices = new List<uint>();
+        Dictionary<(int, int, int), uint> cache = new Dictionary<(int, int, int), uint>();
         bool hasAnyNormal = false;
 
         foreach (string rawLine in File.ReadLines(path)) {
@@ -38,7 +38,7 @@ public static class ObjLoader {
                     break;
 
                 case "f": {
-                        var faceIndices = new uint[tokens.Length - 1];
+                        uint[] faceIndices = new uint[tokens.Length - 1];
                         for (int i = 1; i < tokens.Length; i++)
                             faceIndices[i - 1] = ResolveVertex(tokens[i]);
 
@@ -52,7 +52,7 @@ public static class ObjLoader {
             }
         }
 
-        var data = new MeshData(vertices.ToArray(), indices.ToArray(), primitiveType);
+        MeshData data = new MeshData(vertices.ToArray(), indices.ToArray(), primitiveType);
         if (!hasAnyNormal)
             data.RecalculateNormals();
 
@@ -66,13 +66,13 @@ public static class ObjLoader {
             int ti = parts.Length > 1 && parts[1].Length > 0 ? ParseObjIndex(parts[1], uvs.Count) : -1;
             int ni = parts.Length > 2 && parts[2].Length > 0 ? ParseObjIndex(parts[2], normals.Count) : -1;
 
-            var key = (vi, ti, ni);
+            (int vi, int ti, int ni) key = (vi, ti, ni);
             if (cache.TryGetValue(key, out uint existing))
                 return existing;
 
-            var position = positions[vi];
-            var uv = ti >= 0 ? uvs[ti] : Vector2.Zero;
-            var normal = ni >= 0 ? normals[ni] : Vector3.Zero;
+            Vector3 position = positions[vi];
+            Vector2 uv = 0 <= ti ? uvs[ti] : Vector2.Zero;
+            Vector3 normal = ni >= 0 ? normals[ni] : Vector3.Zero;
 
             uint newIndex = (uint)vertices.Count;
             vertices.Add(new Vertex(position, normal, uv));
@@ -82,19 +82,19 @@ public static class ObjLoader {
     }
 
     public static void Save (string path, MeshData data) {
-        using var writer = new StreamWriter(path);
+        using StreamWriter writer = new StreamWriter(path);
 
         writer.WriteLine("# Exported by Engine.Graphics.ObjLoader");
 
-        foreach (var vert in data.Vertices)
+        foreach (Vertex vert in data.Vertices)
             writer.WriteLine(string.Format(CultureInfo.InvariantCulture,
                 "v {0} {1} {2}", vert.Position.X, vert.Position.Y, vert.Position.Z));
 
-        foreach (var vert in data.Vertices)
+        foreach (Vertex vert in data.Vertices)
             writer.WriteLine(string.Format(CultureInfo.InvariantCulture,
                 "vt {0} {1}", vert.UV.X, vert.UV.Y));
 
-        foreach (var vert in data.Vertices)
+        foreach (Vertex vert in data.Vertices)
             writer.WriteLine(string.Format(CultureInfo.InvariantCulture,
                 "vn {0} {1} {2}", vert.Normal.X, vert.Normal.Y, vert.Normal.Z));
 
@@ -113,6 +113,6 @@ public static class ObjLoader {
     /// OBJ indices are 1-based; negative indices count back from the end of the list so far.
     private static int ParseObjIndex (string s, int count) {
         int i = int.Parse(s, CultureInfo.InvariantCulture);
-        return i > 0 ? i - 1 : count + i;
+        return 0 < i ? i - 1 : count + i;
     }
 }

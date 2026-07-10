@@ -12,7 +12,7 @@ public class WorldGrid : IDisposable {
     public WorldGrid (int halfExtent = 10, float spacing = 1f) {
         GL = Graphics.Renderer.Instance.GL; ;
 
-        var vertices = new List<float>();
+        List<float> vertices = new List<float>();
         float extent = halfExtent * spacing;
 
         for (int i = -halfExtent; i <= halfExtent; i++) {
@@ -35,7 +35,7 @@ public class WorldGrid : IDisposable {
         _vbo = GL.GenBuffer();
         GL.BindBuffer(GLEnum.ArrayBuffer, _vbo);
         unsafe {
-            var verticesArray = vertices.ToArray();
+            float[] verticesArray = vertices.ToArray();
             fixed (float* v = verticesArray) {
                 GL.BufferData(
                     GLEnum.ArrayBuffer,

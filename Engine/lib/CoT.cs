@@ -23,19 +23,19 @@ public class CoT {
 
     public static int GetCount() {
         int count = 0;
-        foreach (var kv in Tasks)
+        foreach (KeyValuePair<string, ConcurrentBag<CoT>> kv in Tasks)
             count += kv.Value.Count;
         return count;
     }
 
     public async static Task Start(Func<Task> actionFunc, bool locked = false,
-        [System.Runtime.CompilerServices.CallerMemberName] string flag = null) {
+        [System.Runtime.CompilerServices.CallerMemberName] string? flag = null) {
 
         if (actionFunc == null) return;
 
         flag ??= actionFunc.Method.Name;
 
-        var cot = new CoT() {
+        CoT cot = new CoT() {
             flag = flag,
             locked = locked,
             active = true,
@@ -43,7 +43,7 @@ public class CoT {
         };
 
         lock (_lock) {
-            var bag = Tasks.GetOrAdd(flag, _ => new ConcurrentBag<CoT>());
+            ConcurrentBag<CoT> bag = Tasks.GetOrAdd(flag, _ => new ConcurrentBag<CoT>());
             bag.Add(cot);
             Count++;
         }
@@ -73,35 +73,35 @@ public class CoT {
     }
 
     public static bool isActiveCoroutine(string flag) {
-        if (!Tasks.TryGetValue(flag, out var bag))
+        if (!Tasks.TryGetValue(flag, out ConcurrentBag<CoT>? bag))
             return false;
 
-        foreach (var cot in bag)
+        foreach (CoT cot in bag)
             if (cot.task != null)
                 return true;
 
         return false;
     }
 
-    public static CoT Get(string flag, bool activeCheck = false) {
+    public static CoT? Get(string flag, bool activeCheck = false) {
         if (activeCheck && !isActiveFlag(flag))
             return null;
 
-        if (!Tasks.TryGetValue(flag, out var bag))
+        if (!Tasks.TryGetValue(flag, out ConcurrentBag<CoT>? bag))
             return null;
 
-        foreach (var cot in bag)
+        foreach (CoT cot in bag)
             return cot; /// first
 
         return null;
     }
 
     private static void Remove(CoT cot) {
-        if (!Tasks.TryGetValue(cot.flag, out var bag))
+        if (!Tasks.TryGetValue(cot.flag, out ConcurrentBag<CoT>? bag))
             return;
 
-        var newBag = new ConcurrentBag<CoT>();
-        foreach (var c in bag)
+        ConcurrentBag<CoT> newBag = new ConcurrentBag<CoT>();
+        foreach (CoT c in bag)
             if (c != cot)
                 newBag.Add(c);
 
@@ -117,10 +117,10 @@ public class CoT {
     }
 
     public static void Stop(string flag, bool forceLocked = false) {
-        if (!Tasks.TryGetValue(flag, out var bag))
+        if (!Tasks.TryGetValue(flag, out ConcurrentBag<CoT>? bag))
             return;
 
-        foreach (var cot in bag) {
+        foreach (CoT cot in bag) {
             if (!lib.Implies(cot.locked, forceLocked))
                 continue;
 
@@ -136,17 +136,17 @@ public class CoT {
     }
 
     public static void StopAll(bool forceLocked = false) {
-        foreach (var kv in Tasks)
-            foreach (var cot in kv.Value)
+        foreach (KeyValuePair<string, ConcurrentBag<CoT>> kv in Tasks)
+            foreach (CoT cot in kv.Value)
                 Stop(cot, forceLocked);
     }
 
     public static void StopAllWith(string flagPart, bool forceLocked = false) {
-        foreach (var kv in Tasks) {
+        foreach (KeyValuePair<string, ConcurrentBag<CoT>> kv in Tasks) {
             if (!kv.Key.Contains(flagPart))
                 continue;
 
-            foreach (var cot in kv.Value)
+            foreach (CoT cot in kv.Value)
                 Stop(cot, forceLocked);
         }
     }
@@ -158,7 +158,7 @@ public class CoT {
     public static void WriteAll() {
         string s = string.Empty;
 
-        foreach (var kv in Tasks)
+        foreach (KeyValuePair<string, ConcurrentBag<CoT>> kv in Tasks)
             s += kv.Key + ": " + kv.Value.Count + "\n";
 
         Log.log(s);

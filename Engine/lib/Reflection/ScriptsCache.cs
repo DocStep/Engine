@@ -10,7 +10,7 @@ public static class ScriptsCache<T> {
         if (Scripts is not null) return Scripts;
 
         Scripts = new List<T>(0);
-        foreach (var script in reflection.Scripts) {
+        foreach (IActionScript script in reflection.Scripts) {
             if (script is T type) {
                 Scripts.Add(type);
             }

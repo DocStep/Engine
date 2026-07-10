@@ -14,7 +14,7 @@ public sealed class WorldAxes : IDisposable {
             LightingEnabled = false
         };
 
-        var vertices = new VertexPositionColor[] {
+        VertexPositionColor[] vertices = new VertexPositionColor[] {
             // X axis (red)
             new(Vector3.Zero, Color.Red),
             new(new Vector3(length, 0, 0), Color.Red),
@@ -39,7 +39,7 @@ public sealed class WorldAxes : IDisposable {
 
         gd.SetVertexBuffer(_vb);
 
-        foreach (var pass in _effect.CurrentTechnique.Passes) {
+        foreach (EffectPass pass in _effect.CurrentTechnique.Passes) {
             pass.Apply();
 
             gd.DrawPrimitives(
