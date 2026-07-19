@@ -326,7 +326,7 @@ public class Renderer {
         _sh_Axes.Use();
         _sh_Axes.SetMatrix4(View, Matrix4x4.ToArray(gizmoView));
         _sh_Axes.SetMatrix4(Projection, Matrix4x4.ToArray(gizmoProjection));
-        _sh_Axes.SetMatrix4(Model, Matrix4x4.ToArray(Matrix4x4.Identity));
+        _sh_Axes.SetMatrix4(Model, Matrix4x4.ToArray(Matrix4x4.CreateScale(0.002f)));
 
         _mesh_AxesWireframe.Draw(PrimitiveType.Lines);
 

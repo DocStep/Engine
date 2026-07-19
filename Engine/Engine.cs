@@ -144,7 +144,7 @@ public class Engine : Singleton<Engine>, IDisposable {
             ComponentManager.Instance.UpdateRender();
         }
 
-        if (Inputs.Actions[Inputs.NavBack].pressed) Window.Close();
+        if (Inputs.Actions[Inputs.Exit].pressed) Window.Close();
     }
 
     private void FixedUpdate () {

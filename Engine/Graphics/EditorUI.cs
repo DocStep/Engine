@@ -1,46 +1,81 @@
 ﻿using Silk.NET.OpenGL.Extensions.ImGui;
 using ImGuiNET;
+using System.Numerics;
 
 namespace Engine.Graphics;
-
 
 public class EditorUI : Singleton<EditorUI>, IDisposable {
     public EditorUI () {
         ImGUI = new ImGuiController(Renderer.Instance.GL, Engine.Window, Engine.Input);
         Renderer.Instance.de_Dispose += Dispose;
+
+        var io = ImGui.GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
+        io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
     }
 
     public readonly ImGuiController ImGUI = null!;
     public bool isUIClick = false;
     private bool _isClosing = false;
+    private bool _dockBuilt = false;
 
 
     public void Update () {
+        if (_isClosing) return;
+
         ImGUI.Update((float)Engine.deltaTime);
 
-        if (!_isClosing && ImGui.GetIO().WantCaptureMouse)
+        if (ImGui.GetIO().WantCaptureMouse || ImGui.IsAnyItemActive())
             isUIClick = true;
-        else isUIClick = false;
+        else
+            isUIClick = false;
     }
 
     public void Draw () {
-        ImGui.Begin("Inspector");
-        GameObject? selectedGO = Renderer.Instance._gizmo_Selected.selectedMesh?.owner;
-        if (selectedGO is not null) {
-            ImGui.Text("Selected: " + Renderer.Instance._gizmo_Selected.selectedMesh?.owner.Name);
-            ImGui.DragFloat3("Position", ref selectedGO.Transform.Position);
-        }
-        ImGuiIOPtr io = ImGui.GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
-        ImGui.End();
+        if (_isClosing) return;
+
+        ImGuiViewportPtr viewport = ImGui.GetMainViewport();
+        uint dockspaceId = ImGui.DockSpaceOverViewport(0, viewport, ImGuiDockNodeFlags.PassthruCentralNode);
+
+        DrawInspector(dockspaceId);
+        DrawTool(dockspaceId);
 
         ImGUI.Render();
     }
 
+    private void DrawInspector (uint dockspaceId) {
+        ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
+
+        ImGui.Begin("Inspector");
+        GameObject? selectedGO = Renderer.Instance._gizmo_Selected.selectedMesh?.owner;
+        if (selectedGO is not null) {
+            ImGui.Text("Selected:");
+            ImGui.LabelText("Name", selectedGO.Name);
+            ImGui.Text("Transform");
+            ImGui.DragFloat3("Position", ref selectedGO.Transform.Position);
+            ImGui.DragFloat3("Rotation", ref selectedGO.Transform.Rotation);
+            ImGui.DragFloat3("Scale", ref selectedGO.Transform.Scale);
+        }
+        ImGui.End();
+    }
+
+    private void DrawTool (uint dockspaceId) {
+        ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
+
+        ImGui.Begin("Tool");
+        if (ImGui.Button("Reset")) {
+            
+        }
+        ImGui.End();
+    }
+
+
 
     public void Dispose () {
-        ImGUI.Dispose();
+        if (_isClosing) return;
         _isClosing = true;
+
+        ImGUI.Dispose();
     }
 
 }
