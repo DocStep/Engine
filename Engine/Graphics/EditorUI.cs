@@ -9,15 +9,16 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGUI = new ImGuiController(Renderer.Instance.GL, Engine.Window, Engine.Input);
         Renderer.Instance.de_Dispose += Dispose;
 
-        var io = ImGui.GetIO();
+        ImGuiIOPtr io = ImGui.GetIO();
         io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
         io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
+
+        ImGui.LoadIniSettingsFromDisk(io.IniFilename);
     }
 
     public readonly ImGuiController ImGUI = null!;
     public bool isUIClick = false;
     private bool _isClosing = false;
-    private bool _dockBuilt = false;
 
 
     public void Update () {
@@ -36,11 +37,17 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         ImGuiViewportPtr viewport = ImGui.GetMainViewport();
         uint dockspaceId = ImGui.DockSpaceOverViewport(0, viewport, ImGuiDockNodeFlags.PassthruCentralNode);
-
+        
         DrawInspector(dockspaceId);
-        DrawTool(dockspaceId);
+        //DrawTool(dockspaceId);
 
         ImGUI.Render();
+
+        ImGuiIOPtr io = ImGui.GetIO();
+        if (io.WantSaveIniSettings) {
+            ImGui.SaveIniSettingsToDisk(io.IniFilename);
+            io.WantSaveIniSettings = false;
+        }
     }
 
     private void DrawInspector (uint dockspaceId) {
