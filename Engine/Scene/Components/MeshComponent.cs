@@ -9,16 +9,17 @@ public class MeshComponent : Component, IRenderComponent, IComponentUpdate {
 
     [JsonIgnore] public Mesh? mesh = null;
     [JsonProperty("mesh")] public string? meshPath = null;
-    [JsonIgnore] public Shader shader = AssetsEngine._sh_Lit;
-    [JsonProperty("shader")] public string? shaderPath = null;
+    //[JsonIgnore] public Shader shader = AssetsEngine._sh_Lit;
+    //[JsonProperty("shader")] public string? shaderPath = null;
     [JsonIgnore] public Material material = AssetsEngine._mat_Lit;
     [JsonProperty("material")] public string? materialPath = null;
+    [JsonProperty("pass")] public RenderPass pass = RenderPass.Opaque;
 
     [JsonIgnore] private RenderInfo renderInfo;
 
 
     public void Update () {
-        if (mesh is null || shader is null || material is null) return;
+        if (mesh is null || material is null) return;
 
         Renderer.Instance.AddRenderInfo(CreateRenderInfo);
     }
@@ -34,7 +35,6 @@ public class MeshComponent : Component, IRenderComponent, IComponentUpdate {
                 scale = owner.Transform.Scale,
 
                 mesh = mesh,
-                shader = shader,
                 material = material,
                 primitiveType = mesh?.Data is not null ? mesh.Data.PrimitiveType : default,
             };

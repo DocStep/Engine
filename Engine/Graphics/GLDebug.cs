@@ -5,7 +5,7 @@ namespace Engine.Graphics;
 
 public static class GLDebug {
     public static void Init () {
-        GL = Renderer.Instance.GL;
+        GL = Renderer.GL;
 
         _lineVAO = GL.GenVertexArray();
         _lineVBO = GL.GenBuffer();
@@ -40,7 +40,7 @@ public static class GLDebug {
     internal static void DrawAll () {
         GL.Disable(EnableCap.DepthTest);
 
-        Renderer.Instance.SetSceneUniformsUnlit(AssetsEngine._sh_Unlit);
+        //Renderer.Instance.SetSceneUniformsUnlit(AssetsEngine._sh_Unlit);
         int count = Lines.Count;
         for (int i = 0; i < count; i++) {
             DrawLine(Lines[i]);

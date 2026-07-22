@@ -10,7 +10,7 @@ public class WorldGrid : IDisposable {
     private readonly uint _vertexCount;
 
     public WorldGrid (int halfExtent = 10, float spacing = 1f) {
-        GL = Graphics.Renderer.Instance.GL; ;
+        GL = Graphics.Renderer.GL; ;
 
         List<float> vertices = new List<float>();
         float extent = halfExtent * spacing;

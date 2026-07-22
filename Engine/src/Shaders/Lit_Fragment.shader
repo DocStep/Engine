@@ -4,7 +4,7 @@ in vec3 vNormal;
 in vec3 vFragPos;
 
 uniform vec3 uColor;
-uniform float uRoughness;
+uniform float uSmoothness;
 uniform float uMetallic;
 uniform vec3 uSunLightColor;
 uniform float uSunLightIntensity;
@@ -34,13 +34,13 @@ float G_Smith (float NdV, float NdL, float rough) {
 vec3 F_Schlick (float cosTheta, vec3 F0) {
     return F0 + (1.0 - F0)*pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
-vec3 F_SchlickRoughness (float cosTheta, vec3 F0, float roughness) {
-    vec3 maxF0 = max(vec3(1.0 - roughness), F0);
+vec3 F_SchlickSmoothness (float cosTheta, vec3 F0, float Smoothness) {
+    vec3 maxF0 = max(vec3(1.0 - Smoothness), F0);
     return F0 + (maxF0 - F0)*pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
-float GetSpecularOcclusion (float NdV, float occlusion, float roughness) {
-    return clamp(pow(NdV + occlusion, exp2(-16.0*roughness - 1.0)) - 1.0 + occlusion, 0.0, 1.0);
+float GetSpecularOcclusion (float NdV, float occlusion, float Smoothness) {
+    return clamp(pow(NdV + occlusion, exp2(-16.0*Smoothness - 1.0)) - 1.0 + occlusion, 0.0, 1.0);
 }
 
 vec2 DirToEquirectUV (vec3 dir) {
@@ -61,7 +61,7 @@ void main () {
     float NdH = max(dot(N, H), 0.0);
     float HdV = max(dot(H, V), 0.0);
 
-    float rough = max(uRoughness, 0.04);
+    float rough = max(uSmoothness, 0.04);
     float a = rough*rough;
 
     float a2 = max(a*a, 1e-3);
@@ -77,7 +77,7 @@ void main () {
     vec3 Lo = (kD*uColor/PI + spec)*uSunLightColor*uSunLightIntensity*NdL;
 
     /// --- Ambient diffuse ---
-    vec3 Fambient = F_SchlickRoughness(NdV, F0, rough);
+    vec3 Fambient = F_SchlickSmoothness(NdV, F0, rough);
     vec3 kDambient = (1.0 - Fambient)*(1.0 - uMetallic);
     vec3 diffuseAmbient = kDambient*uAmbientColor*uColor;
 

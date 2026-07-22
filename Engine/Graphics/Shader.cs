@@ -4,12 +4,8 @@ namespace Engine.Graphics;
 
 
 public class Shader : IDisposable {
-    private readonly GL GL;
-    private readonly uint _program;
-    public string Name = "Unnamed";
-
     public Shader (string vertexSource, string fragmentSource, string name = "unnamed") {
-        GL = Renderer.Instance.GL;
+        GL = Renderer.GL;
         Name = name;
 
         uint vertex = CompileShader(ShaderType.VertexShader, vertexSource);
@@ -30,21 +26,33 @@ public class Shader : IDisposable {
         GL.DetachShader(_program, fragment);
         GL.DeleteShader(vertex);
         GL.DeleteShader(fragment);
-    }
-    
-    private uint CompileShader (ShaderType type, string source) {
-        uint shader = GL.CreateShader(type);
-        GL.ShaderSource(shader, source);
-        GL.CompileShader(shader);
 
-        GL.GetShader(shader, ShaderParameterName.CompileStatus, out int status);
-        if (status == 0) {
-            string log = GL.GetShaderInfoLog(shader);
-            throw new Exception($"{type} failed to compile: {log}");
+        uint CompileShader (ShaderType type, string source) {
+            uint shader = GL.CreateShader(type);
+            GL.ShaderSource(shader, source);
+            GL.CompileShader(shader);
+
+            GL.GetShader(shader, ShaderParameterName.CompileStatus, out int status);
+            if (status == 0) {
+                string log = GL.GetShaderInfoLog(shader);
+                throw new Exception($"{type} failed to compile: {log}");
+            }
+
+            return shader;
         }
-
-        return shader;
     }
+    /*public Shader (Shader shader) : this(shader._vertexSource, shader._fragmentSource, shader.Name + " (copy)") {
+        pass = shader.pass;
+        depthTest = shader.depthTest;
+        depthWrite = shader.depthWrite;
+    }*/
+
+    private readonly GL GL;
+    private readonly uint _program;
+    public string Name = "Unnamed";
+    private readonly string _vertexSource;
+    private readonly string _fragmentSource;
+
 
 
     public const string View = "uView";
@@ -64,12 +72,11 @@ public class Shader : IDisposable {
     public const string Skybox = "uSkybox";
 
     public const string Color = "uColor";
-    public const string Roughness = "uRoughness";
+    public const string Smoothness = "uSmoothness";
     public const string Metallic = "uMetallic";
     public const string Alpha = "uAlpha";
     public const string Radius = "uRadius";
     public const string Fade = "uFade";
-
 
 
 

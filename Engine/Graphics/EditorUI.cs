@@ -10,7 +10,7 @@ namespace Engine.Graphics;
 
 public class EditorUI : Singleton<EditorUI>, IDisposable {
     public EditorUI () {
-        ImGUI = new ImGuiController(Renderer.Instance.GL, Engine.Window, Engine.Input);
+        ImGUI = new ImGuiController(Renderer.GL, Engine.Window, Engine.Input);
         Renderer.Instance.de_Dispose += Dispose;
 
         ImGuiIOPtr io = ImGui.GetIO();
@@ -43,7 +43,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         uint dockspaceId = ImGui.DockSpaceOverViewport(0, viewport, ImGuiDockNodeFlags.PassthruCentralNode);
         
         DrawInspector(dockspaceId);
-        //DrawTool(dockspaceId);
+        DrawInfo(dockspaceId);
 
         ImGUI.Render();
 
@@ -58,25 +58,26 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
 
         ImGui.Begin("Inspector");
-        GameObject? selectedGO = AssetsEngine._gizmo_Selected.selectedMesh?.owner;
+        GameObject? selectedGO = Gizmos._gizmo_Selected.selectedMesh?.owner;
         if (selectedGO is not null) {
             ImGui.Text("Selected:");
-            ImGui.LabelText("Name", selectedGO.Name);
+            ImGui.InputText("Name", ref selectedGO.Name, int.MaxValue);
             ImGui.Text("Transform");
-            ImGui.DragFloat3("Position", ref selectedGO.Transform.Position);
-            ImGui.DragFloat3("Rotation", ref selectedGO.Transform.Rotation);
-            ImGui.DragFloat3("Scale", ref selectedGO.Transform.Scale);
+            ImGui.DragFloat3("Position", ref selectedGO.Transform.Position, 0.1f);
+            ImGui.DragFloat3("Rotation", ref selectedGO.Transform.Rotation, 0.1f);
+            ImGui.DragFloat3("Scale", ref selectedGO.Transform.Scale, 0.1f);
         }
         ImGui.End();
     }
 
-    private void DrawTool (uint dockspaceId) {
+    private void DrawInfo (uint dockspaceId) {
         ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
 
-        ImGui.Begin("Tool");
-        if (ImGui.Button("Reset")) {
-            
-        }
+        ImGui.Begin("Info");
+        
+
+
+
         ImGui.End();
     }
 

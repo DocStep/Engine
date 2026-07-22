@@ -13,7 +13,7 @@ public class WorldAxes : IDisposable {
     private readonly uint _vertexCount;
 
     public WorldAxes (float length = 3f) {
-        GL = Graphics.Renderer.Instance.GL;
+        GL = Graphics.Renderer.GL;
 
         float[] vertices = {
             // Position           // Color (R,G,B)

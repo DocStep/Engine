@@ -5,7 +5,7 @@ namespace Engine.Graphics;
 
 public class Skybox : IDisposable {
     public Skybox (Shader shader, HdrTexture? texture) {
-        GL = Renderer.Instance.GL;
+        GL = Renderer.GL;
         _shader = shader;
         _texture = texture;
 

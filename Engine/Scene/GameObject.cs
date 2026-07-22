@@ -61,27 +61,27 @@ public class GameObject : ISavable {
                 break;
             case PrimitiveTypes.GizmoCube:
                 MeshComponent colliderMesh = AddComponent<MeshComponent>();
-                colliderMesh.mesh = AssetsEngine._mesh_CubeWireframe;
-                colliderMesh.material = AssetsEngine._mat_GizmosG;
-                colliderMesh.shader = AssetsEngine._sh_Unlit;
+                colliderMesh.mesh = Gizmos._mesh_CubeWireframe;
+                colliderMesh.material = Gizmos._mat_GizmosG;
+                colliderMesh.pass = RenderPass.Gizmo;
                 break;
             case PrimitiveTypes.GizmoSphere:
                 colliderMesh = AddComponent<MeshComponent>();
-                colliderMesh.mesh = AssetsEngine._mesh_SphereWireframe;
-                colliderMesh.material = AssetsEngine._mat_GizmosG;
-                colliderMesh.shader = AssetsEngine._sh_Unlit;
+                colliderMesh.mesh = Gizmos._mesh_SphereWireframe;
+                colliderMesh.material = Gizmos._mat_GizmosG;
+                colliderMesh.pass = RenderPass.Gizmo;
                 break;
             case PrimitiveTypes.GizmoCapsule:
                 colliderMesh = AddComponent<MeshComponent>();
-                colliderMesh.mesh = AssetsEngine._mesh_CapsuleWireframe;
-                colliderMesh.material = AssetsEngine._mat_GizmosG;
-                colliderMesh.shader = AssetsEngine._sh_Unlit;
+                colliderMesh.mesh = Gizmos._mesh_CapsuleWireframe;
+                colliderMesh.material = Gizmos._mat_GizmosG;
+                colliderMesh.pass = RenderPass.Gizmo;
                 break;
             case PrimitiveTypes.GizmoPlane:
                 colliderMesh = AddComponent<MeshComponent>();
-                colliderMesh.mesh = AssetsEngine._mesh_PlaneWireframe;
-                colliderMesh.material = AssetsEngine._mat_GizmosG;
-                colliderMesh.shader = AssetsEngine._sh_Unlit;
+                colliderMesh.mesh = Gizmos._mesh_PlaneWireframe;
+                colliderMesh.material = Gizmos._mat_GizmosG;
+                colliderMesh.pass = RenderPass.Gizmo;
                 break;
             default:
                 break;

@@ -5,7 +5,7 @@ namespace Engine.Graphics.UI;
 
 public class TextRenderer : IDisposable {
     public unsafe TextRenderer () {
-        GL = Renderer.Instance.GL;
+        GL = Renderer.GL;
         _atlas = FontAtlas.Load("src/Fonts/FuturaCyrillicMedium.ttf", 24);
         _shader = new Shader(Utils.LoadTextFile("src/Shaders/UI/Text_Vertex.shader"), Utils.LoadTextFile("src/Shaders/UI/Text_Fragment.shader"), "Text");
 
@@ -50,7 +50,7 @@ public class TextRenderer : IDisposable {
     }
 
 
-    internal void DrawUI () {
+    internal void Draw () {
         if (Input.Inputs.Actions[Input.Inputs.F3].pressedDown) _renderF3 = !_renderF3;
         if (_renderF3) {
             GL.Disable(EnableCap.CullFace);

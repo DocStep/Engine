@@ -19,9 +19,8 @@ public class BoxColliderComponent : ColliderComponent {
                 rot = Rotation + owner.Transform.Rotation,
                 scale = Scale*owner.Transform.Scale,
 
-                mesh = AssetsEngine._mesh_CubeWireframe,
-                shader = AssetsEngine._sh_Unlit,
-                material = AssetsEngine._mat_GizmosG,
+                mesh = Gizmos._mesh_CubeWireframe,
+                material = Gizmos._mat_GizmosG,
                 primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
             };
             Graphics.Renderer.Instance.AddRenderInfo(renderInfo);

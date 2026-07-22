@@ -31,6 +31,7 @@ public static class Assets {
         return asset;
     }
 
+
     /// Unloads and disposes a single asset
     public static void Unload<T> (string path) where T : class, IAsset<T> {
         string key = CacheKey<T>(path);
@@ -48,4 +49,5 @@ public static class Assets {
 
         _cache.Clear();
     }
+
 }

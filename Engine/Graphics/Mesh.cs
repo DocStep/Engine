@@ -5,11 +5,11 @@ namespace Engine.Graphics;
 
 public class Mesh : IAsset<Mesh> {
     public Mesh () {
-        GL = Renderer.Instance.GL;
+        GL = Renderer.GL;
         Name = nameof(Mesh);
     }
     public Mesh (MeshData data) {
-        GL = Renderer.Instance.GL;
+        GL = Renderer.GL;
         _indexCount = (uint)data.Indices.Length;
         Data = data;
         LocalAABB = AABB.FromVertices(data.Vertices);

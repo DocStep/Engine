@@ -7,8 +7,8 @@ namespace Engine.Graphics;
 
 public class GizmoSelected : IGizmoWorld {
     public GizmoSelected () {
-        GL = Renderer.Instance.GL;
-        _sh_Outline = AssetsEngine._sh_Outline;
+        GL = Renderer.GL;
+        _sh_Outline = Gizmos._sh_Outline;
     }
 
     GL GL = null!;
@@ -286,8 +286,8 @@ public class GizmoSelected : IGizmoWorld {
         if (tr_obj is null) return;
 
         Shader _sh_Unlit = AssetsEngine._sh_Unlit;
-        Renderer.Instance.GL.Disable(EnableCap.DepthTest);
-        Renderer.Instance.GL.Disable(EnableCap.CullFace);
+        Renderer.GL.Disable(EnableCap.DepthTest);
+        Renderer.GL.Disable(EnableCap.CullFace);
 
         _sh_Unlit.Use();
         _sh_Unlit.SetMatrix4(View, Renderer.Instance.UView);
@@ -357,7 +357,7 @@ public class GizmoSelected : IGizmoWorld {
             _sh_Unlit.SetMatrix4(Model, mesh_uModel);
             _sh_Unlit.SetFloat(Alpha, 0.5f);
             _sh_Unlit.SetColor(Color, color);
-            AssetsEngine._mesh_Arrow3D.Draw();
+            Gizmos._mesh_Arrow3D.Draw();
         }
     }
 
@@ -378,7 +378,7 @@ public class GizmoSelected : IGizmoWorld {
         GL.StencilMask(0xFF);
         GL.DepthMask(true);
 
-        Renderer.Instance.DrawMesh(renderInfo);
+        Renderer.DrawMesh(renderInfo);
 
         /// Pass 2 — Outline: draw inflated mesh ONLY where stencil != 1
         GL.CullFace(TriangleFace.Front);  // now cull front so inflated backfaces show as outline

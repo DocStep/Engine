@@ -5,7 +5,7 @@ namespace Engine.Graphics;
 
 public class HdrTexture : IDisposable {
     public HdrTexture (string path) {
-        GL = Renderer.Instance.GL;
+        GL = Renderer.GL;
         (float[] data, Width, Height) = HdrLoader.Load(path);
 
         Handle = GL.GenTexture();

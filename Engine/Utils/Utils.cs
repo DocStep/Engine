@@ -74,6 +74,15 @@ internal static class Utils {
         return Quaternion.CreateFromRotationMatrix(m);
     }
 
+    extension(Vector3) {
+        public static Vector3 DirectionToEuler (Vector3 dir) {
+            dir = Vector3.Normalize(dir);
+            float yaw = MathF.Atan2(dir.X, dir.Z);
+            float pitch = MathF.Asin(-dir.Y);
+            return new Vector3(pitch, yaw, 0f);
+        }
+    }
+    
 
     public static JQuaternion QuaternionFromEuler (Vector3 rot) {
         Vector3 rad = rot*(MathF.PI/180f);

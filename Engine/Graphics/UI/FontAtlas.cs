@@ -20,12 +20,12 @@ public class FontAtlas : IDisposable {
     }
 
     public static unsafe FontAtlas Load (string ttfPath, float fontSize) {
-        GL gl = Renderer.Instance.GL;
+        GL gl = Renderer.GL;
         int atlasWidth = 512;
         int atlasHeight = 512;
         byte[] fontData = File.ReadAllBytes(ttfPath);
         FontAtlas atlas = new FontAtlas {
-            GL = Renderer.Instance.GL,
+            GL = Renderer.GL,
             AtlasWidth = atlasWidth,
             AtlasHeight = atlasHeight,
             FontSize = fontSize,
