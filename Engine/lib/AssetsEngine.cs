@@ -32,44 +32,47 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         maxLod = MathF.Log2(MathF.Max(_hdrTexture_Skybox.Width, _hdrTexture_Skybox.Height));
 
         _mat_Lit = new Material(_sh_Lit);
-        _mat_Lit.SetVector3(Color, Constants.red);
-
-        _mat_Smooth = new Material(_sh_Unlit);
-        _mat_Smooth.SetVector3(Color, Constants.lightGray);
+        _mat_Lit.SetVector3(Color, Constants.white);
+        _mat_Lit.SetFloat(Smoothness, 0.5f);
+        _mat_Lit.SetFloat(Metallic, 0);
+        ///
+        _mat_Smooth = new Material(_mat_Lit);
         _mat_Smooth.SetFloat(Smoothness, 1);
-
-        _mat_Matt = new Material(_sh_Unlit);
-        _mat_Matt.SetVector3(Color, Constants.lightGray);
+        ///
+        _mat_Matt = new Material(_mat_Lit);
         _mat_Matt.SetFloat(Smoothness, 0);
-
-        _mat_Metallic = new Material(_sh_Lit);
+        ///
+        _mat_Metallic = new Material(_mat_Lit);
         _mat_Metallic.SetVector3(Color, Constants.gray);
+        //_mat_Metallic.SetFloat(Smoothness, 1);
         _mat_Metallic.SetFloat(Metallic, 1);
-
-        _mat_MaterialPreview = new Material(_sh_Lit);
+        ///
+        _mat_MaterialPreview = new Material(_mat_Lit);
         _mat_MaterialPreview.SetVector3(Color, Constants.white);
-
-        _mat_Unlit = new Material(_sh_Unlit);
-        _mat_Unlit.SetVector3(Color, Constants.gray);
-        _mat_Unlit.SetFloat(Smoothness, 1f);
-
+        _mat_MaterialPreview.SetFloat(Smoothness, 1);
+        _mat_MaterialPreview.SetFloat(Metallic, 1);
+        ///
         _mat_LitWhite = new Material(_sh_Lit);
         _mat_LitWhite.SetVector3(Color, Constants.white);
-
+        ///
         _mat_LitBlack = new Material(_sh_Lit);
         _mat_LitBlack.SetVector3(Color, Constants.black);
-
+        ///
         _mat_LitGray = new Material(_sh_Lit);
         _mat_LitGray.SetVector3(Color, Constants.gray);
-
+        ///
         _mat_LitRed = new Material(_sh_Lit);
         _mat_LitRed.SetVector3(Color, Constants.red);
-
+        ///
         _mat_LitGreen = new Material(_sh_Lit);
         _mat_LitGreen.SetVector3(Color, Constants.green);
-
+        ///
         _mat_LitBlue = new Material(_sh_Lit);
         _mat_LitBlue.SetVector3(Color, Constants.blue);
+        
+        _mat_Unlit = new Material(_sh_Unlit);
+        _mat_Unlit.SetVector3(Color, Constants.gray);
+
 
         _mesh_Torus = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Torus.obj"));
         _mesh_Suzanne = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Suzanne.obj"));

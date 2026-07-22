@@ -72,7 +72,7 @@ public class Renderer {
         GL.CullFace(TriangleFace.Back);
 
         /// Draw Scene
-        DrawMaterialsGrid(-12f, 0f, 5, 1f); /// Debug
+        //DrawMaterialsGrid(-12f, 0f, 2, 10f); /// Debug
         Draw();
 
         SceneManager.ActiveScene?.DrawRaw();
@@ -92,11 +92,11 @@ public class Renderer {
     }
 
 
+    RenderPass currentPass = RenderPass.undefined;
     private void Draw () {
         RenderList.Sort((a, b) => a.material.pass.CompareTo(b.material.pass));
 
         int count = RenderList.Count;
-        //RenderPass currentPass = RenderPass.undefined;
         for (int i = 0; i < count; i++) {
             RenderInfo info = RenderList[i];
             DrawMesh(info);
@@ -167,7 +167,7 @@ public class Renderer {
     }
 
     public static void SetSceneUniformsLit (Shader shader) {
-        //Instance.SetSceneUniformsUnlit(shader);
+        SetSceneUniformsUnlit(shader);
         shader.SetVector3(SunLightColor, Constants.sunLightColor);
         shader.SetVector3(SunLightDir, Constants.sunLightDir);
         shader.SetVector3(AmbientColor, 0.05f, 0.05f, 0.06f);
@@ -191,16 +191,17 @@ public class Renderer {
 
 
     public static void DrawMaterialsGrid (float offsetX, float offsetZ, int testGridCount, float testGridDensity) {
-        Renderer.SetSceneUniformsLit(_sh_Lit);
-        _sh_Lit.SetColor(Color, Constants.black);
         for (int x = 0; x < testGridCount*testGridDensity; x++) {
             for (int z = 0; z < testGridCount*testGridDensity; z++) {
+                Material mat = new Material(_sh_Lit);
+                mat.SetVector3(Color, Constants.lightGray);
+                mat.SetFloat(Smoothness, 1f/x);
+                mat.SetFloat(Metallic, 1f - 1f/z);
                 RenderInfo info = new RenderInfo() {
                     pos = new Vector3(2f*x/testGridDensity + offsetX, 0f, 2f*z/testGridDensity + offsetZ),
                     mesh = _mesh_Sphere,
-                    material = new Material(_mat_Lit).SetVector3(Color, Constants.lightGray),
+                    material = mat,
                 };
-                info.material.SetVector3(Color, Constants.lightGray);
                 Renderer.Instance.AddRenderInfo(info);
             }
         }

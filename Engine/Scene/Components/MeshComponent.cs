@@ -13,7 +13,7 @@ public class MeshComponent : Component, IRenderComponent, IComponentUpdate {
     //[JsonProperty("shader")] public string? shaderPath = null;
     [JsonIgnore] public Material material = AssetsEngine._mat_Lit;
     [JsonProperty("material")] public string? materialPath = null;
-    [JsonProperty("pass")] public RenderPass pass = RenderPass.Opaque;
+    //[JsonProperty("pass")] public RenderPass pass = RenderPass.Opaque;
 
     [JsonIgnore] private RenderInfo renderInfo;
 

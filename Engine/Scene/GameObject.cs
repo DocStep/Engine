@@ -63,25 +63,21 @@ public class GameObject : ISavable {
                 MeshComponent colliderMesh = AddComponent<MeshComponent>();
                 colliderMesh.mesh = Gizmos._mesh_CubeWireframe;
                 colliderMesh.material = Gizmos._mat_GizmosG;
-                colliderMesh.pass = RenderPass.Gizmo;
                 break;
             case PrimitiveTypes.GizmoSphere:
                 colliderMesh = AddComponent<MeshComponent>();
                 colliderMesh.mesh = Gizmos._mesh_SphereWireframe;
                 colliderMesh.material = Gizmos._mat_GizmosG;
-                colliderMesh.pass = RenderPass.Gizmo;
                 break;
             case PrimitiveTypes.GizmoCapsule:
                 colliderMesh = AddComponent<MeshComponent>();
                 colliderMesh.mesh = Gizmos._mesh_CapsuleWireframe;
                 colliderMesh.material = Gizmos._mat_GizmosG;
-                colliderMesh.pass = RenderPass.Gizmo;
                 break;
             case PrimitiveTypes.GizmoPlane:
                 colliderMesh = AddComponent<MeshComponent>();
                 colliderMesh.mesh = Gizmos._mesh_PlaneWireframe;
                 colliderMesh.material = Gizmos._mat_GizmosG;
-                colliderMesh.pass = RenderPass.Gizmo;
                 break;
             default:
                 break;

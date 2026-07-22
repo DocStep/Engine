@@ -61,7 +61,8 @@ void main () {
     float NdH = max(dot(N, H), 0.0);
     float HdV = max(dot(H, V), 0.0);
 
-    float rough = max(uSmoothness, 0.04);
+    float smoothness = clamp(uSmoothness, 0.0, 1.0);
+    float rough = max(1.0 - smoothness, 0.04);
     float a = rough*rough;
 
     float a2 = max(a*a, 1e-3);
@@ -77,7 +78,7 @@ void main () {
     vec3 Lo = (kD*uColor/PI + spec)*uSunLightColor*uSunLightIntensity*NdL;
 
     /// --- Ambient diffuse ---
-    vec3 Fambient = F_SchlickSmoothness(NdV, F0, rough);
+    vec3 Fambient = F_SchlickSmoothness(NdV, F0, smoothness);
     vec3 kDambient = (1.0 - Fambient)*(1.0 - uMetallic);
     vec3 diffuseAmbient = kDambient*uAmbientColor*uColor;
 
@@ -85,7 +86,7 @@ void main () {
     float lod = rough*uMaxReflectionLod;
     vec2 envUV = DirToEquirectUV(R);
     vec3 envSpec = textureLod(uSkybox, envUV, lod).rgb*uExposure;
-    float specOcclusion = GetSpecularOcclusion(NdV, 1.0, rough);
+    float specOcclusion = GetSpecularOcclusion(NdV, 1.0, smoothness);
     vec3 specularAmbient = envSpec*Fambient*specOcclusion*uReflectionIntensity;
 
     vec3 ambient = diffuseAmbient + specularAmbient;
