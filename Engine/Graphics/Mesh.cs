@@ -3,9 +3,10 @@
 namespace Engine.Graphics;
 
 
-public class Mesh : IAsset {
+public class Mesh : IAsset<Mesh> {
     public Mesh () {
         GL = Renderer.Instance.GL;
+        Name = nameof(Mesh);
     }
     public Mesh (MeshData data) {
         GL = Renderer.Instance.GL;
@@ -70,6 +71,8 @@ public class Mesh : IAsset {
     public readonly MeshData? Data;
     public readonly AABB LocalAABB;
 
+    public string Name { get; private set; }
+
 
     private static float[] Flatten (Vertex[] verts) {
         float[] result = new float[verts.Length*Vertex.FloatStride];
@@ -93,6 +96,11 @@ public class Mesh : IAsset {
             GL.DrawElements(primitiveType, _indexCount, DrawElementsType.UnsignedInt, null);
         }
         GL.BindVertexArray(0);
+    }
+
+
+    public static Mesh Load (string path) {
+        return new Mesh(ObjLoader.Load(path));
     }
 
 

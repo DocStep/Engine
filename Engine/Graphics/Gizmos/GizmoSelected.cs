@@ -8,7 +8,7 @@ namespace Engine.Graphics;
 public class GizmoSelected : IGizmoWorld {
     public GizmoSelected () {
         GL = Renderer.Instance.GL;
-        _sh_Outline = Renderer.Instance._sh_Outline;
+        _sh_Outline = AssetsEngine._sh_Outline;
     }
 
     GL GL = null!;
@@ -285,7 +285,7 @@ public class GizmoSelected : IGizmoWorld {
         TransformComponent? tr_obj = selectedMesh?.owner.Transform;
         if (tr_obj is null) return;
 
-        Shader _sh_Unlit = Renderer.Instance._sh_Unlit;
+        Shader _sh_Unlit = AssetsEngine._sh_Unlit;
         Renderer.Instance.GL.Disable(EnableCap.DepthTest);
         Renderer.Instance.GL.Disable(EnableCap.CullFace);
 
@@ -316,7 +316,7 @@ public class GizmoSelected : IGizmoWorld {
         float _dist = Vector3.Distance(camPos, _objPos);
         bool isColorSelected;
 
-        Shader _sh_Unlit = Renderer.Instance._sh_Unlit;
+        Shader _sh_Unlit = AssetsEngine._sh_Unlit;
         _sh_Unlit.Use();
         _sh_Unlit.SetMatrix4(View, Renderer.Instance.UView);
         _sh_Unlit.SetMatrix4(Projection, Renderer.Instance.UProjection);
@@ -334,7 +334,7 @@ public class GizmoSelected : IGizmoWorld {
             _sh_Unlit.SetMatrix4(Model, Matrix4x4.ToArray(m4x4_selected));
             _sh_Unlit.SetFloat(Alpha, 0.5f);
             _sh_Unlit.SetColor(Color, color);
-            Renderer.Instance._mesh_PlaneQuad.Draw();
+            AssetsEngine._mesh_PlaneQuad.Draw();
         }
 
 
@@ -357,7 +357,7 @@ public class GizmoSelected : IGizmoWorld {
             _sh_Unlit.SetMatrix4(Model, mesh_uModel);
             _sh_Unlit.SetFloat(Alpha, 0.5f);
             _sh_Unlit.SetColor(Color, color);
-            Renderer.Instance._mesh_Arrow3D.Draw();
+            AssetsEngine._mesh_Arrow3D.Draw();
         }
     }
 

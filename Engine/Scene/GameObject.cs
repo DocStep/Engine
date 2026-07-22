@@ -44,44 +44,44 @@ public class GameObject : ISavable {
         MeshComponent mesh = AddComponent<MeshComponent>();
         switch (primitive) {
             case PrimitiveTypes.Cube:
-                mesh.mesh = Renderer.Instance._mesh_Cube;
-                AddComponent<PhysicsComponent>();
+                mesh.mesh = AssetsEngine._mesh_Cube;
+                //AddComponent<PhysicsComponent>();
                 break;
             case PrimitiveTypes.Sphere:
-                mesh.mesh = Renderer.Instance._mesh_Sphere;
-                AddComponent<PhysicsComponent>();
+                mesh.mesh = AssetsEngine._mesh_Sphere;
+                //AddComponent<PhysicsComponent>();
                 break;
             case PrimitiveTypes.Capsule:
-                mesh.mesh = Renderer.Instance._mesh_Capsule;
-                AddComponent<PhysicsComponent>();
+                mesh.mesh = AssetsEngine._mesh_Capsule;
+                //AddComponent<PhysicsComponent>();
                 break;
             case PrimitiveTypes.Plane:
-                mesh.mesh = Renderer.Instance._mesh_Plane;
-                AddComponent<PhysicsComponent>();
+                mesh.mesh = AssetsEngine._mesh_Plane;
+                //AddComponent<PhysicsComponent>();
                 break;
             case PrimitiveTypes.GizmoCube:
                 MeshComponent colliderMesh = AddComponent<MeshComponent>();
-                colliderMesh.mesh = Renderer.Instance._mesh_CubeWireframe;
-                colliderMesh.material = Renderer.Instance._mat_GizmosG;
-                colliderMesh.shader = Renderer.Instance._sh_Unlit;
+                colliderMesh.mesh = AssetsEngine._mesh_CubeWireframe;
+                colliderMesh.material = AssetsEngine._mat_GizmosG;
+                colliderMesh.shader = AssetsEngine._sh_Unlit;
                 break;
             case PrimitiveTypes.GizmoSphere:
                 colliderMesh = AddComponent<MeshComponent>();
-                colliderMesh.mesh = Renderer.Instance._mesh_SphereWireframe;
-                colliderMesh.material = Renderer.Instance._mat_GizmosG;
-                colliderMesh.shader = Renderer.Instance._sh_Unlit;
+                colliderMesh.mesh = AssetsEngine._mesh_SphereWireframe;
+                colliderMesh.material = AssetsEngine._mat_GizmosG;
+                colliderMesh.shader = AssetsEngine._sh_Unlit;
                 break;
             case PrimitiveTypes.GizmoCapsule:
                 colliderMesh = AddComponent<MeshComponent>();
-                colliderMesh.mesh = Renderer.Instance._mesh_CapsuleWireframe;
-                colliderMesh.material = Renderer.Instance._mat_GizmosG;
-                colliderMesh.shader = Renderer.Instance._sh_Unlit;
+                colliderMesh.mesh = AssetsEngine._mesh_CapsuleWireframe;
+                colliderMesh.material = AssetsEngine._mat_GizmosG;
+                colliderMesh.shader = AssetsEngine._sh_Unlit;
                 break;
             case PrimitiveTypes.GizmoPlane:
                 colliderMesh = AddComponent<MeshComponent>();
-                colliderMesh.mesh = Renderer.Instance._mesh_PlaneWireframe;
-                colliderMesh.material = Renderer.Instance._mat_GizmosG;
-                colliderMesh.shader = Renderer.Instance._sh_Unlit;
+                colliderMesh.mesh = AssetsEngine._mesh_PlaneWireframe;
+                colliderMesh.material = AssetsEngine._mat_GizmosG;
+                colliderMesh.shader = AssetsEngine._sh_Unlit;
                 break;
             default:
                 break;

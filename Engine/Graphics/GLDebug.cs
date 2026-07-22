@@ -3,7 +3,7 @@
 namespace Engine.Graphics;
 
 
-public static class Debug {
+public static class GLDebug {
     public static void Init () {
         GL = Renderer.Instance.GL;
 
@@ -40,7 +40,7 @@ public static class Debug {
     internal static void DrawAll () {
         GL.Disable(EnableCap.DepthTest);
 
-        Renderer.Instance.SetSceneUniformsUnlit(Renderer.Instance._sh_Unlit);
+        Renderer.Instance.SetSceneUniformsUnlit(AssetsEngine._sh_Unlit);
         int count = Lines.Count;
         for (int i = 0; i < count; i++) {
             DrawLine(Lines[i]);
@@ -59,9 +59,9 @@ public static class Debug {
         }
 
         Matrix4x4 mesh_m4x4 = Matrix4x4.Identity;
-        Graphics.Shader unlit = Renderer.Instance._sh_Unlit;
-        unlit.SetMatrix4(Graphics.Shader.Model, Matrix4x4.ToArray(mesh_m4x4));
-        unlit.SetVector3(Graphics.Shader.Color, debugLine.Color);
+        Shader unlit = AssetsEngine._sh_Unlit;
+        unlit.SetMatrix4(Shader.Model, Matrix4x4.ToArray(mesh_m4x4));
+        unlit.SetVector3(Shader.Color, debugLine.Color);
 
         GL.BindVertexArray(_lineVAO);
         GL.DrawArrays(PrimitiveType.Lines, 0, 2);

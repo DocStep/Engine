@@ -73,7 +73,6 @@ public class Engine : Singleton<Engine>, IDisposable {
 
         new Reflection();
         new Json();
-        AssetsManager.Init();
 
         Inputs.OverrideActions(DataEngine.InputsData);
 
@@ -111,6 +110,8 @@ public class Engine : Singleton<Engine>, IDisposable {
         Console.WriteLine($"===== Systems Layer =====");
 
         Renderer = new Graphics.Renderer();
+        new Graphics.EditorUI();
+        new Graphics.CameraEditor();
 
         new PhysicsManager();
         new ComponentManager();

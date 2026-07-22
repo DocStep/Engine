@@ -41,7 +41,7 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
         Rigidbody.Orientation = FromEulerYXZ(owner.Transform.Rotation);
     }
     public void Stop () {
-        if (Rigidbody.MotionType != MotionType.Dynamic) return;
+        if (Rigidbody.Data.MotionType != MotionType.Dynamic) return;
 
         Rigidbody.Velocity = Vector3.Zero;
         Rigidbody.AngularVelocity = Vector3.Zero;

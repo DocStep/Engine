@@ -1,8 +1,12 @@
-﻿using Silk.NET.OpenGL.Extensions.ImGui;
-using ImGuiNET;
+﻿using System;
 using System.Numerics;
+using ImGuiNET;
+using Silk.NET.OpenGL.Extensions.ImGui;
+using Engine;
+using Engine.Graphics;
 
 namespace Engine.Graphics;
+
 
 public class EditorUI : Singleton<EditorUI>, IDisposable {
     public EditorUI () {
@@ -54,7 +58,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
 
         ImGui.Begin("Inspector");
-        GameObject? selectedGO = Renderer.Instance._gizmo_Selected.selectedMesh?.owner;
+        GameObject? selectedGO = AssetsEngine._gizmo_Selected.selectedMesh?.owner;
         if (selectedGO is not null) {
             ImGui.Text("Selected:");
             ImGui.LabelText("Name", selectedGO.Name);

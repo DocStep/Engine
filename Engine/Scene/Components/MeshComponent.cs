@@ -9,9 +9,9 @@ public class MeshComponent : Component, IRenderComponent, IComponentUpdate {
 
     [JsonIgnore] public Mesh? mesh = null;
     [JsonProperty("mesh")] public string? meshPath = null;
-    [JsonIgnore] public Shader shader = Renderer.Instance._sh_Lit;
+    [JsonIgnore] public Shader shader = AssetsEngine._sh_Lit;
     [JsonProperty("shader")] public string? shaderPath = null;
-    [JsonIgnore] public Material material = Renderer.Instance._mat_Lit;
+    [JsonIgnore] public Material material = AssetsEngine._mat_Lit;
     [JsonProperty("material")] public string? materialPath = null;
 
     [JsonIgnore] private RenderInfo renderInfo;

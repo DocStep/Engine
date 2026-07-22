@@ -4,16 +4,16 @@
 public static class Dirs {
 
     public static readonly string Root = AppContext.BaseDirectory;
-    public static readonly string Assets = Path.Combine(Root, "src");
-    public static readonly string Shaders = Path.Combine(Assets, "Shaders");
-    public static readonly string Textures = Path.Combine(Assets, "Textures");
-    public static readonly string Models = Path.Combine(Assets, "Models");
-    public static readonly string Fonts = Path.Combine(Assets, "Fonts");
-    public static readonly string Scenes = Path.Combine(Assets, "Scenes");
+    public static readonly string AssetsPath = System.IO.Path.Combine(Root, "src");
+    public static readonly string Shaders = System.IO.Path.Combine(AssetsPath, "Shaders");
+    public static readonly string Textures = System.IO.Path.Combine(AssetsPath, "Textures");
+    public static readonly string Models = System.IO.Path.Combine(AssetsPath, "Models");
+    public static readonly string Fonts = System.IO.Path.Combine(AssetsPath, "Fonts");
+    public static readonly string Scenes = System.IO.Path.Combine(AssetsPath, "Scenes");
 
     /// Ensures all known directories exist on disk
     public static void EnsureExist () {
-        EnsureExist(Assets);
+        EnsureExist(AssetsPath);
         EnsureExist(Shaders);
         EnsureExist(Textures);
         EnsureExist(Models);
@@ -25,8 +25,8 @@ public static class Dirs {
     }
 
     /// Resolves a path relative to a base folder, e.g. Resolve(Textures, "player.png")
-    public static string Resolve (string baseDir, string relativePath) {
-        return Path.GetFullPath(Path.Combine(baseDir, relativePath));
+    public static string Path (string baseDir, string relativePath) {
+        return System.IO.Path.GetFullPath(System.IO.Path.Combine(baseDir, relativePath));
     }
 
 }

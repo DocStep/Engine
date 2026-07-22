@@ -97,7 +97,7 @@ internal static class Utils {
 
     internal static float Lerp (float a, float b, float t) => a + (b - a)*t;
 
-    internal static string LoadSrc (string relativePath) {
+    internal static string LoadTextFile (string relativePath) {
         string fullPath = Path.Combine(AppContext.BaseDirectory, relativePath);
         if (!File.Exists(fullPath))
             throw new FileNotFoundException($"File not found: {fullPath}.");

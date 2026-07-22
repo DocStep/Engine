@@ -18,9 +18,9 @@ public class SphereColliderComponent : ColliderComponent {
                 rot = Vector3.Zero,
                 scale = 2f*Radius*owner.Transform.Scale,
 
-                mesh = Graphics.Renderer.Instance._mesh_SphereWireframe,
-                shader = Graphics.Renderer.Instance._sh_Unlit,
-                material = Graphics.Renderer.Instance._mat_GizmosG,
+                mesh = AssetsEngine._mesh_SphereWireframe,
+                shader = AssetsEngine._sh_Unlit,
+                material = AssetsEngine._mat_GizmosG,
                 primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
             };
             Graphics.Renderer.Instance.AddRenderInfo(renderInfo);
