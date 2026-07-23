@@ -224,7 +224,7 @@ public class GizmoSelected : IGizmoWorld {
         } else {
             CameraEditor.Instance?.UnblockMouse(this);
         }
-        
+
         Vector3? TryPickCapsule (Vector3 axisDir, float length, float radius) {
             Vector3 segStart = _objPos;
             Vector3 segDir = Vector3.Normalize(axisDir);
@@ -308,6 +308,9 @@ public class GizmoSelected : IGizmoWorld {
     private void DrawGizmo () {
         if (selectedMesh is null) return;
 
+        GL.Disable(EnableCap.DepthTest);
+        GL.Disable(EnableCap.CullFace);
+
         TransformComponent tr_obj = selectedMesh.owner.Transform;
         Vector3 camPos = Camera.Instance.cameraPos;
         Vector3 _objPos = tr_obj.Position;
@@ -330,10 +333,9 @@ public class GizmoSelected : IGizmoWorld {
 
         void drawQuad (Vector3 pos, Matrix4x4 basis, Vector3 color) {
             Matrix4x4 m4x4_selected = Matrix4x4.CreateScale(quadScale)*basis*Matrix4x4.Position(pos);
-            
-            /*_sh_Unlit.SetMatrix4(Model, Matrix4x4.ToArray(m4x4_selected));
+            _sh_Unlit.SetMatrix4(Model, Matrix4x4.ToArray(m4x4_selected));
+            _sh_Unlit.SetColor(Color, color); 
             _sh_Unlit.SetFloat(Alpha, 0.5f);
-            _sh_Unlit.SetColor(Color, color);
             AssetsEngine._mesh_PlaneQuad.Draw();
         }
 
@@ -354,46 +356,10 @@ public class GizmoSelected : IGizmoWorld {
             Matrix4x4 m4x4_selected = _m4x4_selectedScale*Matrix4x4.RotationEuler(rot)*gizmoBasis*Matrix4x4.Position(pos3);
             float[] mesh_uModel = Matrix4x4.ToArray(m4x4_selected);
             _sh_Unlit.SetMatrix4(Model, mesh_uModel);
-            _sh_Unlit.SetFloat(Alpha, 0.5f);
             _sh_Unlit.SetColor(Color, color);
+            _sh_Unlit.SetFloat(Alpha, 0.5f);
             Gizmos._mesh_Arrow3D.Draw();
         }
-    }
-    public void Draw () {
-        TransformComponent? tr_obj = selectedMesh?.owner.Transform;
-        if (tr_obj is null) return;
-
-        Renderer.GL.Disable(EnableCap.DepthTest);
-        Renderer.GL.Disable(EnableCap.CullFace);
-
-        Renderer.SetSceneUniformsUnlit(AssetsEngine._sh_Unlit);
-
-        DrawSelectedOutline();
-        DrawGizmo();
-
-        UI.TextRenderer.AddText($"Selected:");
-        UI.TextRenderer.AddText($"Position: {tr_obj.Position:F3}");
-        UI.TextRenderer.AddText($"Rotation: {tr_obj.Rotation:F3}");
-        UI.TextRenderer.AddText($"Scale: {tr_obj.Scale:F3}");
-    }
-
-
-    public static Vector3 ToEulerXYZ (Matrix4x4 m) {
-        float sy = -m.M13; /// depends on row/col layout, verify against your Matrix4x4 struct
-        float x, y, z;
-
-        if (MathF.Abs(sy) < 0.9999f) {
-            y = MathF.Asin(sy);
-            x = MathF.Atan2(m.M23, m.M33);
-            z = MathF.Atan2(m.M12, m.M11);
-        } else {
-            /// gimbal lock
-            y = MathF.Asin(sy);
-            x = MathF.Atan2(-m.M32, m.M22);
-            z = 0f;
-        }
-
-        return new Vector3(x, y, z);
     }
 
     private void DrawOutline () {
@@ -413,12 +379,7 @@ public class GizmoSelected : IGizmoWorld {
         GL.StencilMask(0xFF);
         GL.DepthMask(true);
 
-        //Renderer.DrawMesh(renderInfo);
-        Matrix4x4 mesh_m4x4 = renderInfo.modelOverride ?? Matrix4x4.CreateScale(renderInfo.scale)
-            *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
-        float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
-        renderInfo.material.shader.SetMatrix4(Model, mesh_uModel);
-        renderInfo.mesh.Draw();
+        Renderer.DrawMesh(renderInfo);
 
         /// Pass 2 — Outline: draw inflated mesh ONLY where stencil != 1
         GL.CullFace(TriangleFace.Front);  // now cull front so inflated backfaces show as outline
@@ -437,20 +398,13 @@ public class GizmoSelected : IGizmoWorld {
 
         Matrix4x4 m4x4_mesh = Matrix4x4.CreateScale(outlineScale)
             *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
-        //float[] mesh_uModel = Matrix4x4.ToArray(m4x4_mesh);
-        mesh_uModel = Matrix4x4.ToArray(m4x4_mesh);
+        float[] mesh_uModel = Matrix4x4.ToArray(m4x4_mesh);
 
-        Renderer.SetSceneUniformsUnlit(_sh_Outline);
+        _sh_Outline.Use();
+        _sh_Outline.SetMatrix4(View, Renderer.Instance.UView);
+        _sh_Outline.SetMatrix4(Projection, Renderer.Instance.UProjection);
         _sh_Outline.SetMatrix4(Model, mesh_uModel);
         _sh_Outline.SetVector3(OutlineColor, Constants.cyan);
-
-        //renderInfo.scale = outlineScale;
-        //renderInfo.material = new Material(_sh_Outline);
-        //renderInfo.material.SetVector3(OutlineColor, Constants.cyan);
-        //renderInfo.material.pass = RenderPass.Opaque;
-        //renderInfo.material.depthTest = true;
-        //renderInfo.depthRangeFar = 1f;
-        //Renderer.DrawMesh(renderInfo);
         renderInfo.mesh.Draw();
 
         /// Restore State
