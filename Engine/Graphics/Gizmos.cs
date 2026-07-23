@@ -30,25 +30,25 @@ public static class Gizmos {
         _mat_GizmosG = new Material(_sh_Unlit);
         _mat_GizmosG.SetVector3(Color, Constants.green);
         _mat_GizmosG.SetFloat(Alpha, 0.5f);
-        _mat_GizmosG.pass = RenderPass.Gizmo;
+        _mat_GizmosG.pass = RenderPass.Transparent;
 
         _mat_GizmoGrid = new Material(_sh_GizmoGrid);
         _mat_GizmoGrid.SetVector3(Color, Constants.lightGray);
         _mat_GizmoGrid.SetFloat(Alpha, 0.5f);
         _mat_GizmoGrid.SetFloat(Radius, 200f);
         _mat_GizmoGrid.SetFloat(Fade, 50f);
-        _mat_GizmoGrid.pass = RenderPass.Gizmo;
+        _mat_GizmoGrid.pass = RenderPass.Transparent;
 
         _mat_GizmoAxes = new Material(_sh_GizmoAxes);
         _mat_GizmoAxes.SetFloat(Alpha, 0.5f);
         _mat_GizmoAxes.SetFloat(Radius, 200f);
         _mat_GizmoAxes.SetFloat(Fade, 50f);
-        _mat_GizmoAxes.pass = RenderPass.Gizmo;
+        _mat_GizmoAxes.pass = RenderPass.Transparent;
 
         _mat_GizmoSun = new Material(_sh_Unlit);
         _mat_GizmoSun.SetVector3(Color, Constants.yellow);
         _mat_GizmoSun.SetFloat(Alpha, 0.5f);
-        _mat_GizmoSun.pass = RenderPass.Gizmo;
+        _mat_GizmoSun.pass = RenderPass.Transparent;
 
         _gizmo_Selected = new GizmoSelected();
 
@@ -87,10 +87,10 @@ public static class Gizmos {
 
         GLDebug.DrawAll();
 
-        //SubmitGizmoCameraOrbitCenter();
+        //GizmoCameraOrbitCenter();
     }
     public static void Draw () {
-        Renderer.Instance.de_GizmosDraw?.Invoke();
+        //Renderer.Instance.de_GizmosDraw?.Invoke();
 
         /// UI Layer — separate camera/viewport
         DrawGizmoAxesWidget();
@@ -101,8 +101,14 @@ public static class Gizmos {
             mesh = _mesh_GridWireframe,
             primitiveType = PrimitiveType.Lines,
             material = _mat_GizmoGrid,
+            depthRangeNear = 0.0001f,
+            //de_Pre = GizmoGridPre,
+            //de_Post = GizmoGridPost,
         });
     }
+    static void GizmoGridPre () => GL.DepthRange(0.0001, 1);
+    static void GizmoGridPost () => GL.DepthRange(0, 1);
+
     private static void GizmoAxes () {
         _mat_GizmoAxes.SetVector3(CameraPos, Camera.Instance.cameraPos);
         Renderer.Instance.AddRenderInfo(new RenderInfo() {
@@ -145,7 +151,7 @@ public static class Gizmos {
         GL.Viewport(Engine.Window.Size);
     }
     /*private static Material mat_GizmoCameraOrbitCenter = new Material() { Color = new Vector3(0.5f, 0.5f, 0.5f), Alpha = 0.2f, };
-    private static void SubmitGizmoCameraOrbitCenter () {
+    private static void GizmoCameraOrbitCenter () {
         if (CameraEditor.Instance is null) return;
 
         float dist = (CameraEditor.Instance.cameraOrbitCenterPos - Camera.Instance.cameraPos).Length();

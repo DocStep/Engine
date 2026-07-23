@@ -7,6 +7,11 @@ public enum RenderPass {
     Gizmo,
     UI
 }
+public enum RenderFace {
+    Front,
+    Back,
+    Both,
+}
 
 
 public class Material /*: IDisposable*/ {
@@ -28,6 +33,8 @@ public class Material /*: IDisposable*/ {
 
     /// Render State
     public RenderPass pass = RenderPass.Opaque;
+    public RenderFace face = RenderFace.Front;
+    public bool opaque = true;
     public bool depthTest = true;
     public bool depthWrite = true;
 

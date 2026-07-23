@@ -88,6 +88,7 @@ public class GizmoSelected : IGizmoWorld {
                 axisCapsuleYOffset = tr_obj.Position + gizmoUp*0.5f*_dist*_axisLength;
                 axisCapsuleZOffset = tr_obj.Position + gizmoForward*0.5f*_dist*_axisLength;
 
+                /// X
                 Vector3? axisPickXPos = TryPickCapsule(gizmoRight, _axisLength, _axisRadius);
                 if (axisPickXPos is not null) {
                     selectedPositionOverMode = SelectedPositionGizmoMode.X;
@@ -96,7 +97,7 @@ public class GizmoSelected : IGizmoWorld {
                         selectedDragMargin = _objPos - axisPickXPos.Value;
                     }
                 }
-
+                /// Y
                 Vector3? axisPickYPos = TryPickCapsule(gizmoUp, _axisLength, _axisRadius);
                 if (axisPickYPos is not null) {
                     selectedPositionOverMode = SelectedPositionGizmoMode.Y;
@@ -105,7 +106,7 @@ public class GizmoSelected : IGizmoWorld {
                         selectedDragMargin = _objPos - axisPickYPos.Value;
                     }
                 }
-
+                /// Z
                 Vector3? axisPickZPos = TryPickCapsule(gizmoForward, _axisLength, _axisRadius);
                 if (axisPickZPos is not null) {
                     selectedPositionOverMode = SelectedPositionGizmoMode.Z;
@@ -160,6 +161,12 @@ public class GizmoSelected : IGizmoWorld {
                     }
                 }
 
+                if (Inputs.Actions[Inputs.LMB].pressedDown) {
+                    if (selectedPositionMode != SelectedPositionGizmoMode.None)
+                        isMouseBlocked |= true;
+                    selectedDragPos = _objPos;
+                    selectedDragRot = _objRot;
+                }
                 if (Inputs.Actions[Inputs.LMB].pressed) {
                     /// Hold
                     if (selectedPositionMode != SelectedPositionGizmoMode.None) {
@@ -204,12 +211,7 @@ public class GizmoSelected : IGizmoWorld {
                 quadXZPos = _objPos + _dist*_squareSize*quadXZOffset;
                 quadYZPos = _objPos + _dist*_squareSize*quadYZOffset;
 
-                if (Inputs.Actions[Inputs.LMB].pressedDown) {
-                    if (selectedPositionMode != SelectedPositionGizmoMode.None) 
-                        isMouseBlocked |= true;
-                    selectedDragPos = _objPos;
-                    selectedDragRot = _objRot;
-                }
+                
                 break;
                 /*case SelectedGizmoMode.Rotation:
                     break;*/
@@ -281,33 +283,8 @@ public class GizmoSelected : IGizmoWorld {
     }
 
 
-    public void Draw () {
-        TransformComponent? tr_obj = selectedMesh?.owner.Transform;
-        if (tr_obj is null) return;
-
-        Shader _sh_Unlit = AssetsEngine._sh_Unlit;
-        Renderer.GL.Disable(EnableCap.DepthTest);
-        Renderer.GL.Disable(EnableCap.CullFace);
-
-        _sh_Unlit.Use();
-        _sh_Unlit.SetMatrix4(View, Renderer.Instance.UView);
-        _sh_Unlit.SetMatrix4(Projection, Renderer.Instance.UProjection);
-        _sh_Unlit.SetVector3(ViewPos, Camera.Instance.cameraPos);
-
-        DrawSelectedOutline();
-        DrawSelectedGizmo();
-
-        UI.TextRenderer.AddText($"Selected:");
-        UI.TextRenderer.AddText($"Position: {tr_obj.Position:F3}");
-        UI.TextRenderer.AddText($"Rotation: {tr_obj.Rotation:F3}");
-        UI.TextRenderer.AddText($"Scale: {tr_obj.Scale:F3}");
-    }
-
-    void DrawSelectedGizmo () {
+    private void DrawGizmo () {
         if (selectedMesh is null) return;
-
-        GL.Disable(EnableCap.DepthTest);
-        GL.Disable(EnableCap.CullFace);
 
         TransformComponent tr_obj = selectedMesh.owner.Transform;
         Vector3 camPos = Camera.Instance.cameraPos;
@@ -331,37 +308,106 @@ public class GizmoSelected : IGizmoWorld {
 
         void drawQuad (Vector3 pos, Matrix4x4 basis, Vector3 color) {
             Matrix4x4 m4x4_selected = Matrix4x4.CreateScale(quadScale)*basis*Matrix4x4.Position(pos);
-            _sh_Unlit.SetMatrix4(Model, Matrix4x4.ToArray(m4x4_selected));
+            
+            /*_sh_Unlit.SetMatrix4(Model, Matrix4x4.ToArray(m4x4_selected));
             _sh_Unlit.SetFloat(Alpha, 0.5f);
             _sh_Unlit.SetColor(Color, color);
-            AssetsEngine._mesh_PlaneQuad.Draw();
+            AssetsEngine._mesh_PlaneQuad.Draw();*/
+
+            Material mat = new Material(_sh_Unlit);
+            mat.SetFloat(Alpha, 0.5f);
+            mat.SetVector3(Color, color);
+            mat.pass = RenderPass.Gizmo;
+            mat.face = RenderFace.Both;
+            mat.depthTest = false;
+            RenderInfo info = new RenderInfo() {
+                name = "quads",
+                modelOverride = m4x4_selected,
+                rot = ToEulerXYZ(basis),
+                scale = _dist*_axisLength*Vector3.One,
+                mesh = AssetsEngine._mesh_PlaneQuad,
+                material = mat,
+            };
+            Renderer.DrawMesh(info);
         }
 
 
         /// Axes
         Matrix4x4 gizmoBasis = BasisToWorld(gizmoRight, gizmoUp, gizmoForward);
-        Vector3 pos2 = selectedMesh.owner.Transform.Position;
+        Vector3 pos3 = selectedMesh.owner.Transform.Position;
         Matrix4x4 _m4x4_selectedScale = Matrix4x4.CreateScale(_dist*_axisLength);
 
         isColorSelected = selectedPositionMode == SelectedPositionGizmoMode.X || selectedPositionOverMode == SelectedPositionGizmoMode.X;
-        Draw(new Vector3(0, 90, 0), isColorSelected ? Constants.redLight : Constants.red);
+        drawArrow(new Vector3(0, 90, 0), isColorSelected ? Constants.redLight : Constants.red);
         isColorSelected = selectedPositionMode == SelectedPositionGizmoMode.Y || selectedPositionOverMode == SelectedPositionGizmoMode.Y;
-        Draw(new Vector3(-90, 0, 0), isColorSelected ? Constants.greenLight : Constants.green);
+        drawArrow(new Vector3(-90, 0, 0), isColorSelected ? Constants.greenLight : Constants.green);
         isColorSelected = selectedPositionMode == SelectedPositionGizmoMode.Z || selectedPositionOverMode == SelectedPositionGizmoMode.Z;
-        Draw(Vector3.Zero, isColorSelected ? Constants.blueLight : Constants.blue);
+        drawArrow(Vector3.Zero, isColorSelected ? Constants.blueLight : Constants.blue);
 
-        void Draw (Vector3 rot, Vector3 color) {
-            Matrix4x4 m4x4_selected = _m4x4_selectedScale*Matrix4x4.RotationEuler(rot)
-                *gizmoBasis*Matrix4x4.Position(pos2);
+        void drawArrow (Vector3 rot, Vector3 color) {
+            Matrix4x4 m4x4_selected = _m4x4_selectedScale*Matrix4x4.RotationEuler(rot)*gizmoBasis*Matrix4x4.Position(pos3);
             float[] mesh_uModel = Matrix4x4.ToArray(m4x4_selected);
             _sh_Unlit.SetMatrix4(Model, mesh_uModel);
             _sh_Unlit.SetFloat(Alpha, 0.5f);
             _sh_Unlit.SetColor(Color, color);
             Gizmos._mesh_Arrow3D.Draw();
+
+            //Material mat = new Material(_sh_Unlit);
+            //mat.SetFloat(Alpha, 0.5f);
+            //mat.SetVector3(Color, color);
+            //mat.pass = RenderPass.Gizmo;
+            //mat.face = RenderFace.Both;
+            //mat.depthTest = false;
+            //RenderInfo info = new RenderInfo () {
+            //    name = "axis",
+            //    modelOverride = m4x4_selected,
+            //    //pos = pos3,
+            //    //rot = rot,
+            //    scale = _dist*_axisLength*Vector3.One,
+            //    mesh = Gizmos._mesh_Arrow3D,
+            //    material = mat,
+            //};
+            //Renderer.DrawMesh(info);
         }
     }
+    public void Draw () {
+        TransformComponent? tr_obj = selectedMesh?.owner.Transform;
+        if (tr_obj is null) return;
 
-    public void DrawSelectedOutline () {
+        Renderer.GL.Disable(EnableCap.DepthTest);
+        Renderer.GL.Disable(EnableCap.CullFace);
+
+        Renderer.SetSceneUniformsUnlit(AssetsEngine._sh_Unlit);
+
+        DrawSelectedOutline();
+        DrawGizmo();
+
+        UI.TextRenderer.AddText($"Selected:");
+        UI.TextRenderer.AddText($"Position: {tr_obj.Position:F3}");
+        UI.TextRenderer.AddText($"Rotation: {tr_obj.Rotation:F3}");
+        UI.TextRenderer.AddText($"Scale: {tr_obj.Scale:F3}");
+    }
+
+
+    public static Vector3 ToEulerXYZ (Matrix4x4 m) {
+        float sy = -m.M13; /// depends on row/col layout, verify against your Matrix4x4 struct
+        float x, y, z;
+
+        if (MathF.Abs(sy) < 0.9999f) {
+            y = MathF.Asin(sy);
+            x = MathF.Atan2(m.M23, m.M33);
+            z = MathF.Atan2(m.M12, m.M11);
+        } else {
+            /// gimbal lock
+            y = MathF.Asin(sy);
+            x = MathF.Atan2(-m.M32, m.M22);
+            z = 0f;
+        }
+
+        return new Vector3(x, y, z);
+    }
+
+    private void DrawSelectedOutline () {
         if (selectedMesh is null) return;
 
         RenderInfo renderInfo = selectedMesh.CreateRenderInfo;
@@ -370,7 +416,7 @@ public class GizmoSelected : IGizmoWorld {
         GL.Enable(EnableCap.StencilTest);
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.CullFace);
-        GL.CullFace(TriangleFace.Back);   // normal culling for the actual mesh
+        GL.CullFace(TriangleFace.Back); /// normal culling for the actual mesh
 
         /// Pass 1 — Render mesh normally, mark stencil = 1 everywhere it's visible
         GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
@@ -378,7 +424,12 @@ public class GizmoSelected : IGizmoWorld {
         GL.StencilMask(0xFF);
         GL.DepthMask(true);
 
-        Renderer.DrawMesh(renderInfo);
+        //renderInfo.material.pass = RenderPass.Opaque;
+        //renderInfo.material.depthTest = true;
+        //Renderer.DrawMesh(renderInfo);
+
+        //Renderer.SetSceneUniformsUnlit(renderInfo.material.shader);
+        renderInfo.mesh.Draw();
 
         /// Pass 2 — Outline: draw inflated mesh ONLY where stencil != 1
         GL.CullFace(TriangleFace.Front);  // now cull front so inflated backfaces show as outline
@@ -395,16 +446,14 @@ public class GizmoSelected : IGizmoWorld {
             renderInfo.scale.Z + t
         );
 
-        Matrix4x4 m4x4_mesh = Matrix4x4.CreateScale(outlineScale)
-            *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
+        Matrix4x4 m4x4_mesh = Matrix4x4.CreateScale(outlineScale)*Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
         float[] mesh_uModel = Matrix4x4.ToArray(m4x4_mesh);
 
-        _sh_Outline.Use();
-        _sh_Outline.SetMatrix4(View, Renderer.Instance.UView);
-        _sh_Outline.SetMatrix4(Projection, Renderer.Instance.UProjection);
+        //Renderer.SetSceneUniformsUnlit(_sh_Outline);
         _sh_Outline.SetMatrix4(Model, mesh_uModel);
         _sh_Outline.SetVector3(OutlineColor, Constants.cyan);
 
+        //renderInfo.material.pass = RenderPass.Opaque;
         renderInfo.mesh.Draw();
 
         /// Restore State

@@ -2,6 +2,7 @@
 using Engine.Graphics.UI;
 using static Engine.Graphics.Shader;
 using static Engine.AssetsEngine;
+using System.Threading;
 
 namespace Engine.Graphics;
 
@@ -24,10 +25,10 @@ public class Renderer {
         TextRenderer = new TextRenderer();
 
         /// Delegates
-        de_GizmosUpdate += Gizmos._gizmo_Selected.Update;
-        de_GizmosDraw += Gizmos._gizmo_Selected.Draw;
+        //de_GizmosUpdate += Gizmos._gizmo_Selected.Update;
+        //de_GizmosDraw += Gizmos._gizmo_Selected.Draw;
 
-        Engine.Instance.de_Update += de_GizmosUpdate;
+        //Engine.Instance.de_Update += de_GizmosUpdate;
     }
     public static Renderer Instance = null!;
 
@@ -35,12 +36,12 @@ public class Renderer {
     public static GL GL => Instance._GL;
     public readonly TextRenderer TextRenderer = null!;
 
-    public Action? de_GizmosUpdate = null;
-    public Action? de_GizmosDraw = null;
+    //public Action? de_GizmosUpdate = null;
+    //public Action? de_GizmosDraw = null;
     public Action? de_Dispose = null;
 
     //public readonly static Matrix4x4 _modelIdentity = Matrix4x4.Identity;
-    public readonly static float[] _uModelIdentity = Matrix4x4.ToArray(Matrix4x4.Identity);
+    //public readonly static float[] _uModelIdentity = Matrix4x4.ToArray(Matrix4x4.Identity);
     
     /// Debug
     internal Matrix4x4 m4x4_View = Matrix4x4.Identity;
@@ -53,10 +54,11 @@ public class Renderer {
 
 
     private readonly List<RenderInfo> RenderList = new List<RenderInfo>();
+    private List<RenderInfo> RenderListStatic = new List<RenderInfo>();
     public void AddRenderInfo (RenderInfo renderInfo) {
         RenderList.Add(renderInfo);
     }
-
+    long iter = 0; 
 
 
     private void OnRender (double deltaTime) {
@@ -69,21 +71,23 @@ public class Renderer {
         if (Constants.renderSkybox) 
             AssetsEngine._skybox?.Draw(m4x4_View, m4x4Projection);
 
-        GL.CullFace(TriangleFace.Back);
-
         /// Draw Scene
         //DrawMaterialsGrid(-12f, 0f, 2, 10f); /// Debug
+        Gizmos._gizmo_Selected.Update();
         Draw();
 
         SceneManager.ActiveScene?.DrawRaw();
 
         ///--- Stage Post-Scene ---///
         Gizmos.Draw();
+        Gizmos._gizmo_Selected.Draw();
 
         /// Draw UI
         TextRenderer.Draw();
 
         EditorUI.Instance.Draw();
+
+        iter++;
 
         DrawEnd();
     }
@@ -92,8 +96,16 @@ public class Renderer {
     }
 
 
-    RenderPass currentPass = RenderPass.undefined;
+    private static RenderPass currentPass = RenderPass.undefined;
     private void Draw () {
+        /*if (iter == 0) {
+            RenderListStatic.AddRange(RenderList);
+        } else {
+            RenderList.Clear();
+            RenderList.AddRange(RenderListStatic);
+        }*/
+        //if (iter == 100) Thread.Sleep(10000);
+
         RenderList.Sort((a, b) => a.material.pass.CompareTo(b.material.pass));
 
         int count = RenderList.Count;
@@ -102,62 +114,62 @@ public class Renderer {
             DrawMesh(info);
         }
     }
-    private static void ApplyPassState (Material material) {
-        switch (material.pass) {
-            case RenderPass.Opaque:
-                GL.Enable(EnableCap.CullFace);
-                GL.Enable(EnableCap.DepthTest);
-                GL.DepthMask(true);
-                GL.Disable(EnableCap.Blend);
-
-                SetSceneUniformsLit(material.shader);
-                break;
-            case RenderPass.Transparent:
-                GL.Enable(EnableCap.CullFace);
-                GL.Enable(EnableCap.DepthTest);
-                GL.DepthMask(true);
-                GL.Enable(EnableCap.Blend);
-                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-
-                SetSceneUniformsLit(material.shader);
-                break;
-            case RenderPass.Gizmo:
-                GL.Disable(EnableCap.CullFace);
-                GL.Enable(EnableCap.Blend);
-                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-                GL.DepthMask(true);
-                break;
-            case RenderPass.UI:
-                GL.Disable(EnableCap.CullFace);
-                GL.Enable(EnableCap.Blend);
-                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-                //GL.DepthMask(false);
-                break;
-        }
-    }
 
     public static void DrawMesh (RenderInfo info) {
         if (info.mesh is null) return;
         if (info.material is null) return;
 
         Shader shader = info.material.shader;
-        SetSceneUniformsUnlit(info.material.shader);
-        //if (currentPass != info.material.pass) {
-        ApplyPassState(info.material);
-        //currentPass = info.material.pass;
-        //}
 
-        if (info.material.depthTest) GL.Enable(EnableCap.DepthTest);
-        else GL.Disable(EnableCap.DepthTest);
+        switch (info.material.pass) {
+            case RenderPass.Opaque:
+                GL.Disable(EnableCap.Blend);
+                break;
+            case RenderPass.Transparent:
+                GL.Enable(EnableCap.Blend);
+                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+                break;
+            case RenderPass.Gizmo:
+                GL.Enable(EnableCap.Blend);
+                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+                break;
+            case RenderPass.UI:
+                GL.Enable(EnableCap.Blend);
+                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+                break;
+        }
 
-        Matrix4x4 mesh_m4x4 = Matrix4x4.CreateScale(info.scale) 
+        switch (info.material.face) {
+            case RenderFace.Front:
+                GL.Enable(EnableCap.CullFace);
+                GL.CullFace(TriangleFace.Back);
+                break;
+            case RenderFace.Back:
+                GL.Enable(EnableCap.CullFace);
+                GL.CullFace(TriangleFace.Front);
+                break;
+            case RenderFace.Both:
+                GL.Disable(EnableCap.CullFace);
+                break;
+        }
+
+        if (info.material.depthTest) {
+            GL.Enable(EnableCap.DepthTest);
+        } else GL.Disable(EnableCap.DepthTest);
+        GL.DepthMask(info.material.depthWrite);
+        GL.DepthRange(info.depthRangeNear, info.depthRangeFar);
+
+        Matrix4x4 mesh_m4x4 = info.modelOverride ?? Matrix4x4.CreateScale(info.scale) 
             *Matrix4x4.RotationEuler(info.rot)*Matrix4x4.Position(info.pos);
         float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
 
         SetSceneUniformsLit(info.material.shader);
         info.material.shader.SetMatrix4(Model, mesh_uModel);
         info.material.Apply(info.material.shader);
+
+        info.de_Pre?.Invoke();
         info.mesh.Draw(info.primitiveType);
+        info.de_Post?.Invoke();
     }
     private void UpdateProjection () {
         float aspect = Engine.Window.Size.X/(float)Engine.Window.Size.Y;
