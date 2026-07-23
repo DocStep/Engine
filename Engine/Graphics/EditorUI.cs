@@ -63,9 +63,9 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             ImGui.Text("Selected:");
             ImGui.InputText("Name", ref selectedGO.Name, int.MaxValue);
             ImGui.Text("Transform");
-            ImGui.DragFloat3("Position", ref selectedGO.Transform.Position, 0.1f);
-            ImGui.DragFloat3("Rotation", ref selectedGO.Transform.Rotation, 0.1f);
-            ImGui.DragFloat3("Scale", ref selectedGO.Transform.Scale, 0.1f);
+            ImGui.DragFloat3("Position", ref selectedGO.Transform.Position, 0.01f);
+            ImGui.DragFloat3("Rotation", ref selectedGO.Transform.Rotation, 1f);
+            ImGui.DragFloat3("Scale", ref selectedGO.Transform.Scale, 0.01f);
         }
         ImGui.End();
     }

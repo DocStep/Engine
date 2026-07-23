@@ -63,6 +63,7 @@ public class Renderer {
 
     private void OnRender (double deltaTime) {
         Gizmos.Update();
+        Gizmos._gizmo_Selected.Update();
 
         GL.Clear((uint)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit));
 
@@ -73,7 +74,6 @@ public class Renderer {
 
         /// Draw Scene
         //DrawMaterialsGrid(-12f, 0f, 2, 10f); /// Debug
-        Gizmos._gizmo_Selected.Update();
         Draw();
 
         SceneManager.ActiveScene?.DrawRaw();

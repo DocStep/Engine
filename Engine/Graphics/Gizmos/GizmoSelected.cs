@@ -283,6 +283,28 @@ public class GizmoSelected : IGizmoWorld {
     }
 
 
+    public void Draw () {
+        TransformComponent? tr_obj = selectedMesh?.owner.Transform;
+        if (tr_obj is null) return;
+
+        Shader _sh_Unlit = AssetsEngine._sh_Unlit;
+        Renderer.GL.Disable(EnableCap.DepthTest);
+        Renderer.GL.Disable(EnableCap.CullFace);
+
+        _sh_Unlit.Use();
+        _sh_Unlit.SetMatrix4(View, Renderer.Instance.UView);
+        _sh_Unlit.SetMatrix4(Projection, Renderer.Instance.UProjection);
+        _sh_Unlit.SetVector3(ViewPos, Camera.Instance.cameraPos);
+
+        DrawOutline();
+        DrawGizmo();
+
+        UI.TextRenderer.AddText($"Selected:");
+        UI.TextRenderer.AddText($"Position: {tr_obj.Position:F3}");
+        UI.TextRenderer.AddText($"Rotation: {tr_obj.Rotation:F3}");
+        UI.TextRenderer.AddText($"Scale: {tr_obj.Scale:F3}");
+    }
+
     private void DrawGizmo () {
         if (selectedMesh is null) return;
 
@@ -312,23 +334,7 @@ public class GizmoSelected : IGizmoWorld {
             /*_sh_Unlit.SetMatrix4(Model, Matrix4x4.ToArray(m4x4_selected));
             _sh_Unlit.SetFloat(Alpha, 0.5f);
             _sh_Unlit.SetColor(Color, color);
-            AssetsEngine._mesh_PlaneQuad.Draw();*/
-
-            Material mat = new Material(_sh_Unlit);
-            mat.SetFloat(Alpha, 0.5f);
-            mat.SetVector3(Color, color);
-            mat.pass = RenderPass.Gizmo;
-            mat.face = RenderFace.Both;
-            mat.depthTest = false;
-            RenderInfo info = new RenderInfo() {
-                name = "quads",
-                modelOverride = m4x4_selected,
-                rot = ToEulerXYZ(basis),
-                scale = _dist*_axisLength*Vector3.One,
-                mesh = AssetsEngine._mesh_PlaneQuad,
-                material = mat,
-            };
-            Renderer.DrawMesh(info);
+            AssetsEngine._mesh_PlaneQuad.Draw();
         }
 
 
@@ -351,23 +357,6 @@ public class GizmoSelected : IGizmoWorld {
             _sh_Unlit.SetFloat(Alpha, 0.5f);
             _sh_Unlit.SetColor(Color, color);
             Gizmos._mesh_Arrow3D.Draw();
-
-            //Material mat = new Material(_sh_Unlit);
-            //mat.SetFloat(Alpha, 0.5f);
-            //mat.SetVector3(Color, color);
-            //mat.pass = RenderPass.Gizmo;
-            //mat.face = RenderFace.Both;
-            //mat.depthTest = false;
-            //RenderInfo info = new RenderInfo () {
-            //    name = "axis",
-            //    modelOverride = m4x4_selected,
-            //    //pos = pos3,
-            //    //rot = rot,
-            //    scale = _dist*_axisLength*Vector3.One,
-            //    mesh = Gizmos._mesh_Arrow3D,
-            //    material = mat,
-            //};
-            //Renderer.DrawMesh(info);
         }
     }
     public void Draw () {
@@ -407,7 +396,7 @@ public class GizmoSelected : IGizmoWorld {
         return new Vector3(x, y, z);
     }
 
-    private void DrawSelectedOutline () {
+    private void DrawOutline () {
         if (selectedMesh is null) return;
 
         RenderInfo renderInfo = selectedMesh.CreateRenderInfo;
