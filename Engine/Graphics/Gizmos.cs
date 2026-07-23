@@ -101,7 +101,7 @@ public static class Gizmos {
             mesh = _mesh_GridWireframe,
             primitiveType = PrimitiveType.Lines,
             material = _mat_GizmoGrid,
-            depthRangeNear = 0.0001f,
+            //depthRangeNear = 0.0001f,
             //de_Pre = GizmoGridPre,
             //de_Post = GizmoGridPost,
         });
@@ -115,6 +115,7 @@ public static class Gizmos {
             mesh = _mesh_AxesWireframe,
             primitiveType = PrimitiveType.Lines,
             material = _mat_GizmoAxes,
+            depthRangeFar = 0.9999f,
         });
     }
     private static void DrawGizmoAxesWidget () {

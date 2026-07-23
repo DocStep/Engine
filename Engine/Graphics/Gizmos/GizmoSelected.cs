@@ -424,11 +424,11 @@ public class GizmoSelected : IGizmoWorld {
         GL.StencilMask(0xFF);
         GL.DepthMask(true);
 
-        //renderInfo.material.pass = RenderPass.Opaque;
-        //renderInfo.material.depthTest = true;
         //Renderer.DrawMesh(renderInfo);
-
-        //Renderer.SetSceneUniformsUnlit(renderInfo.material.shader);
+        Matrix4x4 mesh_m4x4 = renderInfo.modelOverride ?? Matrix4x4.CreateScale(renderInfo.scale)
+            *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
+        float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
+        renderInfo.material.shader.SetMatrix4(Model, mesh_uModel);
         renderInfo.mesh.Draw();
 
         /// Pass 2 — Outline: draw inflated mesh ONLY where stencil != 1
@@ -446,14 +446,22 @@ public class GizmoSelected : IGizmoWorld {
             renderInfo.scale.Z + t
         );
 
-        Matrix4x4 m4x4_mesh = Matrix4x4.CreateScale(outlineScale)*Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
-        float[] mesh_uModel = Matrix4x4.ToArray(m4x4_mesh);
+        Matrix4x4 m4x4_mesh = Matrix4x4.CreateScale(outlineScale)
+            *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
+        //float[] mesh_uModel = Matrix4x4.ToArray(m4x4_mesh);
+        mesh_uModel = Matrix4x4.ToArray(m4x4_mesh);
 
-        //Renderer.SetSceneUniformsUnlit(_sh_Outline);
+        Renderer.SetSceneUniformsUnlit(_sh_Outline);
         _sh_Outline.SetMatrix4(Model, mesh_uModel);
         _sh_Outline.SetVector3(OutlineColor, Constants.cyan);
 
+        //renderInfo.scale = outlineScale;
+        //renderInfo.material = new Material(_sh_Outline);
+        //renderInfo.material.SetVector3(OutlineColor, Constants.cyan);
         //renderInfo.material.pass = RenderPass.Opaque;
+        //renderInfo.material.depthTest = true;
+        //renderInfo.depthRangeFar = 1f;
+        //Renderer.DrawMesh(renderInfo);
         renderInfo.mesh.Draw();
 
         /// Restore State

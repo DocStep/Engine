@@ -159,11 +159,11 @@ public class Renderer {
         GL.DepthMask(info.material.depthWrite);
         GL.DepthRange(info.depthRangeNear, info.depthRangeFar);
 
+        SetSceneUniformsLit(info.material.shader);
+
         Matrix4x4 mesh_m4x4 = info.modelOverride ?? Matrix4x4.CreateScale(info.scale) 
             *Matrix4x4.RotationEuler(info.rot)*Matrix4x4.Position(info.pos);
         float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
-
-        SetSceneUniformsLit(info.material.shader);
         info.material.shader.SetMatrix4(Model, mesh_uModel);
         info.material.Apply(info.material.shader);
 
