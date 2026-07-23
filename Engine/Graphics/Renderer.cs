@@ -79,8 +79,8 @@ public class Renderer {
         SceneManager.ActiveScene?.DrawRaw();
 
         ///--- Stage Post-Scene ---///
-        Gizmos.Draw();
         Gizmos._gizmo_Selected.Draw();
+        Gizmos.Draw();
 
         /// Draw UI
         TextRenderer.Draw();
