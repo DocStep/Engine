@@ -82,7 +82,11 @@ internal static class Utils {
             return new Vector3(pitch, yaw, 0f);
         }
     }
-    
+
+    public static string ToString3 (this JVector vec3) {
+        return $"({vec3.X:F3}, {vec3.Y:F3}, {vec3.Z:F3})";
+    }
+
 
     public static JQuaternion QuaternionFromEuler (Vector3 rot) {
         Vector3 rad = rot*(MathF.PI/180f);
@@ -91,6 +95,9 @@ internal static class Utils {
         JQuaternion qz = JQuaternion.CreateFromAxisAngle(JVector.UnitZ, rad.Z);
         return qx*qy*qz;
     }
+
+
+
 
 
     internal static float Clamp (float value, float min, float max) {

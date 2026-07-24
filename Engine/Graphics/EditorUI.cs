@@ -2,8 +2,6 @@
 using System.Numerics;
 using ImGuiNET;
 using Silk.NET.OpenGL.Extensions.ImGui;
-using Engine;
-using Engine.Graphics;
 
 namespace Engine.Graphics;
 
@@ -62,10 +60,14 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         if (selectedGO is not null) {
             ImGui.Text("Selected:");
             ImGui.InputText("Name", ref selectedGO.Name, int.MaxValue);
+            
             ImGui.Text("Transform");
-            ImGui.DragFloat3("Position", ref selectedGO.Transform.Position, 0.01f);
-            ImGui.DragFloat3("Rotation", ref selectedGO.Transform.Rotation, 1f);
-            ImGui.DragFloat3("Scale", ref selectedGO.Transform.Scale, 0.01f);
+            selectedGO.Transform.DrawInspector();
+
+            for (int c = 0; c < selectedGO.Components.Count; c++) {
+                ImGui.Text(selectedGO.Components[c].Name);
+                selectedGO.Components[c].DrawInspector();
+            }
         }
         ImGui.End();
     }

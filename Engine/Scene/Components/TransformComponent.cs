@@ -5,7 +5,7 @@ namespace Engine;
 
 public class TransformComponent : Component {
 
-    [JsonIgnore] public readonly static string typeName = typeof(TransformComponent).Name;
+    [JsonIgnore] public override string Name => nameof(TransformComponent);
 
     public Vector3 Position = Vector3.Zero;
     public Vector3 Rotation = Vector3.Zero;
@@ -42,6 +42,13 @@ public class TransformComponent : Component {
     public void Stop () {
         PhysicsComponent? physicsComponent = owner.GetComponent<PhysicsComponent>();
         physicsComponent?.Stop();
+    }
+
+
+    public override void DrawInspector () {
+        ImGuiNET.ImGui.DragFloat3("Position", ref Position, 0.01f);
+        ImGuiNET.ImGui.DragFloat3("Rotation", ref Rotation, 1f);
+        ImGuiNET.ImGui.DragFloat3("Scale", ref Scale, 0.01f);
     }
 
 

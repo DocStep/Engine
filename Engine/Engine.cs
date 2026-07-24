@@ -61,24 +61,30 @@ public class Engine : Singleton<Engine>, IDisposable {
         private set => Instance._fixedDeltaTime = value;
     }
 
-    public void Run () {
+
+    protected override void Init () {
         ArgsUtils.Init();
 
-        Console.WriteLine($"========== Init ==========");
-        Console.WriteLine($"===== Utils Layer =====");
         ThreadUtils.Init();
+        Log.InstanceCheck();
+        Log.log($"========== Init ==========", Log.LogType.info);
+        Log.log($"===== Utils Layer =====", Log.LogType.info);
         TimeUtils.Init();
-        /// Log auto-called from Singleton
-        Log.log($"[{TimeUtils.getCurrentTime}]");
 
         new Reflection();
         new Json();
 
+        /// Log auto-called from Singleton
+        Log.log($"[{TimeUtils.getCurrentTime}]");
+
         Inputs.OverrideActions(DataEngine.InputsData);
 
         Inputs.KeysInit();
+    }
+    public void Run () {
+        Log.log($"========== Run ==========", Log.LogType.info);
 
-        //Console.WriteLine($"========== Init Finish ==========");
+        new ReflectionActionScripts();
 
         Silk.NET.Windowing.WindowOptions options = Silk.NET.Windowing.WindowOptions.Default with {
             Size = new Silk.NET.Maths.Vector2D<int>(1280, 720),
@@ -107,7 +113,7 @@ public class Engine : Singleton<Engine>, IDisposable {
         Input = Silk.NET.Input.InputWindowExtensions.CreateInput(Window);
         InputState.Init(Input);
 
-        Console.WriteLine($"===== Systems Layer =====");
+        Log.log($"===== Systems Layer =====", Log.LogType.info);
 
         Renderer = new Graphics.Renderer();
         new Graphics.EditorUI();
@@ -119,7 +125,7 @@ public class Engine : Singleton<Engine>, IDisposable {
 
         de_Update?.Invoke();
 
-        Console.WriteLine($"========== Init Finish ==========");
+        Log.log($"========== Init Finish ==========", Log.LogType.info);
 
         engineState = EngineStates.Ready;
     }
@@ -153,19 +159,23 @@ public class Engine : Singleton<Engine>, IDisposable {
 
         ComponentManager.Instance.FixedUpdate();
         PhysicsManager.Instance.FixedUpdate();
+
         de_FixedUpdate?.Invoke();
+        ReflectionActionScripts.Instance.de_Actions_FixedUpdate?.Invoke();
     }
     private void Update () {
         ComponentManager.Instance.Update();
+
         de_Update?.Invoke();
+        ReflectionActionScripts.Instance.de_Actions_Update?.Invoke();
 
         Graphics.EditorUI.Instance?.Update();
         // your normal scene rendering here
 
+        f3log();
+
         /// Counters
         time += _deltaTime;
-
-        f3log();
     }
 
     void f3log () {

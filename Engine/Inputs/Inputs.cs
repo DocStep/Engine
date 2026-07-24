@@ -260,7 +260,7 @@ public static class Inputs {
     public static void KeysDef () {
         Actions = new Dictionary<string, InputsGroup>(ActionsDef);
         Save();
-        Log.log($"Inited (Created): {nameof(Inputs)}");
+        Log.log($"[{nameof(Inputs)}] Inited (Created): {nameof(Inputs)}");
     }
 
     public static void AddActionsFirst (Dictionary<string, InputsGroup> keyset) {
@@ -351,7 +351,7 @@ public static class Inputs {
         StreamWriter sw = new(getPathSettingsFile());
         sw.WriteLine(text);
         sw.Close();
-        Log.log($"Keys saved");
+        Log.log($"[{nameof(Inputs)}] Keys saved");
 
         void Group (Dictionary<string, InputsGroup> group, string name) {
             text += $"[{name}]\n";

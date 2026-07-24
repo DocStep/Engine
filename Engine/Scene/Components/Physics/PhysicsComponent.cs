@@ -13,7 +13,7 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
         Rigidbody.Friction = 0.5f;
     }
 
-    [JsonIgnore] public readonly static string typeName = typeof(PhysicsComponent).Name;
+    [JsonIgnore] public override string Name => nameof(PhysicsComponent);
 
     [JsonIgnore] public readonly RigidBody Rigidbody = null!;
 
@@ -88,6 +88,14 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
 
         return q;
     }
+
+
+    public override void DrawInspector () {
+        ImGuiNET.ImGui.TextDisabled($"Mode: {Rigidbody.Data.MotionType}");
+        ImGuiNET.ImGui.TextDisabled($"Velocity: {Rigidbody.Velocity.ToString3()}");
+        ImGuiNET.ImGui.TextDisabled($"Angular Velocity: {Rigidbody.AngularVelocity.ToString3()}");
+    }
+
 
     /*public static Quaternion EulerToQuat (Vector3 euler) {
         const float d2r = MathF.PI / 180f;

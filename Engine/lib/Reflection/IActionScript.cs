@@ -1,22 +1,20 @@
 ﻿namespace Engine;
 
 
-public interface IActionScript {
+public interface IActionScript { }
 
+public interface IActionScript_Start : IActionScript {
+    void OnScriptAction_Start ();
 }
 
-public interface IActionScript_Start {
-    public IEnumerator OnScriptAction_Start ();
+public interface IActionScript_FixedUpdate : IActionScript {
+    void OnScriptAction_FixedUpdate ();
 }
 
-public interface IActionScript_FixedUpdate {
-    public IEnumerator OnScriptAction_FixedUpdate ();
+public interface IActionScript_Update : IActionScript {
+    void OnScriptAction_Update ();
 }
 
-public interface IActionScript_Update {
-    public IEnumerator OnScriptAction_Update ();
-}
-
-public interface IActionScript_Exit {
-    public IEnumerator OnScriptAction_Exit ();
+public interface IActionScript_Exit : IActionScript {
+    void OnScriptAction_Exit ();
 }

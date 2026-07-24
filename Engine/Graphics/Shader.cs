@@ -7,6 +7,8 @@ public class Shader : IDisposable {
     public Shader (string vertexSource, string fragmentSource, string name = "unnamed") {
         GL = Renderer.GL;
         Name = name;
+        _vertexSource = vertexSource;
+        _fragmentSource = fragmentSource;
 
         uint vertex = CompileShader(ShaderType.VertexShader, vertexSource);
         uint fragment = CompileShader(ShaderType.FragmentShader, fragmentSource);

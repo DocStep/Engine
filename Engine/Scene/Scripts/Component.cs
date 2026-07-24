@@ -4,6 +4,7 @@ namespace Engine;
 
 
 public abstract class Component : ISavable {
+    public Component () { }
 
     public readonly Guid? Guid = lib.Guid;
     public readonly long? Id = lib.Id;
@@ -12,6 +13,7 @@ public abstract class Component : ISavable {
     public Guid? ownerGuid = null;
     [JsonIgnore] public TransformComponent? parent = null;
     public Guid? parentGuid = null;
+    public abstract string Name { get; }
 
 
     //protected string? typeName = null;
@@ -23,6 +25,10 @@ public abstract class Component : ISavable {
 
     public virtual void OnAdd () { }
     public virtual void OnRemove () { }
+
+
+    public virtual void DrawInspector () { }
+
 
     public void PreSave () {
         /// Own

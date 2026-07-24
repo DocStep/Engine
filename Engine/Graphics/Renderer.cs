@@ -98,13 +98,7 @@ public class Renderer {
 
     private static RenderPass currentPass = RenderPass.undefined;
     private void Draw () {
-        /*if (iter == 0) {
-            RenderListStatic.AddRange(RenderList);
-        } else {
-            RenderList.Clear();
-            RenderList.AddRange(RenderListStatic);
-        }*/
-        //if (iter == 100) Thread.Sleep(10000);
+        //DrawSame();
 
         RenderList.Sort((a, b) => a.material.pass.CompareTo(b.material.pass));
 
@@ -218,8 +212,16 @@ public class Renderer {
             }
         }
     }
-
-
+    
+    void DrawSame () {
+        if (iter == 0) {
+            RenderListStatic.AddRange(RenderList);
+        } else {
+            RenderList.Clear();
+            RenderList.AddRange(RenderListStatic);
+        }
+        //if (iter == 100) Thread.Sleep(10000);
+    }
 
     internal void OnFrameBufferResize (Silk.NET.Maths.Vector2D<int> newSize) {
         GL.Viewport(newSize);

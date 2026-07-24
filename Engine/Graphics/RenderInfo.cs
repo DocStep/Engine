@@ -10,8 +10,8 @@ public struct RenderInfo () {
     public Matrix4x4? modelOverride = null;
 
     /// MeshComponent
-    public Mesh? mesh = null;
-    public Material material = default!;
+    public Mesh mesh = null!;
+    public Material material = null!;
     public Silk.NET.OpenGL.PrimitiveType primitiveType = Silk.NET.OpenGL.PrimitiveType.Triangles;
     public float depthRangeNear = 0f;
     public float depthRangeFar = 1f;

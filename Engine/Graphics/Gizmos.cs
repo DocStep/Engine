@@ -30,29 +30,28 @@ public static class Gizmos {
         _mat_GizmosG = new Material(_sh_Unlit);
         _mat_GizmosG.SetVector3(Color, Constants.green);
         _mat_GizmosG.SetFloat(Alpha, 0.5f);
-        _mat_GizmosG.pass = RenderPass.Transparent;
+        _mat_GizmosG.pass = RenderPass.Gizmo;
         _mat_GizmosG.face = RenderFace.Both;
-
 
         _mat_GizmoGrid = new Material(_sh_GizmoGrid);
         _mat_GizmoGrid.SetVector3(Color, Constants.lightGray);
         _mat_GizmoGrid.SetFloat(Alpha, 0.5f);
         _mat_GizmoGrid.SetFloat(Radius, 200f);
         _mat_GizmoGrid.SetFloat(Fade, 50f);
-        _mat_GizmoGrid.pass = RenderPass.Transparent;
+        _mat_GizmoGrid.pass = RenderPass.Gizmo;
         _mat_GizmosG.face = RenderFace.Both;
 
         _mat_GizmoAxes = new Material(_sh_GizmoAxes);
         _mat_GizmoAxes.SetFloat(Alpha, 0.5f);
         _mat_GizmoAxes.SetFloat(Radius, 200f);
         _mat_GizmoAxes.SetFloat(Fade, 50f);
-        _mat_GizmoAxes.pass = RenderPass.Transparent;
+        _mat_GizmoAxes.pass = RenderPass.Gizmo;
         _mat_GizmosG.face = RenderFace.Both;
 
         _mat_GizmoSun = new Material(_sh_Unlit);
         _mat_GizmoSun.SetVector3(Color, Constants.yellow);
         _mat_GizmoSun.SetFloat(Alpha, 0.5f);
-        _mat_GizmoSun.pass = RenderPass.Transparent;
+        _mat_GizmoSun.pass = RenderPass.Gizmo;
         _mat_GizmosG.face = RenderFace.Both;
 
         _gizmo_Selected = new GizmoSelected();

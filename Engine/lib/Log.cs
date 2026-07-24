@@ -22,20 +22,21 @@ public class Log : Singleton<Log> {
     void Update () {
         while (Queue.TryDequeue(out LogEntry entry)) {
             //string log = entry.text + entry.timestamp + Environment.NewLine + Environment.NewLine +
-            string log = entry.text;
+            string text = entry.text;
             
             switch (entry.type) {
                 case LogType.log:
-                    Console.WriteLine(log);
+                    Console.WriteLine(text);
                     break;
                 case LogType.warning:
-                    Console.WriteLine("? " + log);
+                    Console.WriteLine("? " + text);
                     break;
                 case LogType.error:
-                    log += Environment.NewLine + Environment.NewLine +
+                    text += Environment.NewLine + Environment.NewLine +
                         ParseLight(entry.stackTrace.ToString());
                     //Parse(entry.stackTrace.ToString());
-                    Console.WriteLine("! " + $"/({ThreadUtils.currThread})" + logSymbolSpace + log);
+                    ConsoleColor(entry.type);
+                    Console.WriteLine("! " + $"/({ThreadUtils.currThread})" + logSymbolSpace + text);
                     break;
                 default:
                     break;
@@ -45,8 +46,10 @@ public class Log : Singleton<Log> {
 
 
     public static void log (string text, LogType type = LogType.log) {
-        if (ThreadUtils.isMainThread) Console.WriteLine(logSymbolSpace + text);
-        else {
+        if (ThreadUtils.isMainThread) {
+            ConsoleColor(type);
+            Console.WriteLine(logSymbolSpace + text);
+        } else {
             LogEntry log = new LogEntry(text, type);
             Instance.Queue.Enqueue(log);
         }
@@ -62,6 +65,22 @@ public class Log : Singleton<Log> {
         log(text);
     }
 
+    public static void ConsoleColor (LogType type) {
+        switch (type) {
+            case LogType.log:
+                Console.ResetColor();
+                break;
+            case LogType.warning:
+                Console.ForegroundColor = System.ConsoleColor.Yellow;
+                break;
+            case LogType.error:
+                Console.ForegroundColor = System.ConsoleColor.Red;
+                break;
+            case LogType.info:
+                Console.ForegroundColor = System.ConsoleColor.DarkCyan;
+                break;
+        }
+    }
 
 
     static readonly string[] Ignore = {
@@ -213,6 +232,7 @@ public class Log : Singleton<Log> {
         log,
         warning,
         error,
+        info,
     }
 
     struct LogEntry {
