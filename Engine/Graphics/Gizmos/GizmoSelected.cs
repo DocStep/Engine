@@ -308,8 +308,10 @@ public class GizmoSelected : IGizmoWorld {
     private void DrawGizmo () {
         if (selectedMesh is null) return;
 
-        GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
+        GL.Disable(EnableCap.DepthTest);
+        GL.Enable(EnableCap.Blend);
+        //GL.DepthRange(0, 0.9999f);
 
         TransformComponent tr_obj = selectedMesh.owner.Transform;
         Vector3 camPos = Camera.Instance.cameraPos;
@@ -360,6 +362,8 @@ public class GizmoSelected : IGizmoWorld {
             _sh_Unlit.SetFloat(Alpha, 0.5f);
             Gizmos._mesh_Arrow3D.Draw();
         }
+
+        //GL.DepthRange(0, 1);
     }
 
     private void DrawOutline () {

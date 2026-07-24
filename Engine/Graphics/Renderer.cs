@@ -150,8 +150,11 @@ public class Renderer {
         if (info.material.depthTest) {
             GL.Enable(EnableCap.DepthTest);
         } else GL.Disable(EnableCap.DepthTest);
+
         GL.DepthMask(info.material.depthWrite);
-        GL.DepthRange(info.depthRangeNear, info.depthRangeFar);
+
+        if (info.depthRangeNear != 0 || info.depthRangeFar != 1) 
+            GL.DepthRange(info.depthRangeNear, info.depthRangeFar);
 
         SetSceneUniformsLit(info.material.shader);
 
@@ -164,6 +167,9 @@ public class Renderer {
         info.de_Pre?.Invoke();
         info.mesh.Draw(info.primitiveType);
         info.de_Post?.Invoke();
+
+        if (info.depthRangeNear != 0 || info.depthRangeFar != 1) 
+            GL.DepthRange(0, 1);
     }
     private void UpdateProjection () {
         float aspect = Engine.Window.Size.X/(float)Engine.Window.Size.Y;
