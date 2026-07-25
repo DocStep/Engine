@@ -9,7 +9,7 @@ namespace Engine;
 public class Script : Component {
     public override string Name => nameof(Script) + ": " + GetType().Name;
 
-
+/*
     public override void DrawInspector () {
         Type type = GetType();
 
@@ -51,5 +51,5 @@ public class Script : Component {
                 return null;
         }
     }
-
+*/
 }

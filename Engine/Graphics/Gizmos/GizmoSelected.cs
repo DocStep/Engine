@@ -55,7 +55,7 @@ public class GizmoSelected : IGizmoWorld {
     public void Update () {
         if (selectedMesh is null) return;
 
-        TransformComponent tr_obj = selectedMesh.owner.Transform;
+        Transform tr_obj = selectedMesh.owner.Transform;
         Vector3 camPos = Camera.Instance.cameraPos;
         Vector3 _objPos = tr_obj.Position;
         Vector3 _objRot = tr_obj.Rotation;
@@ -284,7 +284,7 @@ public class GizmoSelected : IGizmoWorld {
 
 
     public void Draw () {
-        TransformComponent? tr_obj = selectedMesh?.owner.Transform;
+        Transform? tr_obj = selectedMesh?.owner.Transform;
         if (tr_obj is null) return;
 
         Shader _sh_Unlit = AssetsEngine._sh_Unlit;
@@ -313,7 +313,7 @@ public class GizmoSelected : IGizmoWorld {
         GL.Enable(EnableCap.Blend);
         //GL.DepthRange(0, 0.9999f);
 
-        TransformComponent tr_obj = selectedMesh.owner.Transform;
+        Transform tr_obj = selectedMesh.owner.Transform;
         Vector3 camPos = Camera.Instance.cameraPos;
         Vector3 _objPos = tr_obj.Position;
         Vector3 _objRot = tr_obj.Rotation;

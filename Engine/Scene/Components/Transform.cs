@@ -3,13 +3,13 @@
 namespace Engine;
 
 
-public class TransformComponent : Component {
+public class Transform : Component {
 
-    [JsonIgnore] public override string Name => nameof(TransformComponent);
+    [JsonIgnore] public override string Name => nameof(Transform);
 
     public Vector3 Position = Vector3.Zero;
-    [JsonProperty("Rotation")] private Vector3 rotation = Vector3.Zero;
-    public Vector3 Rotation {
+    [JsonProperty("Rotation")][AttributeClampRotation(0, 360)] public Vector3 Rotation = Vector3.Zero;
+    /*public Vector3 Rotation {
         get => rotation;
         set {
             value.X = value.X%360f;
@@ -20,7 +20,7 @@ public class TransformComponent : Component {
             if (value.Z < 0f) value.Z += 360f;
             rotation = value;
         }
-    }
+    }*/
     public Vector3 Scale = Vector3.One;
 
     [JsonIgnore] public Vector3 Right => Vector3.Normalize(Vector3.TransformNormal(Vector3.UnitX, Matrix4x4.RotationEuler(Rotation)));
@@ -54,13 +54,6 @@ public class TransformComponent : Component {
     public void Stop () {
         PhysicsComponent? physicsComponent = owner.GetComponent<PhysicsComponent>();
         physicsComponent?.Stop();
-    }
-
-
-    public override void DrawInspector () {
-        ImGuiNET.ImGui.DragFloat3("Position", ref Position, 0.01f);
-        ImGuiNET.ImGui.DragFloat3("Rotation", ref rotation, 1f);
-        ImGuiNET.ImGui.DragFloat3("Scale", ref Scale, 0.01f);
     }
 
 

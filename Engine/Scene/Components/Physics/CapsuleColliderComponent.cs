@@ -28,10 +28,10 @@ public class CapsuleColliderComponent : ColliderComponent {
     }
 
 
-    public override void DrawInspector () {
+    /*public override void DrawInspector () {
         ImGuiNET.ImGui.DragFloat3("Position", ref Position, 0.01f);
         ImGuiNET.ImGui.DragFloat("Height", ref Height, 0.01f);
         ImGuiNET.ImGui.DragFloat("Radius", ref Radius, 0.01f);
-    }
+    }*/
 
 }

@@ -28,10 +28,10 @@ public class BoxColliderComponent : ColliderComponent {
     }
 
 
-    public override void DrawInspector () {
+    /*public override void DrawInspector () {
         ImGuiNET.ImGui.DragFloat3("Position", ref Position, 0.01f);
         ImGuiNET.ImGui.DragFloat3("Rotation", ref Rotation, 1f);
         ImGuiNET.ImGui.DragFloat3("Scale", ref Scale, 0.01f);
-    }
+    }*/
 
 }

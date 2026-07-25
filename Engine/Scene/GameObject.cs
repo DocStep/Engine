@@ -89,7 +89,7 @@ public class GameObject : ISavable {
 
     public string Name = GameObject.GameObjectName;
     public readonly long Id = 0;
-    public readonly TransformComponent Transform = new TransformComponent();
+    public readonly Transform Transform = new Transform();
     public readonly List<Component> Components = new List<Component>();
 
     [JsonIgnore] public const string GameObjectName = "GameObject";
