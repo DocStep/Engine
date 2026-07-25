@@ -24,6 +24,9 @@ public class Renderer {
 
         TextRenderer = new TextRenderer();
 
+        _skybox = new Skybox(_sh_Skybox, _hdrTexture_Skybox);
+        _skybox.BlurScale = 3f;
+
         /// Delegates
         //de_GizmosUpdate += Gizmos._gizmo_Selected.Update;
         //de_GizmosDraw += Gizmos._gizmo_Selected.Draw;
@@ -42,7 +45,9 @@ public class Renderer {
 
     //public readonly static Matrix4x4 _modelIdentity = Matrix4x4.Identity;
     //public readonly static float[] _uModelIdentity = Matrix4x4.ToArray(Matrix4x4.Identity);
-    
+
+    public readonly Skybox _skybox = null!;
+
     /// Debug
     internal Matrix4x4 m4x4_View = Matrix4x4.Identity;
     internal Matrix4x4 m4x4Projection = Matrix4x4.Identity;
@@ -51,6 +56,7 @@ public class Renderer {
 
     private static float[] uProjection = [];
     public float[] UProjection => uProjection;
+
 
 
     private readonly List<RenderInfo> RenderList = new List<RenderInfo>();
@@ -69,12 +75,11 @@ public class Renderer {
 
         UpdateProjection();
 
-        if (Constants.renderSkybox) 
-            AssetsEngine._skybox?.Draw(m4x4_View, m4x4Projection);
+        _skybox?.Draw(m4x4_View, m4x4Projection);
 
         /// Draw Scene
         DrawMaterialsGrid(-12f, 0f, 2, 10f); /// Debug
-        Draw();
+        DrawMeshes();
 
         SceneManager.ActiveScene?.DrawRaw();
 
@@ -96,12 +101,10 @@ public class Renderer {
     }
 
 
-    private static RenderPass currentPass = RenderPass.undefined;
-    private void Draw () {
+    //private static RenderPass currentPass = RenderPass.undefined;
+    private void DrawMeshes () {
         //DrawSame();
-
         RenderList.Sort((a, b) => a.material.pass.CompareTo(b.material.pass));
-
         int count = RenderList.Count;
         for (int i = 0; i < count; i++) {
             RenderInfo info = RenderList[i];
@@ -109,7 +112,7 @@ public class Renderer {
         }
     }
 
-    public static void DrawMesh (RenderInfo info) {
+    public void DrawMesh (RenderInfo info) {
         if (info.mesh is null) return;
         if (info.material is null) return;
 
@@ -156,13 +159,15 @@ public class Renderer {
         if (info.depthRangeNear != 0 || info.depthRangeFar != 1) 
             GL.DepthRange(info.depthRangeNear, info.depthRangeFar);
 
-        SetSceneUniformsLit(info.material.shader);
+        SetSceneUniformsUnlit(shader);
+        SetSceneUniformsLit(shader);
+        SetSceneUniformsSkybox(shader, _skybox.texture, _skybox.maxLod);
 
         Matrix4x4 mesh_m4x4 = info.modelOverride ?? Matrix4x4.CreateScale(info.scale) 
             *Matrix4x4.RotationEuler(info.rot)*Matrix4x4.Position(info.pos);
         float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
-        info.material.shader.SetMatrix4(Model, mesh_uModel);
-        info.material.Apply(info.material.shader);
+        shader.SetMatrix4(Model, mesh_uModel);
+        info.material.Apply(shader);
 
         info.de_Pre?.Invoke();
         info.mesh.Draw(info.primitiveType);
@@ -178,19 +183,19 @@ public class Renderer {
         uProjection = Matrix4x4.ToArray(m4x4Projection);
     }
 
+    public static void SetSceneUniformsSkybox (Shader shader, HdrTexture? texture, float maxLod) {
+        if (texture is null) return;
+
+        texture.Bind(TextureUnit.Texture0);
+        shader.SetInt(Shader.Skybox, 0);
+        shader.SetFloat(MaxReflectionLod, maxLod);
+    }
     public static void SetSceneUniformsLit (Shader shader) {
-        SetSceneUniformsUnlit(shader);
         shader.SetVector3(SunLightColor, Constants.sunLightColor);
         shader.SetVector3(SunLightDir, Constants.sunLightDir);
         shader.SetVector3(AmbientColor, 0.05f, 0.05f, 0.06f);
         shader.SetFloat(SunLightIntensity, Constants.sunLightIntensity);
         shader.SetFloat(ReflectionIntensity, Constants.reflectionIntensity);
-
-        if (AssetsEngine._hdrTexture_Skybox is not null) {
-            AssetsEngine._hdrTexture_Skybox.Bind(TextureUnit.Texture0);
-            shader.SetInt(Shader.Skybox, 0);
-            shader.SetFloat(MaxReflectionLod, AssetsEngine.maxLod);
-        }
     }
     public static void SetSceneUniformsUnlit (Shader shader) {
         shader.Use();
@@ -244,6 +249,8 @@ public class Renderer {
 
     internal void Dispose () {
         TextRenderer.Dispose();
+
+        _skybox.Dispose();
 
         de_Dispose?.Invoke();
     }

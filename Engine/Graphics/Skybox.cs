@@ -7,7 +7,7 @@ public class Skybox : IDisposable {
     public Skybox (Shader shader, HdrTexture? texture) {
         GL = Renderer.GL;
         _shader = shader;
-        _texture = texture;
+        SetTexture(texture);
 
         _emptyVao = GL.GenVertexArray();
     }
@@ -15,17 +15,28 @@ public class Skybox : IDisposable {
 
     private readonly GL GL;
     private readonly Shader _shader;
-    private readonly HdrTexture? _texture;
-    private uint _emptyVao;
 
+    public HdrTexture? texture { get; private set; }
+    public float maxLod { get; private set; }
+    //public bool isTextureValid => texture is not null;
+
+    private uint _emptyVao;
     public float BlurScale = 0f;
 
 
-    public void Draw (Matrix4x4 view, Matrix4x4 projection) {
-        if (_texture is null) return;
+    public void SetTexture (HdrTexture? texture) {
+        if (texture is null) return;
 
-        Matrix4x4.Invert(view, out Matrix4x4 invView);
-        Matrix4x4.Invert(projection, out Matrix4x4 invProjection);
+        this.texture = texture;
+        maxLod = MathF.Log2(MathF.Max(texture.Width, texture.Height));
+    }
+
+    public void Draw (Matrix4x4 view, Matrix4x4 projection) {
+        if (!Constants.renderSkybox) return;
+        if (texture is null) return;
+
+        Matrix4x4.Invert(view, out view);
+        Matrix4x4.Invert(projection, out projection);
 
         GL.DepthFunc(DepthFunction.Lequal);
         GL.DepthMask(false);
@@ -34,10 +45,10 @@ public class Skybox : IDisposable {
         GL.CullFace(TriangleFace.Front);
 
         _shader.Use();
-        _shader.SetMatrix4("uView", Matrix4x4.ToArray(invView));
-        _shader.SetMatrix4("uProjection", Matrix4x4.ToArray(invProjection));
+        _shader.SetMatrix4("uView", Matrix4x4.ToArray(view));
+        _shader.SetMatrix4("uProjection", Matrix4x4.ToArray(projection));
 
-        _texture.Bind(TextureUnit.Texture0);
+        texture.Bind(TextureUnit.Texture0);
         _shader.SetInt("uTexture", 0);
         _shader.SetFloat("uBlurScale", BlurScale);
 

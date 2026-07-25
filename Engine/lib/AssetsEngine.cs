@@ -22,14 +22,11 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         //_sh_UnlitTransparent!.pass = RenderPass.Gizmo;
         
         _sh_Skybox = new Shader(Utils.LoadTextFile("src/Shaders/Skybox_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Skybox_Fragment.shader"), "Skybox");
-        //_hdrTexture = new HdrTexture("src/hdr/autumn_field_puresky_4k.hdr");
-        _hdrTexture_Skybox = new HdrTexture("src/hdr/rogland_clear_night_4k.hdr");
-        ///_hdrTexture = new HdrTexture("src/hdr/grasslands_sunset_4k.hdr");
-        ///_hdrTexture = new HdrTexture("src/hdr/overcast_soil_puresky_4k.hdr");
-        //_hdrTexture = new HdrTexture("src/hdr/qwantani_dusk_2_puresky_4k.hdr");
-        _skybox = new Skybox(_sh_Skybox, _hdrTexture_Skybox);
-        _skybox.BlurScale = 3f;
-        maxLod = MathF.Log2(MathF.Max(_hdrTexture_Skybox.Width, _hdrTexture_Skybox.Height));
+        _hdrTexture_Skybox = new HdrTexture("src/hdr/autumn_field_puresky_4k.hdr");
+        //_hdrTexture_Skybox = new HdrTexture("src/hdr/rogland_clear_night_4k.hdr");
+        //_hdrTexture_Skybox = new HdrTexture("src/hdr/grasslands_sunset_4k.hdr");
+        //_hdrTexture_Skybox = new HdrTexture("src/hdr/overcast_soil_puresky_4k.hdr");
+        //_hdrTexture_Skybox = new HdrTexture("src/hdr/qwantani_dusk_2_puresky_4k.hdr");
 
         _mat_Lit = new Material(_sh_Lit);
         _mat_Lit.SetVector3(Color, Constants.white);
@@ -87,9 +84,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Shader _sh_UnlitTransparent = null!;
 
     public readonly static Shader _sh_Skybox = null!;
-    public readonly static Skybox _skybox = null!;
     public readonly static HdrTexture? _hdrTexture_Skybox = null;
-    public readonly static float maxLod;
 
     public readonly static Material _mat_Lit = null!;
     public readonly static Material _mat_Unlit = null!;
@@ -127,7 +122,6 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _sh_Unlit.Dispose();
 
         _sh_Skybox.Dispose();
-        _skybox.Dispose();
         _hdrTexture_Skybox?.Dispose();
     }
 

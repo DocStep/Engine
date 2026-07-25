@@ -383,7 +383,7 @@ public class GizmoSelected : IGizmoWorld {
         GL.StencilMask(0xFF);
         GL.DepthMask(true);
 
-        Renderer.DrawMesh(renderInfo);
+        Renderer.Instance.DrawMesh(renderInfo);
 
         /// Pass 2 — Outline: draw inflated mesh ONLY where stencil != 1
         GL.CullFace(TriangleFace.Front);  // now cull front so inflated backfaces show as outline

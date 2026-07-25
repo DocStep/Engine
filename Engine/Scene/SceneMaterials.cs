@@ -22,7 +22,6 @@ public class SceneMaterials : Scene {
         mesh.material = AssetsEngine._mat_MaterialPreview;
         reflectionSuzanneHightRes.AddComponent<MonkeyScript>();
 
-
         GameObject reflectionSuzanne = new GameObject() { Name = "Reflection Suzanne", };
         reflectionSuzanne.Transform.Position = new Vector3(x, 0, 4);
         reflectionSuzanne.Transform.Rotation = new Vector3(0, 180, 0);
