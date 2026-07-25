@@ -20,6 +20,7 @@ public class SceneMaterials : Scene {
         mesh = reflectionSuzanneHightRes.AddComponent<MeshComponent>();
         mesh.mesh = AssetsEngine._mesh_SuzanneHighRes;
         mesh.material = AssetsEngine._mat_MaterialPreview;
+        reflectionSuzanneHightRes.AddComponent<MonkeyScript>();
 
 
         GameObject reflectionSuzanne = new GameObject() { Name = "Reflection Suzanne", };

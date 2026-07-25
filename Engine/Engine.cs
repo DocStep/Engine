@@ -74,7 +74,6 @@ public class Engine : Singleton<Engine>, IDisposable {
         new Reflection();
         new Json();
 
-        /// Log auto-called from Singleton
         Log.log($"[{TimeUtils.getCurrentTime}]");
 
         Inputs.OverrideActions(DataEngine.InputsData);
