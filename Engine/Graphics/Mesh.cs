@@ -10,6 +10,8 @@ public class Mesh : IAsset<Mesh> {
     }
     public Mesh (MeshData data) {
         GL = Renderer.GL;
+        Name = nameof(Mesh);
+
         _indexCount = (uint)data.Indices.Length;
         Data = data;
         LocalAABB = AABB.FromVertices(data.Vertices);
@@ -100,7 +102,7 @@ public class Mesh : IAsset<Mesh> {
 
 
     public static Mesh Load (string path) {
-        return new Mesh(ObjLoader.Load(path));
+        return new Mesh(ObjLoader.Load(path)) { Name = Path.GetFileNameWithoutExtension(path) };
     }
 
 

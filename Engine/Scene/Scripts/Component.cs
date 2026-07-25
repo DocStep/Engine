@@ -48,15 +48,14 @@ public abstract class Component : ISavable {
         }
     }
 
-    public const float valueStep = 0.01f;
-
     /// Draws one ImGui widget based on the runtime type of value, returns the new value if changed, null otherwise
     private object? DrawField (MemberInfo member, object? value) {
         string label = member.Name;
         switch (value) {
             case Vector3 v3:
                 AttributeClampRotation? clampAtt = member.GetCustomAttribute<AttributeClampRotation>();
-                bool changed = ImGuiNET.ImGui.DragFloat3(label, ref v3, clampAtt is not null ? AttributeClampRotation.step : valueStep);
+                float speed = clampAtt is not null ? AttributeClampRotation.step : Graphics.EditorUI.valueStep;
+                bool changed = ImGuiNET.ImGui.DragFloat3(label, ref v3, speed);
                 if (changed) {
                     if (clampAtt is not null) v3 = clampAtt.Update(v3);
                     return v3;

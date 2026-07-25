@@ -22,6 +22,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     public bool isUIClick = false;
     private bool _isClosing = false;
 
+    public const float valueStep = 0.01f;
+
 
     public void Update () {
         if (_isClosing) return;
