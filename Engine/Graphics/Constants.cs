@@ -46,7 +46,7 @@ internal static class Constants {
     internal static float sunLightIntensity = 5f;
     internal static float reflectionIntensity = 1f;
 
-    internal static bool drawMaterialsGrid = false;
+    internal static bool drawMaterialsGrid = true;
     internal static int materialsGridCount = 5;
     internal static int materialsGridDensity = 1;
 

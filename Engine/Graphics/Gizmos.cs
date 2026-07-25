@@ -184,32 +184,6 @@ public static class Gizmos {
     }
 
 
-
-    public static void DrawMaterialsGrid (float offsetX, float offsetZ, int testGridCount, float testGridDensity) {
-        GL.Enable(EnableCap.CullFace);
-        GL.CullFace(TriangleFace.Back);
-        Renderer.SetSceneUniformsLit(_sh_Lit);
-        _sh_Lit.SetColor(Color, Constants.black);
-        for (int x = 0; x < testGridCount*testGridDensity; x++) {
-            for (int z = 0; z < testGridCount*testGridDensity; z++) {
-                Renderer.Instance.AddRenderInfo(new RenderInfo() {
-                    pos = new Vector3(2f*x/testGridDensity + offsetX, 0f, -2f*z/testGridDensity + offsetZ),
-                    mesh = _mesh_Sphere,
-                    material = _mat_Smooth,
-                });
-
-                Matrix4x4 mesh_m4x4 = Matrix4x4.CreateTranslation(
-                    new Vector3(2f*x/testGridDensity + offsetX, 0f, -2f*z/testGridDensity + offsetZ));
-                float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
-                _sh_Lit.SetMatrix4(Model, mesh_uModel);
-                _sh_Lit.SetFloat(Smoothness, 1f - x/testGridDensity/testGridCount);
-                _sh_Lit.SetFloat(Metallic, z/testGridDensity/testGridCount);
-                _mesh_Sphere.Draw();
-            }
-        }
-    }
-
-
     internal static void Dispose () {
         _mesh_CubeWireframe.Dispose();
         _mesh_SphereWireframe.Dispose();

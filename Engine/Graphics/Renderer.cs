@@ -73,7 +73,7 @@ public class Renderer {
             AssetsEngine._skybox?.Draw(m4x4_View, m4x4Projection);
 
         /// Draw Scene
-        //DrawMaterialsGrid(-12f, 0f, 2, 10f); /// Debug
+        DrawMaterialsGrid(-12f, 0f, 2, 10f); /// Debug
         Draw();
 
         SceneManager.ActiveScene?.DrawRaw();
@@ -203,12 +203,19 @@ public class Renderer {
 
 
     public static void DrawMaterialsGrid (float offsetX, float offsetZ, int testGridCount, float testGridDensity) {
-        for (int x = 0; x < testGridCount*testGridDensity; x++) {
-            for (int z = 0; z < testGridCount*testGridDensity; z++) {
+        if (!Constants.drawMaterialsGrid) return;
+
+        int total = testGridCount*(int)testGridDensity;
+        for (int x = 0; x < total; x++) {
+            for (int z = 0; z < total; z++) {
+                float smoothness = (float)x/(total - 1);
+                float metallic = (float)z/(total - 1);
+
                 Material mat = new Material(_sh_Lit);
                 mat.SetVector3(Color, Constants.lightGray);
-                mat.SetFloat(Smoothness, 1f/x);
-                mat.SetFloat(Metallic, 1f - 1f/z);
+                mat.SetFloat(Smoothness, smoothness);
+                mat.SetFloat(Metallic, metallic);
+
                 RenderInfo info = new RenderInfo() {
                     pos = new Vector3(2f*x/testGridDensity + offsetX, 0f, 2f*z/testGridDensity + offsetZ),
                     mesh = _mesh_Sphere,
@@ -218,7 +225,7 @@ public class Renderer {
             }
         }
     }
-    
+
     void DrawSame () {
         if (iter == 0) {
             RenderListStatic.AddRange(RenderList);
