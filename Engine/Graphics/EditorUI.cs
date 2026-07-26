@@ -79,9 +79,11 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     private void DrawInfo (uint dockspaceId) {
         ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
         ImGui.Begin("Info");
+        ImGui.BeginDisabled();
 
         DrawScript(Renderer.Instance.Stats);
 
+        ImGui.EndDisabled();
         ImGui.End();
     }
 
@@ -106,8 +108,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         }*/
     }
 
-    /// For structs - box, mutate the box, then write back to the ref
-    /*public static void DrawScript<T> (ref T target) where T : struct {
+    /*/// For structs - box, mutate the box, then write back to the ref
+    public static void DrawScript<T> (ref T target) where T : struct {
         Type type = typeof(T);
         object boxed = target;
 
@@ -118,13 +120,13 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             if (drawn is not null) field.SetValue(boxed, drawn);
         }
 
-        *//*PropertyInfo[] props = type.GetProperties(BindingFlags.Public|BindingFlags.Instance);
-        foreach (PropertyInfo prop in props) {
-            if (!prop.CanRead || !prop.CanWrite) continue;
-            object? value = prop.GetValue(boxed);
-            object? drawn = EditorUI.DrawField(prop, value);
-            if (drawn != null) prop.SetValue(boxed, drawn);
-        }*//*
+        //PropertyInfo[] props = type.GetProperties(BindingFlags.Public|BindingFlags.Instance);
+        //foreach (PropertyInfo prop in props) {
+        //    if (!prop.CanRead || !prop.CanWrite) continue;
+        //    object? value = prop.GetValue(boxed);
+        //    object? drawn = EditorUI.DrawField(prop, value);
+        //    if (drawn != null) prop.SetValue(boxed, drawn);
+        //}
 
         target = (T)boxed;
     }*/
@@ -133,35 +135,87 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     public static object? DrawField (MemberInfo member, object? value) {
         if (member.GetCustomAttribute<Hide>() is not null) return null;
 
+        object? result = null;
         string label = member.Name;
+        label = Utils.NameCapital(label);
+
+        bool isReadonly = member.GetCustomAttribute<Readonly>() is not null;
+        if (isReadonly) ImGui.BeginDisabled(true);
+
         switch (value) {
             case Vector3 v3:
                 WrapVector3? clampAtt = member.GetCustomAttribute<WrapVector3>();
-                if (clampAtt is not null) label = Utils.StringNameCapital(label);
                 float speed = clampAtt is not null ? WrapVector3.Step : valueStep;
-                bool changed = ImGui.DragFloat3(label, ref v3, speed);
+                bool changed = ImGui.DragFloat3(label, ref v3, speed, 0, 0, "%.2f");
+                
                 if (changed) {
                     if (clampAtt is not null) v3 = Utils.WrapVector3(v3, clampAtt.Min, clampAtt.Max);
-                    return v3;
+                    result = v3;
+                    break;
                 }
-                return null;
+                break;
             case float f:
-                if (ImGui.DragFloat(label, ref f, 0.01f)) return f;
-                return null;
+                if (ImGui.DragFloat(label, ref f, valueStep, 0, 0, "%.2f")) return f;
+                break;
             case int i:
                 if (ImGui.DragInt(label, ref i)) return i;
-                return null;
+                break;
             case bool b:
                 if (ImGui.Checkbox(label, ref b)) return b;
-                return null;
+                break;
             case string s:
                 if (ImGui.InputText(label, ref s, 256)) return s;
-                return null;
-            default:
-                return null;
+                break;
         }
-    }
 
+        if (isReadonly) ImGui.EndDisabled();
+
+        return result;
+    }
+    private static void DragDisabledFloat (string name, ref float value) {
+        ImGui.Text(name);
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(-1f);
+
+        ImGui.BeginDisabled(true);
+        ImGui.DragFloat($"##{name}", ref value);
+        ImGui.EndDisabled();
+    }
+    private static void DragDisabledInt (string name, ref int value) {
+        ImGui.Text(name);
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(-1f);
+
+        ImGui.BeginDisabled(true);
+        ImGui.DragInt($"##{name}", ref value);
+        ImGui.EndDisabled();
+    }
+    private static void DragDisabledBool (string name, ref bool value) {
+        ImGui.Text(name);
+        ImGui.SameLine();
+
+        ImGui.BeginDisabled(true);
+        ImGui.Checkbox($"##{name}", ref value);
+        ImGui.EndDisabled();
+    }
+    private static void DragDisabledString (string name, ref string value) {
+        ImGui.Text(name);
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(-1f);
+
+        ImGui.BeginDisabled(true);
+        ImGui.InputText($"##{name}", ref value, 256);
+        ImGui.EndDisabled();
+    }
+    private static void DragDisabledFloat3 (string name, ref Vector3 value) {
+        ImGui.Text(name);
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(-1f);
+
+        ImGui.BeginDisabled(true);
+        ImGui.DragFloat3($"##{name}", ref value);
+        ImGui.EndDisabled();
+    }
 
 
 

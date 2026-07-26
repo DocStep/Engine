@@ -97,6 +97,7 @@ public class Mesh : IAsset<Mesh> {
         unsafe {
             GL.DrawElements(primitiveType, _indexCount, DrawElementsType.UnsignedInt, null);
         }
+        Renderer.Instance.Stats.DrawCalls++;
         GL.BindVertexArray(0);
     }
 

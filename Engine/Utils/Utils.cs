@@ -194,7 +194,7 @@ internal static class Utils {
         return v3;
     }
 
-    public static string StringNameCapital (string text) {
+    public static string NameCapital (string text) {
         return char.ToUpper(text[0]) + text.Substring(1);
     }
 

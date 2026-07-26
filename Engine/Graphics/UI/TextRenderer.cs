@@ -113,6 +113,7 @@ public class TextRenderer : IDisposable {
         }
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, (uint)arr.Length);
+        Renderer.Instance.Stats.UI_DrawCalls++;
 
         GL.Enable(EnableCap.DepthTest);
     }

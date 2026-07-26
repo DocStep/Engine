@@ -82,7 +82,7 @@ public class Renderer {
         _skybox?.Draw(m4x4_View, m4x4Projection);
 
         /// Draw Scene
-        DrawMaterialsGrid(-14f, 0f, 5, 5f); /// Debug
+        DrawMaterialsGrid(-14f, 0f); /// Debug
         DrawMeshes();
 
         SceneManager.ActiveScene?.DrawRaw();
@@ -175,7 +175,6 @@ public class Renderer {
 
         info.de_Pre?.Invoke();
         info.mesh.Draw(info.primitiveType);
-        Stats.DrawCalls++;
         info.de_Post?.Invoke();
 
         if (info.depthRangeNear != 0 || info.depthRangeFar != 1) 
@@ -212,7 +211,7 @@ public class Renderer {
 
 
 
-    public static void DrawMaterialsGrid (float offsetX, float offsetZ, int testGridCount, float testGridDensity) {
+    public static void DrawMaterialsGrid (float offsetX, float offsetZ, int testGridCount = 10, float testGridDensity = 1f) {
         if (!Constants.drawMaterialsGrid) return;
 
         int total = testGridCount*(int)testGridDensity;
@@ -227,8 +226,8 @@ public class Renderer {
                 mat.SetFloat(Smoothness, smoothness);
                 mat.SetFloat(Metallic, metallic);
 
-                float _x = 2f*x/testGridDensity + offsetX;
-                float _z = 2f*z/testGridDensity + offsetZ;
+                float _x = x/testGridDensity + offsetX;
+                float _z = z/testGridDensity + offsetZ;
                 float y = 0.25f*MathF.Sin(_x + speed*(float)Engine.time) * MathF.Cos(_z + speed*(float)Engine.time);
                 RenderInfo info = new RenderInfo() {
                     pos = new Vector3(_x, y, _z),
