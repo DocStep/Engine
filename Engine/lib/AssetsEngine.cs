@@ -8,11 +8,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     static AssetsEngine () {
         Engine.Window.Closing += OnClosing;
 
-        _mesh_Cube = new Mesh(Cube.Generate());
-        _mesh_Sphere = new Mesh(Sphere.Generate());
-        _mesh_Capsule = new Mesh(Capsule.Generate());
-        _mesh_Plane = new Mesh(Graphics.Plane.Generate());
-        _mesh_PlaneQuad = new Mesh(Graphics.Plane.Generate(divisions: 1));
+        Shader.Stats = new RendererGLStats();
 
         _sh_Lit = new Shader(Utils.LoadTextFile("src/Shaders/Lit_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Lit_Fragment.shader"), "Lit");
         //_sh_Transparent = new Shader(Utils.LoadTextFile("src/Shaders/Lit_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Lit_Fragment.shader"), "Transparent");
@@ -20,7 +16,10 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         //_sh_Unlit!.pass = RenderPass.Gizmo;
         //_sh_UnlitTransparent = new Shader(Utils.LoadTextFile("src/Shaders/Unlit_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Unlit_Fragment.shader"), "UnlitTransparent");
         //_sh_UnlitTransparent!.pass = RenderPass.Gizmo;
-        
+        _sh_Depth = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Depth_Fragment.shader"), "Depth");
+        _sh_Grayscale = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Grayscale_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Grayscale_Fragment.shader"), "Grayscale");
+        _sh_Passthrough = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Fragment.shader"), "Grayscale");
+
         _sh_Skybox = new Shader(Utils.LoadTextFile("src/Shaders/Skybox_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Skybox_Fragment.shader"), "Skybox");
         _hdrTexture_Skybox = new HdrTexture("src/hdr/autumn_field_puresky_4k.hdr");
         //_hdrTexture_Skybox = new HdrTexture("src/hdr/rogland_clear_night_4k.hdr");
@@ -70,6 +69,12 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mat_Unlit = new Material(_sh_Unlit);
         _mat_Unlit.SetVector3(Color, Constants.gray);
 
+        _mesh_Cube = new Mesh(Cube.Generate());
+        _mesh_Sphere = new Mesh(Sphere.Generate());
+        _mesh_Capsule = new Mesh(Capsule.Generate());
+        _mesh_Plane = new Mesh(Graphics.Plane.Generate());
+        _mesh_PlaneQuad = new Mesh(Graphics.Plane.Generate(divisions: 1));
+
         _mesh_Torus = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Torus.obj"));
         _mesh_Suzanne = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Suzanne.obj"));
         _mesh_SuzanneHighRes = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "SuzanneHighRes.obj"));
@@ -84,6 +89,9 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Shader _sh_Transparent = null!;
     public readonly static Shader _sh_Unlit = null!;
     public readonly static Shader _sh_UnlitTransparent = null!;
+    public readonly static Shader _sh_Depth = null!;
+    public readonly static Shader _sh_Grayscale = null!;
+    public readonly static Shader _sh_Passthrough = null!;
 
     public readonly static Shader _sh_Skybox = null!;
     public readonly static HdrTexture? _hdrTexture_Skybox = null;

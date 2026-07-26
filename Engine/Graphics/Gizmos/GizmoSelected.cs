@@ -299,10 +299,6 @@ public class GizmoSelected : IGizmoWorld {
         DrawOutline();
         DrawGizmo();
 
-        UI.TextRenderer.AddText($"Selected:");
-        UI.TextRenderer.AddText($"Position: {tr_obj.Position:F3}");
-        UI.TextRenderer.AddText($"Rotation: {tr_obj.Rotation:F3}");
-        UI.TextRenderer.AddText($"Scale: {tr_obj.Scale:F3}");
     }
 
     private void DrawGizmo () {

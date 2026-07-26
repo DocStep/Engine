@@ -100,7 +100,15 @@ public class Mesh : IAsset<Mesh> {
         Renderer.Instance.Stats.DrawCalls++;
         GL.BindVertexArray(0);
     }
+    /// Non-indexed draw, used for fullscreen triangle / no vertex buffer
+    public void Draw (uint vertexCount, PrimitiveType primitiveType = PrimitiveType.Triangles) {
+        GL.BindVertexArray(_vao);
 
+        GL.DrawArrays(primitiveType, 0, vertexCount);
+        Renderer.Instance.Stats.DrawCalls++;
+
+        GL.BindVertexArray(0);
+    }
 
     public static Mesh Load (string path) {
         return new Mesh(ObjLoader.Load(path)) { Name = Path.GetFileNameWithoutExtension(path) };

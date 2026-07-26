@@ -22,11 +22,14 @@ public class Renderer {
         GL.FrontFace(FrontFaceDirection.CW);
         GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
 
-        TextRenderer = new TextRenderer();
-
         _skybox = new Skybox(_sh_Skybox, _hdrTexture_Skybox) {
             BlurScale = 3f
         };
+
+        _postProcessStack = new PostProcessStack();
+        _postProcessStack.Effects.Add(new GrayscaleEffect(AssetsEngine._sh_Grayscale));
+
+        TextRenderer = new TextRenderer();
 
         /// Delegates
         //de_GizmosUpdate += Gizmos._gizmo_Selected.Update;
@@ -38,7 +41,6 @@ public class Renderer {
 
     private readonly GL _GL = Engine.Window.CreateOpenGL();
     public static GL GL => Instance._GL;
-    public RendererStats Stats = default;
 
     public readonly TextRenderer TextRenderer = null!;
 
@@ -51,6 +53,9 @@ public class Renderer {
 
     public readonly Skybox _skybox = null!;
 
+    public readonly PostProcessStack _postProcessStack = null!;
+
+
     /// Debug
     internal Matrix4x4 m4x4_View = Matrix4x4.Identity;
     internal Matrix4x4 m4x4Projection = Matrix4x4.Identity;
@@ -60,6 +65,7 @@ public class Renderer {
     private static float[] uProjection = [];
     public float[] UProjection => uProjection;
 
+    public RendererStats Stats = default;
 
 
     private readonly List<RenderInfo> RenderList = new List<RenderInfo>();
@@ -67,38 +73,35 @@ public class Renderer {
     public void AddRenderInfo (RenderInfo renderInfo) {
         RenderList.Add(renderInfo);
     }
-    long iter = 0; 
+    long iter = 0;
 
 
     private void OnRender (double deltaTime) {
-        Stats = new RendererStats();
-        Gizmos.Update();
-        Gizmos._gizmo_Selected.Update();
+        try {
+            Stats = new RendererStats();
+            Gizmos.Update();
+            Gizmos._gizmo_Selected.Update();
 
-        GL.Clear((uint)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit));
+            UpdateProjection();
 
-        UpdateProjection();
+            _postProcessStack.BeginScene();
+            _skybox?.Draw(m4x4_View, m4x4Projection);
+            DrawMaterialsGrid(-14f, 0f);
+            DrawMeshes();
+            SceneManager.ActiveScene?.DrawRaw();
 
-        _skybox?.Draw(m4x4_View, m4x4Projection);
+            _postProcessStack.EndSceneAndRunStack(0);
 
-        /// Draw Scene
-        DrawMaterialsGrid(-14f, 0f); /// Debug
-        DrawMeshes();
+            Gizmos._gizmo_Selected.Draw();
+            Gizmos.Draw();
+            TextRenderer.Draw();
+            EditorUI.Instance.Draw();
 
-        SceneManager.ActiveScene?.DrawRaw();
-
-        ///--- Stage Post-Scene ---///
-        Gizmos._gizmo_Selected.Draw();
-        Gizmos.Draw();
-
-        /// Draw UI
-        TextRenderer.Draw();
-
-        EditorUI.Instance.Draw();
-
-        iter++;
-
-        DrawEnd();
+            iter++;
+            DrawEnd();
+        } catch (Exception ex) {
+            Log.log($"OnRender exception: {ex}");
+        }
     }
     private void DrawEnd () {
         RenderList.Clear();
@@ -251,8 +254,10 @@ public class Renderer {
 
     internal void OnFrameBufferResize (Silk.NET.Maths.Vector2D<int> newSize) {
         GL.Viewport(newSize);
-        if (0 < newSize.X && 0 < newSize.Y) 
+        if (0 < newSize.X && 0 < newSize.Y) {
             UpdateProjection();
+            //_postProcess.Resize(newSize.X, newSize.Y);
+        }
     }
 
     internal void Dispose () {

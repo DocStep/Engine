@@ -19,6 +19,7 @@ public class Shader : IDisposable {
         GL.LinkProgram(_program);
 
         GL.GetProgram(_program, ProgramPropertyARB.LinkStatus, out int status);
+        Stats.RecordCompile(status);
         if (status == 0) {
             string log = GL.GetProgramInfoLog(_program);
             throw new Exception($"Shader program failed to link: {log}");
@@ -30,17 +31,17 @@ public class Shader : IDisposable {
         GL.DeleteShader(fragment);
 
         uint CompileShader (ShaderType type, string source) {
-            uint shader = GL.CreateShader(type);
-            GL.ShaderSource(shader, source);
-            GL.CompileShader(shader);
+            uint shaderId = GL.CreateShader(type);
+            GL.ShaderSource(shaderId, source);
+            GL.CompileShader(shaderId);
 
-            GL.GetShader(shader, ShaderParameterName.CompileStatus, out int status);
+            GL.GetShader(shaderId, ShaderParameterName.CompileStatus, out int status);
             if (status == 0) {
-                string log = GL.GetShaderInfoLog(shader);
+                string log = GL.GetShaderInfoLog(shaderId);
                 throw new Exception($"{type} failed to compile: {log}");
             }
 
-            return shader;
+            return shaderId;
         }
     }
     /*public Shader (Shader shader) : this(shader._vertexSource, shader._fragmentSource, shader.Name + " (copy)") {
@@ -55,6 +56,7 @@ public class Shader : IDisposable {
     private readonly string _vertexSource;
     private readonly string _fragmentSource;
 
+    public static RendererGLStats Stats = default;
 
 
     public const string View = "uView";

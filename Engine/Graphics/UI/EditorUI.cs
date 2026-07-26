@@ -82,6 +82,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.BeginDisabled();
 
         DrawScript(Renderer.Instance.Stats);
+        DrawScript(Shader.Stats);
 
         ImGui.EndDisabled();
         ImGui.End();
