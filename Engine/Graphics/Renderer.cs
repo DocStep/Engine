@@ -83,10 +83,12 @@ public class Renderer {
             Gizmos._gizmo_Selected.Update();
 
             UpdateProjection();
-
             _postProcessStack.BeginScene();
+
             _skybox?.Draw(m4x4_View, m4x4Projection);
+
             DrawMaterialsGrid(-14f, 0f);
+
             DrawMeshes();
             SceneManager.ActiveScene?.DrawRaw();
 

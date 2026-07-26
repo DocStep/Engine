@@ -64,6 +64,7 @@ public class Shader : IDisposable {
     public const string ViewPos = "uViewPos";
     public const string Model = "uModel";
     public const string CameraPos = "uCameraPos";
+    public const string Scene = "uScene";
 
     public const string SunLightColor = "uSunLightColor";
     public const string SunLightDir = "uSunLightDir";

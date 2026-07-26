@@ -6,23 +6,25 @@ namespace Engine.Graphics;
 
 
 public class PostProcessStack : IDisposable {
-    public static uint QuadVAO;
-
-    uint _sceneFbo, _sceneColor, _sceneDepth;
-    uint[] _pingFbo = new uint[2];
-    uint[] _pingColor = new uint[2];
-
-    uint _outputFbo, _outputColor; /// final result, this is what Scene View samples
-    public uint OutputTexture => _outputColor;
-    int _width, _height;
-
-    public List<PostProcessEffect> Effects = new();
-
     public PostProcessStack () {
         QuadVAO = Renderer.GL.GenVertexArray();
 
         Resize(Engine.Window.Size.X, Engine.Window.Size.Y);
     }
+
+    public static uint QuadVAO;
+
+    public List<PostProcessEffect> Effects = new();
+
+    /// Final Result
+    uint _sceneFbo, _sceneColor, _sceneDepth;
+    uint[] _pingFbo = new uint[2];
+    uint[] _pingColor = new uint[2];
+
+    uint _outputFbo, _outputColor; /// Final Result
+    public uint OutputTexture => _outputColor;
+    int _width, _height;
+
 
     public void Resize (int w, int h) {
         if (w <= 0 || h <= 0) return;
@@ -36,6 +38,7 @@ public class PostProcessStack : IDisposable {
         _sceneFbo = CreateFbo(w, h, out _sceneColor, out _sceneDepth, withDepth: true);
         _pingFbo[0] = CreateFbo(w, h, out _pingColor[0], out _, withDepth: false);
         _pingFbo[1] = CreateFbo(w, h, out _pingColor[1], out _, withDepth: false);
+
         _outputFbo = CreateFbo(w, h, out _outputColor, out _, withDepth: false);
     }
 
@@ -137,7 +140,7 @@ public class PostProcessStack : IDisposable {
         _sh_Passthrough.Use();
         Renderer.GL.ActiveTexture(TextureUnit.Texture0);
         Renderer.GL.BindTexture(TextureTarget.Texture2D, tex);
-        _sh_Passthrough.SetInt("uScene", 0);
+        _sh_Passthrough.SetInt(Shader.Scene, 0);
 
         Renderer.GL.BindVertexArray(QuadVAO);
         Renderer.GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
