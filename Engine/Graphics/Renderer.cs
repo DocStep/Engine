@@ -90,7 +90,8 @@ public class Renderer {
             DrawMeshes();
             SceneManager.ActiveScene?.DrawRaw();
 
-            _postProcessStack.EndSceneAndRunStack(0);
+            bool postProcessingEnabled = SettingsGraphicsEngine.Instance?.postProcessing.isOn ?? true;
+            _postProcessStack.EndSceneAndRunStack(0, postProcessingEnabled);
 
             Gizmos._gizmo_Selected.Draw();
             Gizmos.Draw();
@@ -256,7 +257,7 @@ public class Renderer {
         GL.Viewport(newSize);
         if (0 < newSize.X && 0 < newSize.Y) {
             UpdateProjection();
-            //_postProcess.Resize(newSize.X, newSize.Y);
+            _postProcessStack.Resize(newSize.X, newSize.Y);
         }
     }
 
@@ -264,6 +265,7 @@ public class Renderer {
         TextRenderer.Dispose();
 
         _skybox.Dispose();
+        _postProcessStack.Dispose();
 
         de_Dispose?.Invoke();
     }

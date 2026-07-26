@@ -18,7 +18,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         //_sh_UnlitTransparent!.pass = RenderPass.Gizmo;
         _sh_Depth = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Depth_Fragment.shader"), "Depth");
         _sh_Grayscale = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Grayscale_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Grayscale_Fragment.shader"), "Grayscale");
-        _sh_Passthrough = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Fragment.shader"), "Grayscale");
+        _sh_Passthrough = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Fragment.shader"), "Passthrough");
 
         _sh_Skybox = new Shader(Utils.LoadTextFile("src/Shaders/Skybox_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Skybox_Fragment.shader"), "Skybox");
         _hdrTexture_Skybox = new HdrTexture("src/hdr/autumn_field_puresky_4k.hdr");

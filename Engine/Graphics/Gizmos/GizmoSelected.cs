@@ -25,6 +25,7 @@ public class GizmoSelected : IGizmoWorld {
     private const float _squareSize = 0.025f;
     private const float _axisLength = 0.15f;
     private const float _axisRadius = 0.005f;
+    private const float _width = 2.5f;
 
     public Vector3 selectedDragPos;
     public Vector3 selectedDragRot;
@@ -368,51 +369,58 @@ public class GizmoSelected : IGizmoWorld {
         RenderInfo renderInfo = selectedMesh.CreateRenderInfo;
         if (renderInfo.mesh is null) return;
 
-        GL.Enable(EnableCap.StencilTest);
-        GL.Enable(EnableCap.DepthTest);
-        GL.Enable(EnableCap.CullFace);
-        GL.CullFace(TriangleFace.Back); /// normal culling for the actual mesh
+        try {
+            GL.Enable(EnableCap.StencilTest);
+            GL.Enable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.CullFace);
+            GL.CullFace(TriangleFace.Back); /// normal culling for the actual mesh
+            GL.StencilMask(0xFF);
+            GL.Clear(ClearBufferMask.StencilBufferBit);
 
-        /// Pass 1 — Render mesh normally, mark stencil = 1 everywhere it's visible
-        GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
-        GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
-        GL.StencilMask(0xFF);
-        GL.DepthMask(true);
+            /// Pass 1 — Render mesh normally, mark stencil = 1 everywhere it's visible
+            GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
+            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
+            GL.StencilMask(0xFF);
+            GL.DepthFunc(DepthFunction.Lequal);
+            GL.DepthMask(false);
+            GL.ColorMask(false, false, false, false);
 
-        Renderer.Instance.DrawMesh(renderInfo);
+            Renderer.Instance.DrawMesh(renderInfo);
 
-        /// Pass 2 — Outline: draw inflated mesh ONLY where stencil != 1
-        GL.CullFace(TriangleFace.Front);  // now cull front so inflated backfaces show as outline
-        GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
-        GL.StencilMask(0x00);
-        GL.DepthMask(false);
+            /// Pass 2 — Outline: draw inflated mesh ONLY where stencil != 1
+            GL.ColorMask(true, true, true, true);
+            GL.CullFace(TriangleFace.Front);  // now cull front so inflated backfaces show as outline
+            GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
+            GL.StencilMask(0x00);
+            GL.DepthMask(false);
 
-        float width = 2.5f;
-        float dist = Vector3.Distance(Camera.Instance.cameraPos, renderInfo.pos);
-        float t = width*0.001f*MathF.Sqrt(dist);
-        Vector3 outlineScale = new Vector3(
-            renderInfo.scale.X + t,
-            renderInfo.scale.Y + t,
-            renderInfo.scale.Z + t
-        );
+            float dist = Vector3.Distance(Camera.Instance.cameraPos, renderInfo.pos);
+            float t = _width*0.001f*MathF.Sqrt(dist);
+            Vector3 outlineScale = new Vector3(
+                renderInfo.scale.X + t,
+                renderInfo.scale.Y + t,
+                renderInfo.scale.Z + t
+            );
 
-        Matrix4x4 m4x4_mesh = Matrix4x4.CreateScale(outlineScale)
-            *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
-        float[] mesh_uModel = Matrix4x4.ToArray(m4x4_mesh);
+            Matrix4x4 m4x4_mesh = Matrix4x4.CreateScale(outlineScale)
+                *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
+            float[] mesh_uModel = Matrix4x4.ToArray(m4x4_mesh);
 
-        _sh_Outline.Use();
-        _sh_Outline.SetMatrix4(View, Renderer.Instance.UView);
-        _sh_Outline.SetMatrix4(Projection, Renderer.Instance.UProjection);
-        _sh_Outline.SetMatrix4(Model, mesh_uModel);
-        _sh_Outline.SetVector3(OutlineColor, Constants.cyan);
-        renderInfo.mesh.Draw();
-
-        /// Restore State
-        GL.Enable(EnableCap.DepthTest);
-        GL.DepthMask(true);
-        GL.StencilMask(0xFF);
-        GL.CullFace(TriangleFace.Back);
-        GL.Disable(EnableCap.StencilTest);
+            _sh_Outline.Use();
+            _sh_Outline.SetMatrix4(View, Renderer.Instance.UView);
+            _sh_Outline.SetMatrix4(Projection, Renderer.Instance.UProjection);
+            _sh_Outline.SetMatrix4(Model, mesh_uModel);
+            _sh_Outline.SetVector3(OutlineColor, Constants.cyan);
+            renderInfo.mesh.Draw();
+        } finally {
+            GL.ColorMask(true, true, true, true);
+            GL.Enable(EnableCap.DepthTest);
+            GL.DepthFunc(DepthFunction.Less);
+            GL.DepthMask(true);
+            GL.StencilMask(0xFF);
+            GL.CullFace(TriangleFace.Back);
+            GL.Disable(EnableCap.StencilTest);
+        }
     }
 
 }
