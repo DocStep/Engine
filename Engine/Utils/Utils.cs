@@ -176,11 +176,26 @@ internal static class Utils {
     }*/
 
     /// Wraps an angle to [-pi, pi].
-    internal static float WrapAngle (float angle) {
+    public static float WrapAngle (float angle) {
         angle %= 2f*MathF.PI;
         if (MathF.PI < angle) angle -= 2f*MathF.PI;
         if (angle < -MathF.PI) angle += 2f*MathF.PI;
         return angle;
+    }
+
+    public static Vector3 WrapVector3 (Vector3 v3, float min, float max) {
+        float range = max - min;
+        v3.X = v3.X%range;
+        if (v3.X < 0f) v3.X += range;
+        v3.Y = v3.Y%range;
+        if (v3.Y < 0f) v3.Y += range;
+        v3.Z = v3.Z%range;
+        if (v3.Z < 0f) v3.Z += range;
+        return v3;
+    }
+
+    public static string StringNameCapital (string text) {
+        return char.ToUpper(text[0]) + text.Substring(1);
     }
 
 

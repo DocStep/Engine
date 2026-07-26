@@ -24,8 +24,9 @@ public class Renderer {
 
         TextRenderer = new TextRenderer();
 
-        _skybox = new Skybox(_sh_Skybox, _hdrTexture_Skybox);
-        _skybox.BlurScale = 3f;
+        _skybox = new Skybox(_sh_Skybox, _hdrTexture_Skybox) {
+            BlurScale = 3f
+        };
 
         /// Delegates
         //de_GizmosUpdate += Gizmos._gizmo_Selected.Update;
@@ -37,6 +38,8 @@ public class Renderer {
 
     private readonly GL _GL = Engine.Window.CreateOpenGL();
     public static GL GL => Instance._GL;
+    public RendererStats Stats = default;
+
     public readonly TextRenderer TextRenderer = null!;
 
     //public Action? de_GizmosUpdate = null;
@@ -68,6 +71,7 @@ public class Renderer {
 
 
     private void OnRender (double deltaTime) {
+        Stats = new RendererStats();
         Gizmos.Update();
         Gizmos._gizmo_Selected.Update();
 
@@ -78,7 +82,7 @@ public class Renderer {
         _skybox?.Draw(m4x4_View, m4x4Projection);
 
         /// Draw Scene
-        DrawMaterialsGrid(-12f, 0f, 2, 10f); /// Debug
+        DrawMaterialsGrid(-14f, 0f, 5, 5f); /// Debug
         DrawMeshes();
 
         SceneManager.ActiveScene?.DrawRaw();
@@ -171,6 +175,7 @@ public class Renderer {
 
         info.de_Pre?.Invoke();
         info.mesh.Draw(info.primitiveType);
+        Stats.DrawCalls++;
         info.de_Post?.Invoke();
 
         if (info.depthRangeNear != 0 || info.depthRangeFar != 1) 
@@ -211,18 +216,22 @@ public class Renderer {
         if (!Constants.drawMaterialsGrid) return;
 
         int total = testGridCount*(int)testGridDensity;
+        float speed = 2f;
         for (int x = 0; x < total; x++) {
             for (int z = 0; z < total; z++) {
                 float smoothness = (float)x/(total - 1);
                 float metallic = (float)z/(total - 1);
 
-                Material mat = new Material(_sh_Lit);
+                Material mat = new Material(_mat_MaterialPreview);
                 mat.SetVector3(Color, Constants.lightGray);
                 mat.SetFloat(Smoothness, smoothness);
                 mat.SetFloat(Metallic, metallic);
 
+                float _x = 2f*x/testGridDensity + offsetX;
+                float _z = 2f*z/testGridDensity + offsetZ;
+                float y = 0.25f*MathF.Sin(_x + speed*(float)Engine.time) * MathF.Cos(_z + speed*(float)Engine.time);
                 RenderInfo info = new RenderInfo() {
-                    pos = new Vector3(2f*x/testGridDensity + offsetX, 0f, 2f*z/testGridDensity + offsetZ),
+                    pos = new Vector3(_x, y, _z),
                     mesh = _mesh_Sphere,
                     material = mat,
                 };
