@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Reflection;
+using Marshal = System.Runtime.InteropServices.Marshal;
 using ImGuiNET;
 using Silk.NET.OpenGL.Extensions.ImGui;
 
@@ -12,14 +13,13 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGUI = new ImGuiController(Renderer.GL, Engine.Window, Engine.Input);
         Renderer.Instance.de_Dispose += Dispose;
 
-        ImGuiIOPtr io = ImGui.GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
-        io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
+        SetDock();
+        //SetFont(AssetsEngine._fontData);
 
-        ImGui.LoadIniSettingsFromDisk(io.IniFilename);
+        ImGui.LoadIniSettingsFromDisk(ImGui.GetIO().IniFilename);
     }
 
-    public readonly ImGuiController ImGUI = null!;
+    public ImGuiController ImGUI = null!;
     public bool isUIClick = false;
     private bool _isClosing = false;
 
@@ -31,7 +31,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         ImGUI.Update((float)Engine.deltaTime);
 
-        if (ImGui.GetIO().WantCaptureMouse || ImGui.IsAnyItemActive())
+        if (ImGui.GetIO().WantCaptureMouse || ImGui.IsAnyItemActive()) 
             isUIClick = true;
         else
             isUIClick = false;
@@ -215,6 +215,31 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.BeginDisabled(true);
         ImGui.DragFloat3($"##{name}", ref value);
         ImGui.EndDisabled();
+    }
+
+
+    public void SetDock () {
+        ImGuiIOPtr io = ImGui.GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
+        io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
+    }
+    public unsafe void SetFont (byte[] fontData) {
+        ImGuiIOPtr io = ImGui.GetIO();
+        io.Fonts.Clear();
+
+        IntPtr fontPtr = Marshal.AllocHGlobal(fontData.Length);
+        Marshal.Copy(fontData, 0, fontPtr, fontData.Length);
+
+        io.Fonts.AddFontFromMemoryTTF(fontPtr, fontData.Length, 16.0f);
+        /// don't free fontPtr — ImGui takes ownership (FontDataOwnedByAtlas defaults true) and frees it internally
+
+        io.Fonts.Build();
+
+        /// re-upload the atlas texture to the GPU — this is backend-specific
+        var method = typeof(ImGuiController).GetMethod("RecreateFontDeviceTexture", BindingFlags.NonPublic | BindingFlags.Instance);
+        method?.Invoke(ImGUI, null);
+        //ImGUI?.Dispose();
+        //ImGUI = new ImGuiController(Renderer.GL, Engine.Window, Engine.Input);
     }
 
 

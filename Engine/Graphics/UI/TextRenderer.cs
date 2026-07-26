@@ -6,9 +6,9 @@ namespace Engine.Graphics.UI;
 public class TextRenderer : IDisposable {
     public unsafe TextRenderer () {
         GL = Renderer.GL;
-        _atlas = FontAtlas.Load("src/Fonts/FuturaCyrillicMedium.ttf", 24);
-        _shader = new Shader(Utils.LoadTextFile("src/Shaders/UI/Text_Vertex.shader"), Utils.LoadTextFile("src/Shaders/UI/Text_Fragment.shader"), "Text");
-
+        _atlas = FontAtlas.Load(AssetsEngine._fontData, 24);
+        _shader = AssetsEngine._fontShader;
+        
         _vao = GL.GenVertexArray();
         _vbo = GL.GenBuffer();
 

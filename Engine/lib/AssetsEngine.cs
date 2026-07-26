@@ -70,10 +70,12 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mat_Unlit = new Material(_sh_Unlit);
         _mat_Unlit.SetVector3(Color, Constants.gray);
 
-
         _mesh_Torus = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Torus.obj"));
         _mesh_Suzanne = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Suzanne.obj"));
         _mesh_SuzanneHighRes = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "SuzanneHighRes.obj"));
+
+        _fontShader = new Shader(Utils.LoadTextFile("src/Shaders/UI/Text_Vertex.shader"), Utils.LoadTextFile("src/Shaders/UI/Text_Fragment.shader"), "Text");
+        _fontData = File.ReadAllBytes("src/Fonts/FuturaCyrillicMedium.ttf");
 
     }
 
@@ -109,6 +111,9 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Mesh _mesh_Torus = null!;
     public readonly static Mesh _mesh_Suzanne = null!;
     public readonly static Mesh _mesh_SuzanneHighRes = null!;
+
+    public readonly static Shader _fontShader = null!;
+    public readonly static byte[] _fontData = null!;
 
 
     internal static void OnClosing () {
