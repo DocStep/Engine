@@ -13,16 +13,8 @@ public class HdrTexture : IDisposable {
 
         unsafe {
             fixed (float* d = data) {
-                GL.TexImage2D(
-                    TextureTarget.Texture2D,
-                    0,
-                    InternalFormat.Rgb32f,
-                    (uint)Width,
-                    (uint)Height,
-                    0,
-                    PixelFormat.Rgb,
-                    PixelType.Float,
-                    d);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgb32f, (uint)Width, (uint)Height, 
+                    0, PixelFormat.Rgb, PixelType.Float, d);
             }
         }
 

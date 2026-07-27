@@ -3,6 +3,13 @@ using System.Diagnostics;
 
 namespace Engine;
 
+public enum LogType {
+    log,
+    warning,
+    error,
+    info,
+}
+
 
 public class Log : Singleton<Log> {
 
@@ -226,14 +233,6 @@ public class Log : Singleton<Log> {
         return sb.ToString();
     }
 
-
-
-    public enum LogType {
-        log,
-        warning,
-        error,
-        info,
-    }
 
     struct LogEntry {
         public LogEntry (string text, LogType type) {

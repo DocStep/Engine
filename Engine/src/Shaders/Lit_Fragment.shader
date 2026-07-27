@@ -12,6 +12,7 @@ uniform vec3 uSunLightDir;
 uniform vec3 uViewPos;
 
 uniform vec3 uAmbientColor;
+uniform float uAmbientColorIntensity;
 uniform sampler2D uSkybox;
 uniform float uMaxReflectionLod;
 uniform float uReflectionIntensity;
@@ -80,14 +81,15 @@ void main () {
     /// --- Ambient diffuse ---
     vec3 Fambient = F_SchlickSmoothness(NdV, F0, smoothness);
     vec3 kDambient = (1.0 - Fambient)*(1.0 - uMetallic);
-    vec3 diffuseAmbient = kDambient*uAmbientColor*uColor;
+    vec3 diffuseAmbient = kDambient*uAmbientColorIntensity*uAmbientColor*uColor;
 
     /// Ambient specular (IBL), exposure applied BEFORE tonemap, with occlusion
     float lod = rough*uMaxReflectionLod;
     vec2 envUV = DirToEquirectUV(R);
     vec3 envSpec = textureLod(uSkybox, envUV, lod).rgb*uExposure;
+    vec3 envSpecMixed = mix(uAmbientColor, envSpec, clamp(uReflectionIntensity, 0.0, 1.0));
     float specOcclusion = GetSpecularOcclusion(NdV, 1.0, smoothness);
-    vec3 specularAmbient = envSpec*Fambient*specOcclusion*uReflectionIntensity;
+    vec3 specularAmbient = envSpecMixed*Fambient*specOcclusion;
 
     vec3 ambient = diffuseAmbient + specularAmbient;
     vec3 color = ambient + Lo;

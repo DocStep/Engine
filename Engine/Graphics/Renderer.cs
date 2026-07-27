@@ -22,7 +22,7 @@ public class Renderer {
         GL.FrontFace(FrontFaceDirection.CW);
         GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
 
-        _skybox = new Skybox(_sh_Skybox, _hdrTexture_Skybox) {
+        _skybox = new Skybox(_sh_Skybox, _hdr_Skybox) {
             BlurScale = 3f
         };
 
@@ -77,11 +77,16 @@ public class Renderer {
     long iter = 0;
 
 
+    public Action? de_Draw_Clear = null;
+    public Action? de_Draw_Scene = null;
+    public Action? de_Draw_ = null;
+
     private void OnRender (double deltaTime) {
         try {
-            Stats = new RendererStats();
             Gizmos.Update();
             Gizmos._gizmo_Selected.Update();
+
+            Stats = new RendererStats();
 
             UpdateProjection();
             _postProcessStack.BeginScene();
@@ -90,14 +95,15 @@ public class Renderer {
 
             DrawMaterialsGrid(-14f, 0f);
 
-            DrawMeshes();
+            DrawScene();
             SceneManager.ActiveScene?.DrawRaw();
 
             bool postProcessingEnabled = SettingsGraphicsEngine.Instance?.postProcessing.isOn ?? true;
             _postProcessStack.EndSceneAndRunStack(0, postProcessingEnabled);
 
-            Gizmos._gizmo_Selected.Draw();
             Gizmos.Draw();
+            Gizmos._gizmo_Selected.Draw();
+
             TextRenderer.Draw();
             EditorUI.Instance.Draw();
 
@@ -113,17 +119,17 @@ public class Renderer {
 
 
     //private static RenderPass currentPass = RenderPass.undefined;
-    private void DrawMeshes () {
+    private void DrawScene () {
         //DrawSame();
         RenderList.Sort((a, b) => a.material.pass.CompareTo(b.material.pass));
         int count = RenderList.Count;
         for (int i = 0; i < count; i++) {
             RenderInfo info = RenderList[i];
-            DrawMesh(info);
+            DrawInfo(info);
         }
     }
 
-    public void DrawMesh (RenderInfo info) {
+    public void DrawInfo (RenderInfo info) {
         if (info.mesh is null) return;
         if (info.material is null) return;
 
@@ -194,25 +200,29 @@ public class Renderer {
         uProjection = Matrix4x4.ToArray(m4x4Projection);
     }
 
-    public static void SetSceneUniformsSkybox (Shader shader, HdrTexture? texture, float maxLod) {
-        if (texture is null) return;
-
-        texture.Bind(TextureUnit.Texture0);
-        shader.SetInt(Shader.Skybox, 0);
-        shader.SetFloat(MaxReflectionLod, maxLod);
-    }
-    public static void SetSceneUniformsLit (Shader shader) {
-        shader.SetVector3(SunLightColor, Constants.sunLightColor);
-        shader.SetVector3(SunLightDir, Constants.sunLightDir);
-        shader.SetVector3(AmbientColor, 0.05f, 0.05f, 0.06f);
-        shader.SetFloat(SunLightIntensity, Constants.sunLightIntensity);
-        shader.SetFloat(ReflectionIntensity, Constants.reflectionIntensity);
-    }
     public static void SetSceneUniformsUnlit (Shader shader) {
         shader.Use();
         shader.SetMatrix4(View, uView);
         shader.SetMatrix4(Projection, uProjection);
         shader.SetVector3(ViewPos, Camera.Instance.cameraPos);
+    }
+    public static void SetSceneUniformsLit (Shader shader) {
+        shader.SetVector3(SunLightDir, Constants.sunLightDir);
+        shader.SetVector3(SunLightColor, Constants.sunLightColor);
+        shader.SetFloat(SunLightIntensity, Constants.sunLightIntensity);
+        shader.SetVector3(AmbientColor, Constants.ambientColor);
+        shader.SetFloat(AmbientColorIntensity, Constants.ambientColorIntensity);
+        
+        if (Constants.renderSkyboxReflection) 
+            shader.SetFloat(ReflectionIntensity, Constants.reflectionIntensity);
+    }
+    public static void SetSceneUniformsSkybox (Shader shader, HdrTexture? texture, float maxLod) {
+        if (!Constants.renderSkyboxReflection) return;
+        if (texture is null) return;
+
+        texture.Bind(TextureUnit.Texture0);
+        shader.SetInt(Shader.Skybox, 0);
+        shader.SetFloat(MaxReflectionLod, maxLod);
     }
 
 

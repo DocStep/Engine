@@ -67,8 +67,8 @@ public class Engine : Singleton<Engine>, IDisposable {
 
         ThreadUtils.Init();
         Log.InstanceCheck();
-        Log.log($"========== Init ==========", Log.LogType.info);
-        Log.log($"===== Utils Layer =====", Log.LogType.info);
+        Log.log($"========== Init ==========", LogType.info);
+        Log.log($"===== Utils Layer =====", LogType.info);
         TimeUtils.Init();
 
         new Reflection();
@@ -81,7 +81,7 @@ public class Engine : Singleton<Engine>, IDisposable {
         Inputs.KeysInit();
     }
     public void Run () {
-        Log.log($"========== Run ==========", Log.LogType.info);
+        Log.log($"========== Run ==========", LogType.info);
 
         new ReflectionActionScripts();
 
@@ -112,7 +112,7 @@ public class Engine : Singleton<Engine>, IDisposable {
         Input = Silk.NET.Input.InputWindowExtensions.CreateInput(Window);
         InputState.Init(Input);
 
-        Log.log($"===== Systems Layer =====", Log.LogType.info);
+        Log.log($"===== Systems Layer =====", LogType.info);
 
         Renderer = new Graphics.Renderer();
         new Graphics.EditorUI();
@@ -124,7 +124,7 @@ public class Engine : Singleton<Engine>, IDisposable {
 
         de_Update?.Invoke();
 
-        Log.log($"========== Init Finish ==========", Log.LogType.info);
+        Log.log($"========== Init Finish ==========", LogType.info);
 
         engineState = EngineStates.Ready;
     }

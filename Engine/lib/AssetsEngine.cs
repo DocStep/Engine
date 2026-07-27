@@ -23,11 +23,11 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mat_Unlit.SetVector3(Color, Constants.gray);
 
         _sh_Skybox = new Shader(Assets.LoadText("src/Shaders/Skybox_Vertex.shader"), Assets.LoadText("src/Shaders/Skybox_Fragment.shader"), "Skybox");
-        _hdrTexture_Skybox = new HdrTexture("src/hdr/autumn_field_puresky_4k.hdr");
-        //_hdrTexture_Skybox = new HdrTexture("src/hdr/rogland_clear_night_4k.hdr");
-        //_hdrTexture_Skybox = new HdrTexture("src/hdr/grasslands_sunset_4k.hdr");
-        //_hdrTexture_Skybox = new HdrTexture("src/hdr/overcast_soil_puresky_4k.hdr");
-        //_hdrTexture_Skybox = new HdrTexture("src/hdr/qwantani_dusk_2_puresky_4k.hdr");
+        _hdr_Skybox = new HdrTexture("src/hdr/autumn_field_puresky_4k.hdr");
+        //_hdr_Skybox = new HdrTexture("src/hdr/rogland_clear_night_4k.hdr");
+        //_hdr_Skybox = new HdrTexture("src/hdr/grasslands_sunset_4k.hdr");
+        //_hdr_Skybox = new HdrTexture("src/hdr/overcast_soil_puresky_4k.hdr");
+        //_hdr_Skybox = new HdrTexture("src/hdr/qwantani_dusk_2_puresky_4k.hdr");
 
         _mat_Smooth = new Material(_mat_Lit);
         _mat_Smooth.SetFloat(Smoothness, 1);
@@ -94,7 +94,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Shader _sh_Unlit = null!;
 
     public readonly static Shader _sh_Skybox = null!;
-    public readonly static HdrTexture? _hdrTexture_Skybox = null;
+    public readonly static HdrTexture? _hdr_Skybox = null;
     
     public readonly static Material _mat_Lit = null!;
     public readonly static Material _mat_Unlit = null!;
@@ -152,7 +152,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _sh_Passthrough.Dispose();
 
         _sh_Skybox.Dispose();
-        _hdrTexture_Skybox?.Dispose();
+        _hdr_Skybox?.Dispose();
     }
 
 }

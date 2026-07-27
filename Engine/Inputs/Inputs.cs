@@ -207,7 +207,7 @@ public static class Inputs {
     public static string Key_Name (Keys key) {
         if (KeysName.ContainsKey(key)) return KeysName[key];
         else {
-            Log.log($"Wrong Input Action Key {key}", Log.LogType.warning);
+            Log.log($"Wrong Input Action Key {key}", LogType.warning);
             return string.Empty;
         }
     }
@@ -215,7 +215,7 @@ public static class Inputs {
     public static Keys Name_Key (string name) {
         if (NameKeys.ContainsKey(name)) return NameKeys[name];
         else {
-            Log.log($"Wrong Input Action Name {name}", Log.LogType.warning);
+            Log.log($"Wrong Input Action Name {name}", LogType.warning);
             return Keys.None;
         }
     }

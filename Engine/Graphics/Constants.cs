@@ -26,16 +26,6 @@ internal static class Constants {
     internal static float _cameraPlaneClose = 0.1f;
     internal static float _cameraPlaneFar = 1000f;
 
-    internal static bool _renderSkybox = false;
-    public static bool renderSkybox {
-        get => Constants._renderSkybox;
-        set {
-            if (Constants._renderSkybox != value) {
-                Constants._renderSkybox = value;
-            }
-        }
-    }
-
     internal readonly static float _gridScale = _cameraPlaneFar;
     internal readonly static float _gridDivisionScale = 1f;
 
@@ -43,7 +33,12 @@ internal static class Constants {
 
     internal static Vector3 sunLightDir = Vector3.Normalize(new Vector3(-0.3f, -1f, 0.4f));
     internal static Vector3 sunLightColor = new Vector3(1f, 1f, 1f);
+    internal static Vector3 ambientColor = new Vector3(0.5f, 0.5f, 0.6f);
+    internal static float ambientColorIntensity = 0.1f;
     internal static float sunLightIntensity = 5f;
+
+    public static bool renderSkybox { get; private set; } = true;
+    public static bool renderSkyboxReflection { get; private set; } = false;
     internal static float reflectionIntensity = 1f;
 
     internal static bool drawMaterialsGrid = true;

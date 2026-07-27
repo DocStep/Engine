@@ -69,10 +69,11 @@ public class Shader : IDisposable {
     public const string CameraPos = "uCameraPos";
     public const string Scene = "uScene";
 
-    public const string SunLightColor = "uSunLightColor";
     public const string SunLightDir = "uSunLightDir";
-    public const string AmbientColor = "uAmbientColor";
+    public const string SunLightColor = "uSunLightColor";
     public const string SunLightIntensity = "uSunLightIntensity";
+    public const string AmbientColor = "uAmbientColor";
+    public const string AmbientColorIntensity = "uAmbientColorIntensity";
     public const string ReflectionIntensity = "uReflectionIntensity";
 
 

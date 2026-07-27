@@ -385,7 +385,7 @@ public class GizmoSelected : IGizmoWorld {
             GL.DepthMask(false);
             GL.ColorMask(false, false, false, false);
 
-            Renderer.Instance.DrawMesh(renderInfo);
+            Renderer.Instance.DrawInfo(renderInfo);
 
             /// Pass 2 — Outline: draw inflated mesh ONLY where stencil != 1
             GL.ColorMask(true, true, true, true);
