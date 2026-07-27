@@ -9,10 +9,10 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     static AssetsEngine () {
         Engine.Window.Closing += OnClosing;
 
-        Shader.Stats = new RendererGLStats();
+        Shader.StatsReset();
 
-        _sh_Lit = new Shader(Utils.LoadTextFile("src/Shaders/Lit_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Lit_Fragment.shader"), "Lit");
-        _sh_Unlit = new Shader(Utils.LoadTextFile("src/Shaders/Unlit_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Unlit_Fragment.shader"), "Unlit");
+        _sh_Lit = new Shader(Assets.LoadText("src/Shaders/Lit_Vertex.shader"), Assets.LoadText("src/Shaders/Lit_Fragment.shader"), "Lit");
+        _sh_Unlit = new Shader(Assets.LoadText("src/Shaders/Unlit_Vertex.shader"), Assets.LoadText("src/Shaders/Unlit_Fragment.shader"), "Unlit");
         
         _mat_Lit = new Material(_sh_Lit);
         _mat_Lit.SetVector3(Color, Constants.white);
@@ -22,7 +22,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mat_Unlit = new Material(_sh_Unlit);
         _mat_Unlit.SetVector3(Color, Constants.gray);
 
-        _sh_Skybox = new Shader(Utils.LoadTextFile("src/Shaders/Skybox_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Skybox_Fragment.shader"), "Skybox");
+        _sh_Skybox = new Shader(Assets.LoadText("src/Shaders/Skybox_Vertex.shader"), Assets.LoadText("src/Shaders/Skybox_Fragment.shader"), "Skybox");
         _hdrTexture_Skybox = new HdrTexture("src/hdr/autumn_field_puresky_4k.hdr");
         //_hdrTexture_Skybox = new HdrTexture("src/hdr/rogland_clear_night_4k.hdr");
         //_hdrTexture_Skybox = new HdrTexture("src/hdr/grasslands_sunset_4k.hdr");
@@ -68,13 +68,14 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mesh_Plane = new Mesh(Graphics.Plane.Generate());
         _mesh_PlaneQuad = new Mesh(Graphics.Plane.Generate(divisions: 1));
 
-        _fontShader = new Shader(Utils.LoadTextFile("src/Shaders/UI/Text_Vertex.shader"), Utils.LoadTextFile("src/Shaders/UI/Text_Fragment.shader"), "Text");
+        _fontShader = new Shader(Assets.LoadText("src/Shaders/UI/Text_Vertex.shader"), Assets.LoadText("src/Shaders/UI/Text_Fragment.shader"), "Text");
         _fontData = File.ReadAllBytes("src/Fonts/FuturaCyrillicMedium.ttf");
 
-        _sh_Passthrough = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Fragment.shader"), "Passthrough");
-        _sh_Depth = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Depth_Fragment.shader"), "Depth");
-        _sh_Grayscale = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Grayscale_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Grayscale_Fragment.shader"), "Grayscale");
-        _sh_Fxaa = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Fxaa_Fragment.shader"), "FXAA");
+
+        _sh_Passthrough = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Fragment.shader"), "Passthrough");
+        _sh_Depth = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Depth_Fragment.shader"), "Depth");
+        _sh_Grayscale = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Grayscale_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Grayscale_Fragment.shader"), "Grayscale");
+        _sh_Fxaa = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Fxaa_Fragment.shader"), "FXAA");
 
         _mat_FullPass = new Material(_sh_Passthrough);
         _mat_Depth = new Material(_sh_Depth);

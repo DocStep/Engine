@@ -23,9 +23,9 @@ public static class Gizmos {
         _mesh_Arrow3D = new Mesh(Arrow.Generate(length: 1f, shaftWidth: 0.01f, headLength: 0.2f, headWidth: 0.1f));
         _mesh_ArrowWireframe = new Mesh(Arrow.GenerateWireframe(length: 1f, shaftWidth: 0.01f, headLength: 0.2f, headWidth: 0.1f));
 
-        _sh_GizmoGrid = new Graphics.Shader(Utils.LoadTextFile("src/Shaders/Grid_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Grid_Fragment.shader"), "Grid");
-        _sh_GizmoAxes = new Graphics.Shader(Utils.LoadTextFile("src/Shaders/Axes_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Axes_Fragment.shader"), "Axes");
-        _sh_Outline = new Graphics.Shader(Utils.LoadTextFile("src/Shaders/Outline_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Outline_Fragment.shader"), "Axes");
+        _sh_GizmoGrid = new Graphics.Shader(Assets.LoadText("src/Shaders/Grid_Vertex.shader"), Assets.LoadText("src/Shaders/Grid_Fragment.shader"), "Grid");
+        _sh_GizmoAxes = new Graphics.Shader(Assets.LoadText("src/Shaders/Axes_Vertex.shader"), Assets.LoadText("src/Shaders/Axes_Fragment.shader"), "Axes");
+        _sh_Outline = new Graphics.Shader(Assets.LoadText("src/Shaders/Outline_Vertex.shader"), Assets.LoadText("src/Shaders/Outline_Fragment.shader"), "Axes");
 
         _mat_GizmosG = new Material(_sh_Unlit);
         _mat_GizmosG.SetVector3(Color, Constants.green);

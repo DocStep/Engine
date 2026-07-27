@@ -31,6 +31,13 @@ public static class Assets {
         return asset;
     }
 
+    public static string LoadText (string relativePath) {
+        string fullPath = Path.Combine(AppContext.BaseDirectory, relativePath);
+        if (!File.Exists(fullPath))
+            throw new FileNotFoundException($"File not found: {fullPath}.");
+        return File.ReadAllText(fullPath);
+    }
+
 
     /// Unloads and disposes a single asset
     public static void Unload<T> (string path) where T : class, IAsset<T> {

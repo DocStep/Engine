@@ -52,11 +52,14 @@ public class Shader : IDisposable {
 
     private readonly GL GL;
     private readonly uint _program;
-    public string Name = "Unnamed";
+    public readonly string Name = "Unnamed";
     private readonly string _vertexSource;
     private readonly string _fragmentSource;
 
-    public static RendererGLStats Stats = default;
+    public static RendererGLStats Stats { get; private set; } = default;
+    public static void StatsReset () {
+        Stats = new RendererGLStats();
+    }
 
 
     public const string View = "uView";
