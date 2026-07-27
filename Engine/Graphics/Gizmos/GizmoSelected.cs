@@ -333,7 +333,7 @@ public class GizmoSelected : IGizmoWorld {
         void drawQuad (Vector3 pos, Matrix4x4 basis, Vector3 color) {
             Matrix4x4 m4x4_selected = Matrix4x4.CreateScale(quadScale)*basis*Matrix4x4.Position(pos);
             _sh_Unlit.SetMatrix4(Model, Matrix4x4.ToArray(m4x4_selected));
-            _sh_Unlit.SetColor(Color, color); 
+            _sh_Unlit.SetVector3(Color, color); 
             _sh_Unlit.SetFloat(Alpha, 0.5f);
             AssetsEngine._mesh_PlaneQuad.Draw();
         }
@@ -355,7 +355,7 @@ public class GizmoSelected : IGizmoWorld {
             Matrix4x4 m4x4_selected = _m4x4_selectedScale*Matrix4x4.RotationEuler(rot)*gizmoBasis*Matrix4x4.Position(pos3);
             float[] mesh_uModel = Matrix4x4.ToArray(m4x4_selected);
             _sh_Unlit.SetMatrix4(Model, mesh_uModel);
-            _sh_Unlit.SetColor(Color, color);
+            _sh_Unlit.SetVector3(Color, color);
             _sh_Unlit.SetFloat(Alpha, 0.5f);
             Gizmos._mesh_Arrow3D.Draw();
         }

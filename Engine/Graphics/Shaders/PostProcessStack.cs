@@ -132,7 +132,7 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.DepthMask(true);
     }
 
-    void Blit (uint tex) {
+    /*void Blit (uint tex) {
         PrepareFullscreenPass();
 
         _sh_Passthrough.Use();
@@ -144,7 +144,7 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
         Renderer.Instance.Stats.DrawCalls++;
         Renderer.GL.BindVertexArray(0);
-    }
+    }*/
 
     void PrepareFullscreenPass () {
         Renderer.GL.Disable(EnableCap.ScissorTest);

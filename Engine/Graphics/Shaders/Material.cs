@@ -22,12 +22,14 @@ public class Material /*: IDisposable*/ {
     public Material (Material material) {
         shader = material.shader;
         floats = new Dictionary<string, float>(material.floats);
-        vectors = new Dictionary<string, Vector3>(material.vectors);
+        vectors2 = new Dictionary<string, Vector2>(material.vectors2);
+        vectors3 = new Dictionary<string, Vector3>(material.vectors3);
         ///textures = (Silk.NET.OpenGL.Texture?[])material.textures.Clone();
     }
     public Shader shader = default!;
     private readonly Dictionary<string, float> floats = new();
-    private readonly Dictionary<string, Vector3> vectors = new();
+    private readonly Dictionary<string, Vector2> vectors2 = new();
+    private readonly Dictionary<string, Vector3> vectors3 = new();
     ///private readonly Silk.NET.OpenGL.Texture?[] textures = new Silk.NET.OpenGL.Texture?[4];
 
     /// Render State
@@ -38,18 +40,27 @@ public class Material /*: IDisposable*/ {
     public bool depthWrite = true;
 
 
+    public virtual void Update () { }
+
+
     public Material SetFloat (string name, float value) {
         floats[name] = value;
         return this;
     }
+    public Material SetVector2 (string name, Vector2 value) {
+        vectors2[name] = value;
+        return this;
+    }
     public Material SetVector3 (string name, Vector3 value) {
-        vectors[name] = value;
+        vectors3[name] = value;
         return this;
     }
 
-    public void Apply (Shader shader) {
+    public void Apply () {
+        Update();
         foreach (var kv in floats) shader.SetFloat(kv.Key, kv.Value);
-        foreach (var kv in vectors) shader.SetVector3(kv.Key, kv.Value);
+        foreach (var kv in vectors2) shader.SetVector2(kv.Key, kv.Value);
+        foreach (var kv in vectors3) shader.SetVector3(kv.Key, kv.Value);
         /// texture binding here later
     }
 

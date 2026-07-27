@@ -92,6 +92,36 @@ public class Shader : IDisposable {
         //    Console.WriteLine($"UseProgram({_program}, {Name}) Error: {err}");
     }
 
+
+    public void SetFloat (string name, float value) {
+        int location = GL.GetUniformLocation(_program, name);
+        GL.Uniform1(location, value);
+    }
+    public void SetInt (string name, int value) => SetFloat(name, value);
+
+    public void SetVector2 (string name, float x, float y) {
+        int location = GL.GetUniformLocation(_program, name);
+        GL.Uniform2(location, x, y);
+    }
+    public void SetVector2 (string name, Vector2 vec2) {
+        int location = GL.GetUniformLocation(_program, name);
+        GL.Uniform2(location, vec2.X, vec2.Y);
+    }
+
+    public void SetVector3 (string name, float x, float y, float z) {
+        int location = GL.GetUniformLocation(_program, name);
+        GL.Uniform3(location, x, y, z);
+    }
+    public void SetVector3 (string name, Vector3 vec3) {
+        int location = GL.GetUniformLocation(_program, name);
+        GL.Uniform3(location, vec3.X, vec3.Y, vec3.Z);
+    }
+
+    public void SetBool (string name, bool value) {
+        int location = GL.GetUniformLocation(_program, name);
+        GL.Uniform1(location, value ? 1 : 0);
+    }
+
     public void SetMatrix4 (string name, float[] matrix) {
         int location = GL.GetUniformLocation(_program, name);
         unsafe {
@@ -113,43 +143,9 @@ public class Shader : IDisposable {
         GL.BindTexture(TextureTarget.Texture2D, 0);
     }
 
-    public void SetVector3 (string name, float x, float y, float z) {
-        int location = GL.GetUniformLocation(_program, name);
-        GL.Uniform3(location, x, y, z);
-    }
-    public void SetVector2 (string name, float x, float y) {
-        int location = GL.GetUniformLocation(_program, name);
-        GL.Uniform2(location, x, y);
-    }
-    public void SetVector2 (string name, Vector2 vec2) {
-        int location = GL.GetUniformLocation(_program, name);
-        GL.Uniform2(location, vec2.X, vec2.Y);
-    }
-    public void SetVector3 (string name, Vector3 vec3) {
-        int location = GL.GetUniformLocation(_program, name);
-        GL.Uniform3(location, vec3.X, vec3.Y, vec3.Z);
-    }
-
-    public void SetColor (string name, Vector3 color) {
-        int location = GL.GetUniformLocation(_program, name);
-        GL.Uniform3(location, color.X, color.Y, color.Z);
-    }
-
-    public void SetInt (string name, int value) {
-        int location = GL.GetUniformLocation(_program, name);
-        GL.Uniform1(location, value);
-    }
-    public void SetFloat (string name, float value) {
-        int location = GL.GetUniformLocation(_program, name);
-        GL.Uniform1(location, value);
-    }
-
-    public void SetBool (string name, bool value) {
-        int location = GL.GetUniformLocation(_program, name);
-        GL.Uniform1(location, value ? 1 : 0);
-    }
 
     public void Dispose () {
         GL.DeleteProgram(_program);
     }
+
 }

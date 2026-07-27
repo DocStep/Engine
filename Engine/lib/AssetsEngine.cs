@@ -1,4 +1,5 @@
 ﻿using Engine.Graphics;
+using Engine.Graphics.Shaders;
 using static Engine.Graphics.Shader;
 
 namespace Engine;
@@ -11,15 +12,15 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         Shader.Stats = new RendererGLStats();
 
         _sh_Lit = new Shader(Utils.LoadTextFile("src/Shaders/Lit_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Lit_Fragment.shader"), "Lit");
-        //_sh_Transparent = new Shader(Utils.LoadTextFile("src/Shaders/Lit_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Lit_Fragment.shader"), "Transparent");
         _sh_Unlit = new Shader(Utils.LoadTextFile("src/Shaders/Unlit_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Unlit_Fragment.shader"), "Unlit");
-        //_sh_Unlit!.pass = RenderPass.Gizmo;
-        //_sh_UnlitTransparent = new Shader(Utils.LoadTextFile("src/Shaders/Unlit_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Unlit_Fragment.shader"), "UnlitTransparent");
-        //_sh_UnlitTransparent!.pass = RenderPass.Gizmo;
-        _sh_Depth = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Depth_Fragment.shader"), "Depth");
-        _sh_Grayscale = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Grayscale_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Grayscale_Fragment.shader"), "Grayscale");
-        _sh_Fxaa = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Fxaa_Fragment.shader"), "FXAA");
-        _sh_Passthrough = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Fragment.shader"), "Passthrough");
+        
+        _mat_Lit = new Material(_sh_Lit);
+        _mat_Lit.SetVector3(Color, Constants.white);
+        _mat_Lit.SetFloat(Smoothness, 0.5f);
+        _mat_Lit.SetFloat(Metallic, 0);
+        ///
+        _mat_Unlit = new Material(_sh_Unlit);
+        _mat_Unlit.SetVector3(Color, Constants.gray);
 
         _sh_Skybox = new Shader(Utils.LoadTextFile("src/Shaders/Skybox_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Skybox_Fragment.shader"), "Skybox");
         _hdrTexture_Skybox = new HdrTexture("src/hdr/autumn_field_puresky_4k.hdr");
@@ -28,11 +29,6 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         //_hdrTexture_Skybox = new HdrTexture("src/hdr/overcast_soil_puresky_4k.hdr");
         //_hdrTexture_Skybox = new HdrTexture("src/hdr/qwantani_dusk_2_puresky_4k.hdr");
 
-        _mat_Lit = new Material(_sh_Lit);
-        _mat_Lit.SetVector3(Color, Constants.white);
-        _mat_Lit.SetFloat(Smoothness, 0.5f);
-        _mat_Lit.SetFloat(Metallic, 0);
-        ///
         _mat_Smooth = new Material(_mat_Lit);
         _mat_Smooth.SetFloat(Smoothness, 1);
         ///
@@ -41,7 +37,6 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         ///
         _mat_Metallic = new Material(_mat_Lit);
         _mat_Metallic.SetVector3(Color, Constants.gray);
-        //_mat_Metallic.SetFloat(Smoothness, 1);
         _mat_Metallic.SetFloat(Metallic, 1);
         ///
         _mat_MaterialPreview = new Material(_mat_Lit);
@@ -67,50 +62,41 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mat_LitBlue = new Material(_sh_Lit);
         _mat_LitBlue.SetVector3(Color, Constants.blue);
         
-        _mat_Unlit = new Material(_sh_Unlit);
-        _mat_Unlit.SetVector3(Color, Constants.gray);
-
         _mesh_Cube = new Mesh(Cube.Generate());
         _mesh_Sphere = new Mesh(Sphere.Generate());
         _mesh_Capsule = new Mesh(Capsule.Generate());
         _mesh_Plane = new Mesh(Graphics.Plane.Generate());
         _mesh_PlaneQuad = new Mesh(Graphics.Plane.Generate(divisions: 1));
 
+        _fontShader = new Shader(Utils.LoadTextFile("src/Shaders/UI/Text_Vertex.shader"), Utils.LoadTextFile("src/Shaders/UI/Text_Fragment.shader"), "Text");
+        _fontData = File.ReadAllBytes("src/Fonts/FuturaCyrillicMedium.ttf");
+
+        _sh_Passthrough = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Fragment.shader"), "Passthrough");
+        _sh_Depth = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Depth_Fragment.shader"), "Depth");
+        _sh_Grayscale = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Grayscale_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Grayscale_Fragment.shader"), "Grayscale");
+        _sh_Fxaa = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Fxaa_Fragment.shader"), "FXAA");
+
+        _mat_FullPass = new Material(_sh_Passthrough);
+        _mat_Depth = new Material(_sh_Depth);
+        _mat_Grayscale = new Material(_sh_Grayscale);
+        _mat_Fxaa = new MaterialFxaa(_sh_Fxaa);
+
         _mesh_Torus = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Torus.obj"));
         _mesh_Suzanne = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Suzanne.obj"));
         _mesh_SuzanneHighRes = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "SuzanneHighRes.obj"));
 
-        _fontShader = new Shader(Utils.LoadTextFile("src/Shaders/UI/Text_Vertex.shader"), Utils.LoadTextFile("src/Shaders/UI/Text_Fragment.shader"), "Text");
-        _fontData = File.ReadAllBytes("src/Fonts/FuturaCyrillicMedium.ttf");
-
     }
 
 
+    /// Editor
     public readonly static Shader _sh_Lit = null!;
-    public readonly static Shader _sh_Transparent = null!;
     public readonly static Shader _sh_Unlit = null!;
-    public readonly static Shader _sh_UnlitTransparent = null!;
-    public readonly static Shader _sh_Depth = null!;
-    public readonly static Shader _sh_Grayscale = null!;
-    public readonly static Shader _sh_Fxaa = null!;
-    public readonly static Shader _sh_Passthrough = null!;
 
     public readonly static Shader _sh_Skybox = null!;
     public readonly static HdrTexture? _hdrTexture_Skybox = null;
-
+    
     public readonly static Material _mat_Lit = null!;
     public readonly static Material _mat_Unlit = null!;
-    public readonly static Material _mat_Smooth = null!;
-    public readonly static Material _mat_Matt = null!;
-    public readonly static Material _mat_Metallic = null!;
-    public readonly static Material _mat_MaterialPreview = null!;
-
-    public readonly static Material _mat_LitWhite = null!;
-    public readonly static Material _mat_LitBlack = null!;
-    public readonly static Material _mat_LitGray = null!;
-    public readonly static Material _mat_LitRed = null!;
-    public readonly static Material _mat_LitGreen = null!;
-    public readonly static Material _mat_LitBlue = null!;
 
     public readonly static Mesh _mesh_Cube = null!;
     public readonly static Mesh _mesh_Sphere = null!;
@@ -118,12 +104,36 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Mesh _mesh_Plane = null!;
     public readonly static Mesh _mesh_PlaneQuad = null!;
 
+    public readonly static Shader _fontShader = null!;
+    public readonly static byte[] _fontData = null!;
+
+    /// PostProcess
+    public readonly static Shader _sh_Passthrough = null!;
+    public readonly static Material _mat_FullPass = null!;
+    /// Effects
+    public readonly static Shader _sh_Depth = null!;
+    public readonly static Material _mat_Depth = null!;
+    public readonly static Shader _sh_Grayscale = null!;
+    public readonly static Material _mat_Grayscale = null!;
+    public readonly static Shader _sh_Fxaa = null!;
+    public readonly static MaterialFxaa _mat_Fxaa = null!;
+
+
+    /// Editor
+    public readonly static Material _mat_Smooth = null!;
+    public readonly static Material _mat_Matt = null!;
+    public readonly static Material _mat_Metallic = null!;
+    public readonly static Material _mat_MaterialPreview = null!;
+    public readonly static Material _mat_LitWhite = null!;
+    public readonly static Material _mat_LitBlack = null!;
+    public readonly static Material _mat_LitGray = null!;
+    public readonly static Material _mat_LitRed = null!;
+    public readonly static Material _mat_LitGreen = null!;
+    public readonly static Material _mat_LitBlue = null!;
+
     public readonly static Mesh _mesh_Torus = null!;
     public readonly static Mesh _mesh_Suzanne = null!;
     public readonly static Mesh _mesh_SuzanneHighRes = null!;
-
-    public readonly static Shader _fontShader = null!;
-    public readonly static byte[] _fontData = null!;
 
 
     internal static void OnClosing () {

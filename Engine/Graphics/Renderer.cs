@@ -27,8 +27,8 @@ public class Renderer {
         };
 
         _postProcessStack = new PostProcessStack();
-        //_postProcessStack.Effects.Add(new FxaaEffect(AssetsEngine._sh_Fxaa));
-        //_postProcessStack.Effects.Add(new GrayscaleEffect(AssetsEngine._sh_Grayscale));
+        _postProcessStack.Effects.Add(new PostProcessEffect(_mat_Fxaa));
+        //_postProcessStack.Effects.Add(new PostProcessEffect(_mat_Grayscale));
 
         TextRenderer = new TextRenderer();
 
@@ -178,7 +178,7 @@ public class Renderer {
             *Matrix4x4.RotationEuler(info.rot)*Matrix4x4.Position(info.pos);
         float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
         shader.SetMatrix4(Model, mesh_uModel);
-        info.material.Apply(shader);
+        info.material.Apply();
 
         info.de_Pre?.Invoke();
         info.mesh.Draw(info.primitiveType);
