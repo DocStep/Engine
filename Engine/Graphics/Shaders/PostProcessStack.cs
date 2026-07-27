@@ -104,9 +104,7 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.Disable(EnableCap.DepthTest);
 
         if (!enabled || Effects.Count == 0) {
-            Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, finalTargetFbo);
-            SetDrawBuffer(finalTargetFbo);
-            Blit(_sceneColor);
+            CopySceneColor(finalTargetFbo);
             CopySceneDepth(finalTargetFbo);
             Renderer.GL.DepthMask(true);
             return;
@@ -161,6 +159,8 @@ public class PostProcessStack : IDisposable {
     }
 
     void CopySceneDepth (uint targetFbo) {
+        if (targetFbo != 0) return;
+
         Renderer.GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, _sceneFbo);
         Renderer.GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, targetFbo);
         SetDrawBuffer(targetFbo);
@@ -168,6 +168,27 @@ public class PostProcessStack : IDisposable {
             0, 0, _width, _height,
             0, 0, _width, _height,
             ClearBufferMask.DepthBufferBit,
+            BlitFramebufferFilter.Nearest);
+        Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, targetFbo);
+    }
+
+    void CopySceneColor (uint targetFbo) {
+        Renderer.GL.Disable(EnableCap.ScissorTest);
+        Renderer.GL.Disable(EnableCap.Blend);
+        Renderer.GL.Disable(EnableCap.StencilTest);
+        Renderer.GL.Disable(EnableCap.CullFace);
+        Renderer.GL.Disable(EnableCap.DepthTest);
+        Renderer.GL.ColorMask(true, true, true, true);
+        Renderer.GL.DepthMask(false);
+
+        Renderer.GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, _sceneFbo);
+        Renderer.GL.ReadBuffer(GLEnum.ColorAttachment0);
+        Renderer.GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, targetFbo);
+        SetDrawBuffer(targetFbo);
+        Renderer.GL.BlitFramebuffer(
+            0, 0, _width, _height,
+            0, 0, _width, _height,
+            ClearBufferMask.ColorBufferBit,
             BlitFramebufferFilter.Nearest);
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, targetFbo);
     }
