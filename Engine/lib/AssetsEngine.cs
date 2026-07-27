@@ -9,7 +9,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     static AssetsEngine () {
         Engine.Window.Closing += OnClosing;
 
-        Shader.StatsReset();
+        //Shader.StatsReset();
 
         _sh_Lit = new Shader(Assets.LoadText("src/Shaders/Lit_Vertex.shader"), Assets.LoadText("src/Shaders/Lit_Fragment.shader"), "Lit");
         _sh_Unlit = new Shader(Assets.LoadText("src/Shaders/Unlit_Vertex.shader"), Assets.LoadText("src/Shaders/Unlit_Fragment.shader"), "Unlit");
@@ -29,6 +29,16 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         //_hdr_Skybox = new HdrTexture("src/hdr/overcast_soil_puresky_4k.hdr");
         //_hdr_Skybox = new HdrTexture("src/hdr/qwantani_dusk_2_puresky_4k.hdr");
 
+        _mesh_Cube = new Mesh(Cube.Generate());
+        _mesh_Sphere = new Mesh(Sphere.Generate());
+        _mesh_Capsule = new Mesh(Capsule.Generate());
+        _mesh_Plane = new Mesh(Graphics.Plane.Generate());
+        _mesh_PlaneQuad = new Mesh(Graphics.Plane.Generate(divisions: 1));
+
+        _fontShader = new Shader(Assets.LoadText("src/Shaders/UI/Text_Vertex.shader"), Assets.LoadText("src/Shaders/UI/Text_Fragment.shader"), "Text");
+        _fontData = File.ReadAllBytes("src/Fonts/FuturaCyrillicMedium.ttf");
+
+        /// Editor
         _mat_Smooth = new Material(_mat_Lit);
         _mat_Smooth.SetFloat(Smoothness, 1);
         ///
@@ -61,30 +71,21 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         ///
         _mat_LitBlue = new Material(_sh_Lit);
         _mat_LitBlue.SetVector3(Color, Constants.blue);
-        
-        _mesh_Cube = new Mesh(Cube.Generate());
-        _mesh_Sphere = new Mesh(Sphere.Generate());
-        _mesh_Capsule = new Mesh(Capsule.Generate());
-        _mesh_Plane = new Mesh(Graphics.Plane.Generate());
-        _mesh_PlaneQuad = new Mesh(Graphics.Plane.Generate(divisions: 1));
-
-        _fontShader = new Shader(Assets.LoadText("src/Shaders/UI/Text_Vertex.shader"), Assets.LoadText("src/Shaders/UI/Text_Fragment.shader"), "Text");
-        _fontData = File.ReadAllBytes("src/Fonts/FuturaCyrillicMedium.ttf");
-
-
-        _sh_Passthrough = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Fragment.shader"), "Passthrough");
-        _sh_Depth = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Depth_Fragment.shader"), "Depth");
-        _sh_Grayscale = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Grayscale_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Grayscale_Fragment.shader"), "Grayscale");
-        _sh_Fxaa = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Fxaa_Fragment.shader"), "FXAA");
-
-        _mat_FullPass = new Material(_sh_Passthrough);
-        _mat_Depth = new Material(_sh_Depth);
-        _mat_Grayscale = new Material(_sh_Grayscale);
-        _mat_Fxaa = new MaterialFxaa(_sh_Fxaa);
 
         _mesh_Torus = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Torus.obj"));
         _mesh_Suzanne = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Suzanne.obj"));
         _mesh_SuzanneHighRes = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "SuzanneHighRes.obj"));
+
+        /// Post-Process
+        _sh_FullPass = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Fragment.shader"), "Passthrough");
+        _sh_Depth = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Depth_Fragment.shader"), "Depth");
+        _sh_Grayscale = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Grayscale_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Grayscale_Fragment.shader"), "Grayscale");
+        _sh_Fxaa = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Fxaa_Fragment.shader"), "FXAA");
+
+        _mat_FullPass = new Material(_sh_FullPass);
+        _mat_Depth = new Material(_sh_Depth);
+        _mat_Grayscale = new Material(_sh_Grayscale);
+        _mat_Fxaa = new MaterialFxaa(_sh_Fxaa);
 
     }
 
@@ -109,7 +110,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static byte[] _fontData = null!;
 
     /// PostProcess
-    public readonly static Shader _sh_Passthrough = null!;
+    public readonly static Shader _sh_FullPass = null!;
     public readonly static Material _mat_FullPass = null!;
     /// Effects
     public readonly static Shader _sh_Depth = null!;
@@ -149,7 +150,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _sh_Depth.Dispose();
         _sh_Grayscale.Dispose();
         _sh_Fxaa.Dispose();
-        _sh_Passthrough.Dispose();
+        _sh_FullPass.Dispose();
 
         _sh_Skybox.Dispose();
         _hdr_Skybox?.Dispose();

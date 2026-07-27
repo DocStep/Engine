@@ -1,5 +1,11 @@
 ﻿namespace Engine.Graphics;
 
+public enum DrawMode {
+    Normal = 0,
+    Wireframe,
+    NormalWireframe,
+}
+
 
 internal static class Constants {
 
@@ -22,31 +28,33 @@ internal static class Constants {
     public readonly static Vector3 greenLight = new Vector3(0.5f, 1, 0.5f);
     public readonly static Vector3 blueLight = new Vector3(0.5f, 0.5f, 1);
 
-    internal static float _cameraFOV = 0.25f*MathF.PI;
-    internal static float _cameraPlaneClose = 0.1f;
-    internal static float _cameraPlaneFar = 1000f;
+    public static float _cameraFOV = 0.25f*MathF.PI;
+    public static float _cameraPlaneClose = 0.1f;
+    public static float _cameraPlaneFar = 1000f;
 
-    internal readonly static float _gridScale = _cameraPlaneFar;
-    internal readonly static float _gridDivisionScale = 1f;
+    public readonly static float _gridScale = _cameraPlaneFar;
+    public readonly static float _gridDivisionScale = 1f;
 
-    internal static bool _drawArrowAsMesh = true;
+    public static bool _drawArrowAsMesh = true;
 
-    internal static Vector3 sunLightDir = Vector3.Normalize(new Vector3(-0.3f, -1f, 0.4f));
-    internal static Vector3 sunLightColor = new Vector3(1f, 1f, 1f);
-    internal static Vector3 ambientColor = new Vector3(0.5f, 0.5f, 0.6f);
-    internal static float ambientColorIntensity = 0.1f;
-    internal static float sunLightIntensity = 5f;
+    public static Vector3 sunLightDir = Vector3.Normalize(new Vector3(-0.3f, -1f, 0.4f));
+    public static Vector3 sunLightColor = new Vector3(1f, 1f, 1f);
+    public static Vector3 ambientColor = new Vector3(0.5f, 0.5f, 0.6f);
+    public static float ambientColorIntensity = 0.1f;
+    public static float sunLightIntensity = 5f;
 
     public static bool renderSkybox { get; private set; } = true;
-    public static bool renderSkyboxReflection { get; private set; } = false;
-    internal static float reflectionIntensity = 1f;
+    public static bool renderSkyboxReflection { get; private set; } = true;
+    public static float reflectionIntensity = 1f;
 
-    internal static bool drawMaterialsGrid = true;
-    internal static int materialsGridCount = 5;
-    internal static int materialsGridDensity = 1;
+    public static bool drawMaterialsGrid = true;
+    public static int materialsGridCount = 5;
+    public static int materialsGridDensity = 1;
 
-    internal static bool drawGizmos = true;
-    internal static bool drawGizmosSun = true;
+    public static bool drawGizmos = true;
+    public static bool drawGizmosSun = true;
+
+    public static DrawMode drawMode = DrawMode.Wireframe;
 
 
     internal static int left = 10;

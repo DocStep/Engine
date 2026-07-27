@@ -19,7 +19,7 @@ public class SphereColliderComponent : ColliderComponent {
                 scale = 2f*Radius*owner.Transform.Scale,
 
                 mesh = Gizmos._mesh_SphereWireframe,
-                material = Gizmos._mat_GizmosG,
+                material = Gizmos._mat_GizmosGreen,
                 primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
             };
             Graphics.Renderer.Instance.AddRenderInfo(renderInfo);

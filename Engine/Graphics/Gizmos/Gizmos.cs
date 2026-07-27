@@ -11,6 +11,41 @@ public static class Gizmos {
         //Renderer.Instance.de_GizmosDraw += DrawGizmos;
         GL = Renderer.GL;
 
+        _sh_GizmoGrid = new Graphics.Shader(Assets.LoadText("src/Shaders/Grid_Vertex.shader"), Assets.LoadText("src/Shaders/Grid_Fragment.shader"), "Grid");
+        _sh_GizmoAxes = new Graphics.Shader(Assets.LoadText("src/Shaders/Axes_Vertex.shader"), Assets.LoadText("src/Shaders/Axes_Fragment.shader"), "Axes");
+        _sh_Outline = new Graphics.Shader(Assets.LoadText("src/Shaders/Outline_Vertex.shader"), Assets.LoadText("src/Shaders/Outline_Fragment.shader"), "Axes");
+
+        _mat_GizmosGreen = new Material(_sh_Unlit);
+        _mat_GizmosGreen.SetVector3(Color, Constants.green);
+        _mat_GizmosGreen.SetFloat(Alpha, 0.5f);
+        _mat_GizmosGreen.pass = RenderPass.Gizmo;
+        _mat_GizmosGreen.face = RenderFace.Both;
+
+        _mat_GizmoWireframe = new Material(_mat_GizmosGreen);
+        _mat_GizmoWireframe.SetVector3(Color, Constants.black);
+        _mat_GizmoWireframe.SetFloat(Alpha, 0.1f);
+
+        _mat_GizmoGrid = new Material(_sh_GizmoGrid);
+        _mat_GizmoGrid.SetVector3(Color, Constants.lightGray);
+        _mat_GizmoGrid.SetFloat(Alpha, 0.5f);
+        _mat_GizmoGrid.SetFloat(Radius, 200f);
+        _mat_GizmoGrid.SetFloat(Fade, 50f);
+        _mat_GizmoGrid.pass = RenderPass.Gizmo;
+        _mat_GizmosGreen.face = RenderFace.Both;
+
+        _mat_GizmoAxes = new Material(_sh_GizmoAxes);
+        _mat_GizmoAxes.SetFloat(Alpha, 0.5f);
+        _mat_GizmoAxes.SetFloat(Radius, 200f);
+        _mat_GizmoAxes.SetFloat(Fade, 50f);
+        _mat_GizmoAxes.pass = RenderPass.Gizmo;
+        _mat_GizmosGreen.face = RenderFace.Both;
+
+        _mat_GizmoSun = new Material(_sh_Unlit);
+        _mat_GizmoSun.SetVector3(Color, Constants.yellow);
+        _mat_GizmoSun.SetFloat(Alpha, 0.5f);
+        _mat_GizmoSun.pass = RenderPass.Gizmo;
+        _mat_GizmosGreen.face = RenderFace.Both;
+
         _mesh_CubeWireframe = new Mesh(Cube.GenerateWireframe());
         _mesh_SphereWireframe = new Mesh(Sphere.GenerateWireframe());
         _mesh_CapsuleWireframe = new Mesh(Capsule.GenerateWireframe());
@@ -22,37 +57,6 @@ public static class Gizmos {
         _mesh_AxesWireframe = new Mesh(Axes.GenerateWireframe(length: Constants._gridScale));
         _mesh_Arrow3D = new Mesh(Arrow.Generate(length: 1f, shaftWidth: 0.01f, headLength: 0.2f, headWidth: 0.1f));
         _mesh_ArrowWireframe = new Mesh(Arrow.GenerateWireframe(length: 1f, shaftWidth: 0.01f, headLength: 0.2f, headWidth: 0.1f));
-
-        _sh_GizmoGrid = new Graphics.Shader(Assets.LoadText("src/Shaders/Grid_Vertex.shader"), Assets.LoadText("src/Shaders/Grid_Fragment.shader"), "Grid");
-        _sh_GizmoAxes = new Graphics.Shader(Assets.LoadText("src/Shaders/Axes_Vertex.shader"), Assets.LoadText("src/Shaders/Axes_Fragment.shader"), "Axes");
-        _sh_Outline = new Graphics.Shader(Assets.LoadText("src/Shaders/Outline_Vertex.shader"), Assets.LoadText("src/Shaders/Outline_Fragment.shader"), "Axes");
-
-        _mat_GizmosG = new Material(_sh_Unlit);
-        _mat_GizmosG.SetVector3(Color, Constants.green);
-        _mat_GizmosG.SetFloat(Alpha, 0.5f);
-        _mat_GizmosG.pass = RenderPass.Gizmo;
-        _mat_GizmosG.face = RenderFace.Both;
-
-        _mat_GizmoGrid = new Material(_sh_GizmoGrid);
-        _mat_GizmoGrid.SetVector3(Color, Constants.lightGray);
-        _mat_GizmoGrid.SetFloat(Alpha, 0.5f);
-        _mat_GizmoGrid.SetFloat(Radius, 200f);
-        _mat_GizmoGrid.SetFloat(Fade, 50f);
-        _mat_GizmoGrid.pass = RenderPass.Gizmo;
-        _mat_GizmosG.face = RenderFace.Both;
-
-        _mat_GizmoAxes = new Material(_sh_GizmoAxes);
-        _mat_GizmoAxes.SetFloat(Alpha, 0.5f);
-        _mat_GizmoAxes.SetFloat(Radius, 200f);
-        _mat_GizmoAxes.SetFloat(Fade, 50f);
-        _mat_GizmoAxes.pass = RenderPass.Gizmo;
-        _mat_GizmosG.face = RenderFace.Both;
-
-        _mat_GizmoSun = new Material(_sh_Unlit);
-        _mat_GizmoSun.SetVector3(Color, Constants.yellow);
-        _mat_GizmoSun.SetFloat(Alpha, 0.5f);
-        _mat_GizmoSun.pass = RenderPass.Gizmo;
-        _mat_GizmosG.face = RenderFace.Both;
 
         _gizmo_Selected = new GizmoSelected();
 
@@ -76,7 +80,8 @@ public static class Gizmos {
 
     public readonly static Material _mat_GizmoGrid = null!;
     public readonly static Material _mat_GizmoAxes = null!;
-    public readonly static Material _mat_GizmosG = null!;
+    public readonly static Material _mat_GizmosGreen = null!;
+    public readonly static Material _mat_GizmoWireframe = null!;
     public readonly static Material _mat_GizmoSun = null!;
 
     public readonly static GizmoSelected _gizmo_Selected = null!;

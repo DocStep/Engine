@@ -62,22 +62,22 @@ public class GameObject : ISavable {
             case PrimitiveTypes.GizmoCube:
                 MeshComponent colliderMesh = AddComponent<MeshComponent>();
                 colliderMesh.mesh = Gizmos._mesh_CubeWireframe;
-                colliderMesh.material = Gizmos._mat_GizmosG;
+                colliderMesh.material = Gizmos._mat_GizmosGreen;
                 break;
             case PrimitiveTypes.GizmoSphere:
                 colliderMesh = AddComponent<MeshComponent>();
                 colliderMesh.mesh = Gizmos._mesh_SphereWireframe;
-                colliderMesh.material = Gizmos._mat_GizmosG;
+                colliderMesh.material = Gizmos._mat_GizmosGreen;
                 break;
             case PrimitiveTypes.GizmoCapsule:
                 colliderMesh = AddComponent<MeshComponent>();
                 colliderMesh.mesh = Gizmos._mesh_CapsuleWireframe;
-                colliderMesh.material = Gizmos._mat_GizmosG;
+                colliderMesh.material = Gizmos._mat_GizmosGreen;
                 break;
             case PrimitiveTypes.GizmoPlane:
                 colliderMesh = AddComponent<MeshComponent>();
                 colliderMesh.mesh = Gizmos._mesh_PlaneWireframe;
-                colliderMesh.material = Gizmos._mat_GizmosG;
+                colliderMesh.material = Gizmos._mat_GizmosGreen;
                 break;
             default:
                 break;

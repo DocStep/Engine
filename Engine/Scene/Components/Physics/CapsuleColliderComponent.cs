@@ -20,7 +20,7 @@ public class CapsuleColliderComponent : ColliderComponent {
                 scale = owner.Transform.Scale,
 
                 mesh = Gizmos._mesh_CapsuleWireframe,
-                material = Gizmos._mat_GizmosG,
+                material = Gizmos._mat_GizmosGreen,
                 primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
             };
             Graphics.Renderer.Instance.AddRenderInfo(renderInfo);

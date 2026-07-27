@@ -95,12 +95,27 @@ public class Renderer {
 
             DrawMaterialsGrid(-14f, 0f);
 
-            DrawScene();
+            switch (Constants.drawMode) {
+                case DrawMode.Normal:
+                    DrawScene();
+                    break;
+                case DrawMode.Wireframe:
+                    DrawSceneWireframe();
+                    break;
+                case DrawMode.NormalWireframe:
+                    DrawScene();
+                    DrawSceneWireframe();
+                    break;
+            }
+
             SceneManager.ActiveScene?.DrawRaw();
 
             bool postProcessingEnabled = SettingsGraphicsEngine.Instance?.postProcessing.isOn ?? true;
             _postProcessStack.EndSceneAndRunStack(0, postProcessingEnabled);
 
+
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             Gizmos.Draw();
             Gizmos._gizmo_Selected.Draw();
 
@@ -118,7 +133,6 @@ public class Renderer {
     }
 
 
-    //private static RenderPass currentPass = RenderPass.undefined;
     private void DrawScene () {
         //DrawSame();
         RenderList.Sort((a, b) => a.material.pass.CompareTo(b.material.pass));
@@ -127,6 +141,32 @@ public class Renderer {
             RenderInfo info = RenderList[i];
             DrawInfo(info);
         }
+    }
+    private void DrawSceneWireframe () {
+        GL.PolygonMode(TriangleFace.FrontAndBack, GLEnum.Line);
+
+        /// Gizmo
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+        /// Both
+        GL.Disable(EnableCap.CullFace);
+
+        /// DepthTest
+        GL.Disable(EnableCap.DepthTest);
+        GL.DepthMask(false);
+
+        RenderList.Sort((a, b) => a.material.pass.CompareTo(b.material.pass));
+        int count = RenderList.Count;
+        for (int i = 0; i < count; i++) {
+            RenderInfo info = RenderList[i];
+            if (info.material.pass == RenderPass.Opaque || info.material.pass == RenderPass.Transparent) 
+                DrawInfoWireframe(info);
+            else DrawInfo(info);
+        }
+
+        GL.Enable(EnableCap.CullFace);
+        GL.PolygonMode(TriangleFace.FrontAndBack, GLEnum.Fill);
     }
 
     public void DrawInfo (RenderInfo info) {
@@ -193,6 +233,25 @@ public class Renderer {
         if (info.depthRangeNear != 0 || info.depthRangeFar != 1) 
             GL.DepthRange(0, 1);
     }
+    private void DrawInfoWireframe (RenderInfo info) {
+        if (info.mesh is null) return;
+
+        Shader shader = Gizmos._mat_GizmoWireframe.shader;
+
+        SetSceneUniformsUnlit(shader);
+
+        Matrix4x4 mesh_m4x4 = info.modelOverride ?? Matrix4x4.CreateScale(info.scale)
+            *Matrix4x4.RotationEuler(info.rot)*Matrix4x4.Position(info.pos);
+        float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
+        shader.SetMatrix4(Model, mesh_uModel);
+        Gizmos._mat_GizmoWireframe.Apply();
+
+        info.mesh.Draw(info.primitiveType);
+
+        if (info.depthRangeNear != 0 || info.depthRangeFar != 1)
+            GL.DepthRange(0, 1);
+    }
+
     private void UpdateProjection () {
         float aspect = Engine.Window.Size.X/(float)Engine.Window.Size.Y;
         m4x4Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Constants._cameraFOV, aspect, Constants._cameraPlaneClose, Constants._cameraPlaneFar);

@@ -81,8 +81,9 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.Begin("Info");
         ImGui.BeginDisabled();
 
-        DrawScript(Renderer.Instance.Stats);
-        DrawScript(Shader.Stats);
+        DrawObject(Renderer.Instance.Stats);
+        DrawObject(Shader.Stats);
+        //Log.log(Shader.Stats._ShaderCompiled);
 
         ImGui.EndDisabled();
         ImGui.End();
@@ -90,7 +91,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
 
     /// For classes / reference types
-    public static void DrawScript (object target) {
+    public static void DrawObject (object target) {
         Type type = target.GetType();
         
         FieldInfo[] fields = type.GetFields(BindingFlags.Public|BindingFlags.Instance);
@@ -100,13 +101,13 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             if (drawn is not null) field.SetValue(target, drawn);
         }
 
-        /*PropertyInfo[] props = type.GetProperties(BindingFlags.Public|BindingFlags.Instance);
+        PropertyInfo[] props = type.GetProperties(BindingFlags.Public|BindingFlags.Instance);
         foreach (PropertyInfo prop in props) {
             if (!prop.CanRead || !prop.CanWrite) continue;
-            object? value = prop.GetValue(this);
+            object? value = prop.GetValue(target);
             object? drawn = EditorUI.DrawField(prop, value);
-            if (drawn != null) prop.SetValue(this, drawn);
-        }*/
+            if (drawn != null) prop.SetValue(target, drawn);
+        }
     }
 
     /*/// For structs - box, mutate the box, then write back to the ref

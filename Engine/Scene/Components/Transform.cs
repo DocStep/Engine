@@ -9,7 +9,7 @@ public class Transform : Component {
 
     public Vector3 Position = Vector3.Zero;
     [JsonIgnore][WrapVector3(0, 360)] public Vector3 rotation = Vector3.Zero;
-    public Vector3 Rotation {
+    [Hide] public Vector3 Rotation {
         get => rotation;
         set {
             rotation = Utils.WrapVector3(value, 0, 360);

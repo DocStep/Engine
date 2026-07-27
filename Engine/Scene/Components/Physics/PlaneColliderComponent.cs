@@ -20,7 +20,7 @@ public class PlaneColliderComponent : ColliderComponent {
                 scale = Scale*owner.Transform.Scale,
 
                 mesh = Gizmos._mesh_PlaneWireframe,
-                material = Gizmos._mat_GizmosG,
+                material = Gizmos._mat_GizmosGreen,
                 primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
             };
             Graphics.Renderer.Instance.AddRenderInfo(renderInfo);
