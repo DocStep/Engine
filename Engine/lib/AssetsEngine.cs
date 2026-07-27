@@ -77,12 +77,12 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mesh_SuzanneHighRes = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "SuzanneHighRes.obj"));
 
         /// Post-Process
-        _sh_FullPass = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Fragment.shader"), "Passthrough");
+        _sh_Fullscreen = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Fragment.shader"), "Fullscreen");
         _sh_Depth = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Depth_Fragment.shader"), "Depth");
-        _sh_Grayscale = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Grayscale_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Grayscale_Fragment.shader"), "Grayscale");
+        _sh_Grayscale = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Grayscale_Fragment.shader"), "Grayscale");
         _sh_Fxaa = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Fxaa_Fragment.shader"), "FXAA");
 
-        _mat_FullPass = new Material(_sh_FullPass);
+        _mat_Fullscreen = new Material(_sh_Fullscreen);
         _mat_Depth = new Material(_sh_Depth);
         _mat_Grayscale = new Material(_sh_Grayscale);
         _mat_Fxaa = new MaterialFxaa(_sh_Fxaa);
@@ -110,8 +110,8 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static byte[] _fontData = null!;
 
     /// PostProcess
-    public readonly static Shader _sh_FullPass = null!;
-    public readonly static Material _mat_FullPass = null!;
+    public readonly static Shader _sh_Fullscreen = null!;
+    public readonly static Material _mat_Fullscreen = null!;
     /// Effects
     public readonly static Shader _sh_Depth = null!;
     public readonly static Material _mat_Depth = null!;
@@ -150,7 +150,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _sh_Depth.Dispose();
         _sh_Grayscale.Dispose();
         _sh_Fxaa.Dispose();
-        _sh_FullPass.Dispose();
+        _sh_Fullscreen.Dispose();
 
         _sh_Skybox.Dispose();
         _hdr_Skybox?.Dispose();

@@ -54,7 +54,7 @@ internal static class Constants {
     public static bool drawGizmos = true;
     public static bool drawGizmosSun = true;
 
-    public static DrawMode drawMode = DrawMode.Wireframe;
+    public static DrawMode drawMode = DrawMode.Normal;
 
 
     internal static int left = 10;

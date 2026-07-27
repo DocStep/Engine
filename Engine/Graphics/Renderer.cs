@@ -26,9 +26,10 @@ public class Renderer {
             BlurScale = 3f
         };
 
-        _postProcessStack = new PostProcessStack();
-        _postProcessStack.Effects.Add(new PostProcessEffect(_mat_Fxaa));
-        //_postProcessStack.Effects.Add(new PostProcessEffect(_mat_Grayscale));
+        PostProcessStack = new PostProcessStack();
+        PostProcessStack.Effects.Add(new PostProcessPass(_mat_Depth));
+        PostProcessStack.Effects.Add(new PostProcessPass(_mat_Fxaa));
+        //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Grayscale));
 
         TextRenderer = new TextRenderer();
 
@@ -54,7 +55,7 @@ public class Renderer {
 
     public readonly Skybox _skybox = null!;
 
-    public readonly PostProcessStack _postProcessStack = null!;
+    public readonly PostProcessStack PostProcessStack = null!;
 
 
     /// Debug
@@ -89,7 +90,7 @@ public class Renderer {
             Stats = new RendererStats();
 
             UpdateProjection();
-            _postProcessStack.BeginScene();
+            PostProcessStack.BeginScene();
 
             _skybox?.Draw(m4x4_View, m4x4Projection);
 
@@ -111,7 +112,7 @@ public class Renderer {
             SceneManager.ActiveScene?.DrawRaw();
 
             bool postProcessingEnabled = SettingsGraphicsEngine.Instance?.postProcessing.isOn ?? true;
-            _postProcessStack.EndSceneAndRunStack(0, postProcessingEnabled);
+            PostProcessStack.EndSceneAndRunStack(0, postProcessingEnabled);
 
 
             GL.Enable(EnableCap.Blend);
@@ -329,7 +330,7 @@ public class Renderer {
         GL.Viewport(newSize);
         if (0 < newSize.X && 0 < newSize.Y) {
             UpdateProjection();
-            _postProcessStack.Resize(newSize.X, newSize.Y);
+            PostProcessStack.Resize(newSize.X, newSize.Y);
         }
     }
 
@@ -337,7 +338,7 @@ public class Renderer {
         TextRenderer.Dispose();
 
         _skybox.Dispose();
-        _postProcessStack.Dispose();
+        PostProcessStack.Dispose();
 
         de_Dispose?.Invoke();
     }

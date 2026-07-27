@@ -14,7 +14,7 @@ public class PostProcessStack : IDisposable {
 
     public static uint QuadVAO;
 
-    public List<PostProcessEffect> Effects = new();
+    public List<PostProcessPass> Effects = new();
 
     /// Final Result
     uint _sceneFbo, _sceneColor, _sceneDepth;
@@ -42,7 +42,7 @@ public class PostProcessStack : IDisposable {
         _outputFbo = CreateFbo(w, h, out _outputColor, out _, withDepth: false);
     }
 
-    uint CreateFbo (int w, int h, out uint colorTex, out uint depthRbo, bool withDepth) {
+    uint CreateFbo (int w, int h, out uint colorTex, out uint depthTex, bool withDepth) {
         uint fbo = Renderer.GL.GenFramebuffer();
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
         SetDrawBuffer(fbo);
@@ -60,13 +60,20 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
             TextureTarget.Texture2D, colorTex, 0);
 
-        depthRbo = 0;
+        depthTex = 0;
         if (withDepth) {
-            depthRbo = Renderer.GL.GenRenderbuffer();
-            Renderer.GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, depthRbo);
-            Renderer.GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, InternalFormat.Depth24Stencil8, (uint)w, (uint)h);
-            Renderer.GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment,
-                RenderbufferTarget.Renderbuffer, depthRbo);
+            depthTex = Renderer.GL.GenTexture();
+            Renderer.GL.BindTexture(TextureTarget.Texture2D, depthTex);
+            unsafe {
+                Renderer.GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Depth24Stencil8,
+                    (uint)w, (uint)h, 0, PixelFormat.DepthStencil, PixelType.UnsignedInt248, null);
+            }
+            Renderer.GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
+            Renderer.GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+            Renderer.GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
+            Renderer.GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
+            Renderer.GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment,
+                TextureTarget.Texture2D, depthTex, 0);
         }
 
         var status = Renderer.GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
@@ -120,7 +127,7 @@ public class PostProcessStack : IDisposable {
             SetDrawBuffer(targetFbo);
             PrepareFullscreenPass();
 
-            Effects[i].Apply(currentInput);
+            Effects[i].Apply(currentInput, _sceneDepth);
 
             if (!isLast) {
                 currentInput = _pingColor[pingIndex];
