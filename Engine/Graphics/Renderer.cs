@@ -27,7 +27,8 @@ public class Renderer {
         };
 
         _postProcessStack = new PostProcessStack();
-        _postProcessStack.Effects.Add(new GrayscaleEffect(AssetsEngine._sh_Grayscale));
+        //_postProcessStack.Effects.Add(new FxaaEffect(AssetsEngine._sh_Fxaa));
+        //_postProcessStack.Effects.Add(new GrayscaleEffect(AssetsEngine._sh_Grayscale));
 
         TextRenderer = new TextRenderer();
 

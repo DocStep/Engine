@@ -117,6 +117,14 @@ public class Shader : IDisposable {
         int location = GL.GetUniformLocation(_program, name);
         GL.Uniform3(location, x, y, z);
     }
+    public void SetVector2 (string name, float x, float y) {
+        int location = GL.GetUniformLocation(_program, name);
+        GL.Uniform2(location, x, y);
+    }
+    public void SetVector2 (string name, Vector2 vec2) {
+        int location = GL.GetUniformLocation(_program, name);
+        GL.Uniform2(location, vec2.X, vec2.Y);
+    }
     public void SetVector3 (string name, Vector3 vec3) {
         int location = GL.GetUniformLocation(_program, name);
         GL.Uniform3(location, vec3.X, vec3.Y, vec3.Z);

@@ -18,6 +18,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         //_sh_UnlitTransparent!.pass = RenderPass.Gizmo;
         _sh_Depth = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Depth_Fragment.shader"), "Depth");
         _sh_Grayscale = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Grayscale_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Grayscale_Fragment.shader"), "Grayscale");
+        _sh_Fxaa = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Fxaa_Fragment.shader"), "FXAA");
         _sh_Passthrough = new Shader(Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Utils.LoadTextFile("src/Shaders/PostProcessing/Fullscreen_Fragment.shader"), "Passthrough");
 
         _sh_Skybox = new Shader(Utils.LoadTextFile("src/Shaders/Skybox_Vertex.shader"), Utils.LoadTextFile("src/Shaders/Skybox_Fragment.shader"), "Skybox");
@@ -91,6 +92,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Shader _sh_UnlitTransparent = null!;
     public readonly static Shader _sh_Depth = null!;
     public readonly static Shader _sh_Grayscale = null!;
+    public readonly static Shader _sh_Fxaa = null!;
     public readonly static Shader _sh_Passthrough = null!;
 
     public readonly static Shader _sh_Skybox = null!;
@@ -133,6 +135,10 @@ public class AssetsEngine : Singleton<AssetsEngine> {
 
         _sh_Lit.Dispose();
         _sh_Unlit.Dispose();
+        _sh_Depth.Dispose();
+        _sh_Grayscale.Dispose();
+        _sh_Fxaa.Dispose();
+        _sh_Passthrough.Dispose();
 
         _sh_Skybox.Dispose();
         _hdrTexture_Skybox?.Dispose();
