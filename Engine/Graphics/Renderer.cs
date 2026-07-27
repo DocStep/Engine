@@ -28,7 +28,7 @@ public class Renderer {
 
         PostProcessStack = new PostProcessStack();
         PostProcessStack.Effects.Add(new PostProcessPass(_mat_Depth));
-        PostProcessStack.Effects.Add(new PostProcessPass(_mat_Fxaa));
+        //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Fxaa));
         //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Grayscale));
 
         TextRenderer = new TextRenderer();
@@ -111,8 +111,7 @@ public class Renderer {
 
             SceneManager.ActiveScene?.DrawRaw();
 
-            bool postProcessingEnabled = SettingsGraphicsEngine.Instance?.postProcessing.isOn ?? true;
-            PostProcessStack.EndSceneAndRunStack(0, postProcessingEnabled);
+            PostProcessStack.EndSceneAndRunStack(0, true);
 
 
             GL.Enable(EnableCap.Blend);

@@ -3,7 +3,7 @@ in vec2 vUV;
 out vec4 FragColor;
 uniform sampler2D uDepth;
 const float uNear = 0.1;
-const float uFar = 10.0;
+const float uFar = 100.0;
 
 /// Converts nonlinear depth buffer value back to linear eye-space distance, normalized 0-1
 float LinearizeDepth(float depth) {
