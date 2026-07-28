@@ -441,8 +441,10 @@ public class GizmoSelected : IGizmoWorld {
             _sh_Outline.SetVector3(Color, Constants.cyan);
             _sh_Outline.SetFloat(Alpha, 1f);
 
-            Mesh outlined = new Mesh(new MeshData(renderInfo.mesh.Data!));
-            outlined.Data!.RecalculateOutlineNormals();
+            
+            MeshData welded = renderInfo.mesh.Data!.Weld(1e-5f);
+            welded.RecalculateOutlineNormals();
+            Mesh outlined = new Mesh(welded);
             outlined.Draw();
             //renderInfo.mesh.Draw();
         } finally {

@@ -55,6 +55,10 @@ public class MeshData {
     }
 
     public void RecalculateOutlineNormals () {
+        // Accumulate unnormalized face normals (area-weighted) per unique position
+        // and normalize once at the end. This avoids using individually normalized
+        // face normals which can cause visible seams when faces are offset for
+        // outline rendering.
         Dictionary<Vector3, Vector3> sums = new();
 
         for (int i = 0; i < Indices.Length; i += 3) {
@@ -62,21 +66,56 @@ public class MeshData {
             Vector3 b = Vertices[Indices[i + 1]].Position;
             Vector3 c = Vertices[Indices[i + 2]].Position;
 
-            Vector3 normal = Vector3.Normalize(
-                Vector3.Cross(b - a, c - a)
-            );
+            // Use the unnormalized cross product so larger faces contribute more
+            // to the vertex normal (area-weighted). This yields smoother, more
+            // stable normals for the outline offset.
+            Vector3 faceNormal = Vector3.Cross(b - a, c - a);
 
-            sums[a] = sums.GetValueOrDefault(a) + normal;
-            sums[b] = sums.GetValueOrDefault(b) + normal;
-            sums[c] = sums.GetValueOrDefault(c) + normal;
+            if (sums.TryGetValue(a, out var sa)) sums[a] = sa + faceNormal; else sums[a] = faceNormal;
+            if (sums.TryGetValue(b, out var sb)) sums[b] = sb + faceNormal; else sums[b] = faceNormal;
+            if (sums.TryGetValue(c, out var sc)) sums[c] = sc + faceNormal; else sums[c] = faceNormal;
         }
 
         for (int i = 0; i < Vertices.Length; i++) {
             Vector3 pos = Vertices[i].Position;
 
-            if (sums.TryGetValue(pos, out Vector3 normal))
+            if (sums.TryGetValue(pos, out Vector3 normal) && normal.LengthSquared() > 0f)
                 Vertices[i].Normal = Vector3.Normalize(normal);
         }
+    }
+
+    /// Weld vertices that share the same position (within an epsilon) into a single
+    /// vertex so that outline offsets remain connected. Returns a new MeshData
+    /// instance with remapped indices.
+    public MeshData Weld (float epsilon = 1e-5f) {
+        if (Vertices.Length == 0) return new MeshData(new Vertex[0], new uint[0], PrimitiveType);
+
+        var map = new Dictionary<(long, long, long), int>();
+        var newVerts = new List<Vertex>();
+        uint[] newIndices = new uint[Indices.Length];
+
+        long Quantize(float v) => (long)Math.Round(v / epsilon);
+
+        for (int i = 0; i < Vertices.Length; i++) {
+            var p = Vertices[i].Position;
+            var key = (Quantize(p.X), Quantize(p.Y), Quantize(p.Z));
+
+            if (!map.TryGetValue(key, out int idx)) {
+                idx = newVerts.Count;
+                map[key] = idx;
+                // copy vertex (keep first encountered attributes)
+                newVerts.Add(Vertices[i]);
+            }
+        }
+
+        for (int i = 0; i < Indices.Length; i++) {
+            uint oldIndex = Indices[i];
+            var p = Vertices[oldIndex].Position;
+            var key = (Quantize(p.X), Quantize(p.Y), Quantize(p.Z));
+            newIndices[i] = (uint)map[key];
+        }
+
+        return new MeshData(newVerts.ToArray(), newIndices, PrimitiveType);
     }
 
 }
