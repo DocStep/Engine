@@ -35,7 +35,10 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mesh_Plane = new Mesh(Graphics.Plane.Generate());
         _mesh_PlaneQuad = new Mesh(Graphics.Plane.Generate(divisions: 1));
 
-        _fontShader = new Shader(Assets.LoadText("src/Shaders/UI/Text_Vertex.shader"), Assets.LoadText("src/Shaders/UI/Text_Fragment.shader"), "Text");
+        _sh_Text = new Shader(Assets.LoadText("src/Shaders/UI/Text_Vertex.shader"), Assets.LoadText("src/Shaders/UI/Text_Fragment.shader"), "Text");
+        _mat_Text = new Material(_sh_Text);
+        _mat_Text.SetInt(Shader.Texture, 0);
+        _mat_Text.SetVector3(Color, Constants.textRendererColor);
         _fontData = File.ReadAllBytes("src/Fonts/FuturaCyrillicMedium.ttf");
 
         /// Editor
@@ -106,7 +109,8 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Mesh _mesh_Plane = null!;
     public readonly static Mesh _mesh_PlaneQuad = null!;
 
-    public readonly static Shader _fontShader = null!;
+    public readonly static Shader _sh_Text = null!;
+    public readonly static Material _mat_Text = null!;
     public readonly static byte[] _fontData = null!;
 
     /// PostProcess

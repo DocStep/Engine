@@ -57,6 +57,8 @@ internal static class Constants {
     public static DrawMode drawMode = DrawMode.Normal;
 
 
-    internal static int textRendererMarginLeft = 10;
+    public static int textRendererMarginLeft = 10;
+    public static Vector3 textRendererColor = 0.2f*Vector3.One;
+
 
 }

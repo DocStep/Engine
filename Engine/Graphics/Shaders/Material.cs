@@ -27,6 +27,7 @@ public class Material /*: IDisposable*/ {
         ///textures = (Silk.NET.OpenGL.Texture?[])material.textures.Clone();
     }
     public Shader shader = default!;
+    private readonly Dictionary<string, int> ints = new();
     private readonly Dictionary<string, float> floats = new();
     private readonly Dictionary<string, Vector2> vectors2 = new();
     private readonly Dictionary<string, Vector3> vectors3 = new();
@@ -43,6 +44,10 @@ public class Material /*: IDisposable*/ {
     public virtual void Update () { }
 
 
+    public Material SetInt (string name, int value) {
+        ints[name] = value;
+        return this;
+    }
     public Material SetFloat (string name, float value) {
         floats[name] = value;
         return this;
@@ -58,6 +63,7 @@ public class Material /*: IDisposable*/ {
 
     public void Apply () {
         Update();
+        foreach (var kv in ints) shader.SetFloat(kv.Key, kv.Value);
         foreach (var kv in floats) shader.SetFloat(kv.Key, kv.Value);
         foreach (var kv in vectors2) shader.SetVector2(kv.Key, kv.Value);
         foreach (var kv in vectors3) shader.SetVector3(kv.Key, kv.Value);

@@ -7,7 +7,7 @@ public class TextRenderer : IDisposable {
     public unsafe TextRenderer () {
         GL = Renderer.GL;
         _atlas = FontAtlas.Load(AssetsEngine._fontData, 24);
-        _shader = AssetsEngine._fontShader;
+        _material = AssetsEngine._mat_Text;
         
         _vao = GL.GenVertexArray();
         _vbo = GL.GenBuffer();
@@ -30,7 +30,7 @@ public class TextRenderer : IDisposable {
     GL GL;
     FontAtlas _atlas;
     uint _vao, _vbo;
-    Shader _shader;
+    Material _material;
 
     List<Vertex> _vertices = new List<Vertex>();
     
@@ -53,6 +53,9 @@ public class TextRenderer : IDisposable {
     internal void Draw () {
         if (Input.Inputs.Actions[Input.Inputs.F3].pressedDown) _renderF3 = !_renderF3;
         if (_renderF3) {
+            int targetWidth = Renderer.Instance.PostProcessStack.Width;
+            int targetHeight = Renderer.Instance.PostProcessStack.Height;
+            GL.Viewport(0, 0, (uint)Renderer.Instance.PostProcessStack.Width, (uint)Renderer.Instance.PostProcessStack.Height);
             GL.Disable(EnableCap.CullFace);
 
             int count = Texts.Count;
@@ -60,13 +63,13 @@ public class TextRenderer : IDisposable {
             int yStep = 20;
             for (int i = 0; i < count; i++) {
                 y += yStep;
-                DrawText(Texts[i].text, Constants.textRendererMarginLeft, y);
+                DrawText(Texts[i].text, Constants.textRendererMarginLeft, y, targetWidth, targetHeight);
             }
             Texts.Clear();
         }
     }
 
-    public unsafe void DrawText (string text, float x, float y) {
+    public unsafe void DrawText (string text, float x, float y, int targetWidth, int targetHeight) {
         _vertices.Clear();
         float cursorX = x;
         float screenWidth = Engine.Window.Size.X;
@@ -92,15 +95,15 @@ public class TextRenderer : IDisposable {
             cursorX += ci.XAdvance;
         }
 
-        Matrix4x4 ortho = Matrix4x4.CreateOrthographicOffCenter(0, screenWidth, screenHeight, 0, -1f, 1f);
+        Matrix4x4 ortho = Matrix4x4.CreateOrthographicOffCenter(0, targetWidth, targetHeight, 0, -1f, 1f);
 
         GL.Disable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-        _shader.Use();
-        _shader.SetMatrix4X4("uProjection", ortho);
-        _shader.SetInt("uTexture", 0);
+        _material.shader.Use();
+        _material.shader.SetMatrix4X4(Shader.Projection, ortho);
+        _material.Apply();
         GL.ActiveTexture(TextureUnit.Texture0);
         GL.BindTexture(TextureTarget.Texture2D, _atlas.TextureId);
 
@@ -122,7 +125,7 @@ public class TextRenderer : IDisposable {
     public void Dispose () {
         GL.DeleteVertexArray(_vao);
         GL.DeleteBuffer(_vbo);
-        _shader.Dispose();
+        //_material.Dispose();
         _atlas.Dispose();
     }
 

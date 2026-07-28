@@ -82,6 +82,7 @@ public class Shader : IDisposable {
     public const string Skybox = "uSkybox";
 
     public const string Color = "uColor";
+    public const string Texture = "uTexture";
     public const string Smoothness = "uSmoothness";
     public const string Metallic = "uMetallic";
     public const string Alpha = "uAlpha";
