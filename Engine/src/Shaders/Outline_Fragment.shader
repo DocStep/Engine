@@ -1,8 +1,10 @@
 #version 330 core
-uniform vec3 uOutlineColor;
+
+uniform vec3 uColor;
+uniform float uAlpha;
 
 out vec4 FragColor;
 
-void main () {
-    FragColor = vec4(uOutlineColor, 1.0);
+void main() {
+    FragColor = vec4(uColor, uAlpha);
 }

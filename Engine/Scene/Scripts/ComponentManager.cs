@@ -20,11 +20,13 @@ public class ComponentManager : Singleton<ComponentManager> {
 
     internal void FixedUpdate () {
         for (int c = 0; c < componentsFixedUpdate.Count; c++) {
+            if (!componentsFixedUpdate[c].Enabled) continue;
             componentsFixedUpdate[c].FixedUpdate();
         }
     }
     internal void Update () {
         for (int c = 0; c < componentsUpdate.Count; c++) {
+            if (!componentsUpdate[c].Enabled) continue;
             componentsUpdate[c].Update();
         }
     }

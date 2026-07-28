@@ -13,8 +13,10 @@ public static class Gizmos {
 
         _sh_GizmoGrid = new Graphics.Shader(Assets.LoadText("src/Shaders/Grid_Vertex.shader"), Assets.LoadText("src/Shaders/Grid_Fragment.shader"), "Grid");
         _sh_GizmoAxes = new Graphics.Shader(Assets.LoadText("src/Shaders/Axes_Vertex.shader"), Assets.LoadText("src/Shaders/Axes_Fragment.shader"), "Axes");
-        _sh_Outline = new Graphics.Shader(Assets.LoadText("src/Shaders/Outline_Vertex.shader"), Assets.LoadText("src/Shaders/Outline_Fragment.shader"), "Axes");
-
+        _sh_Outline = new Graphics.Shader(Assets.LoadText("src/Shaders/Outline_Vertex.shader"), Assets.LoadText("src/Shaders/Outline_Fragment.shader"), "Outline");
+        _sh_Outline.SetVector3(Color, Constants.cyan);
+        _sh_DepthClear = new Graphics.Shader(Assets.LoadText("src/Shaders/DepthClear_Vertex.shader"), Assets.LoadText("src/Shaders/DepthClear_Fragment.shader"), "DepthClear");
+        
         _mat_GizmosGreen = new Material(_sh_Unlit);
         _mat_GizmosGreen.SetVector3(Color, Constants.green);
         _mat_GizmosGreen.SetFloat(Alpha, 0.5f);
@@ -77,6 +79,7 @@ public static class Gizmos {
     public readonly static Graphics.Shader _sh_GizmoGrid = null!;
     public readonly static Graphics.Shader _sh_GizmoAxes = null!;
     public readonly static Graphics.Shader _sh_Outline = null!;
+    public readonly static Graphics.Shader _sh_DepthClear = null!;
 
     public readonly static Material _mat_GizmoGrid = null!;
     public readonly static Material _mat_GizmoAxes = null!;

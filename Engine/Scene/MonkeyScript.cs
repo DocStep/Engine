@@ -3,9 +3,9 @@
 
 public class MonkeyScript : Script, IComponentUpdate {
 
-    public string call = "kk";
-    public int count = 1;
-    public float val = 1.111f;
+    public string string1 = "kk";
+    public int int1 = 1;
+    public float float1 = 1.111f;
 
 
     public void Update () {

@@ -1,6 +1,7 @@
 ﻿using Silk.NET.OpenGL;
 using Engine.Input;
 using static Engine.Graphics.Shader;
+using System.Linq;
 
 namespace Engine.Graphics;
 
@@ -15,7 +16,6 @@ public class GizmoSelected : IGizmoWorld {
     Shader _sh_Outline = null!;
 
     public MeshComponent? selectedMesh = null;
-    private const string OutlineColor = "uOutlineColor";
 
     public SelectedGizmoMode selectedGizmoMode = SelectedGizmoMode.Position;
     public SelectedPositionGizmoMode selectedPositionMode;
@@ -25,7 +25,7 @@ public class GizmoSelected : IGizmoWorld {
     private const float _squareSize = 0.025f;
     private const float _axisLength = 0.15f;
     private const float _axisRadius = 0.005f;
-    private const float _width = 10f;
+    private const float _width = 1f;
 
     public Vector3 selectedDragPos;
     public Vector3 selectedDragRot;
@@ -46,6 +46,9 @@ public class GizmoSelected : IGizmoWorld {
     private Vector3 gizmoRight;
     private Vector3 gizmoUp;
     private Vector3 gizmoForward;
+
+    public const string NormalMatrix = "uNormalMatrix";
+    public const string NormalOffset = "uNormalOffset";
 
     /// Draw
     //private Vector3 drawPos;
@@ -383,59 +386,75 @@ public class GizmoSelected : IGizmoWorld {
         RenderInfo renderInfo = selectedMesh.CreateRenderInfo;
         if (renderInfo.mesh is null) return;
 
+        Matrix4x4 model =
+            Matrix4x4.CreateScale(renderInfo.scale)
+            *Matrix4x4.RotationEuler(renderInfo.rot)
+            *Matrix4x4.Position(renderInfo.pos);
+
         try {
             GL.Enable(EnableCap.StencilTest);
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
-            GL.CullFace(TriangleFace.Back);
-            GL.StencilMask(0xFF);
-            GL.Clear(ClearBufferMask.StencilBufferBit);
 
-            /// Pass 1 — mark stencil = 1 where mesh is visible
-            GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
-            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
-            GL.StencilMask(0xFF);
-            GL.DepthFunc(DepthFunction.Lequal);
-            GL.DepthMask(false);
-            //GL.DepthMask(true);
+            /// Pass 1 - write object into stencil only
             GL.ColorMask(false, false, false, false);
+
+            GL.DepthMask(false);
+            GL.DepthFunc(DepthFunction.Always);
+
+            GL.CullFace(TriangleFace.Back);
+
+            GL.StencilMask(0xFF);
+            GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
+
+            GL.StencilOp(
+                StencilOp.Keep,
+                StencilOp.Keep,
+                StencilOp.Replace
+            );
 
             Renderer.Instance.DrawInfo(renderInfo);
 
-            /// Pass 2 — draw inflated mesh only where stencil != 1
-            GL.ColorMask(true, true, true, true);
-            GL.CullFace(TriangleFace.Front);
-            GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
-            GL.StencilMask(0x00);
-            //GL.Enable(EnableCap.DepthTest);
-            GL.DepthMask(false);
-            //GL.DepthMask(true);
 
-            float dist = Vector3.Distance(Camera.Instance.cameraPos, renderInfo.pos);
-            float t = _width*0.001f*MathF.Sqrt(dist);
-            Vector3 outlineScale = new Vector3(
-                renderInfo.scale.X + t,
-                renderInfo.scale.Y + t,
-                renderInfo.scale.Z + t
+            /// Pass 2 - outline
+            GL.ColorMask(true, true, true, true);
+
+            GL.DepthMask(false);
+            GL.DepthFunc(DepthFunction.Lequal);
+
+            GL.CullFace(TriangleFace.Front);
+
+            GL.StencilMask(0x00);
+            GL.StencilFunc(
+                StencilFunction.Notequal,
+                1,
+                0xFF
             );
 
-            Matrix4x4 m4x4_mesh = Matrix4x4.CreateScale(outlineScale)
-                *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
-            float[] mesh_uModel = Matrix4x4.ToArray(m4x4_mesh);
+            float dist = Vector3.Distance(Camera.Instance.cameraPos, renderInfo.pos);
 
             _sh_Outline.Use();
             _sh_Outline.SetMatrix4(View, Renderer.Instance.UView);
             _sh_Outline.SetMatrix4(Projection, Renderer.Instance.UProjection);
-            _sh_Outline.SetMatrix4(Model, mesh_uModel);
-            _sh_Outline.SetVector3(OutlineColor, Constants.cyan);
-            renderInfo.mesh.Draw();
+            _sh_Outline.SetMatrix4(Model, Matrix4x4.ToArray(model));
+            _sh_Outline.SetFloat(NormalOffset, 0.01f*dist*_width);
+            _sh_Outline.SetVector3(Color, Constants.cyan);
+            _sh_Outline.SetFloat(Alpha, 1f);
+
+            Mesh outlined = new Mesh(new MeshData(renderInfo.mesh.Data!));
+            outlined.Data!.RecalculateOutlineNormals();
+            outlined.Draw();
+            //renderInfo.mesh.Draw();
         } finally {
             GL.ColorMask(true, true, true, true);
-            GL.Enable(EnableCap.DepthTest);
-            GL.DepthFunc(DepthFunction.Less);
+
             GL.DepthMask(true);
+            GL.DepthFunc(DepthFunction.Less);
+
             GL.StencilMask(0xFF);
+
             GL.CullFace(TriangleFace.Back);
+
             GL.Disable(EnableCap.StencilTest);
         }
     }

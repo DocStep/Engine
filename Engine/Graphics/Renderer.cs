@@ -93,6 +93,7 @@ public class Renderer {
             PostProcessStack.Resize((int)sceneSize.X, (int)sceneSize.Y);
 
             UpdateProjection(sceneSize.X, sceneSize.Y);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
             PostProcessStack.BeginScene();
 
             _skybox?.Draw(m4x4_View, m4x4Projection);

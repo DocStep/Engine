@@ -93,18 +93,22 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     private void DrawInspector (uint dockspaceId) {
         ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
         ImGui.Begin("Inspector");
-        
+
         GameObject? selectedGO = Gizmos._gizmo_Selected.selectedMesh?.owner;
         if (selectedGO is not null) {
             ImGui.Text("Selected:");
             ImGui.InputText("Name", ref selectedGO.Name, int.MaxValue);
-            
+
             ImGui.Text("Transform");
+            ImGui.PushID(selectedGO.Transform.GetHashCode());
             selectedGO.Transform.DrawInspector();
+            ImGui.PopID();
 
             for (int c = 0; c < selectedGO.Components.Count; c++) {
                 ImGui.Text(selectedGO.Components[c].Name);
+                ImGui.PushID(selectedGO.Components[c].GetHashCode());
                 selectedGO.Components[c].DrawInspector();
+                ImGui.PopID();
             }
         }
 
@@ -181,27 +185,24 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         switch (value) {
             case Vector3 v3:
-                WrapVector3? clampAtt = member.GetCustomAttribute<WrapVector3>();
-                float speed = clampAtt is not null ? WrapVector3.Step : valueStep;
-                bool changed = ImGui.DragFloat3(label, ref v3, speed, 0, 0, "%.2f");
-                
-                if (changed) {
+                WrapRotation? clampAtt = member.GetCustomAttribute<WrapRotation>();
+                float speed = clampAtt is not null ? WrapRotation.Step : valueStep;
+                if (ImGui.DragFloat3(label, ref v3, speed, 0, 0, "%.2f")) {
                     if (clampAtt is not null) v3 = Utils.WrapVector3(v3, clampAtt.Min, clampAtt.Max);
                     result = v3;
-                    break;
                 }
                 break;
             case float f:
-                if (ImGui.DragFloat(label, ref f, valueStep, 0, 0, "%.2f")) return f;
+                if (ImGui.DragFloat(label, ref f, valueStep, 0, 0, "%.2f")) result = f;
                 break;
             case int i:
-                if (ImGui.DragInt(label, ref i)) return i;
+                if (ImGui.DragInt(label, ref i)) result = i;
                 break;
             case bool b:
-                if (ImGui.Checkbox(label, ref b)) return b;
+                if (ImGui.Checkbox(label, ref b)) result = b;
                 break;
             case string s:
-                if (ImGui.InputText(label, ref s, 256)) return s;
+                if (ImGui.InputText(label, ref s, 256)) result = s;
                 break;
         }
 

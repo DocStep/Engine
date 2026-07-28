@@ -139,7 +139,7 @@ public class Shader : IDisposable {
             }
         }
     }
-    public void SetMatrix4X4 (string name, Matrix4x4 matrix) {
+    public void SetMatrix4x4 (string name, Matrix4x4 matrix) {
         int location = GL.GetUniformLocation(_program, name);
         if (location == -1) Console.WriteLine($"Uniform '{name}' not found in program {_program}!");
         unsafe {
