@@ -25,7 +25,7 @@ public class GizmoSelected : IGizmoWorld {
     private const float _squareSize = 0.025f;
     private const float _axisLength = 0.15f;
     private const float _axisRadius = 0.005f;
-    private const float _width = 2.5f;
+    private const float _width = 10f;
 
     public Vector3 selectedDragPos;
     public Vector3 selectedDragRot;
@@ -56,13 +56,26 @@ public class GizmoSelected : IGizmoWorld {
     public void Update () {
         if (selectedMesh is null) return;
 
+        Ray? rayOpt = Camera.Instance.RaycastMouse();
+        if (rayOpt is null) {
+            /// Mouse left the Scene panel mid-drag — release cleanly rather than leaving picking state stuck
+            if (selectedPositionMode != SelectedPositionGizmoMode.None && !Inputs.Actions[Inputs.LMB].pressed) {
+                selectedPositionMode = SelectedPositionGizmoMode.None;
+                if (isMouseBlocked) {
+                    isMouseBlocked = false;
+                    CameraEditor.Instance?.UnblockMouse(this);
+                }
+            }
+            return;
+        }
+        Ray ray = rayOpt.Value;
+
         Transform tr_obj = selectedMesh.owner.Transform;
         Vector3 camPos = Camera.Instance.cameraPos;
         Vector3 _objPos = tr_obj.Position;
         Vector3 _objRot = tr_obj.Rotation;
         float _dist = Vector3.Distance(camPos, _objPos);
 
-        Ray ray = Camera.Instance.RaycastMouse();
         float half = 0.5f*_squareSize;
         Vector3 axisCapsuleXOffset;
         Vector3 axisCapsuleYOffset;
@@ -288,10 +301,12 @@ public class GizmoSelected : IGizmoWorld {
         Transform? tr_obj = selectedMesh?.owner.Transform;
         if (tr_obj is null) return;
 
-        Shader _sh_Unlit = AssetsEngine._sh_Unlit;
+        GL.Viewport(0, 0, (uint)Renderer.Instance.PostProcessStack.Width, (uint)Renderer.Instance.PostProcessStack.Height);
+
         Renderer.GL.Disable(EnableCap.DepthTest);
         Renderer.GL.Disable(EnableCap.CullFace);
 
+        Shader _sh_Unlit = AssetsEngine._sh_Unlit;
         _sh_Unlit.Use();
         _sh_Unlit.SetMatrix4(View, Renderer.Instance.UView);
         _sh_Unlit.SetMatrix4(Projection, Renderer.Instance.UProjection);
@@ -299,7 +314,6 @@ public class GizmoSelected : IGizmoWorld {
 
         DrawOutline();
         DrawGizmo();
-
     }
 
     private void DrawGizmo () {
@@ -373,26 +387,29 @@ public class GizmoSelected : IGizmoWorld {
             GL.Enable(EnableCap.StencilTest);
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
-            GL.CullFace(TriangleFace.Back); /// normal culling for the actual mesh
+            GL.CullFace(TriangleFace.Back);
             GL.StencilMask(0xFF);
             GL.Clear(ClearBufferMask.StencilBufferBit);
 
-            /// Pass 1 — Render mesh normally, mark stencil = 1 everywhere it's visible
+            /// Pass 1 — mark stencil = 1 where mesh is visible
             GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
             GL.StencilMask(0xFF);
             GL.DepthFunc(DepthFunction.Lequal);
             GL.DepthMask(false);
+            //GL.DepthMask(true);
             GL.ColorMask(false, false, false, false);
 
             Renderer.Instance.DrawInfo(renderInfo);
 
-            /// Pass 2 — Outline: draw inflated mesh ONLY where stencil != 1
+            /// Pass 2 — draw inflated mesh only where stencil != 1
             GL.ColorMask(true, true, true, true);
-            GL.CullFace(TriangleFace.Front);  // now cull front so inflated backfaces show as outline
+            GL.CullFace(TriangleFace.Front);
             GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
             GL.StencilMask(0x00);
+            //GL.Enable(EnableCap.DepthTest);
             GL.DepthMask(false);
+            //GL.DepthMask(true);
 
             float dist = Vector3.Distance(Camera.Instance.cameraPos, renderInfo.pos);
             float t = _width*0.001f*MathF.Sqrt(dist);

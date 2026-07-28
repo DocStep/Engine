@@ -38,9 +38,14 @@ internal class Camera {
     }
 
 
-    public Ray RaycastMouse () {
-        Ray ray = Raycast.ScreenPointToRay(mousePos.X, mousePos.Y, Engine.Window.Size.X, Engine.Window.Size.Y,
-                Graphics.Renderer.Instance.m4x4_View, Graphics.Renderer.Instance.m4x4Projection);
+    public Ray? RaycastMouse () {
+        Vector2? scenePos = EditorUI.Instance.GetSceneMousePos(mousePos);
+        if (scenePos is null) return null;
+
+        Vector2 sceneSize = EditorUI.Instance.SceneAvail;
+
+        Ray ray = Raycast.ScreenPointToRay(scenePos.Value.X, scenePos.Value.Y, (int)sceneSize.X, (int)sceneSize.Y,
+            Renderer.Instance.m4x4_View, Renderer.Instance.m4x4Projection);
         return ray;
     }
 

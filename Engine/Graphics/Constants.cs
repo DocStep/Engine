@@ -57,6 +57,6 @@ internal static class Constants {
     public static DrawMode drawMode = DrawMode.Normal;
 
 
-    internal static int left = 10;
+    internal static int textRendererMarginLeft = 10;
 
 }

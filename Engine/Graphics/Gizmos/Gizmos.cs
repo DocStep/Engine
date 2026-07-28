@@ -139,7 +139,11 @@ public static class Gizmos {
 
         GL.Disable(EnableCap.DepthTest);
         GL.Viewport(gizmoX, gizmoY, (uint)gizmoSize, (uint)gizmoSize);
+
+        GL.Enable(EnableCap.ScissorTest);
+        GL.Scissor(gizmoX, gizmoY, (uint)gizmoSize, (uint)gizmoSize);
         GL.Clear(ClearBufferMask.DepthBufferBit);
+        GL.Disable(EnableCap.ScissorTest);
 
         Matrix4x4 rotation = Camera.Instance.cameraRot;
         Vector3 forward = Vector3.Transform(Vector3.UnitZ, rotation);

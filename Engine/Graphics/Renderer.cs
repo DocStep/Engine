@@ -27,8 +27,8 @@ public class Renderer {
         };
 
         PostProcessStack = new PostProcessStack();
-        PostProcessStack.Effects.Add(new PostProcessPass(_mat_Depth));
-        //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Fxaa));
+        //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Depth));
+        PostProcessStack.Effects.Add(new PostProcessPass(_mat_Fxaa));
         //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Grayscale));
 
         TextRenderer = new TextRenderer();
@@ -89,7 +89,10 @@ public class Renderer {
 
             Stats = new RendererStats();
 
-            UpdateProjection();
+            Vector2 sceneSize = EditorUI.Instance.SceneAvail;
+            PostProcessStack.Resize((int)sceneSize.X, (int)sceneSize.Y);
+
+            UpdateProjection(sceneSize.X, sceneSize.Y);
             PostProcessStack.BeginScene();
 
             _skybox?.Draw(m4x4_View, m4x4Projection);
@@ -111,15 +114,26 @@ public class Renderer {
 
             SceneManager.ActiveScene?.DrawRaw();
 
-            PostProcessStack.EndSceneAndRunStack(0, true);
+            PostProcessStack.EndSceneAndRunStack();
+            //PostProcessStack.DebugReadDepth(PostProcessStack.Fbo, PostProcessStack.Width/2, PostProcessStack.Height/2);      // scene fbo, should be < 1
+            //PostProcessStack.DebugReadDepth(PostProcessStack.OutputFbo, PostProcessStack.Width/2, PostProcessStack.Height/2); // output fbo, should match
 
-
+            /// Overlays (gizmos, text) get drawn into the same offscreen texture as the scene,
+            /// so they show up inside the Scene panel instead of the window backbuffer
+            PostProcessStack.BindOutputForOverlay();
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             Gizmos.Draw();
             Gizmos._gizmo_Selected.Draw();
-
             TextRenderer.Draw();
+
+            /// Switch to the real backbuffer for ImGui — dockspace, panels, and the Scene image itself
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            GL.DrawBuffer(GLEnum.Back);
+            GL.Viewport(0, 0, (uint)Engine.Window.Size.X, (uint)Engine.Window.Size.Y);
+            GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
+            GL.Clear((uint)ClearBufferMask.ColorBufferBit);
+
             EditorUI.Instance.Draw();
 
             iter++;
@@ -127,6 +141,13 @@ public class Renderer {
         } catch (Exception ex) {
             Log.log($"OnRender exception: {ex}");
         }
+    }
+    private void UpdateProjection (float width, float height) {
+        float aspect = width/height;
+        m4x4Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
+            Constants._cameraFOV, aspect, Constants._cameraPlaneClose, Constants._cameraPlaneFar);
+        uView = Matrix4x4.ToArray(m4x4_View);
+        uProjection = Matrix4x4.ToArray(m4x4Projection);
     }
     private void DrawEnd () {
         RenderList.Clear();
@@ -252,12 +273,6 @@ public class Renderer {
             GL.DepthRange(0, 1);
     }
 
-    private void UpdateProjection () {
-        float aspect = Engine.Window.Size.X/(float)Engine.Window.Size.Y;
-        m4x4Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Constants._cameraFOV, aspect, Constants._cameraPlaneClose, Constants._cameraPlaneFar);
-        uView = Matrix4x4.ToArray(m4x4_View);
-        uProjection = Matrix4x4.ToArray(m4x4Projection);
-    }
 
     public static void SetSceneUniformsUnlit (Shader shader) {
         shader.Use();
@@ -327,10 +342,10 @@ public class Renderer {
 
     internal void OnFrameBufferResize (Silk.NET.Maths.Vector2D<int> newSize) {
         GL.Viewport(newSize);
-        if (0 < newSize.X && 0 < newSize.Y) {
+        /*if (0 < newSize.X && 0 < newSize.Y) {
             UpdateProjection();
             PostProcessStack.Resize(newSize.X, newSize.Y);
-        }
+        }*/
     }
 
     internal void Dispose () {

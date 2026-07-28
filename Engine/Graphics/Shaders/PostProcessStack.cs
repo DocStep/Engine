@@ -20,10 +20,14 @@ public class PostProcessStack : IDisposable {
     uint _sceneFbo, _sceneColor, _sceneDepth;
     uint[] _pingFbo = new uint[2];
     uint[] _pingColor = new uint[2];
+    public uint Fbo => _sceneFbo;
+    public uint OutputFbo => _outputFbo;
 
-    uint _outputFbo, _outputColor; /// Final Result
+    uint _outputFbo, _outputColor, _outputDepth; /// Final Result
     public uint OutputTexture => _outputColor;
     int _width, _height;
+    public int Width => _width;
+    public int Height => _height;
 
 
     public void Resize (int w, int h) {
@@ -36,10 +40,10 @@ public class PostProcessStack : IDisposable {
         _height = h;
 
         _sceneFbo = CreateFbo(w, h, out _sceneColor, out _sceneDepth, withDepth: true);
-        _pingFbo[0] = CreateFbo(w, h, out _pingColor[0], out _, withDepth: false);
-        _pingFbo[1] = CreateFbo(w, h, out _pingColor[1], out _, withDepth: false);
+        _pingFbo[0] = CreateFbo(w, h, out _pingColor[0], out _, withDepth: true);
+        _pingFbo[1] = CreateFbo(w, h, out _pingColor[1], out _, withDepth: true);
 
-        _outputFbo = CreateFbo(w, h, out _outputColor, out _, withDepth: false);
+        _outputFbo = CreateFbo(w, h, out _outputColor, out _outputDepth, withDepth: true);
     }
 
     uint CreateFbo (int w, int h, out uint colorTex, out uint depthTex, bool withDepth) {
@@ -83,10 +87,16 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         return fbo;
     }
+    /// Call after all scene draws. Leaves result in _outputFbo instead of blitting to screen.
     public void EndSceneAndRunStack () {
-        EndSceneAndRunStack(_outputFbo);
+        EndSceneAndRunStack(_outputFbo, true);
     }
-
+    /// Bind the output FBO so gizmos/text/debug draws land inside the scene texture, not the window
+    public void BindOutputForOverlay () {
+        Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, _outputFbo);
+        SetDrawBuffer(_outputFbo);
+        Renderer.GL.Viewport(0, 0, (uint)_width, (uint)_height);
+    }
 
     /// Call before drawing the scene
     public void BeginScene () {
@@ -139,20 +149,6 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.DepthMask(true);
     }
 
-    /*void Blit (uint tex) {
-        PrepareFullscreenPass();
-
-        _sh_Passthrough.Use();
-        Renderer.GL.ActiveTexture(TextureUnit.Texture0);
-        Renderer.GL.BindTexture(TextureTarget.Texture2D, tex);
-        _sh_Passthrough.SetInt(Shader.Scene, 0);
-
-        Renderer.GL.BindVertexArray(QuadVAO);
-        Renderer.GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
-        Renderer.Instance.Stats.DrawCalls++;
-        Renderer.GL.BindVertexArray(0);
-    }*/
-
     void PrepareFullscreenPass () {
         Renderer.GL.Disable(EnableCap.ScissorTest);
         Renderer.GL.Disable(EnableCap.Blend);
@@ -163,20 +159,6 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.DepthMask(false);
         Renderer.GL.Viewport(0, 0, (uint)_width, (uint)_height);
         Renderer.GL.Clear((uint)ClearBufferMask.ColorBufferBit);
-    }
-
-    void CopySceneDepth (uint targetFbo) {
-        if (targetFbo != 0) return;
-
-        Renderer.GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, _sceneFbo);
-        Renderer.GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, targetFbo);
-        SetDrawBuffer(targetFbo);
-        Renderer.GL.BlitFramebuffer(
-            0, 0, _width, _height,
-            0, 0, _width, _height,
-            ClearBufferMask.DepthBufferBit,
-            BlitFramebufferFilter.Nearest);
-        Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, targetFbo);
     }
 
     void CopySceneColor (uint targetFbo) {
@@ -199,6 +181,18 @@ public class PostProcessStack : IDisposable {
             BlitFramebufferFilter.Nearest);
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, targetFbo);
     }
+    void CopySceneDepth (uint targetFbo) {
+        Renderer.GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, _sceneFbo);
+        Renderer.GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, targetFbo);
+        SetDrawBuffer(targetFbo);
+        Renderer.GL.BlitFramebuffer(
+            0, 0, _width, _height,
+            0, 0, _width, _height,
+            ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit,
+            BlitFramebufferFilter.Nearest);
+        Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, targetFbo);
+    }
+
 
     static void SetDrawBuffer (uint fbo) {
         Renderer.GL.DrawBuffer(fbo == 0 ? GLEnum.Back : GLEnum.ColorAttachment0);
@@ -218,12 +212,14 @@ public class PostProcessStack : IDisposable {
 
         DeleteFramebuffer(_outputFbo);
         DeleteTexture(_outputColor);
+        DeleteTexture(_outputDepth);
 
         _sceneFbo = 0;
         _sceneColor = 0;
         _sceneDepth = 0;
         _outputFbo = 0;
         _outputColor = 0;
+        _outputDepth = 0;
     }
 
     static void DeleteFramebuffer (uint id) {
@@ -238,6 +234,15 @@ public class PostProcessStack : IDisposable {
         if (id != 0) Renderer.GL.DeleteRenderbuffer(id);
     }
 
+    public unsafe void DebugReadDepth (uint fbo, int x, int y) {
+        Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
+        float depth = 0f;
+        Renderer.GL.ReadPixels(x, y, 1, 1, PixelFormat.DepthComponent, PixelType.Float, &depth);
+        Log.log($"depth@({x},{y}) fbo={fbo}: {depth}");
+        Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+    }
+
+
     public void Dispose () {
         DeleteTargets();
         if (QuadVAO != 0) {
@@ -245,4 +250,5 @@ public class PostProcessStack : IDisposable {
             QuadVAO = 0;
         }
     }
+
 }

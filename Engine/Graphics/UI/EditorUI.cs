@@ -25,16 +25,21 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
     public const float valueStep = 0.01f;
 
+    private Vector2 _sceneAvail = new(1280, 720);
+    public Vector2 SceneAvail => _sceneAvail;
+
+    private Vector2 _sceneRectMin;
+    private Vector2 _sceneRectMax;
+    public bool IsSceneHovered { get; private set; }
+
 
     public void Update () {
         if (_isClosing) return;
 
         ImGUI.Update((float)Engine.deltaTime);
 
-        if (ImGui.GetIO().WantCaptureMouse || ImGui.IsAnyItemActive()) 
-            isUIClick = true;
-        else
-            isUIClick = false;
+        bool wantCapture = ImGui.GetIO().WantCaptureMouse || ImGui.IsAnyItemActive();
+        isUIClick = wantCapture && !IsSceneHovered;
     }
 
     public void Draw () {
@@ -42,7 +47,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         ImGuiViewportPtr viewport = ImGui.GetMainViewport();
         uint dockspaceId = ImGui.DockSpaceOverViewport(0, viewport, ImGuiDockNodeFlags.PassthruCentralNode);
-        
+
+        DrawSceneView(dockspaceId);
         DrawInspector(dockspaceId);
         DrawInfo(dockspaceId);
 
@@ -53,6 +59,35 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             ImGui.SaveIniSettingsToDisk(io.IniFilename);
             io.WantSaveIniSettings = false;
         }
+    }
+
+    private void DrawSceneView (uint dockspaceId) {
+        ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
+        ImGui.Begin("Scene");
+
+        Vector2 avail = ImGui.GetContentRegionAvail();
+        _sceneAvail = new Vector2(MathF.Max(avail.X, 1f), MathF.Max(avail.Y, 1f));
+
+        ImGui.Image((IntPtr)Renderer.Instance.PostProcessStack.OutputTexture,
+            _sceneAvail, new Vector2(0, 1), new Vector2(1, 0));
+
+        _sceneRectMin = ImGui.GetItemRectMin();
+        _sceneRectMax = ImGui.GetItemRectMax();
+        IsSceneHovered = ImGui.IsItemHovered();
+
+        ImGui.End();
+        ImGui.PopStyleVar();
+    }
+    /// Mouse position remapped into Scene FBO pixel space, or null if outside the panel
+    public Vector2? GetSceneMousePos (Vector2 screenMousePos) {
+        if (!IsSceneHovered) return null;
+
+        Vector2 local = screenMousePos - _sceneRectMin;
+        if (local.X < 0 || local.Y < 0 || local.X > _sceneAvail.X || local.Y > _sceneAvail.Y)
+            return null;
+
+        return local;
     }
 
     private void DrawInspector (uint dockspaceId) {
@@ -78,7 +113,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
     private void DrawInfo (uint dockspaceId) {
         ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
-        ImGui.Begin("Info");
+        ImGui.Begin("GL Info");
         ImGui.BeginDisabled();
 
         DrawObject(Renderer.Instance.Stats);

@@ -60,7 +60,7 @@ public class TextRenderer : IDisposable {
             int yStep = 20;
             for (int i = 0; i < count; i++) {
                 y += yStep;
-                DrawText(Texts[i].text, Constants.left, y);
+                DrawText(Texts[i].text, Constants.textRendererMarginLeft, y);
             }
             Texts.Clear();
         }

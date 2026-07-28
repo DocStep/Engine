@@ -245,9 +245,9 @@ internal sealed class CameraEditor : Camera {
 
         /// Select
         if (mouseAllowed && !EditorUI.Instance.isUIClick) {
-            Ray ray = RaycastMouse();
-            if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
-                Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
+            Ray? ray = RaycastMouse();
+            if (ray is not null && Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
+                Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray.Value, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
                 if (hitMesh is not null) {
                     Gizmos._gizmo_Selected.selectedMesh = hitMesh;
                 } else {
@@ -262,7 +262,10 @@ internal sealed class CameraEditor : Camera {
 
     private void TryFocusOnPoint (float mouseX, float mouseY, int viewportWidth, int viewportHeight) {
         float? bestT = null;
-        Ray ray = RaycastMouse();
+        Ray? rayOpt = RaycastMouse();
+        if (rayOpt is null) return;
+
+        Ray ray = rayOpt.Value;
         Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
         if (hitMesh is not null) {
             bestT = Vector3.Distance(cameraPos, hitPos);
