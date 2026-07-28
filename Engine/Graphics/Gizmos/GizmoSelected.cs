@@ -25,7 +25,7 @@ public class GizmoSelected : IGizmoWorld {
     private const float _squareSize = 0.025f;
     private const float _axisLength = 0.15f;
     private const float _axisRadius = 0.005f;
-    private const float _width = 1f;
+    private const float _width = 0.1f;
 
     public Vector3 selectedDragPos;
     public Vector3 selectedDragRot;
