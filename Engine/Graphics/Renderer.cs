@@ -23,13 +23,13 @@ public class Renderer {
         GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
 
         _skybox = new Skybox(_sh_Skybox, _hdr_Skybox) {
-            BlurScale = 3f
+            BlurScale = 3f,
         };
 
         PostProcessStack = new PostProcessStack();
         //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Depth));
-        PostProcessStack.Effects.Add(new PostProcessPass(_mat_Fxaa));
         //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Grayscale));
+        //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Fxaa));
 
         TextRenderer = new TextRenderer();
 
@@ -56,6 +56,16 @@ public class Renderer {
     public readonly Skybox _skybox = null!;
 
     public readonly PostProcessStack PostProcessStack = null!;
+
+
+    int _width, _height;
+    public int Width => _width;
+    public int Height => _height;
+    public void SetTargetSize (int width, int height) {
+        _width = width;
+        _height = height;
+        PostProcessStack.Resize(width, height);
+    }
 
 
     /// Debug
@@ -90,7 +100,7 @@ public class Renderer {
             Stats = new RendererStats();
 
             Vector2 sceneSize = EditorUI.Instance.SceneAvail;
-            PostProcessStack.Resize((int)sceneSize.X, (int)sceneSize.Y);
+            SetTargetSize((int)sceneSize.X, (int)sceneSize.Y);
 
             UpdateProjection(sceneSize.X, sceneSize.Y);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);

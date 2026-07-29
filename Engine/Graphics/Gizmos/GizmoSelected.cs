@@ -49,11 +49,7 @@ public class GizmoSelected : IGizmoWorld {
 
     public const string NormalMatrix = "uNormalMatrix";
     public const string NormalOffset = "uNormalOffset";
-
-    /// Draw
-    //private Vector3 drawPos;
-    //private Vector3 drawRot;
-    //private Vector3 drawScale;
+    private Mesh outlined = null!;
 
 
     public void Update () {
@@ -74,11 +70,13 @@ public class GizmoSelected : IGizmoWorld {
         Ray ray = rayOpt.Value;
 
         Transform tr_obj = selectedMesh.owner.Transform;
+        if (selectedMesh.mesh?.Data is not null) 
+            SelectedOutlineMeshUpdate(selectedMesh.mesh.Data);
         Vector3 camPos = Camera.Instance.cameraPos;
         Vector3 _objPos = tr_obj.Position;
         Vector3 _objRot = tr_obj.Rotation;
-        float _dist = Vector3.Distance(camPos, _objPos);
 
+        float _dist = Vector3.Distance(camPos, _objPos);
         float half = 0.5f*_squareSize;
         Vector3 axisCapsuleXOffset;
         Vector3 axisCapsuleYOffset;
@@ -304,7 +302,7 @@ public class GizmoSelected : IGizmoWorld {
         Transform? tr_obj = selectedMesh?.owner.Transform;
         if (tr_obj is null) return;
 
-        GL.Viewport(0, 0, (uint)Renderer.Instance.PostProcessStack.Width, (uint)Renderer.Instance.PostProcessStack.Height);
+        GL.Viewport(0, 0, (uint)Renderer.Instance.Width, (uint)Renderer.Instance.Height);
 
         Renderer.GL.Disable(EnableCap.DepthTest);
         Renderer.GL.Disable(EnableCap.CullFace);
@@ -386,10 +384,8 @@ public class GizmoSelected : IGizmoWorld {
         RenderInfo renderInfo = selectedMesh.CreateRenderInfo;
         if (renderInfo.mesh is null) return;
 
-        Matrix4x4 model =
-            Matrix4x4.CreateScale(renderInfo.scale)
-            *Matrix4x4.RotationEuler(renderInfo.rot)
-            *Matrix4x4.Position(renderInfo.pos);
+        Matrix4x4 model =Matrix4x4.CreateScale(renderInfo.scale)
+            *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
 
         try {
             GL.Enable(EnableCap.StencilTest);
@@ -406,12 +402,7 @@ public class GizmoSelected : IGizmoWorld {
 
             GL.StencilMask(0xFF);
             GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
-
-            GL.StencilOp(
-                StencilOp.Keep,
-                StencilOp.Keep,
-                StencilOp.Replace
-            );
+            GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
 
             Renderer.Instance.DrawInfo(renderInfo);
 
@@ -441,12 +432,7 @@ public class GizmoSelected : IGizmoWorld {
             _sh_Outline.SetVector3(Color, Constants.cyan);
             _sh_Outline.SetFloat(Alpha, 1f);
 
-            
-            MeshData welded = renderInfo.mesh.Data!.Weld(1e-5f);
-            welded.RecalculateOutlineNormals();
-            Mesh outlined = new Mesh(welded);
             outlined.Draw();
-            //renderInfo.mesh.Draw();
         } finally {
             GL.ColorMask(true, true, true, true);
 
@@ -459,6 +445,12 @@ public class GizmoSelected : IGizmoWorld {
 
             GL.Disable(EnableCap.StencilTest);
         }
+    }
+
+    private void SelectedOutlineMeshUpdate (MeshData data) {
+        MeshData welded = data.Weld(1e-5f);
+        welded.RecalculateOutlineNormals();
+        outlined = new Mesh(welded);
     }
 
 }

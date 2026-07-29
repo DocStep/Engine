@@ -53,9 +53,9 @@ public class TextRenderer : IDisposable {
     internal void Draw () {
         if (Input.Inputs.Actions[Input.Inputs.F3].pressedDown) _renderF3 = !_renderF3;
         if (_renderF3) {
-            int targetWidth = Renderer.Instance.PostProcessStack.Width;
-            int targetHeight = Renderer.Instance.PostProcessStack.Height;
-            GL.Viewport(0, 0, (uint)Renderer.Instance.PostProcessStack.Width, (uint)Renderer.Instance.PostProcessStack.Height);
+            int targetWidth = Renderer.Instance.Width;
+            int targetHeight = Renderer.Instance.Height;
+            GL.Viewport(0, 0, (uint)Renderer.Instance.Width, (uint)Renderer.Instance.Height);
             GL.Disable(EnableCap.CullFace);
 
             int count = Texts.Count;

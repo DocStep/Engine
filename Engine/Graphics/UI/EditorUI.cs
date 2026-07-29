@@ -25,7 +25,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
     public const float valueStep = 0.01f;
 
-    private Vector2 _sceneAvail = new(1280, 720);
+    private Vector2 _sceneAvail = new Vector2(1280, 720);
     public Vector2 SceneAvail => _sceneAvail;
 
     private Vector2 _sceneRectMin;

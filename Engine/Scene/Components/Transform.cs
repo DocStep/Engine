@@ -5,6 +5,10 @@ namespace Engine;
 
 public class Transform : Component {
 
+#pragma warning disable CS0108
+    [Hide] public bool Enabled { get; set; } = true;
+#pragma warning restore CS0108
+
     [JsonIgnore] public override string Name => nameof(Transform);
 
     public Vector3 Position = Vector3.Zero;
