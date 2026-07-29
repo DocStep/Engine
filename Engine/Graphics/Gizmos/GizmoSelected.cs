@@ -5,7 +5,7 @@ using static Engine.Graphics.Shader;
 namespace Engine.Graphics;
 
 
-public class GizmoSelected : IGizmoWorld {
+public class GizmoSelected : IGizmoWorld, IDisposable {
     public GizmoSelected () {
         GL = Renderer.GL;
         _sh_Outline = Gizmos._sh_Outline;
@@ -15,14 +15,14 @@ public class GizmoSelected : IGizmoWorld {
     Shader _sh_Outline = null!;
 
     public MeshComponent? selectedMeshComp { get; private set; } = null;
-    private Mesh? selectedMeshLast = null;
+    private Mesh? mesh_selectedLast = null;
     public void UpdateSelectedMesh (MeshComponent? selectedMeshComp) {
-        selectedMeshLast = selectedMeshComp?.mesh;
+        mesh_selectedLast = selectedMeshComp?.mesh;
         this.selectedMeshComp = selectedMeshComp;
         if (this.selectedMeshComp?.mesh?.Data is not null) 
-            outlined = SelectedOutlineNewMesh(this.selectedMeshComp.mesh.Data);
+            mesh_outlined = SelectedOutlineNewMesh(this.selectedMeshComp.mesh.Data);
     }
-    private Mesh outlined = null!;
+    private Mesh mesh_outlined = null!;
 
 
     public SelectedGizmoMode selectedGizmoMode = SelectedGizmoMode.Position;
@@ -429,7 +429,7 @@ public class GizmoSelected : IGizmoWorld {
             _sh_Outline.SetFloat(NormalOffset, 0.01f*dist*_width);
             _sh_Outline.SetVector3(Color, Constants.cyan);
             _sh_Outline.SetFloat(Alpha, 1f);
-            outlined.Draw();
+            mesh_outlined.Draw();
         } finally {
             GL.ColorMask(true, true, true, true);
 
@@ -448,6 +448,12 @@ public class GizmoSelected : IGizmoWorld {
         MeshData welded = data.Weld(1e-5f);
         welded.RecalculateOutlineNormals();
         return new Mesh(welded);
+    }
+
+
+    public void Dispose () {
+        mesh_selectedLast?.Dispose();
+        mesh_outlined?.Dispose();
     }
 
 }

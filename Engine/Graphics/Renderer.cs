@@ -30,7 +30,7 @@ public class Renderer {
         GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
 
         _skybox = new Skybox(_sh_Skybox, _hdr_Skybox) {
-            BlurScale = 3f,
+            blurScale = 3f,
         };
 
         PostProcess = new PostProcessStack();
@@ -41,6 +41,8 @@ public class Renderer {
         TextRenderer = new TextRenderer();
 
         /// Delegates
+        de_LateUpdate += Gizmos.Update;
+        de_LateUpdate += DrawMaterialsGrid;
         //de_GizmosUpdate += Gizmos._gizmo_Selected.Update;
         //de_GizmosDraw += Gizmos._gizmo_Selected.Draw;
 
@@ -95,7 +97,8 @@ public class Renderer {
     long iter = 0;
 
 
-    public Action? de_Scene = null;
+    public Action? de_LateUpdate = null;
+
 
     /// Skybox
     /// Opaque
@@ -105,14 +108,9 @@ public class Renderer {
     /// UI
     
     private void OnRender (double deltaTime) {
+        de_LateUpdate?.Invoke();
+
         try {
-            Gizmos.Update();
-
-            //System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-            Gizmos._gizmo_Selected.Update();
-            //sw.Stop();
-            //Log.log(sw.ElapsedMilliseconds);
-
             Stats = new RendererStats();
 
             Vector2 sceneSize = EditorUI.Instance.SceneAvail;
@@ -120,13 +118,11 @@ public class Renderer {
 
             /// Camera Matrix
             UpdateProjection(sceneSize.X, sceneSize.Y);
-
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
+
             PostProcess.BeginScene();
 
             _skybox?.Draw(m4x4_View, m4x4Projection);
-
-            DrawMaterialsGrid(-14f, 0f);
 
             switch (Constants.drawMode) {
                 case DrawMode.Normal:
@@ -147,21 +143,14 @@ public class Renderer {
             //PostProcessStack.DebugReadDepth(PostProcessStack.Fbo, PostProcessStack.Width/2, PostProcessStack.Height/2);      // scene fbo, should be < 1
             //PostProcessStack.DebugReadDepth(PostProcessStack.OutputFbo, PostProcessStack.Width/2, PostProcessStack.Height/2); // output fbo, should match
 
-            /// Overlays (gizmos, text) get drawn into the same offscreen texture as the scene,
-            /// so they show up inside the Scene panel instead of the window backbuffer
             PostProcess.BindOutputForOverlay();
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             Gizmos.Draw();
             Gizmos._gizmo_Selected.Draw();
+            
+            /// UI Layer
             TextRenderer.Draw();
-
-            /// Switch to the real backbuffer for ImGui — dockspace, panels, and the Scene image itself
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-            GL.DrawBuffer(GLEnum.Back);
-            GL.Viewport(0, 0, (uint)Engine.Window.Size.X, (uint)Engine.Window.Size.Y);
-            GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
-            GL.Clear((uint)ClearBufferMask.ColorBufferBit);
 
             EditorUI.Instance.Draw();
 
@@ -330,7 +319,6 @@ public class Renderer {
 
 
 
-
     public static void DrawMaterialsGrid (float offsetX, float offsetZ, int testGridCount = 10, float testGridDensity = 1f) {
         if (!Constants.drawMaterialsGrid) return;
 
@@ -358,6 +346,7 @@ public class Renderer {
             }
         }
     }
+    public void DrawMaterialsGrid () => DrawMaterialsGrid(-14f, 0f);
 
     void DrawSame () {
         if (iter == 0) {
@@ -371,10 +360,6 @@ public class Renderer {
 
     internal void OnFrameBufferResize (Silk.NET.Maths.Vector2D<int> newSize) {
         GL.Viewport(newSize);
-        /*if (0 < newSize.X && 0 < newSize.Y) {
-            UpdateProjection();
-            PostProcessStack.Resize(newSize.X, newSize.Y);
-        }*/
     }
 
     internal void Dispose () {

@@ -100,6 +100,7 @@ public static class Gizmos {
         GLDebug.DrawAll();
 
         //GizmoCameraOrbitCenter();
+        _gizmo_Selected.Update();
     }
     public static void Draw () {
         //Renderer.Instance.de_GizmosDraw?.Invoke();

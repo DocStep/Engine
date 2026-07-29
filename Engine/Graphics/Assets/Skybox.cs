@@ -21,7 +21,9 @@ public class Skybox : IDisposable {
     //public bool isTextureValid => texture is not null;
 
     private uint _emptyVao;
-    public float BlurScale = 0f;
+
+    public float blurScale = 0f;
+    public const string BlurScale = "uBlurScale";
 
 
     public void SetTexture (HdrTexture? texture) {
@@ -35,32 +37,32 @@ public class Skybox : IDisposable {
         if (!Constants.renderSkybox) return;
         if (texture is null) return;
 
-        Matrix4x4.Invert(view, out view);
-        Matrix4x4.Invert(projection, out projection);
-
-        GL.DepthFunc(DepthFunction.Lequal);
-        GL.DepthMask(false);
-
         GL.Enable(EnableCap.CullFace);
         GL.CullFace(TriangleFace.Front);
+        GL.DepthMask(false);
+        //GL.DepthFunc(DepthFunction.Lequal);
+
+        Matrix4x4.Invert(view, out view);
+        Matrix4x4.Invert(projection, out projection);
+        texture.Bind(TextureUnit.Texture0);
 
         _shader.Use();
-        _shader.SetMatrix4("uView", Matrix4x4.ToArray(view));
-        _shader.SetMatrix4("uProjection", Matrix4x4.ToArray(projection));
-
-        texture.Bind(TextureUnit.Texture0);
-        _shader.SetInt("uTexture", 0);
-        _shader.SetFloat("uBlurScale", BlurScale);
+        _shader.SetMatrix4(Shader.View, Matrix4x4.ToArray(view));
+        _shader.SetMatrix4(Shader.Projection, Matrix4x4.ToArray(projection));
+        _shader.SetInt(Shader.Texture, 0);
+        _shader.SetFloat(BlurScale, blurScale);
 
         GL.BindVertexArray(_emptyVao);
         GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
-        GL.BindVertexArray(0);
+        //GL.BindVertexArray(0);
 
         //GL.BindTexture(TextureTarget.TextureCubeMap, skyboxTextureId);
-        //GL.GenerateMipmap(TextureTarget.TextureCubeMap);
 
+        GL.CullFace(TriangleFace.Back);
         GL.DepthMask(true);
         GL.DepthFunc(DepthFunction.Less);
+
+        Renderer.Instance.Stats.DrawCalls++;
     }
 
 

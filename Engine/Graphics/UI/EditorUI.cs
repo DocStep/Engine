@@ -2,8 +2,9 @@
 using System.Numerics;
 using System.Reflection;
 using Marshal = System.Runtime.InteropServices.Marshal;
-using ImGuiNET;
+using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
+using ImGuiNET;
 
 namespace Engine.Graphics;
 
@@ -44,6 +45,13 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
     public void Draw () {
         if (_isClosing) return;
+        
+        /// Switch to the real backbuffer for ImGui — dockspace, panels, and the Scene image itself
+        Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        Renderer.GL.DrawBuffer(GLEnum.Back);
+        Renderer.GL.Viewport(0, 0, (uint)Engine.Window.Size.X, (uint)Engine.Window.Size.Y);
+        Renderer.GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
+        Renderer.GL.Clear((uint)ClearBufferMask.ColorBufferBit);
 
         ImGuiViewportPtr viewport = ImGui.GetMainViewport();
         uint dockspaceId = ImGui.DockSpaceOverViewport(0, viewport, ImGuiDockNodeFlags.PassthruCentralNode);
@@ -68,10 +76,9 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.Begin("Scene");
 
         Vector2 avail = ImGui.GetContentRegionAvail();
-        _sceneAvail = new Vector2(MathF.Max(avail.X, 1f), MathF.Max(avail.Y, 1f));
+        _sceneAvail = new Vector2(Math.Max(avail.X, 1), Math.Max(avail.Y, 1));
 
-        ImGui.Image((IntPtr)Renderer.Instance.PostProcess.OutputTexture,
-            _sceneAvail, new Vector2(0, 1), new Vector2(1, 0));
+        ImGui.Image((IntPtr)Renderer.Instance.PostProcess.OutputTexture, _sceneAvail, new Vector2(0, 1), new Vector2(1, 0));
 
         _sceneRectMin = ImGui.GetItemRectMin();
         _sceneRectMax = ImGui.GetItemRectMax();

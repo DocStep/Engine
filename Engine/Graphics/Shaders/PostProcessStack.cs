@@ -9,6 +9,8 @@ public class PostProcessStack : IDisposable {
     public PostProcessStack () {
         QuadVAO = Renderer.GL.GenVertexArray();
 
+        Engine.Window.FramebufferResize += Resize;
+
         Resize(Renderer.Instance.Width, Renderer.Instance.Height);
     }
 
@@ -25,7 +27,6 @@ public class PostProcessStack : IDisposable {
 
     uint _outputFbo, _outputColor, _outputDepth;
     public uint OutputTexture => _outputColor;
-    
 
 
     public void Resize (int w, int h) {
@@ -43,6 +44,7 @@ public class PostProcessStack : IDisposable {
 
         _outputFbo = CreateFbo(w, h, out _outputColor, out _outputDepth, withDepth: true);
     }
+    public void Resize (Silk.NET.Maths.Vector2D<int> newSize) => Resize(newSize.X, newSize.Y);
 
     uint CreateFbo (int w, int h, out uint colorTex, out uint depthTex, bool withDepth) {
         uint fbo = Renderer.GL.GenFramebuffer();
