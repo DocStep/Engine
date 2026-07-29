@@ -12,13 +12,6 @@ namespace Engine;
 ///     Sync
 /// Update
 /// Render:
-///     Camera Matrix
-///     Skybox
-///     Opaque
-///     Transparent
-///     PP
-///     Gizmos
-///     UI
 
 
 
@@ -115,12 +108,13 @@ public class Engine : Singleton<Engine>, IDisposable {
         Log.log($"===== Systems Layer =====", LogType.info);
 
         Renderer = new Graphics.Renderer();
-        new Graphics.EditorUI();
-        new Graphics.CameraEditor();
 
         new PhysicsManager();
         new ComponentManager();
         new SceneManager();
+
+        new Graphics.EditorUI();
+        new Graphics.CameraEditor();
 
         de_Update?.Invoke();
 

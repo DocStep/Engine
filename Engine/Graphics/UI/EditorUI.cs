@@ -49,6 +49,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         uint dockspaceId = ImGui.DockSpaceOverViewport(0, viewport, ImGuiDockNodeFlags.PassthruCentralNode);
 
         DrawSceneView(dockspaceId);
+
         DrawInspector(dockspaceId);
         DrawInfo(dockspaceId);
 
@@ -69,7 +70,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         Vector2 avail = ImGui.GetContentRegionAvail();
         _sceneAvail = new Vector2(MathF.Max(avail.X, 1f), MathF.Max(avail.Y, 1f));
 
-        ImGui.Image((IntPtr)Renderer.Instance.PostProcessStack.OutputTexture,
+        ImGui.Image((IntPtr)Renderer.Instance.PostProcess.OutputTexture,
             _sceneAvail, new Vector2(0, 1), new Vector2(1, 0));
 
         _sceneRectMin = ImGui.GetItemRectMin();
@@ -94,7 +95,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
         ImGui.Begin("Inspector");
 
-        GameObject? selectedGO = Gizmos._gizmo_Selected.selectedMesh?.owner;
+        GameObject? selectedGO = Gizmos._gizmo_Selected.selectedMeshComp?.owner;
         if (selectedGO is not null) {
             ImGui.Text("Selected:");
             ImGui.InputText("Name", ref selectedGO.Name, int.MaxValue);

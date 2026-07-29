@@ -1,7 +1,6 @@
 ﻿using Silk.NET.OpenGL;
 using Engine.Input;
 using static Engine.Graphics.Shader;
-using System.Linq;
 
 namespace Engine.Graphics;
 
@@ -15,7 +14,16 @@ public class GizmoSelected : IGizmoWorld {
     GL GL = null!;
     Shader _sh_Outline = null!;
 
-    public MeshComponent? selectedMesh = null;
+    public MeshComponent? selectedMeshComp { get; private set; } = null;
+    private Mesh? selectedMeshLast = null;
+    public void UpdateSelectedMesh (MeshComponent? selectedMeshComp) {
+        selectedMeshLast = selectedMeshComp?.mesh;
+        this.selectedMeshComp = selectedMeshComp;
+        if (this.selectedMeshComp?.mesh?.Data is not null) 
+            outlined = SelectedOutlineNewMesh(this.selectedMeshComp.mesh.Data);
+    }
+    private Mesh outlined = null!;
+
 
     public SelectedGizmoMode selectedGizmoMode = SelectedGizmoMode.Position;
     public SelectedPositionGizmoMode selectedPositionMode;
@@ -49,11 +57,10 @@ public class GizmoSelected : IGizmoWorld {
 
     public const string NormalMatrix = "uNormalMatrix";
     public const string NormalOffset = "uNormalOffset";
-    private Mesh outlined = null!;
 
 
     public void Update () {
-        if (selectedMesh is null) return;
+        if (selectedMeshComp is null) return;
 
         Ray? rayOpt = Camera.Instance.RaycastMouse();
         if (rayOpt is null) {
@@ -69,9 +76,7 @@ public class GizmoSelected : IGizmoWorld {
         }
         Ray ray = rayOpt.Value;
 
-        Transform tr_obj = selectedMesh.owner.Transform;
-        if (selectedMesh.mesh?.Data is not null) 
-            SelectedOutlineMeshUpdate(selectedMesh.mesh.Data);
+        Transform tr_obj = selectedMeshComp.owner.Transform;
         Vector3 camPos = Camera.Instance.cameraPos;
         Vector3 _objPos = tr_obj.Position;
         Vector3 _objRot = tr_obj.Rotation;
@@ -207,9 +212,9 @@ public class GizmoSelected : IGizmoWorld {
                                 break;
                         }
                         if (pos is not null) {
-                            selectedMesh.owner.Transform.Stop();
-                            selectedMesh.owner.Transform.SetPosition(pos.Value + selectedDragMargin);
-                            selectedMesh.owner.Transform.SetRotation(selectedDragRot);
+                            selectedMeshComp.owner.Transform.Stop();
+                            selectedMeshComp.owner.Transform.SetPosition(pos.Value + selectedDragMargin);
+                            selectedMeshComp.owner.Transform.SetRotation(selectedDragRot);
                         }
                     }
                 } else if (Inputs.Actions[Inputs.LMB].pressedUp) {
@@ -299,7 +304,7 @@ public class GizmoSelected : IGizmoWorld {
 
 
     public void Draw () {
-        Transform? tr_obj = selectedMesh?.owner.Transform;
+        Transform? tr_obj = selectedMeshComp?.owner.Transform;
         if (tr_obj is null) return;
 
         GL.Viewport(0, 0, (uint)Renderer.Instance.Width, (uint)Renderer.Instance.Height);
@@ -318,14 +323,13 @@ public class GizmoSelected : IGizmoWorld {
     }
 
     private void DrawGizmo () {
-        if (selectedMesh is null) return;
+        if (selectedMeshComp is null) return;
 
         GL.Disable(EnableCap.CullFace);
         GL.Disable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Blend);
-        //GL.DepthRange(0, 0.9999f);
 
-        Transform tr_obj = selectedMesh.owner.Transform;
+        Transform tr_obj = selectedMeshComp.owner.Transform;
         Vector3 camPos = Camera.Instance.cameraPos;
         Vector3 _objPos = tr_obj.Position;
         Vector3 _objRot = tr_obj.Rotation;
@@ -356,7 +360,7 @@ public class GizmoSelected : IGizmoWorld {
 
         /// Axes
         Matrix4x4 gizmoBasis = BasisToWorld(gizmoRight, gizmoUp, gizmoForward);
-        Vector3 pos3 = selectedMesh.owner.Transform.Position;
+        Vector3 pos3 = selectedMeshComp.owner.Transform.Position;
         Matrix4x4 _m4x4_selectedScale = Matrix4x4.CreateScale(_dist*_axisLength);
 
         isColorSelected = selectedPositionMode == SelectedPositionGizmoMode.X || selectedPositionOverMode == SelectedPositionGizmoMode.X;
@@ -374,18 +378,13 @@ public class GizmoSelected : IGizmoWorld {
             _sh_Unlit.SetFloat(Alpha, 0.5f);
             Gizmos._mesh_Arrow3D.Draw();
         }
-
-        //GL.DepthRange(0, 1);
     }
 
     private void DrawOutline () {
-        if (selectedMesh is null) return;
+        if (selectedMeshComp is null) return;
+        if (selectedMeshComp.mesh is null) return;
 
-        RenderInfo renderInfo = selectedMesh.CreateRenderInfo;
-        if (renderInfo.mesh is null) return;
-
-        Matrix4x4 model =Matrix4x4.CreateScale(renderInfo.scale)
-            *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
+        RenderInfo renderInfo = selectedMeshComp.CreateRenderInfo;
 
         try {
             GL.Enable(EnableCap.StencilTest);
@@ -416,13 +415,12 @@ public class GizmoSelected : IGizmoWorld {
             GL.CullFace(TriangleFace.Front);
 
             GL.StencilMask(0x00);
-            GL.StencilFunc(
-                StencilFunction.Notequal,
-                1,
-                0xFF
-            );
+            GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
 
             float dist = Vector3.Distance(Camera.Instance.cameraPos, renderInfo.pos);
+
+            Matrix4x4 model = Matrix4x4.CreateScale(renderInfo.scale)
+                *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
 
             _sh_Outline.Use();
             _sh_Outline.SetMatrix4(View, Renderer.Instance.UView);
@@ -431,7 +429,6 @@ public class GizmoSelected : IGizmoWorld {
             _sh_Outline.SetFloat(NormalOffset, 0.01f*dist*_width);
             _sh_Outline.SetVector3(Color, Constants.cyan);
             _sh_Outline.SetFloat(Alpha, 1f);
-
             outlined.Draw();
         } finally {
             GL.ColorMask(true, true, true, true);
@@ -447,10 +444,10 @@ public class GizmoSelected : IGizmoWorld {
         }
     }
 
-    private void SelectedOutlineMeshUpdate (MeshData data) {
+    private Mesh SelectedOutlineNewMesh (MeshData data) {
         MeshData welded = data.Weld(1e-5f);
         welded.RecalculateOutlineNormals();
-        outlined = new Mesh(welded);
+        return new Mesh(welded);
     }
 
 }

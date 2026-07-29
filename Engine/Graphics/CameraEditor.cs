@@ -145,8 +145,8 @@ internal sealed class CameraEditor : Camera {
         }
 
         if (Inputs.Actions[Inputs.CameraFocus].pressedDown && mouseAllowed) 
-            if (Gizmos._gizmo_Selected.selectedMesh is not null) 
-                FocusAtPoint(Gizmos._gizmo_Selected.selectedMesh.owner.Transform.Position);
+            if (Gizmos._gizmo_Selected.selectedMeshComp is not null) 
+                FocusAtPoint(Gizmos._gizmo_Selected.selectedMeshComp.owner.Transform.Position);
 
         /// Smoothly glide toward the focus target
         if (isFocusing) {
@@ -247,11 +247,11 @@ internal sealed class CameraEditor : Camera {
         if (mouseAllowed && !EditorUI.Instance.isUIClick) {
             Ray? ray = RaycastMouse();
             if (ray is not null && Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
-                Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray.Value, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
-                if (hitMesh is not null) {
-                    Gizmos._gizmo_Selected.selectedMesh = hitMesh;
+                Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray.Value, out MeshComponent? hitMeshComp, out Vector3 hitPos, out Vector3 hitNormal);
+                if (hitMeshComp is not null) {
+                    Gizmos._gizmo_Selected.UpdateSelectedMesh(hitMeshComp);
                 } else {
-                    Gizmos._gizmo_Selected.selectedMesh = null;
+                    Gizmos._gizmo_Selected.UpdateSelectedMesh(null);
                 }
             }
         }

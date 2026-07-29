@@ -6,6 +6,13 @@ using System.Threading;
 
 namespace Engine.Graphics;
 
+/// Camera Matrix
+/// Skybox
+/// Opaque
+/// Transparent
+/// PP
+/// Gizmos
+/// UI
 
 public class Renderer {
     public Renderer () {
@@ -26,7 +33,7 @@ public class Renderer {
             BlurScale = 3f,
         };
 
-        PostProcessStack = new PostProcessStack();
+        PostProcess = new PostProcessStack();
         //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Depth));
         //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Grayscale));
         //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Fxaa));
@@ -55,7 +62,7 @@ public class Renderer {
 
     public readonly Skybox _skybox = null!;
 
-    public readonly PostProcessStack PostProcessStack = null!;
+    public readonly PostProcessStack PostProcess = null!;
 
 
     int _width, _height;
@@ -64,7 +71,7 @@ public class Renderer {
     public void SetTargetSize (int width, int height) {
         _width = width;
         _height = height;
-        PostProcessStack.Resize(width, height);
+        PostProcess.Resize(width, height);
     }
 
 
@@ -88,23 +95,34 @@ public class Renderer {
     long iter = 0;
 
 
-    public Action? de_Draw_Clear = null;
-    public Action? de_Draw_Scene = null;
-    public Action? de_Draw_ = null;
+    public Action? de_Scene = null;
 
+    /// Skybox
+    /// Opaque
+    /// Transparent
+    /// PP
+    /// Gizmos
+    /// UI
+    
     private void OnRender (double deltaTime) {
         try {
             Gizmos.Update();
+
+            //System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
             Gizmos._gizmo_Selected.Update();
+            //sw.Stop();
+            //Log.log(sw.ElapsedMilliseconds);
 
             Stats = new RendererStats();
 
             Vector2 sceneSize = EditorUI.Instance.SceneAvail;
             SetTargetSize((int)sceneSize.X, (int)sceneSize.Y);
 
+            /// Camera Matrix
             UpdateProjection(sceneSize.X, sceneSize.Y);
+
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
-            PostProcessStack.BeginScene();
+            PostProcess.BeginScene();
 
             _skybox?.Draw(m4x4_View, m4x4Projection);
 
@@ -125,13 +143,13 @@ public class Renderer {
 
             SceneManager.ActiveScene?.DrawRaw();
 
-            PostProcessStack.EndSceneAndRunStack();
+            PostProcess.EndSceneAndRunStack();
             //PostProcessStack.DebugReadDepth(PostProcessStack.Fbo, PostProcessStack.Width/2, PostProcessStack.Height/2);      // scene fbo, should be < 1
             //PostProcessStack.DebugReadDepth(PostProcessStack.OutputFbo, PostProcessStack.Width/2, PostProcessStack.Height/2); // output fbo, should match
 
             /// Overlays (gizmos, text) get drawn into the same offscreen texture as the scene,
             /// so they show up inside the Scene panel instead of the window backbuffer
-            PostProcessStack.BindOutputForOverlay();
+            PostProcess.BindOutputForOverlay();
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             Gizmos.Draw();
@@ -363,7 +381,7 @@ public class Renderer {
         TextRenderer.Dispose();
 
         _skybox.Dispose();
-        PostProcessStack.Dispose();
+        PostProcess.Dispose();
 
         de_Dispose?.Invoke();
     }
