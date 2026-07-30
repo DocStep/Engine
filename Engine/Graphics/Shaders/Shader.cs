@@ -152,6 +152,11 @@ public class Shader : IDisposable {
         GL.BindTexture(TextureTarget.Texture2D, 0);
     }
 
+    public void SetVec3Array (string name, Vector3[] values) {
+        int location = GL.GetUniformLocation(_program, name);
+        GL.Uniform3(location, (uint)values.Length, ref values[0].X);
+    }
+
 
     public void Dispose () {
         GL.DeleteProgram(_program);

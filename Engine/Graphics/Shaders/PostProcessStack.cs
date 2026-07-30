@@ -26,6 +26,8 @@ public class PostProcessStack : IDisposable {
     uint[] _pingColor = new uint[2];
 
     uint _outputFbo, _outputColor, _outputDepth;
+
+    public uint SceneColorTexture => _sceneColor;
     public uint OutputTexture => _outputColor;
 
 

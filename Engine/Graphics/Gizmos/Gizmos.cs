@@ -22,6 +22,7 @@ public static class Gizmos {
         _mat_GizmosGreen.SetFloat(Alpha, 0.5f);
         _mat_GizmosGreen.pass = RenderPass.Gizmo;
         _mat_GizmosGreen.face = RenderFace.Both;
+        _mat_GizmosGreen.depthWrite = false;
 
         _mat_GizmoWireframe = new Material(_mat_GizmosGreen);
         _mat_GizmoWireframe.SetVector3(Color, Constants.black);
@@ -33,20 +34,23 @@ public static class Gizmos {
         _mat_GizmoGrid.SetFloat(Radius, 200f);
         _mat_GizmoGrid.SetFloat(Fade, 50f);
         _mat_GizmoGrid.pass = RenderPass.Gizmo;
-        _mat_GizmosGreen.face = RenderFace.Both;
+        _mat_GizmoGrid.face = RenderFace.Both;
+        _mat_GizmoGrid.depthWrite = false;
 
         _mat_GizmoAxes = new Material(_sh_GizmoAxes);
         _mat_GizmoAxes.SetFloat(Alpha, 0.5f);
         _mat_GizmoAxes.SetFloat(Radius, 200f);
         _mat_GizmoAxes.SetFloat(Fade, 50f);
         _mat_GizmoAxes.pass = RenderPass.Gizmo;
-        _mat_GizmosGreen.face = RenderFace.Both;
+        _mat_GizmoAxes.face = RenderFace.Both;
+        _mat_GizmoAxes.depthWrite = false;
 
         _mat_GizmoSun = new Material(_sh_Unlit);
         _mat_GizmoSun.SetVector3(Color, Constants.yellow);
         _mat_GizmoSun.SetFloat(Alpha, 0.5f);
         _mat_GizmoSun.pass = RenderPass.Gizmo;
-        _mat_GizmosGreen.face = RenderFace.Both;
+        _mat_GizmoSun.face = RenderFace.Both;
+        _mat_GizmoSun.depthWrite = false;
 
         _mesh_CubeWireframe = new Mesh(Cube.GenerateWireframe());
         _mesh_SphereWireframe = new Mesh(Sphere.GenerateWireframe());

@@ -41,7 +41,7 @@ public class Material /*: IDisposable*/ {
     public bool depthWrite = true;
 
 
-    public virtual void Update () { }
+    public virtual void ApplyCustom () { }
 
 
     public Material SetInt (string name, int value) {
@@ -62,12 +62,13 @@ public class Material /*: IDisposable*/ {
     }
 
     public void Apply () {
-        Update();
         foreach (var kv in ints) shader.SetFloat(kv.Key, kv.Value);
         foreach (var kv in floats) shader.SetFloat(kv.Key, kv.Value);
         foreach (var kv in vectors2) shader.SetVector2(kv.Key, kv.Value);
         foreach (var kv in vectors3) shader.SetVector3(kv.Key, kv.Value);
         /// texture binding here later
+        
+        ApplyCustom();
     }
 
 

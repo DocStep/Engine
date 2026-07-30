@@ -1,5 +1,4 @@
 ﻿using Engine.Graphics;
-using Engine.Graphics.Shaders;
 using static Engine.Graphics.Shader;
 
 namespace Engine;
@@ -81,15 +80,25 @@ public class AssetsEngine : Singleton<AssetsEngine> {
 
         /// Post-Process
         _sh_Fullscreen = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Fragment.shader"), "Fullscreen");
-        _sh_Depth = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Depth_Fragment.shader"), "Depth");
-        _sh_Grayscale = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Grayscale_Fragment.shader"), "Grayscale");
-        _sh_Fxaa = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Fxaa_Fragment.shader"), "FXAA");
-
         _mat_Fullscreen = new Material(_sh_Fullscreen);
+
+        _sh_Depth = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Depth_Fragment.shader"), "Depth");
         _mat_Depth = new Material(_sh_Depth);
+
+        _sh_Grayscale = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Grayscale_Fragment.shader"), "Grayscale");
         _mat_Grayscale = new Material(_sh_Grayscale);
+
+        _sh_Fxaa = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Fxaa_Fragment.shader"), "FXAA");
         _mat_Fxaa = new MaterialFxaa(_sh_Fxaa);
 
+        _sh_SSAO = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/SSAO_Fragment.shader"), "SSAO");
+        _mat_SSAO = new MaterialSSAO(_sh_SSAO);
+
+        _sh_SSAOBlur = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/SSAOBlur_Fragment.shader"), "SSAOBlur");
+        _mat_SSAOBlur = new MaterialSSAOBlur(_sh_SSAOBlur);
+
+        _sh_SSAOComposite = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/SSAOComposite_Fragment.shader"), "SSAOComposite");
+        _mat_SSAOComposite = new MaterialSSAOComposite(_sh_SSAOComposite);
     }
 
 
@@ -123,6 +132,12 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Material _mat_Grayscale = null!;
     public readonly static Shader _sh_Fxaa = null!;
     public readonly static MaterialFxaa _mat_Fxaa = null!;
+    public readonly static Shader _sh_SSAO = null!;
+    public readonly static MaterialSSAO _mat_SSAO = null!;
+    public readonly static Shader _sh_SSAOBlur = null!;
+    public readonly static MaterialSSAOBlur _mat_SSAOBlur = null!;
+    public readonly static Shader _sh_SSAOComposite = null!;
+    public readonly static MaterialSSAOComposite _mat_SSAOComposite = null!;
 
 
     /// Editor

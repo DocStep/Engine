@@ -95,6 +95,11 @@ public class SceneMaterials : Scene {
         mesh.mesh = AssetsEngine._mesh_Sphere;
         mesh.material = AssetsEngine._mat_MaterialPreview;
 
+        x = 0;
+        GameObject ssao1 = new GameObject(PrimitiveTypes.Sphere) { Name = "ssao1", };
+        ssao1.Transform.Position = new Vector3(x, 0, -4);
+        GameObject ssao2 = new GameObject(PrimitiveTypes.Sphere) { Name = "ssao2", };
+        ssao2.Transform.Position = new Vector3(x, 0, -4.5f);
     }
 
     public override void DrawRaw () {

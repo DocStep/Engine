@@ -36,9 +36,12 @@ public class Renderer {
         //SetTargetSize(Engine.Window.Size.X, Engine.Window.Size.Y);
 
         PostProcess = new PostProcessStack();
-        //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Depth));
-        //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Grayscale));
-        //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Fxaa));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_Grayscale));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
 
         TextRenderer = new TextRenderer();
 
@@ -105,6 +108,14 @@ public class Renderer {
     private void OnRender (double deltaTime) {
         de_LateUpdate?.Invoke();
 
+        if (Input.Inputs.Actions[Input.Inputs.PP].pressedDown) {
+            if (PostProcess.Effects.Count == 0) {
+                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
+                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
+                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
+            } else PostProcess.Effects.Clear();
+        }
+
         try {
             Stats = new RendererStats();
 
@@ -134,6 +145,8 @@ public class Renderer {
             }
 
             SceneManager.ActiveScene?.DrawRaw();
+
+            AssetsEngine._mat_SSAOComposite.originalSceneTexture = PostProcess.SceneColorTexture;
 
             PostProcess.EndSceneAndRunStack();
             //PostProcessStack.DebugReadDepth(PostProcessStack.Fbo, PostProcessStack.Width/2, PostProcessStack.Height/2);      // scene fbo, should be < 1

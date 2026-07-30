@@ -133,6 +133,7 @@ public static class Inputs {
     public const string Temp = nameof(Temp);
     public const string EditorSave = nameof(EditorSave);
     public const string Exit = nameof(Exit);
+    public const string PP = nameof(PP);
 
 
     public static Dictionary<string, InputsGroup> Actions = null!;
@@ -185,6 +186,7 @@ public static class Inputs {
         [Temp] = new InputsGroup(new List<Keys>() { Keys.RightBracket }, hidden: true),
         [EditorSave] = new InputsGroup(new List<Keys>() { Keys.O }, hidden: true),
         [Exit] = new InputsGroup(new List<Keys>() { Keys.Escape }, hidden: true),
+        [PP] = new InputsGroup(new List<Keys>() { Keys.Z }, hidden: true),
     };
 
 
