@@ -17,9 +17,12 @@ namespace Engine;
 
 public class Engine : Singleton<Engine>, IDisposable {
 
+    internal Action? de_Update_Engine = null;
+    internal Action? de_FixedUpdate_Engine = null;
+    public static string savesFolder = "Data";
+
     public Action? de_Update = null;
     public Action? de_FixedUpdate = null;
-    public static string savesFolder = "Data";
 
     public static Silk.NET.Windowing.IWindow Window = null!;
     public static Silk.NET.Input.IInputContext Input = null!;
@@ -113,10 +116,10 @@ public class Engine : Singleton<Engine>, IDisposable {
         new ComponentManager();
         new SceneManager();
 
-        new Graphics.EditorUI();
+        Graphics.EditorUI.InstanceCheck();
         new Graphics.CameraEditor();
 
-        de_Update?.Invoke();
+        de_Update_Engine?.Invoke();
 
         Log.log($"========== Init Finish ==========", LogType.info);
 
@@ -153,13 +156,13 @@ public class Engine : Singleton<Engine>, IDisposable {
         ComponentManager.Instance.FixedUpdate();
         PhysicsManager.Instance.FixedUpdate();
 
-        de_FixedUpdate?.Invoke();
+        de_FixedUpdate_Engine?.Invoke();
         ReflectionActionScripts.Instance.de_Actions_FixedUpdate?.Invoke();
     }
     private void Update () {
         ComponentManager.Instance.Update();
 
-        de_Update?.Invoke();
+        de_Update_Engine?.Invoke();
         ReflectionActionScripts.Instance.de_Actions_Update?.Invoke();
 
         Graphics.EditorUI.Instance?.Update();

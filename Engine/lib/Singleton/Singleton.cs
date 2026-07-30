@@ -3,7 +3,7 @@
 namespace Engine;
 
 
-public class Singleton<T> : ISingleton where T : Singleton<T>, new() {
+public abstract class Singleton<T> : ISingleton where T : Singleton<T>, new() {
     public Singleton () {
         lock (SingletonManager._lock) {
             if (instance is not null) 
@@ -25,7 +25,7 @@ public class Singleton<T> : ISingleton where T : Singleton<T>, new() {
     public const string Name = "Singleton";
     protected readonly bool debugLog = true;
 
-    private static T instance = null!;
+    private static T? instance = null;
     public static T Instance {
         get {
             if (instance is null) {

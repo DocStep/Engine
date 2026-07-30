@@ -33,6 +33,8 @@ public class Renderer {
             blurScale = 3f,
         };
 
+        //SetTargetSize(Engine.Window.Size.X, Engine.Window.Size.Y);
+
         PostProcess = new PostProcessStack();
         //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Depth));
         //PostProcessStack.Effects.Add(new PostProcessPass(_mat_Grayscale));
@@ -43,10 +45,10 @@ public class Renderer {
         /// Delegates
         de_LateUpdate += Gizmos.Update;
         de_LateUpdate += DrawMaterialsGrid;
-        //de_GizmosUpdate += Gizmos._gizmo_Selected.Update;
-        //de_GizmosDraw += Gizmos._gizmo_Selected.Draw;
-
-        //Engine.Instance.de_Update += de_GizmosUpdate;
+        de_ScreenResize = EditorResize;
+        de_DrawPostScene += DrawGizmos;
+        de_DrawUI += TextRenderer.Draw;
+        de_DrawUI += EditorUI.Instance.Draw;
     }
     public static Renderer Instance = null!;
 
@@ -67,13 +69,11 @@ public class Renderer {
     public readonly PostProcessStack PostProcess = null!;
 
 
-    int _width, _height;
-    public int Width => _width;
-    public int Height => _height;
+    public int Width { get; private set; }
+    public int Height { get; private set; }
     public void SetTargetSize (int width, int height) {
-        _width = width;
-        _height = height;
-        PostProcess.Resize(width, height);
+        Width = width;
+        Height = height;
     }
 
 
@@ -97,27 +97,23 @@ public class Renderer {
     long iter = 0;
 
 
+    public Action? de_ScreenResize = null;
     public Action? de_LateUpdate = null;
+    public Action? de_DrawPostScene = null;
+    public Action? de_DrawUI = null;
 
-
-    /// Skybox
-    /// Opaque
-    /// Transparent
-    /// PP
-    /// Gizmos
-    /// UI
-    
     private void OnRender (double deltaTime) {
         de_LateUpdate?.Invoke();
 
         try {
             Stats = new RendererStats();
 
-            Vector2 sceneSize = EditorUI.Instance.SceneAvail;
-            SetTargetSize((int)sceneSize.X, (int)sceneSize.Y);
+            SetTargetSize(Engine.Window.Size.X, Engine.Window.Size.Y);
+            de_ScreenResize?.Invoke();
+            PostProcess.Resize(Width, Height);
 
             /// Camera Matrix
-            UpdateProjection(sceneSize.X, sceneSize.Y);
+            UpdateProjection(Width, Height);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
             PostProcess.BeginScene();
@@ -144,15 +140,11 @@ public class Renderer {
             //PostProcessStack.DebugReadDepth(PostProcessStack.OutputFbo, PostProcessStack.Width/2, PostProcessStack.Height/2); // output fbo, should match
 
             PostProcess.BindOutputForOverlay();
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-            Gizmos.Draw();
-            Gizmos._gizmo_Selected.Draw();
-            
-            /// UI Layer
-            TextRenderer.Draw();
 
-            EditorUI.Instance.Draw();
+            de_DrawPostScene?.Invoke();
+
+            /// UI Stage
+            de_DrawUI?.Invoke();
 
             iter++;
             DrawEnd();
@@ -199,7 +191,7 @@ public class Renderer {
         int count = RenderList.Count;
         for (int i = 0; i < count; i++) {
             RenderInfo info = RenderList[i];
-            if (info.material.pass == RenderPass.Opaque || info.material.pass == RenderPass.Transparent) 
+            if (info.material.pass == RenderPass.Opaque || info.material.pass == RenderPass.Transparent)
                 DrawInfoWireframe(info);
             else DrawInfo(info);
         }
@@ -252,14 +244,14 @@ public class Renderer {
 
         GL.DepthMask(info.material.depthWrite);
 
-        if (info.depthRangeNear != 0 || info.depthRangeFar != 1) 
+        if (info.depthRangeNear != 0 || info.depthRangeFar != 1)
             GL.DepthRange(info.depthRangeNear, info.depthRangeFar);
 
         SetSceneUniformsUnlit(shader);
         SetSceneUniformsLit(shader);
         SetSceneUniformsSkybox(shader, _skybox.texture, _skybox.maxLod);
 
-        Matrix4x4 mesh_m4x4 = info.modelOverride ?? Matrix4x4.CreateScale(info.scale) 
+        Matrix4x4 mesh_m4x4 = info.modelOverride ?? Matrix4x4.CreateScale(info.scale)
             *Matrix4x4.RotationEuler(info.rot)*Matrix4x4.Position(info.pos);
         float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
         shader.SetMatrix4(Model, mesh_uModel);
@@ -269,7 +261,7 @@ public class Renderer {
         info.mesh.Draw(info.primitiveType);
         info.de_Post?.Invoke();
 
-        if (info.depthRangeNear != 0 || info.depthRangeFar != 1) 
+        if (info.depthRangeNear != 0 || info.depthRangeFar != 1)
             GL.DepthRange(0, 1);
     }
     private void DrawInfoWireframe (RenderInfo info) {
@@ -291,6 +283,14 @@ public class Renderer {
             GL.DepthRange(0, 1);
     }
 
+    public void DrawGizmos () {
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+        Gizmos.Draw();
+        Gizmos._gizmo_Selected.Draw();
+    }
+
 
     public static void SetSceneUniformsUnlit (Shader shader) {
         shader.Use();
@@ -304,8 +304,8 @@ public class Renderer {
         shader.SetFloat(SunLightIntensity, Constants.sunLightIntensity);
         shader.SetVector3(AmbientColor, Constants.ambientColor);
         shader.SetFloat(AmbientColorIntensity, Constants.ambientColorIntensity);
-        
-        if (Constants.renderSkyboxReflection) 
+
+        if (Constants.renderSkyboxReflection)
             shader.SetFloat(ReflectionIntensity, Constants.reflectionIntensity);
     }
     public static void SetSceneUniformsSkybox (Shader shader, HdrTexture? texture, float maxLod) {
@@ -369,6 +369,12 @@ public class Renderer {
         PostProcess.Dispose();
 
         de_Dispose?.Invoke();
+    }
+
+
+
+    private void EditorResize () {
+        SetTargetSize((int)EditorUI.Instance.SceneAvail.X, (int)EditorUI.Instance.SceneAvail.Y);
     }
 
 }

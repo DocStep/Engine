@@ -21,7 +21,7 @@ public class PostProcessStack : IDisposable {
     int _width, _height;
 
     /// Final Result
-    uint _sceneFbo, _sceneColor, _sceneDepth;
+    uint _sceneFbo, _sceneColor, _sceneDepth, _pingDepth0, _pingDepth1;
     uint[] _pingFbo = new uint[2];
     uint[] _pingColor = new uint[2];
 
@@ -39,8 +39,8 @@ public class PostProcessStack : IDisposable {
         _height = h;
 
         _sceneFbo = CreateFbo(w, h, out _sceneColor, out _sceneDepth, withDepth: true);
-        _pingFbo[0] = CreateFbo(w, h, out _pingColor[0], out _, withDepth: true);
-        _pingFbo[1] = CreateFbo(w, h, out _pingColor[1], out _, withDepth: true);
+        _pingFbo[0] = CreateFbo(w, h, out _pingColor[0], out _pingDepth0, withDepth: true);
+        _pingFbo[1] = CreateFbo(w, h, out _pingColor[1], out _pingDepth1, withDepth: true);
 
         _outputFbo = CreateFbo(w, h, out _outputColor, out _outputDepth, withDepth: true);
     }
@@ -201,7 +201,7 @@ public class PostProcessStack : IDisposable {
     void DeleteTargets () {
         DeleteFramebuffer(_sceneFbo);
         DeleteTexture(_sceneColor);
-        DeleteRenderbuffer(_sceneDepth);
+        DeleteTexture(_sceneDepth);
 
         for (int i = 0; i < 2; i++) {
             DeleteFramebuffer(_pingFbo[i]);
@@ -213,6 +213,8 @@ public class PostProcessStack : IDisposable {
         DeleteFramebuffer(_outputFbo);
         DeleteTexture(_outputColor);
         DeleteTexture(_outputDepth);
+        DeleteTexture(_pingDepth0);
+        DeleteTexture(_pingDepth1);
 
         _sceneFbo = 0;
         _sceneColor = 0;
@@ -220,6 +222,8 @@ public class PostProcessStack : IDisposable {
         _outputFbo = 0;
         _outputColor = 0;
         _outputDepth = 0;
+        _pingDepth0 = 0;
+        _pingDepth1 = 0;
     }
 
     static void DeleteFramebuffer (uint id) {
