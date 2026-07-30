@@ -101,10 +101,10 @@ public class PostProcessStack : IDisposable {
 
         // Restore depth testing so overlays (gizmos, text) can depth-test against the scene
         // but don't write depth so we don't modify the copied scene depth buffer.
-        Renderer.GL.Enable(EnableCap.DepthTest);
-        Renderer.GL.DepthFunc(DepthFunction.Lequal);
-        Renderer.GL.DepthMask(false);
-        Renderer.GL.ColorMask(true, true, true, true);
+        //Renderer.GL.Enable(EnableCap.DepthTest);
+        //Renderer.GL.DepthFunc(DepthFunction.Lequal);
+        //Renderer.GL.DepthMask(false);
+        //Renderer.GL.ColorMask(true, true, true, true);
     }
 
     /// Call before drawing the scene
