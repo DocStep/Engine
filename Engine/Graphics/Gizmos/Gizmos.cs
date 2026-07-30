@@ -11,44 +11,48 @@ public static class Gizmos {
         //Renderer.Instance.de_GizmosDraw += DrawGizmos;
         GL = Renderer.GL;
 
-        _sh_GizmoGrid = new Graphics.Shader(Assets.LoadText("src/Shaders/Grid_Vertex.shader"), Assets.LoadText("src/Shaders/Grid_Fragment.shader"), "Grid");
-        _sh_GizmoAxes = new Graphics.Shader(Assets.LoadText("src/Shaders/Axes_Vertex.shader"), Assets.LoadText("src/Shaders/Axes_Fragment.shader"), "Axes");
         _sh_Outline = new Graphics.Shader(Assets.LoadText("src/Shaders/Outline_Vertex.shader"), Assets.LoadText("src/Shaders/Outline_Fragment.shader"), "Outline");
         _sh_Outline.SetVector3(Color, Constants.cyan);
-        _sh_DepthClear = new Graphics.Shader(Assets.LoadText("src/Shaders/DepthClear_Vertex.shader"), Assets.LoadText("src/Shaders/DepthClear_Fragment.shader"), "DepthClear");
+        
+        //_sh_DepthClear = new Graphics.Shader(Assets.LoadText("src/Shaders/DepthClear_Vertex.shader"), Assets.LoadText("src/Shaders/DepthClear_Fragment.shader"), "DepthClear");
         
         _mat_GizmosGreen = new Material(_sh_Unlit);
         _mat_GizmosGreen.SetVector3(Color, Constants.green);
         _mat_GizmosGreen.SetFloat(Alpha, 0.5f);
-        _mat_GizmosGreen.pass = RenderPass.Gizmo;
+        _mat_GizmosGreen.pass = RenderPass.Transparent;
         _mat_GizmosGreen.face = RenderFace.Both;
         _mat_GizmosGreen.depthWrite = false;
 
-        _mat_GizmoWireframe = new Material(_mat_GizmosGreen);
+        _mat_GizmoWireframe = new Material(_sh_Unlit);
         _mat_GizmoWireframe.SetVector3(Color, Constants.black);
         _mat_GizmoWireframe.SetFloat(Alpha, 0.1f);
+        _mat_GizmoWireframe.pass = RenderPass.Transparent;
+        _mat_GizmoWireframe.face = RenderFace.Both;
+        _mat_GizmoWireframe.depthWrite = false;
 
+        _sh_GizmoGrid = new Graphics.Shader(Assets.LoadText("src/Shaders/Grid_Vertex.shader"), Assets.LoadText("src/Shaders/Grid_Fragment.shader"), "Grid");
         _mat_GizmoGrid = new Material(_sh_GizmoGrid);
         _mat_GizmoGrid.SetVector3(Color, Constants.lightGray);
         _mat_GizmoGrid.SetFloat(Alpha, 0.5f);
         _mat_GizmoGrid.SetFloat(Radius, 200f);
         _mat_GizmoGrid.SetFloat(Fade, 50f);
-        _mat_GizmoGrid.pass = RenderPass.Gizmo;
+        _mat_GizmoGrid.pass = RenderPass.Transparent;
         _mat_GizmoGrid.face = RenderFace.Both;
         _mat_GizmoGrid.depthWrite = false;
 
+        _sh_GizmoAxes = new Graphics.Shader(Assets.LoadText("src/Shaders/Axes_Vertex.shader"), Assets.LoadText("src/Shaders/Axes_Fragment.shader"), "Axes");
         _mat_GizmoAxes = new Material(_sh_GizmoAxes);
         _mat_GizmoAxes.SetFloat(Alpha, 0.5f);
         _mat_GizmoAxes.SetFloat(Radius, 200f);
         _mat_GizmoAxes.SetFloat(Fade, 50f);
-        _mat_GizmoAxes.pass = RenderPass.Gizmo;
+        _mat_GizmoAxes.pass = RenderPass.Transparent;
         _mat_GizmoAxes.face = RenderFace.Both;
         _mat_GizmoAxes.depthWrite = false;
 
         _mat_GizmoSun = new Material(_sh_Unlit);
         _mat_GizmoSun.SetVector3(Color, Constants.yellow);
         _mat_GizmoSun.SetFloat(Alpha, 0.5f);
-        _mat_GizmoSun.pass = RenderPass.Gizmo;
+        _mat_GizmoSun.pass = RenderPass.Transparent;
         _mat_GizmoSun.face = RenderFace.Both;
         _mat_GizmoSun.depthWrite = false;
 
@@ -83,7 +87,7 @@ public static class Gizmos {
     public readonly static Graphics.Shader _sh_GizmoGrid = null!;
     public readonly static Graphics.Shader _sh_GizmoAxes = null!;
     public readonly static Graphics.Shader _sh_Outline = null!;
-    public readonly static Graphics.Shader _sh_DepthClear = null!;
+    //public readonly static Graphics.Shader _sh_DepthClear = null!;
 
     public readonly static Material _mat_GizmoGrid = null!;
     public readonly static Material _mat_GizmoAxes = null!;

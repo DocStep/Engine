@@ -36,11 +36,12 @@ public class Renderer {
         //SetTargetSize(Engine.Window.Size.X, Engine.Window.Size.Y);
 
         PostProcess = new PostProcessStack();
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_Fullscreen));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Grayscale));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
 
         TextRenderer = new TextRenderer();
@@ -93,11 +94,12 @@ public class Renderer {
 
 
     private readonly List<RenderInfo> RenderList = new List<RenderInfo>();
-    private List<RenderInfo> RenderListStatic = new List<RenderInfo>();
+    private readonly List<RenderInfo> RenderUIList = new List<RenderInfo>();
     public void AddRenderInfo (RenderInfo renderInfo) {
-        RenderList.Add(renderInfo);
+        if (renderInfo.material.pass != RenderPass.UI) RenderList.Add(renderInfo);
+        else RenderUIList.Add(renderInfo);
     }
-    long iter = 0;
+    private long iter = 0;
 
 
     public Action? de_ScreenResize = null;
@@ -108,13 +110,13 @@ public class Renderer {
     private void OnRender (double deltaTime) {
         de_LateUpdate?.Invoke();
 
-        if (Input.Inputs.Actions[Input.Inputs.PP].pressedDown) {
+        /*if (Input.Inputs.Actions[Input.Inputs.PP].pressedDown) {
             if (PostProcess.Effects.Count == 0) {
-                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
-                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
-                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
-            } else PostProcess.Effects.Clear();
-        }
+                //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
+                //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
+                //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
+            } //else PostProcess.Effects.Clear();
+        }*/
 
         try {
             Stats = new RendererStats();
@@ -149,8 +151,6 @@ public class Renderer {
             AssetsEngine._mat_SSAOComposite.originalSceneTexture = PostProcess.SceneColorTexture;
 
             PostProcess.EndSceneAndRunStack();
-            //PostProcessStack.DebugReadDepth(PostProcessStack.Fbo, PostProcessStack.Width/2, PostProcessStack.Height/2);      // scene fbo, should be < 1
-            //PostProcessStack.DebugReadDepth(PostProcessStack.OutputFbo, PostProcessStack.Width/2, PostProcessStack.Height/2); // output fbo, should match
 
             PostProcess.BindOutputForOverlay();
 
@@ -224,10 +224,6 @@ public class Renderer {
                 GL.Disable(EnableCap.Blend);
                 break;
             case RenderPass.Transparent:
-                GL.Enable(EnableCap.Blend);
-                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-                break;
-            case RenderPass.Gizmo:
                 GL.Enable(EnableCap.Blend);
                 GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 break;
@@ -361,12 +357,14 @@ public class Renderer {
     }
     public void DrawMaterialsGrid () => DrawMaterialsGrid(-14f, 0f);
 
-    void DrawSame () {
+
+    private List<RenderInfo> RenderListSame = new List<RenderInfo>();
+    private void DrawSame () {
         if (iter == 0) {
-            RenderListStatic.AddRange(RenderList);
+            RenderListSame.AddRange(RenderList);
         } else {
             RenderList.Clear();
-            RenderList.AddRange(RenderListStatic);
+            RenderList.AddRange(RenderListSame);
         }
         //if (iter == 100) Thread.Sleep(10000);
     }

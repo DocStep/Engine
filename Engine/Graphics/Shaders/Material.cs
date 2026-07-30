@@ -1,11 +1,9 @@
 ﻿namespace Engine.Graphics;
 
 public enum RenderPass {
-    undefined = -1,
     Opaque,
     Transparent,
-    Gizmo,
-    UI
+    UI,
 }
 public enum RenderFace {
     Front,
