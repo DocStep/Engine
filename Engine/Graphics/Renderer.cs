@@ -27,7 +27,7 @@ public class Renderer {
         _GL = Engine.Window.CreateOpenGL();
         GLDebug.Init();
         GL.FrontFace(FrontFaceDirection.CW);
-        GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
+        GL.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
 
         _skybox = new Skybox(_sh_Skybox, _hdr_Skybox) {
             blurScale = 3f,
@@ -39,9 +39,9 @@ public class Renderer {
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Fullscreen));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Grayscale));
-        //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
-        //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
-        //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
 
         TextRenderer = new TextRenderer();
@@ -110,13 +110,13 @@ public class Renderer {
     private void OnRender (double deltaTime) {
         de_LateUpdate?.Invoke();
 
-        /*if (Input.Inputs.Actions[Input.Inputs.PP].pressedDown) {
+        if (Input.Inputs.Actions[Input.Inputs.PP].pressedDown) {
             if (PostProcess.Effects.Count == 0) {
-                //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
-                //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
-                //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
-            } //else PostProcess.Effects.Clear();
-        }*/
+                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
+                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
+                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
+            } else PostProcess.Effects.Clear();
+        }
 
         try {
             Stats = new RendererStats();
@@ -168,7 +168,7 @@ public class Renderer {
     private void UpdateProjection (float width, float height) {
         float aspect = width/height;
         m4x4Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
-            Constants._cameraFOV, aspect, Constants._cameraPlaneClose, Constants._cameraPlaneFar);
+            Camera.FOV/180*MathF.PI, aspect, Camera.planeNear, Camera.planeFar);
         uView = Matrix4x4.ToArray(m4x4_View);
         uProjection = Matrix4x4.ToArray(m4x4Projection);
     }
@@ -247,14 +247,13 @@ public class Renderer {
                 break;
         }
 
-        if (info.material.depthTest) {
-            GL.Enable(EnableCap.DepthTest);
-        } else GL.Disable(EnableCap.DepthTest);
+        if (info.material.depthTest) GL.Enable(EnableCap.DepthTest);
+        else GL.Disable(EnableCap.DepthTest);
 
         GL.DepthMask(info.material.depthWrite);
 
-        if (info.depthRangeNear != 0 || info.depthRangeFar != 1)
-            GL.DepthRange(info.depthRangeNear, info.depthRangeFar);
+        //if (info.depthRangeNear != 0 || info.depthRangeFar != 1)
+        //    GL.DepthRange(info.depthRangeNear, info.depthRangeFar);
 
         SetSceneUniformsUnlit(shader);
         SetSceneUniformsLit(shader);
@@ -270,8 +269,8 @@ public class Renderer {
         info.mesh.Draw(info.primitiveType);
         info.de_Post?.Invoke();
 
-        if (info.depthRangeNear != 0 || info.depthRangeFar != 1)
-            GL.DepthRange(0, 1);
+        //if (info.depthRangeNear != 0 || info.depthRangeFar != 1)
+        //    GL.DepthRange(0, 1);
     }
     private void DrawInfoWireframe (RenderInfo info) {
         if (info.mesh is null) return;

@@ -1,10 +1,14 @@
-﻿//using Engine.Graphics;
+﻿using Engine.Graphics;
+using Engine.Graphics;
+using Engine.Graphics;
+
+//using Engine.Graphics;
 
 namespace Engine.Graphics;
 
 
-internal class Camera {
-    internal Camera () {
+public class Camera {
+    public Camera () {
         Instance = this;
 
         Engine.Window.Update += Update;
@@ -15,7 +19,7 @@ internal class Camera {
     public static Camera Instance = null!;
 
     /// Values
-    protected const float _sensetivity = 0.15f;
+    protected const float _sensetivity = 0.10f;
     internal const float _sensetivityMultiplier = 0.01f;
 
     public Vector3 cameraPos = Vector3.Zero;
@@ -26,6 +30,10 @@ internal class Camera {
 
     protected float yaw;
     protected float pitch;
+
+    public static float FOV = 60;
+    public static float planeNear = 0.1f;
+    public static float planeFar = 1000f;
 
 
     protected virtual void Update (double deltaTime) {

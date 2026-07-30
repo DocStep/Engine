@@ -98,6 +98,13 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, _outputFbo);
         SetDrawBuffer(_outputFbo);
         Renderer.GL.Viewport(0, 0, (uint)Renderer.Instance.Width, (uint)Renderer.Instance.Height);
+
+        // Restore depth testing so overlays (gizmos, text) can depth-test against the scene
+        // but don't write depth so we don't modify the copied scene depth buffer.
+        Renderer.GL.Enable(EnableCap.DepthTest);
+        Renderer.GL.DepthFunc(DepthFunction.Lequal);
+        Renderer.GL.DepthMask(false);
+        Renderer.GL.ColorMask(true, true, true, true);
     }
 
     /// Call before drawing the scene

@@ -33,7 +33,7 @@ public static class Gizmos {
         _sh_GizmoGrid = new Graphics.Shader(Assets.LoadText("src/Shaders/Grid_Vertex.shader"), Assets.LoadText("src/Shaders/Grid_Fragment.shader"), "Grid");
         _mat_GizmoGrid = new Material(_sh_GizmoGrid);
         _mat_GizmoGrid.SetVector3(Color, Constants.lightGray);
-        _mat_GizmoGrid.SetFloat(Alpha, 0.5f);
+        _mat_GizmoGrid.SetFloat(Alpha, 0.2f);
         _mat_GizmoGrid.SetFloat(Radius, 200f);
         _mat_GizmoGrid.SetFloat(Fade, 50f);
         _mat_GizmoGrid.pass = RenderPass.Transparent;
@@ -164,7 +164,7 @@ public static class Gizmos {
         Matrix4x4 gizmoView = Matrix4x4.CreateLookAtLeftHanded(gizmoCamPos, Vector3.Zero, up);
         float aspect = Engine.Window.Size.X/(float)Engine.Window.Size.Y;
         Matrix4x4 gizmoProjection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
-            Constants._cameraFOV, aspect, Constants._cameraPlaneClose, Constants._cameraPlaneFar);
+            Camera.FOV/180*MathF.PI, aspect, Camera.planeNear, Camera.planeFar);
 
         _sh_GizmoAxes.Use();
         _sh_GizmoAxes.SetMatrix4(View, Matrix4x4.ToArray(gizmoView));

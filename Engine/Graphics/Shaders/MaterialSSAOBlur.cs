@@ -6,11 +6,6 @@ namespace Engine.Graphics;
 public class MaterialSSAOBlur : Material {
     public MaterialSSAOBlur (Shader shader) : base(shader) { }
 
-    public Matrix4x4 invProjection;
-    public float radius = 0.5f;
-    public float bias = 0.02f;
-    public float strength = 1.0f;
-
     public const string TexelSize = "uTexelSize";
 
 

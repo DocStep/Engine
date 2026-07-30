@@ -28,11 +28,9 @@ internal static class Constants {
     public readonly static Vector3 greenLight = new Vector3(0.5f, 1, 0.5f);
     public readonly static Vector3 blueLight = new Vector3(0.5f, 0.5f, 1);
 
-    public static float _cameraFOV = 0.25f*MathF.PI;
-    public static float _cameraPlaneClose = 0.1f;
-    public static float _cameraPlaneFar = 1000f;
-
-    public readonly static float _gridScale = _cameraPlaneFar;
+    //public readonly static Vector3 clearColor = new Vector3(0.1f, 0.1f, 0.15f);
+    public readonly static Vector3 clearColor = black;
+    public readonly static float _gridScale = Camera.planeFar;
     public readonly static float _gridDivisionScale = 1f;
 
     public static bool _drawArrowAsMesh = true;

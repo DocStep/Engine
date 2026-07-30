@@ -50,7 +50,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         Renderer.GL.DrawBuffer(GLEnum.Back);
         Renderer.GL.Viewport(0, 0, (uint)Engine.Window.Size.X, (uint)Engine.Window.Size.Y);
-        Renderer.GL.ClearColor(0.1f, 0.1f, 0.15f, 1f);
+        Renderer.GL.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
         Renderer.GL.Clear((uint)ClearBufferMask.ColorBufferBit);
 
         ImGuiViewportPtr viewport = ImGui.GetMainViewport();
