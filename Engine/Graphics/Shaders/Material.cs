@@ -3,6 +3,7 @@
 public enum RenderPass {
     Opaque,
     Transparent,
+    Gizmo,
     UI,
 }
 public enum RenderFace {

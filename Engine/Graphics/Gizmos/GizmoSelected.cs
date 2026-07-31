@@ -5,7 +5,7 @@ using static Engine.Graphics.Shader;
 namespace Engine.Graphics;
 
 
-public class GizmoSelected : IGizmoWorld, IDisposable {
+public class GizmoSelected : IDisposable {
     public GizmoSelected () {
         GL = Renderer.GL;
         _sh_Outline = Gizmos._sh_Outline;

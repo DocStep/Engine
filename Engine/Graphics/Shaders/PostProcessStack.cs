@@ -89,23 +89,6 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         return fbo;
     }
-    /// Call after all scene draws. Leaves result in _outputFbo instead of blitting to screen.
-    public void EndSceneAndRunStack () {
-        EndSceneAndRunStack(_outputFbo, true);
-    }
-    /// Bind the output FBO so gizmos/text/debug draws land inside the scene texture, not the window
-    public void BindOutputForOverlay () {
-        Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, _outputFbo);
-        SetDrawBuffer(_outputFbo);
-        Renderer.GL.Viewport(0, 0, (uint)Renderer.Instance.Width, (uint)Renderer.Instance.Height);
-
-        // Restore depth testing so overlays (gizmos, text) can depth-test against the scene
-        // but don't write depth so we don't modify the copied scene depth buffer.
-        //Renderer.GL.Enable(EnableCap.DepthTest);
-        //Renderer.GL.DepthFunc(DepthFunction.Lequal);
-        //Renderer.GL.DepthMask(false);
-        //Renderer.GL.ColorMask(true, true, true, true);
-    }
 
     /// Call before drawing the scene
     public void BeginScene () {
@@ -121,12 +104,22 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.Clear((uint)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
     }
 
-    /// Call after all scene draws (skybox, meshes, etc). Runs the whole stack, ends drawing to screen (fbo 0).
-    public void EndSceneAndRunStack (uint finalTargetFbo) {
-        EndSceneAndRunStack(finalTargetFbo, enabled: true);
+    /// Bind the output FBO so gizmos/text/debug draws land inside the scene texture, not the window
+    public void BindOutputForOverlay () {
+        Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, _outputFbo);
+        SetDrawBuffer(_outputFbo);
+        Renderer.GL.Viewport(0, 0, (uint)Renderer.Instance.Width, (uint)Renderer.Instance.Height);
+
+        // Restore depth testing so overlays (gizmos, text) can depth-test against the scene
+        // but don't write depth so we don't modify the copied scene depth buffer.
+        //Renderer.GL.Enable(EnableCap.DepthTest);
+        //Renderer.GL.DepthFunc(DepthFunction.Lequal);
+        //Renderer.GL.DepthMask(false);
+        //Renderer.GL.ColorMask(true, true, true, true);
     }
 
-    public void EndSceneAndRunStack (uint finalTargetFbo, bool enabled) {
+    public void Run (bool enabled = true) => Run(_outputFbo, enabled: enabled);
+    public void Run (uint finalTargetFbo, bool enabled) {
         Renderer.GL.Disable(EnableCap.DepthTest);
 
         if (!enabled || Effects.Count == 0) {
@@ -142,7 +135,7 @@ public class PostProcessStack : IDisposable {
         for (int i = 0; i < Effects.Count; i++) {
             bool isLast = i == Effects.Count - 1;
             uint targetFbo = isLast ? finalTargetFbo : _pingFbo[pingIndex];
-            Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, targetFbo);
+            //Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, targetFbo);
             SetDrawBuffer(targetFbo);
             PrepareFullscreenPass();
 

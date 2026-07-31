@@ -38,11 +38,11 @@ public class Renderer {
         PostProcess = new PostProcessStack();
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Grayscale));
-        //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
-        //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
-        //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
 
         TextRenderer = new TextRenderer();
 
@@ -50,7 +50,7 @@ public class Renderer {
         de_LateUpdate += Gizmos.Update;
         de_LateUpdate += DrawMaterialsGrid;
         de_ScreenResize = EditorResize;
-        de_DrawPostScene += DrawGizmos;
+        de_DrawPostScene += DrawGizmosRaw;
         de_DrawUI += TextRenderer.Draw;
         de_DrawUI += EditorUI.Instance.Draw;
     }
@@ -94,10 +94,21 @@ public class Renderer {
 
 
     private readonly List<RenderInfo> RenderList = new List<RenderInfo>();
+    private readonly List<RenderInfo> RenderGizmoList = new List<RenderInfo>();
     private readonly List<RenderInfo> RenderUIList = new List<RenderInfo>();
     public void AddRenderInfo (RenderInfo renderInfo) {
-        if (renderInfo.material.pass != RenderPass.UI) RenderList.Add(renderInfo);
-        else RenderUIList.Add(renderInfo);
+        switch (renderInfo.material.pass) {
+            case RenderPass.Opaque:
+                RenderList.Add(renderInfo);
+                break;
+            case RenderPass.Transparent:
+            case RenderPass.Gizmo:
+                RenderGizmoList.Add(renderInfo);
+                break;
+            case RenderPass.UI:
+                RenderUIList.Add(renderInfo);
+                break;
+        }
     }
     private long iter = 0;
 
@@ -112,10 +123,10 @@ public class Renderer {
 
         if (Input.Inputs.Actions[Input.Inputs.PP].pressedDown) {
             if (PostProcess.Effects.Count == 0) {
-                PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
-                //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
-                //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
-                //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
+                //PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
+                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
+                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
+                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
             } else PostProcess.Effects.Clear();
         }
 
@@ -134,7 +145,7 @@ public class Renderer {
 
             _skybox?.Draw(m4x4_View, m4x4Projection);
 
-            switch (Constants.drawMode) {
+            /*switch (Constants.drawMode) {
                 case DrawMode.Normal:
                     DrawScene();
                     break;
@@ -145,15 +156,17 @@ public class Renderer {
                     DrawScene();
                     DrawSceneWireframe();
                     break;
-            }
+            }*/
 
             SceneManager.ActiveScene?.DrawRaw();
 
-            PostProcess.EndSceneAndRunStack();
+            PostProcess.Run(enabled: true);
 
-            PostProcess.BindOutputForOverlay();
+            DrawGizmos();
 
-            de_DrawPostScene?.Invoke();
+            //PostProcess.BindOutputForOverlay();
+
+            //de_DrawPostScene?.Invoke();
 
             /// UI Stage
             de_DrawUI?.Invoke();
@@ -173,6 +186,8 @@ public class Renderer {
     }
     private void DrawEnd () {
         RenderList.Clear();
+        RenderGizmoList.Clear();
+        RenderUIList.Clear();
     }
 
 
@@ -211,6 +226,38 @@ public class Renderer {
         GL.Enable(EnableCap.CullFace);
         GL.PolygonMode(TriangleFace.FrontAndBack, GLEnum.Fill);
     }
+    private void DrawGizmos () {
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+        GL.Disable(EnableCap.CullFace);
+
+        //GL.Disable(EnableCap.DepthTest);
+
+        int count = RenderGizmoList.Count;
+        for (int i = 0; i < count; i++) {
+            RenderInfo info = RenderGizmoList[i];
+            DrawInfo(info);
+            Shader shader = info.material.shader;
+            //SetSceneUniformsUnlit(shader);
+            //SetSceneUniformsLit(shader);
+            //SetSceneUniformsSkybox(shader, _skybox.texture, _skybox.maxLod);
+
+            //Matrix4x4 mesh_m4x4 = info.modelOverride ?? Matrix4x4.CreateScale(info.scale)
+            //    *Matrix4x4.RotationEuler(info.rot)*Matrix4x4.Position(info.pos);
+            //float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
+            //shader.SetMatrix4(Model, mesh_uModel);
+            //info.material.Apply();
+
+            //info.de_Pre?.Invoke();
+            //info.mesh.Draw(info.primitiveType);
+            //info.de_Post?.Invoke();
+        }
+
+        GL.Enable(EnableCap.CullFace);
+        GL.PolygonMode(TriangleFace.FrontAndBack, GLEnum.Fill);
+    }
+
 
     public void DrawInfo (RenderInfo info) {
         if (info.mesh is null) return;
@@ -223,6 +270,7 @@ public class Renderer {
                 GL.Disable(EnableCap.Blend);
                 break;
             case RenderPass.Transparent:
+            case RenderPass.Gizmo:
                 GL.Enable(EnableCap.Blend);
                 GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 break;
@@ -290,7 +338,7 @@ public class Renderer {
             GL.DepthRange(0, 1);
     }
 
-    public void DrawGizmos () {
+    public void DrawGizmosRaw () {
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
