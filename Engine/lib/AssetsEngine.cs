@@ -99,6 +99,10 @@ public class AssetsEngine : Singleton<AssetsEngine> {
 
         _sh_SSAOComposite = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/SSAOComposite_Fragment.shader"), "SSAOComposite");
         _mat_SSAOComposite = new MaterialSSAOComposite(_sh_SSAOComposite);
+
+        _sh_CameraFocus = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/CameraFocus_Fragment.shader"), "CameraFocus");
+        _mat_CameraFocus = new MaterialCameraFocus(_sh_CameraFocus);
+
     }
 
 
@@ -131,13 +135,15 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Shader _sh_Grayscale = null!;
     public readonly static Material _mat_Grayscale = null!;
     public readonly static Shader _sh_Fxaa = null!;
-    public readonly static MaterialFxaa _mat_Fxaa = null!;
+    public readonly static Material _mat_Fxaa = null!;
     public readonly static Shader _sh_SSAO = null!;
-    public readonly static MaterialSSAO _mat_SSAO = null!;
+    public readonly static Material _mat_SSAO = null!;
     public readonly static Shader _sh_SSAOBlur = null!;
-    public readonly static MaterialSSAOBlur _mat_SSAOBlur = null!;
+    public readonly static Material _mat_SSAOBlur = null!;
     public readonly static Shader _sh_SSAOComposite = null!;
-    public readonly static MaterialSSAOComposite _mat_SSAOComposite = null!;
+    public readonly static Material _mat_SSAOComposite = null!;
+    public readonly static Shader _sh_CameraFocus = null!;
+    public readonly static Material _mat_CameraFocus = null!;
 
 
     /// Editor

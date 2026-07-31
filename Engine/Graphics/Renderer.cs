@@ -36,13 +36,13 @@ public class Renderer {
         //SetTargetSize(Engine.Window.Size.X, Engine.Window.Size.Y);
 
         PostProcess = new PostProcessStack();
-        //PostProcess.Effects.Add(new PostProcessPass(_mat_Fullscreen));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Grayscale));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
 
         TextRenderer = new TextRenderer();
 
@@ -112,9 +112,10 @@ public class Renderer {
 
         if (Input.Inputs.Actions[Input.Inputs.PP].pressedDown) {
             if (PostProcess.Effects.Count == 0) {
-                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
-                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
-                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
+                PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
+                //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
+                //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
+                //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
             } else PostProcess.Effects.Clear();
         }
 
@@ -147,8 +148,6 @@ public class Renderer {
             }
 
             SceneManager.ActiveScene?.DrawRaw();
-
-            AssetsEngine._mat_SSAOComposite.originalSceneTexture = PostProcess.SceneColorTexture;
 
             PostProcess.EndSceneAndRunStack();
 

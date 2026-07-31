@@ -64,6 +64,7 @@ public class Shader : IDisposable {
 
     public const string View = "uView";
     public const string Projection = "uProjection";
+    public const string InvProjection = "uInvProjection";
     public const string ViewPos = "uViewPos";
     public const string Model = "uModel";
     public const string CameraPos = "uCameraPos";
@@ -141,7 +142,11 @@ public class Shader : IDisposable {
     }
     public void SetMatrix4x4 (string name, Matrix4x4 matrix) {
         int location = GL.GetUniformLocation(_program, name);
-        if (location == -1) Console.WriteLine($"Uniform '{name}' not found in program {_program}!");
+        //if (location == -1) Log.log($"Uniform '{name}' not found in program {_program}!", LogType.warning);
+        if (location == -1) {
+            Log.log($"Uniform '{name}' not found in program {Name}!", LogType.warning);
+            throw new Exception();
+        }
         unsafe {
             GL.UniformMatrix4(location, 1, false, (float*)&matrix);
         }
