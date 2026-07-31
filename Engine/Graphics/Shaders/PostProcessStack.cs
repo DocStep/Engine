@@ -158,7 +158,7 @@ public class PostProcessStack : IDisposable {
         //Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, targetFbo);
         ///SetDrawBuffer(targetFbo);
         Renderer.GL.ColorMask(false, false, false, true);
-        ///Renderer.GL.ClearColor(0f, 0f, 0f, 1f);
+        //Renderer.GL.ClearColor(0f, 0f, 0f, 1f);
         Renderer.GL.Clear((uint)ClearBufferMask.ColorBufferBit);
         Renderer.GL.ColorMask(true, true, true, true);
         ///Renderer.GL.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);

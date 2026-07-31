@@ -10,7 +10,8 @@ namespace Engine.Graphics;
 
 
 public class EditorUI : Singleton<EditorUI>, IDisposable {
-    public EditorUI () {
+
+    protected override void Init () {
         ImGUI = new ImGuiController(Renderer.GL, Engine.Window, Engine.Input);
         Renderer.Instance.de_Dispose += Dispose;
 
@@ -18,6 +19,9 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         //SetFont(AssetsEngine._fontData);
 
         ImGui.LoadIniSettingsFromDisk(ImGui.GetIO().IniFilename);
+
+        Renderer.Instance.de_DrawUI += EditorUI.Instance.Draw;
+        new CameraEditor();
     }
 
     public ImGuiController ImGUI = null!;

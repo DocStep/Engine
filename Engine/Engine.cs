@@ -15,7 +15,13 @@ namespace Engine;
 
 
 
-public class Engine : Singleton<Engine>, IDisposable {
+public class Engine: IDisposable {
+    public Engine () {
+        if (Instance is not null) throw new Exception($"{typeof(Engine)}.{nameof(Instance)} is not null");
+        Instance = this;
+    }
+
+    public static Engine Instance { get; private set; } = null!;
 
     internal Action? de_Update_Engine = null;
     internal Action? de_FixedUpdate_Engine = null;
@@ -58,28 +64,25 @@ public class Engine : Singleton<Engine>, IDisposable {
     }
 
 
-    protected override void Init () {
+    public void Run () {
         ArgsUtils.Init();
 
         ThreadUtils.Init();
-        Log.InstanceCheck();
-        Log.log($"========== Init ==========", LogType.info);
+        Log.CreateSingleton();
+        Log.log($"========== Run ==========", LogType.info);
         Log.log($"===== Utils Layer =====", LogType.info);
         TimeUtils.Init();
 
-        new Reflection();
-        new Json();
+        Reflection.CreateSingleton();
+        Json.CreateSingleton();
 
         Log.log($"[{TimeUtils.getCurrentTime}]");
 
         Inputs.OverrideActions(DataEngine.InputsData);
 
         Inputs.KeysInit();
-    }
-    public void Run () {
-        Log.log($"========== Run ==========", LogType.info);
 
-        new ReflectionActionScripts();
+        ReflectionActionScripts.CreateSingleton();
 
         Silk.NET.Windowing.WindowOptions options = Silk.NET.Windowing.WindowOptions.Default with {
             Size = new Silk.NET.Maths.Vector2D<int>(1280, 720),
@@ -112,12 +115,11 @@ public class Engine : Singleton<Engine>, IDisposable {
 
         Renderer = new Graphics.Renderer();
 
-        new PhysicsManager();
-        new ComponentManager();
-        new SceneManager();
+        PhysicsManager.CreateSingleton();
+        ComponentManager.CreateSingleton();
+        SceneManager.CreateSingleton();
 
-        Graphics.EditorUI.InstanceCheck();
-        new Graphics.CameraEditor();
+        Graphics.EditorUI.CreateSingleton();
 
         de_Update_Engine?.Invoke();
 

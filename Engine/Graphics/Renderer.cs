@@ -36,7 +36,7 @@ public class Renderer {
         //SetTargetSize(Engine.Window.Size.X, Engine.Window.Size.Y);
 
         PostProcess = new PostProcessStack();
-        PostProcess.Effects.Add(new PostProcessPass(_mat_Fullscreen));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_Fullscreen));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Grayscale));
         PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
@@ -53,7 +53,6 @@ public class Renderer {
         de_ScreenResize = EditorResize;
         de_DrawPostScene += DrawGizmosRaw;
         de_DrawUI += TextRenderer.Draw;
-        de_DrawUI += EditorUI.Instance.Draw;
     }
     public static Renderer Instance = null!;
 
@@ -162,9 +161,9 @@ public class Renderer {
 
             SceneManager.ActiveScene?.DrawRaw();
 
-            DrawGizmos();
-
             PostProcess.Run(enabled: true);
+
+            DrawGizmos();
 
             PostProcess.BindOutputForOverlay();
 
