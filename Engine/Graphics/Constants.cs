@@ -41,7 +41,7 @@ internal static class Constants {
     public static float ambientColorIntensity = 0.1f;
     public static float sunLightIntensity = 5f;
 
-    public static bool renderSkybox { get; private set; } = false;
+    public static bool renderSkybox { get; private set; } = true;
     public static bool renderSkyboxReflection { get; private set; } = true;
     public static float reflectionIntensity = 1f;
 

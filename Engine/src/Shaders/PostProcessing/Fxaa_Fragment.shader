@@ -3,7 +3,7 @@
 in vec2 vUV;
 out vec4 FragColor;
 
-uniform sampler2D uScene;
+uniform sampler2D uSceneColor;
 uniform vec2 uInvResolution;
 
 /// Quality-tier FXAA (based on FXAA 3.11), luma-based edge search
@@ -25,12 +25,12 @@ float Luma(vec3 rgb) {
 
 void main () {
     vec2 pos = vUV;
-    vec3 rgbM = texture(uScene, pos).rgb;
+    vec3 rgbM = texture(uSceneColor, pos).rgb;
 
-    vec3 rgbN = textureOffset(uScene, pos, ivec2( 0, -1)).rgb;
-    vec3 rgbS = textureOffset(uScene, pos, ivec2( 0,  1)).rgb;
-    vec3 rgbE = textureOffset(uScene, pos, ivec2( 1,  0)).rgb;
-    vec3 rgbW = textureOffset(uScene, pos, ivec2(-1,  0)).rgb;
+    vec3 rgbN = textureOffset(uSceneColor, pos, ivec2( 0, -1)).rgb;
+    vec3 rgbS = textureOffset(uSceneColor, pos, ivec2( 0,  1)).rgb;
+    vec3 rgbE = textureOffset(uSceneColor, pos, ivec2( 1,  0)).rgb;
+    vec3 rgbW = textureOffset(uSceneColor, pos, ivec2(-1,  0)).rgb;
 
     float lumaM = Luma(rgbM);
     float lumaN = Luma(rgbN);
@@ -48,10 +48,10 @@ void main () {
         return;
     }
 
-    vec3 rgbNW = textureOffset(uScene, pos, ivec2(-1, -1)).rgb;
-    vec3 rgbNE = textureOffset(uScene, pos, ivec2( 1, -1)).rgb;
-    vec3 rgbSW = textureOffset(uScene, pos, ivec2(-1,  1)).rgb;
-    vec3 rgbSE = textureOffset(uScene, pos, ivec2( 1,  1)).rgb;
+    vec3 rgbNW = textureOffset(uSceneColor, pos, ivec2(-1, -1)).rgb;
+    vec3 rgbNE = textureOffset(uSceneColor, pos, ivec2( 1, -1)).rgb;
+    vec3 rgbSW = textureOffset(uSceneColor, pos, ivec2(-1,  1)).rgb;
+    vec3 rgbSE = textureOffset(uSceneColor, pos, ivec2( 1,  1)).rgb;
 
     float lumaNW = Luma(rgbNW);
     float lumaNE = Luma(rgbNE);
@@ -120,8 +120,8 @@ void main () {
     vec2 uv1 = currentUV - offset;
     vec2 uv2 = currentUV + offset;
 
-    float lumaEnd1 = Luma(texture(uScene, uv1).rgb) - lumaLocalAvg;
-    float lumaEnd2 = Luma(texture(uScene, uv2).rgb) - lumaLocalAvg;
+    float lumaEnd1 = Luma(texture(uSceneColor, uv1).rgb) - lumaLocalAvg;
+    float lumaEnd2 = Luma(texture(uSceneColor, uv2).rgb) - lumaLocalAvg;
     bool reached1 = abs(lumaEnd1) >= gradientScaled;
     bool reached2 = abs(lumaEnd2) >= gradientScaled;
     bool reachedBoth = reached1 && reached2;
@@ -132,12 +132,12 @@ void main () {
     for (int i = 0; i < FXAA_SEARCH_STEPS; i++) {
         if (reachedBoth) break;
         if (!reached1) {
-            lumaEnd1 = Luma(texture(uScene, uv1).rgb) - lumaLocalAvg;
+            lumaEnd1 = Luma(texture(uSceneColor, uv1).rgb) - lumaLocalAvg;
             reached1 = abs(lumaEnd1) >= gradientScaled;
             if (!reached1) uv1 -= offset;
         }
         if (!reached2) {
-            lumaEnd2 = Luma(texture(uScene, uv2).rgb) - lumaLocalAvg;
+            lumaEnd2 = Luma(texture(uSceneColor, uv2).rgb) - lumaLocalAvg;
             reached2 = abs(lumaEnd2) >= gradientScaled;
             if (!reached2) uv2 += offset;
         }
@@ -169,5 +169,5 @@ void main () {
         finalUV.x += finalOffset*stepLength;
     }
 
-    FragColor = vec4(texture(uScene, finalUV).rgb, 1.0);
+    FragColor = vec4(texture(uSceneColor, finalUV).rgb, 1.0);
 }

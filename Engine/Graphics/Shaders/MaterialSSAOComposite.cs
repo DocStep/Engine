@@ -12,7 +12,7 @@ public class MaterialSSAOComposite : Material {
     public override void ApplyCustom () {
         Renderer.GL.ActiveTexture(TextureUnit.Texture2);
         Renderer.GL.BindTexture(TextureTarget.Texture2D, Renderer.Instance.PostProcess.SceneColorTexture);
-        shader.SetInt(Original, 2); /// uAO = unit 2, uScene stays unit 0 (blurred AO from chain)
+        shader.SetInt(Original, 2); /// uAO = unit 2, uSceneColor stays unit 0 (blurred AO from chain)
     }
 
 }

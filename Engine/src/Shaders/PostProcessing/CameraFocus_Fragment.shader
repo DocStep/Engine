@@ -2,7 +2,7 @@
 in vec2 vUV;
 out vec4 FragColor;
 
-uniform sampler2D uScene;
+uniform sampler2D uSceneColor;
 uniform sampler2D uDepth;
 
 uniform float uNear;
@@ -24,14 +24,14 @@ void main () {
     float coc = clamp(abs(linearDepth - uFocusDistance) / uFocusRange, 0.0, 1.0);
     float radius = coc*uBokehRadius;
 
-    vec3 sum = texture(uScene, vUV).rgb;
+    vec3 sum = texture(uSceneColor, vUV).rgb;
     float total = 1.0;
 
     const int kSamples = 8;
     for (int i = 0; i < kSamples; i++) {
         float angle = float(i) / float(kSamples)*6.28318530718;
         vec2 offset = vec2(cos(angle), sin(angle))*radius*uTexelSize;
-        sum += texture(uScene, vUV + offset).rgb;
+        sum += texture(uSceneColor, vUV + offset).rgb;
         total += 1.0;
     }
 

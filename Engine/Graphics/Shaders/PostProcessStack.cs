@@ -125,30 +125,43 @@ public class PostProcessStack : IDisposable {
         if (!enabled || Effects.Count == 0) {
             CopySceneColor(finalTargetFbo);
             CopySceneDepth(finalTargetFbo);
-            Renderer.GL.DepthMask(true);
-            return;
-        }
+        } else {
+            uint currentInput = _sceneColor;
+            int pingIndex = 0;
 
-        uint currentInput = _sceneColor;
-        int pingIndex = 0;
+            for (int i = 0; i < Effects.Count; i++) {
+                bool isLast = i == Effects.Count - 1;
+                uint targetFbo = isLast ? finalTargetFbo : _pingFbo[pingIndex];
+                Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, targetFbo);
+                SetDrawBuffer(targetFbo);
+                PrepareFullscreenPass();
 
-        for (int i = 0; i < Effects.Count; i++) {
-            bool isLast = i == Effects.Count - 1;
-            uint targetFbo = isLast ? finalTargetFbo : _pingFbo[pingIndex];
-            //Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, targetFbo);
-            SetDrawBuffer(targetFbo);
-            PrepareFullscreenPass();
+                Effects[i].Apply(currentInput, _sceneDepth);
 
-            Effects[i].Apply(currentInput, _sceneDepth);
-
-            if (!isLast) {
-                currentInput = _pingColor[pingIndex];
-                pingIndex = 1 - pingIndex;
+                if (!isLast) {
+                    currentInput = _pingColor[pingIndex];
+                    pingIndex = 1 - pingIndex;
+                }
             }
+
+            CopySceneDepth(finalTargetFbo);
         }
 
-        CopySceneDepth(finalTargetFbo);
+        ForceOpaqueAlpha(finalTargetFbo);
         Renderer.GL.DepthMask(true);
+    }
+
+    /// Writes alpha = 1 across finalTargetFbo without touching RGB. Unlike BlitFramebuffer,
+    /// GL.Clear respects GL.ColorMask, so this reliably scrubs whatever partial alpha
+    /// transparent scene draws left behind, regardless of which path filled the target.
+    void ForceOpaqueAlpha (uint targetFbo) {
+        //Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, targetFbo);
+        ///SetDrawBuffer(targetFbo);
+        Renderer.GL.ColorMask(false, false, false, true);
+        ///Renderer.GL.ClearColor(0f, 0f, 0f, 1f);
+        Renderer.GL.Clear((uint)ClearBufferMask.ColorBufferBit);
+        Renderer.GL.ColorMask(true, true, true, true);
+        ///Renderer.GL.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
     }
 
     void PrepareFullscreenPass () {

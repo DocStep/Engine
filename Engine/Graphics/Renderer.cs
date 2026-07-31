@@ -36,6 +36,7 @@ public class Renderer {
         //SetTargetSize(Engine.Window.Size.X, Engine.Window.Size.Y);
 
         PostProcess = new PostProcessStack();
+        PostProcess.Effects.Add(new PostProcessPass(_mat_Fullscreen));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Grayscale));
         PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
@@ -123,10 +124,11 @@ public class Renderer {
 
         if (Input.Inputs.Actions[Input.Inputs.PP].pressedDown) {
             if (PostProcess.Effects.Count == 0) {
-                //PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
+                //PostProcess.Effects.Add(new PostProcessPass(_mat_Fullscreen));
                 PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
                 PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
                 PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
+                //PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
             } else PostProcess.Effects.Clear();
         }
 
@@ -145,7 +147,7 @@ public class Renderer {
 
             _skybox?.Draw(m4x4_View, m4x4Projection);
 
-            /*switch (Constants.drawMode) {
+            switch (Constants.drawMode) {
                 case DrawMode.Normal:
                     DrawScene();
                     break;
@@ -156,17 +158,17 @@ public class Renderer {
                     DrawScene();
                     DrawSceneWireframe();
                     break;
-            }*/
+            }
 
             SceneManager.ActiveScene?.DrawRaw();
 
-            PostProcess.Run(enabled: true);
-
             DrawGizmos();
 
-            //PostProcess.BindOutputForOverlay();
+            PostProcess.Run(enabled: true);
 
-            //de_DrawPostScene?.Invoke();
+            PostProcess.BindOutputForOverlay();
+
+            de_DrawPostScene?.Invoke();
 
             /// UI Stage
             de_DrawUI?.Invoke();

@@ -76,7 +76,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.Begin("Scene");
 
         Vector2 avail = ImGui.GetContentRegionAvail();
-        _sceneAvail = new Vector2(Math.Max(avail.X, 1), Math.Max(avail.Y, 1));
+        _sceneAvail = new Vector2(MathF.Max(MathF.Floor(avail.X), 1), MathF.Max(MathF.Floor(avail.Y), 1));
 
         ImGui.Image((IntPtr)Renderer.Instance.PostProcess.OutputTexture, _sceneAvail, new Vector2(0, 1), new Vector2(1, 0));
 
