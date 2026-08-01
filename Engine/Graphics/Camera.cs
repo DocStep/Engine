@@ -10,8 +10,6 @@ public class Camera {
         Instance = this;
 
         Engine.Window.Update += Update;
-
-        //UpdateCamera(0);
     }
 
     public static Camera Instance = null!;

@@ -36,19 +36,19 @@ public static class CrashHandlers {
 
     private static readonly object _lock = new object();
     public static void WriteLog (Exception ex, string source = null) {
-        try {
-            ConsoleColor tempColor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"Error (Log): {source}");
-            Console.ForegroundColor = tempColor;
-            string log =
-                "========== CRASH ==========\n" +
-                $"Time: {DateTime.UtcNow:O}\n" +
-                $"Source: {source}\n" +
-                $"Message: {ex.Message}\n" +
-                $"StackTrace:\n{ex.StackTrace}\n" +
-                $"Inner:\n{ex.InnerException}\n\n";
+        ConsoleColor tempColor = Console.ForegroundColor;
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine($"Error (Log): {source}");
+        Console.ForegroundColor = tempColor;
+        string log =
+            "========== CRASH ==========\n" +
+            $"Time: {DateTime.UtcNow:O}\n" +
+            $"Source: {source}\n" +
+            $"Message: {ex.Message}\n" +
+            $"StackTrace:\n{ex.StackTrace}\n" +
+            $"Inner:\n{ex.InnerException}\n\n";
 
+        try {
             lock (_lock) {
                 lib.DirectoryExists(folderPath);
                 File.AppendAllText(logDefaultFilePath, log, Encoding.UTF8);

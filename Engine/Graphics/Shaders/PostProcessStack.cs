@@ -57,6 +57,7 @@ public class PostProcessStack : IDisposable {
         _width = w;
         _height = h;
 
+        Log.log(_width, _height);
         _sceneFbo = CreateFbo(w, h, out _sceneColor, out _sceneDepth, withDepth: true);
         _pingFbo[0] = CreateFbo(w, h, out _pingColor[0], out _pingDepth0, withDepth: true);
         _pingFbo[1] = CreateFbo(w, h, out _pingColor[1], out _pingDepth1, withDepth: true);
@@ -168,6 +169,17 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.DepthMask(true);
     }
 
+    public void PresentToBackbuffer () {
+        Renderer.GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, _outputFbo);
+        Renderer.GL.ReadBuffer(GLEnum.ColorAttachment0);
+        Renderer.GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+        Renderer.GL.DrawBuffer(GLEnum.Back);
+        Renderer.GL.BlitFramebuffer(0, 0, _width, _height,0, 0, Renderer.Instance.Width, Renderer.Instance.Height,
+            ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+        Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+    }
+
+
     /// Writes alpha = 1 across finalTargetFbo without touching RGB. Unlike BlitFramebuffer,
     /// GL.Clear respects GL.ColorMask, so this reliably scrubs whatever partial alpha
     /// transparent scene draws left behind, regardless of which path filled the target.
@@ -229,6 +241,8 @@ public class PostProcessStack : IDisposable {
     static void SetDrawBuffer (uint fbo) {
         Renderer.GL.DrawBuffer(fbo == 0 ? GLEnum.Back : GLEnum.ColorAttachment0);
     }
+
+
 
     void DeleteTargets () {
         DeleteFramebuffer(_sceneFbo);

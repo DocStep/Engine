@@ -259,7 +259,7 @@ public sealed class CameraEditor : Camera {
             }
         }
         
-        Renderer.Instance.m4x4_View = Matrix4x4.CreateLookAtLeftHanded(position, position + forward, worldUp);
+        RendererEditor.Instance.m4x4_View = Matrix4x4.CreateLookAtLeftHanded(position, position + forward, worldUp);
         cameraRot = rotation;
     }
 
@@ -310,7 +310,7 @@ public sealed class CameraEditor : Camera {
         //UI.TextRenderer.AddText($"SceneSize: {sceneSize.X}, {sceneSize.Y}");
 
         Ray ray = Raycast.ScreenPointToRay(scenePos.Value.X, scenePos.Value.Y, (int)sceneSize.X, (int)sceneSize.Y,
-            Renderer.Instance.m4x4_View, Renderer.Instance.m4x4Projection);
+            RendererEditor.Instance.m4x4_View, RendererEditor.Instance.m4x4Projection);
         return ray;
     }
 

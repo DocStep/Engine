@@ -14,25 +14,23 @@ namespace Editor.Graphics;
 public class EditorUI : Singleton<EditorUI>, IDisposable {
 
     protected override void Init () {
-        ImGUI = new ImGuiController(Engine.Graphics.Renderer.GL, Engine.Engine.Window, Engine.Engine.Input);
+        ImGUI = new ImGuiController(Renderer.GL, Engine.Engine.Window, Engine.Engine.Input);
 
         SetDock();
         //SetFont(AssetsEngine._fontData);
 
         ImGui.LoadIniSettingsFromDisk(ImGui.GetIO().IniFilename);
 
-        //new CameraEditor();
+        Engine.Engine.Instance.de_Update_Engine += Update;
+        Renderer.Instance.de_LateUpdate += Gizmos.Update;
 
-        Engine.Engine.Instance.de_Update += Update;
-        Engine.Graphics.Renderer.Instance.de_LateUpdate += Gizmos.Update;
-
-        Engine.Graphics.Renderer.Instance.de_ScreenResize = EditorResize;
-        Engine.Graphics.Renderer.Instance.de_DrawUI += Draw;
-        Engine.Graphics.Renderer.Instance.de_Dispose += Dispose;
+        Renderer.Instance.de_DrawUI += Draw;
+        Renderer.Instance.de_Dispose += Dispose;
     }
 
     public ImGuiController ImGUI = null!;
     public bool isUIClick = false;
+    private bool _docked = false;
     private bool _isClosing = false;
 
     public const float valueStep = 0.01f;
@@ -59,14 +57,16 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         if (_isClosing) return;
 
         /// Switch to the real backbuffer for ImGui — dockspace, panels, and the Scene image itself
-        Engine.Graphics.Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-        Engine.Graphics.Renderer.GL.DrawBuffer(GLEnum.Back);
-        Engine.Graphics.Renderer.GL.Viewport(0, 0, (uint)Engine.Engine.Window.Size.X, (uint)Engine.Engine.Window.Size.Y);
-        Engine.Graphics.Renderer.GL.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
-        Engine.Graphics.Renderer.GL.Clear((uint)ClearBufferMask.ColorBufferBit);
+        Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        Renderer.GL.DrawBuffer(GLEnum.Back);
+        Renderer.GL.Viewport(0, 0, (uint)Engine.Engine.Window.Size.X, (uint)Engine.Engine.Window.Size.Y);
+        Renderer.GL.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
+        Renderer.GL.Clear((uint)ClearBufferMask.ColorBufferBit);
 
         ImGuiViewportPtr viewport = ImGui.GetMainViewport();
         uint dockspaceId = ImGui.DockSpaceOverViewport(0, viewport, ImGuiDockNodeFlags.PassthruCentralNode);
+
+        if (!_docked) ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
 
         DrawSceneView(dockspaceId);
 
@@ -80,18 +80,21 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             ImGui.SaveIniSettingsToDisk(io.IniFilename);
             io.WantSaveIniSettings = false;
         }
+
+        _docked = true;
     }
 
     private void DrawSceneView (uint dockspaceId) {
-        ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         ImGui.Begin("Scene");
-
+        Vector2 winSize = ImGui.GetWindowSize();
         Vector2 avail = ImGui.GetContentRegionAvail();
-        Log.log("DrawSceneView", avail);
         _sceneAvail = new Vector2(MathF.Max(MathF.Floor(avail.X), 1), MathF.Max(MathF.Floor(avail.Y), 1));
 
-        ImGui.Image((IntPtr)Engine.Graphics.Renderer.Instance.PostProcess.OutputTexture, _sceneAvail, new Vector2(0, 1), new Vector2(1, 0));
+        //Log.log("win", winSize, "avail", avail, "_sceneAvail", _sceneAvail);
+
+        ImGui.Image((IntPtr)Renderer.Instance.PostProcess.OutputTexture,
+            _sceneAvail, new Vector2(0, 1), new Vector2(1, 0));
 
         _sceneRectMin = ImGui.GetItemRectMin();
         _sceneRectMax = ImGui.GetItemRectMax();
@@ -112,7 +115,6 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     }
 
     private void DrawInspector (uint dockspaceId) {
-        ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
         ImGui.Begin("Inspector");
 
         GameObject? selectedGO = Gizmos._gizmo_Selected.selectedMeshComp?.owner;
@@ -137,7 +139,6 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     }
 
     private void DrawInfo (uint dockspaceId) {
-        ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
         ImGui.Begin("GL Info");
         ImGui.BeginDisabled();
 
@@ -303,12 +304,6 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         //ImGUI = new ImGuiController(Renderer.GL, Engine.Window, Engine.Input);
     }
 
-
-
-
-    private void EditorResize () {
-        Engine.Graphics.Renderer.Instance.SetTargetSize((int)SceneAvail.X, (int)SceneAvail.Y);
-    }
 
 
     public void Dispose () {

@@ -15,8 +15,8 @@ namespace Editor.Graphics;
 /// Gizmos
 /// UI
 
-public class Renderer : Engine.Graphics.Renderer {
-    public Renderer() : base() {
+public class RendererEditor : Renderer {
+    public RendererEditor() : base() {
         Engine.Engine.Instance.de_Update_Engine += EngineUpdate;
 
         de_LateUpdate += DrawMaterialsGrid;
@@ -33,6 +33,12 @@ public class Renderer : Engine.Graphics.Renderer {
             list[c].Update();
         }
     }
+
+    public override void SetTargetSize () {
+        Width = (int)EditorUI.Instance.SceneAvail.X;
+        Height = (int)EditorUI.Instance.SceneAvail.Y;
+    }
+
     protected override void DrawSceneAll () {
         switch (Constants.drawMode) {
             case DrawMode.Normal:
@@ -158,7 +164,7 @@ public class Renderer : Engine.Graphics.Renderer {
                     mesh = _mesh_Sphere,
                     material = mat,
                 };
-                Renderer.Instance.AddRenderInfo(info);
+                RendererEditor.Instance.AddRenderInfo(info);
             }
         }
     }

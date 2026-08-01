@@ -58,12 +58,8 @@ public class Renderer {
     public readonly PostProcessStack PostProcess = null!;
 
 
-    public int Width { get; private set; }
-    public int Height { get; private set; }
-    public void SetTargetSize (int width, int height) {
-        Width = width;
-        Height = height;
-    }
+    public int Width { get; protected set; }
+    public int Height { get; protected set; }
 
 
     /// Debug
@@ -98,50 +94,53 @@ public class Renderer {
     protected long iter = 0;
 
 
-    public Action? de_ScreenResize = null;
     public Action? de_LateUpdate = null;
     public Action? de_DrawPostScene = null;
     public Action? de_DrawOverlay = null;
     public Action? de_DrawUI = null;
+    public Action? de_Final = null;
 
     protected void OnRender (double deltaTime) {
         de_LateUpdate?.Invoke();
 
-        try {
-            Stats = new RendererStats();
+        Stats = new RendererStats();
 
-            SetTargetSize(Engine.Window.Size.X, Engine.Window.Size.Y);
-            de_ScreenResize?.Invoke();
-            PostProcess.Resize(Width, Height);
+        SetTargetSize();
+        PostProcess.Resize(Width, Height);
+        //Log.log(Width, Height);
 
-            /// Camera Matrix
-            UpdateProjection(Width, Height);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
+        /// Camera Matrix
+        UpdateProjection(Width, Height);
+        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
-            PostProcess.BeginScene();
+        PostProcess.BeginScene();
 
-            _skybox?.Draw(m4x4_View, m4x4Projection);
+        _skybox?.Draw(m4x4_View, m4x4Projection);
 
-            DrawSceneAll();
+        DrawSceneAll();
 
-            SceneManager.ActiveScene?.DrawRaw();
+        SceneManager.ActiveScene?.DrawRaw();
 
-            PostProcess.Run();
+        PostProcess.Run();
 
-            de_DrawPostScene?.Invoke();
+        de_DrawPostScene?.Invoke();
 
-            PostProcess.BindOutputForOverlay();
+        PostProcess.BindOutputForOverlay();
 
-            de_DrawOverlay?.Invoke();
+        de_DrawOverlay?.Invoke();
 
-            /// UI Stage
-            de_DrawUI?.Invoke();
+        /// UI Stage
+        de_DrawUI?.Invoke();
 
-            iter++;
-            DrawEnd();
-        } catch (Exception ex) {
-            Log.log($"OnRender exception: {ex}");
-        }
+        //de_Final?.Invoke();
+        PostProcess.PresentToBackbuffer(); /// blit _outputFbo into fbo 0
+
+        iter++;
+        DrawEnd();
+    }
+    public virtual void SetTargetSize () {
+        Width = Engine.Window.Size.X;
+        Height = Engine.Window.Size.Y;
     }
     protected void UpdateProjection (float width, float height) {
         float aspect = width/height;

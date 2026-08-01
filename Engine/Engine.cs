@@ -71,6 +71,7 @@ public class Engine : IDisposable {
         Log.log($"========== Run ==========", LogType.info);
         Log.log($"===== Utils Layer =====", LogType.info);
         TimeUtils.Init();
+        //CrashHandlers.Init();
 
         Reflection.CreateSingleton();
         Json.CreateSingleton();

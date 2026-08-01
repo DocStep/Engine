@@ -9,7 +9,7 @@ namespace Editor.Graphics;
 
 public class GizmoSelected : IDisposable {
     public GizmoSelected () {
-        GL = Renderer.GL;
+        GL = RendererEditor.GL;
         _sh_Outline = Gizmos._sh_Outline;
     }
 
@@ -309,15 +309,15 @@ public class GizmoSelected : IDisposable {
         Transform? tr_obj = selectedMeshComp?.owner.Transform;
         if (tr_obj is null) return;
 
-        GL.Viewport(0, 0, (uint)Renderer.Instance.Width, (uint)Renderer.Instance.Height);
+        GL.Viewport(0, 0, (uint)RendererEditor.Instance.Width, (uint)RendererEditor.Instance.Height);
 
-        Renderer.GL.Disable(EnableCap.DepthTest);
-        Renderer.GL.Disable(EnableCap.CullFace);
+        RendererEditor.GL.Disable(EnableCap.DepthTest);
+        RendererEditor.GL.Disable(EnableCap.CullFace);
 
         Shader _sh_Unlit = AssetsEngine._sh_Unlit;
         _sh_Unlit.Use();
-        _sh_Unlit.SetMatrix4(View, Renderer.Instance.UView);
-        _sh_Unlit.SetMatrix4(Projection, Renderer.Instance.UProjection);
+        _sh_Unlit.SetMatrix4(View, RendererEditor.Instance.UView);
+        _sh_Unlit.SetMatrix4(Projection, RendererEditor.Instance.UProjection);
         _sh_Unlit.SetVector3(ViewPos, Camera.Instance.cameraPos);
 
         DrawOutline();
@@ -340,8 +340,8 @@ public class GizmoSelected : IDisposable {
 
         Shader _sh_Unlit = AssetsEngine._sh_Unlit;
         _sh_Unlit.Use();
-        _sh_Unlit.SetMatrix4(View, Renderer.Instance.UView);
-        _sh_Unlit.SetMatrix4(Projection, Renderer.Instance.UProjection);
+        _sh_Unlit.SetMatrix4(View, RendererEditor.Instance.UView);
+        _sh_Unlit.SetMatrix4(Projection, RendererEditor.Instance.UProjection);
 
         /// Quads
         isColorSelected = selectedPositionMode == SelectedPositionGizmoMode.XY || selectedPositionOverMode == SelectedPositionGizmoMode.XY;
@@ -405,7 +405,7 @@ public class GizmoSelected : IDisposable {
             GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
 
-            Renderer.Instance.DrawInfo(renderInfo);
+            RendererEditor.Instance.DrawInfo(renderInfo);
 
 
             /// Pass 2 - outline
@@ -425,8 +425,8 @@ public class GizmoSelected : IDisposable {
                 *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
 
             _sh_Outline.Use();
-            _sh_Outline.SetMatrix4(View, Renderer.Instance.UView);
-            _sh_Outline.SetMatrix4(Projection, Renderer.Instance.UProjection);
+            _sh_Outline.SetMatrix4(View, RendererEditor.Instance.UView);
+            _sh_Outline.SetMatrix4(Projection, RendererEditor.Instance.UProjection);
             _sh_Outline.SetMatrix4(Model, Matrix4x4.ToArray(model));
             _sh_Outline.SetFloat(NormalOffset, 0.01f*dist*_width);
             _sh_Outline.SetVector3(Color, Constants.cyan);

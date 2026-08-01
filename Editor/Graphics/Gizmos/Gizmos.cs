@@ -10,7 +10,7 @@ namespace Editor.Graphics;
 public static class Gizmos {
     static Gizmos () {
         //Renderer.Instance.de_GizmosDraw += DrawGizmos;
-        GL = Renderer.GL;
+        GL = RendererEditor.GL;
 
         _sh_Outline = new Shader(Assets.LoadText("src/Shaders/Outline_Vertex.shader"), Assets.LoadText("src/Shaders/Outline_Fragment.shader"), "Outline");
         _sh_Outline.SetVector3(Color, Constants.cyan);
@@ -119,7 +119,7 @@ public static class Gizmos {
     }
     private static void GizmoGrid () {
         _mat_GizmoGrid.SetVector3(CameraPos, Camera.Instance.cameraPos);
-        Renderer.Instance.AddRenderInfo(new RenderInfo() {
+        RendererEditor.Instance.AddRenderInfo(new RenderInfo() {
             mesh = _mesh_GridWireframe,
             primitiveType = PrimitiveType.Lines,
             material = _mat_GizmoGrid,
@@ -133,7 +133,7 @@ public static class Gizmos {
 
     private static void GizmoAxes () {
         _mat_GizmoAxes.SetVector3(CameraPos, Camera.Instance.cameraPos);
-        Renderer.Instance.AddRenderInfo(new RenderInfo() {
+        RendererEditor.Instance.AddRenderInfo(new RenderInfo() {
             mesh = _mesh_AxesWireframe,
             primitiveType = PrimitiveType.Lines,
             material = _mat_GizmoAxes,
@@ -196,7 +196,7 @@ public static class Gizmos {
 
     private static void GizmoSun () {
         if (!Constants.drawGizmosSun) return;
-        Renderer.Instance.AddRenderInfo(new RenderInfo() {
+        RendererEditor.Instance.AddRenderInfo(new RenderInfo() {
             pos = new Vector3(0f, 5f, 0f),
             rot = Vector3.DirectionToEuler(Constants.sunLightDir),
             mesh = Constants._drawArrowAsMesh ? _mesh_Arrow3D : _mesh_ArrowWireframe,
