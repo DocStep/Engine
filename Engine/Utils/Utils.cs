@@ -6,7 +6,7 @@ namespace Engine;
 public enum Axis { XY, XZ, YZ }
 
 
-internal static class Utils {
+public static class Utils {
 
     extension(Matrix4x4) {
         public static Matrix4x4 Position (Vector3 position) {
@@ -100,18 +100,18 @@ internal static class Utils {
 
 
 
-    internal static float Clamp (float value, float min, float max) {
+    public static float Clamp (float value, float min, float max) {
         if (value < min) return min;
         if (value > max) return max;
         return value;
     }
 
 
-    internal static Matrix4x4 CreateFromYawPitchRoll (float yaw, float pitch, float roll) {
+    public static Matrix4x4 CreateFromYawPitchRoll (float yaw, float pitch, float roll) {
         return Matrix4x4.CreateRotationZ(roll)*Matrix4x4.CreateRotationX(-pitch)*Matrix4x4.CreateRotationY(-yaw);
     }
 
-    internal static float Lerp (float a, float b, float t) => a + (b - a)*t;
+    public static float Lerp (float a, float b, float t) => a + (b - a)*t;
 
     extension(Matrix4x4) {
         internal static float[] ToArray (Matrix4x4 m) => new[] {

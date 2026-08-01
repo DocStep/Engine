@@ -1,4 +1,7 @@
-﻿using Engine.Graphics;
+﻿using System;
+using System.Collections.Generic;
+using System.Numerics;
+using Engine.Graphics;
 using Engine.Input;
 using static Engine.Input.Inputs;
 
@@ -86,8 +89,8 @@ internal sealed class CameraEditor : Camera {
 
 
     protected override void Update (double deltaTime) {
-        mousePos.X = Inputs.MousePos.X;
-        mousePos.Y = Inputs.MousePos.Y;
+        mousePos_Window.X = Inputs.MousePos.X;
+        mousePos_Window.Y = Inputs.MousePos.Y;
         //Log.log($"mousePos {mousePos}");
         float dt = (float)deltaTime;
 
@@ -117,8 +120,8 @@ internal sealed class CameraEditor : Camera {
 
         /// Middle Mouse: drag to pan, clean click (no drag) to focus
         if (Inputs.Actions[CameraDrag].pressedDown && mouseAllowed) {
-            cameraDragStartX = mousePos.X;
-            cameraDragStartY = mousePos.Y;
+            cameraDragStartX = mousePos_Window.X;
+            cameraDragStartY = mousePos_Window.Y;
             isCameraDragging = false;
         }
         if (Inputs.Actions[CameraDrag].pressed) {
@@ -126,8 +129,8 @@ internal sealed class CameraEditor : Camera {
             float dx = Inputs.MouseDelta.X;
             float dy = Inputs.MouseDelta.Y;
 
-            float totalDx = mousePos.X - cameraDragStartX;
-            float totalDy = mousePos.Y - cameraDragStartY;
+            float totalDx = mousePos_Window.X - cameraDragStartX;
+            float totalDy = mousePos_Window.Y - cameraDragStartY;
             if (_clickDragThresholdPixels*_clickDragThresholdPixels < totalDx*totalDx + totalDy*totalDy) {
                 isCameraDragging = true;
                 isFocusing = false;
@@ -140,7 +143,7 @@ internal sealed class CameraEditor : Camera {
             Inputs.MouseHide();
         } else if (Inputs.Actions[CameraDrag].pressedUp) {
             if (!isCameraDragging) {
-                TryFocusOnPoint(mousePos.X, mousePos.Y, Engine.Window.Size.X, Engine.Window.Size.Y);
+                TryFocusOnPoint(mousePos_Window.X, mousePos_Window.Y, Engine.Window.Size.X, Engine.Window.Size.Y);
             }
         }
 
@@ -244,7 +247,7 @@ internal sealed class CameraEditor : Camera {
         }
 
         /// Select
-        if (mouseAllowed && !EditorUI.Instance.isUIClick) {
+        if (mouseAllowed && !Editor.Graphics.EditorUI.Instance.isUIClick) {
             Ray? ray = RaycastMouse();
             if (ray is not null && Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
                 Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray.Value, out MeshComponent? hitMeshComp, out Vector3 hitPos, out Vector3 hitNormal);
@@ -293,6 +296,23 @@ internal sealed class CameraEditor : Camera {
         isFocusing = true;
     }
 
+
+    public override Ray? RaycastMouse () {
+        //UI.TextRenderer.AddText($"MousePos_Window: {mousePos_Window.X}, {mousePos_Window.Y}");
+
+        //Vector2? scenePos = mousePos;
+        Vector2? scenePos = Editor.Graphics.EditorUI.Instance.GetSceneMousePos(mousePos_Window);
+        if (scenePos is null) return null;
+
+        Vector2 sceneSize = Editor.Graphics.EditorUI.Instance.SceneAvail;
+
+        //UI.TextRenderer.AddText($"MousePos_Scene: {scenePos.Value.X}, {scenePos.Value.Y}");
+        //UI.TextRenderer.AddText($"SceneSize: {sceneSize.X}, {sceneSize.Y}");
+
+        Ray ray = Raycast.ScreenPointToRay(scenePos.Value.X, scenePos.Value.Y, (int)sceneSize.X, (int)sceneSize.Y,
+            Renderer.Instance.m4x4_View, Renderer.Instance.m4x4Projection);
+        return ray;
+    }
 
     /*private void LookAtOrbitCenter () {
         Vector3 offset = cameraOrbitCenterPos - cameraPos;

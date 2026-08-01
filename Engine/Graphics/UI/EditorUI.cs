@@ -5,23 +5,28 @@ using Marshal = System.Runtime.InteropServices.Marshal;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
 using ImGuiNET;
+using Engine;
+using Engine.Graphics;
 
-namespace Engine.Graphics;
+namespace Editor.Graphics;
 
 
 public class EditorUI : Singleton<EditorUI>, IDisposable {
 
     protected override void Init () {
-        ImGUI = new ImGuiController(Renderer.GL, Engine.Window, Engine.Input);
-        Renderer.Instance.de_Dispose += Dispose;
+        ImGUI = new ImGuiController(Renderer.GL, Engine.Engine.Window, Engine.Engine.Input);
 
         SetDock();
         //SetFont(AssetsEngine._fontData);
 
         ImGui.LoadIniSettingsFromDisk(ImGui.GetIO().IniFilename);
 
-        Renderer.Instance.de_DrawUI += EditorUI.Instance.Draw;
         new CameraEditor();
+
+        Renderer.Instance.de_LateUpdate += Gizmos.Update;
+        Renderer.Instance.de_ScreenResize = EditorResize;
+        Renderer.Instance.de_DrawUI += EditorUI.Instance.Draw;
+        Renderer.Instance.de_Dispose += Dispose;
     }
 
     public ImGuiController ImGUI = null!;
@@ -35,16 +40,17 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
     private Vector2 _sceneRectMin;
     private Vector2 _sceneRectMax;
-    public bool IsSceneHovered { get; private set; }
+    public bool isUIHovered { get; private set; }
 
 
     public void Update () {
         if (_isClosing) return;
 
-        ImGUI.Update((float)Engine.deltaTime);
+        ImGUI.Update((float)Engine.Engine.deltaTime);
 
         bool wantCapture = ImGui.GetIO().WantCaptureMouse || ImGui.IsAnyItemActive();
-        isUIClick = wantCapture && !IsSceneHovered;
+        isUIClick = wantCapture && !isUIHovered;
+        //isUIClick = wantCapture;
     }
 
     public void Draw () {
@@ -53,7 +59,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         /// Switch to the real backbuffer for ImGui — dockspace, panels, and the Scene image itself
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         Renderer.GL.DrawBuffer(GLEnum.Back);
-        Renderer.GL.Viewport(0, 0, (uint)Engine.Window.Size.X, (uint)Engine.Window.Size.Y);
+        Renderer.GL.Viewport(0, 0, (uint)Engine.Engine.Window.Size.X, (uint)Engine.Engine.Window.Size.Y);
         Renderer.GL.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
         Renderer.GL.Clear((uint)ClearBufferMask.ColorBufferBit);
 
@@ -86,16 +92,16 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         _sceneRectMin = ImGui.GetItemRectMin();
         _sceneRectMax = ImGui.GetItemRectMax();
-        IsSceneHovered = ImGui.IsItemHovered();
+        isUIHovered = ImGui.IsItemHovered();
 
         ImGui.End();
         ImGui.PopStyleVar();
     }
     /// Mouse position remapped into Scene FBO pixel space, or null if outside the panel
-    public Vector2? GetSceneMousePos (Vector2 screenMousePos) {
-        if (!IsSceneHovered) return null;
+    public Vector2? GetSceneMousePos (Vector2 mousePosWindow) {
+        if (!isUIHovered) return null;
 
-        Vector2 local = screenMousePos - _sceneRectMin;
+        Vector2 local = mousePosWindow - _sceneRectMin;
         if (local.X < 0 || local.Y < 0 || local.X > _sceneAvail.X || local.Y > _sceneAvail.Y)
             return null;
 
@@ -134,7 +140,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         DrawObject(Renderer.Instance.Stats);
         ImGui.NewLine();
-        DrawObject(Shader.Stats);
+        DrawObject(Engine.Graphics.Shader.Stats);
 
         ImGui.EndDisabled();
         ImGui.End();
@@ -292,6 +298,12 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         //ImGUI = new ImGuiController(Renderer.GL, Engine.Window, Engine.Input);
     }
 
+
+
+
+    private void EditorResize () {
+        Renderer.Instance.SetTargetSize((int)SceneAvail.X, (int)SceneAvail.Y);
+    }
 
 
     public void Dispose () {

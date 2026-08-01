@@ -42,15 +42,13 @@ public class Renderer {
         PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
         PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
         PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
-        //PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
 
         TextRenderer = new TextRenderer();
 
         /// Delegates
-        de_LateUpdate += Gizmos.Update;
         de_LateUpdate += DrawMaterialsGrid;
-        de_ScreenResize = EditorResize;
         de_DrawPostScene += DrawGizmosRaw;
         de_DrawUI += TextRenderer.Draw;
     }
@@ -82,8 +80,8 @@ public class Renderer {
 
 
     /// Debug
-    internal Matrix4x4 m4x4_View = Matrix4x4.Identity;
-    internal Matrix4x4 m4x4Projection = Matrix4x4.Identity;
+    public Matrix4x4 m4x4_View = Matrix4x4.Identity;
+    public Matrix4x4 m4x4Projection = Matrix4x4.Identity;
     private static float[] uView = [];
     public float[] UView => uView;
 
@@ -122,13 +120,7 @@ public class Renderer {
         de_LateUpdate?.Invoke();
 
         if (Input.Inputs.Actions[Input.Inputs.PP].pressedDown) {
-            if (PostProcess.Effects.Count == 0) {
-                //PostProcess.Effects.Add(new PostProcessPass(_mat_Fullscreen));
-                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
-                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
-                PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
-                //PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
-            } else PostProcess.Effects.Clear();
+            PostProcess.Enabled = !PostProcess.Enabled;
         }
 
         try {
@@ -161,7 +153,7 @@ public class Renderer {
 
             SceneManager.ActiveScene?.DrawRaw();
 
-            PostProcess.Run(enabled: true);
+            PostProcess.Run();
 
             DrawGizmos();
 
@@ -427,12 +419,6 @@ public class Renderer {
         PostProcess.Dispose();
 
         de_Dispose?.Invoke();
-    }
-
-
-
-    private void EditorResize () {
-        SetTargetSize((int)EditorUI.Instance.SceneAvail.X, (int)EditorUI.Instance.SceneAvail.Y);
     }
 
 }

@@ -8,7 +8,7 @@ public class MaterialCameraFocus : Material {
 
     public float focusDistance = 10f;
     public float focusRange = 5f;
-    public float bokehRadius = 0.0f;
+    public float bokehRadius = 3.0f;
 
     public const string SceneDepth = "uDepth";
     public const string Near = "uNear";

@@ -119,7 +119,7 @@ public class Engine: IDisposable {
         ComponentManager.CreateSingleton();
         SceneManager.CreateSingleton();
 
-        Graphics.EditorUI.CreateSingleton();
+        Editor.Graphics.EditorUI.CreateSingleton();
 
         de_Update_Engine?.Invoke();
 
@@ -167,7 +167,7 @@ public class Engine: IDisposable {
         de_Update_Engine?.Invoke();
         ReflectionActionScripts.Instance.de_Actions_Update?.Invoke();
 
-        Graphics.EditorUI.Instance?.Update();
+        Editor.Graphics.EditorUI.Instance?.Update();
         // your normal scene rendering here
 
         f3log();
@@ -181,7 +181,7 @@ public class Engine: IDisposable {
         Graphics.UI.TextRenderer.AddText($"FPS: {(int)(1/Engine.Instance._deltaTime)}");
         Graphics.UI.TextRenderer.AddText($"ms: {_deltaTime*1000:F3}");
         Graphics.UI.TextRenderer.AddText($"Pos: {Graphics.Camera.Instance?.cameraPos:F3}");
-        Graphics.UI.TextRenderer.AddText($"MousePos: {Graphics.Camera.Instance?.mousePos}");
+        Graphics.UI.TextRenderer.AddText($"MousePos: {Graphics.Camera.Instance?.mousePos_Window}");
         Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.Instance.componentsCount}");
     }
 

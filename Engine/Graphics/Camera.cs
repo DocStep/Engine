@@ -1,6 +1,4 @@
 ﻿using Engine.Graphics;
-using Engine.Graphics;
-using Engine.Graphics;
 
 //using Engine.Graphics;
 
@@ -20,11 +18,11 @@ public class Camera {
 
     /// Values
     protected const float _sensetivity = 0.10f;
-    internal const float _sensetivityMultiplier = 0.01f;
+    public const float _sensetivityMultiplier = 0.01f;
 
     public Vector3 cameraPos = Vector3.Zero;
     public Matrix4x4 cameraRot = Matrix4x4.Identity;
-    public Vector2 mousePos = Vector2.Zero;
+    public Vector2 mousePos_Window = Vector2.Zero;
 
     public Vector3 forward => Vector3.Transform(Vector3.UnitZ, cameraRot);
 
@@ -46,12 +44,11 @@ public class Camera {
     }
 
 
-    public Ray? RaycastMouse () {
-        Vector2? scenePos = EditorUI.Instance.GetSceneMousePos(mousePos);
+    public virtual Ray? RaycastMouse () {
+        Vector2? scenePos = mousePos_Window;
         if (scenePos is null) return null;
 
-        Vector2 sceneSize = EditorUI.Instance.SceneAvail;
-
+        Vector2 sceneSize = scenePos.Value;
         Ray ray = Raycast.ScreenPointToRay(scenePos.Value.X, scenePos.Value.Y, (int)sceneSize.X, (int)sceneSize.Y,
             Renderer.Instance.m4x4_View, Renderer.Instance.m4x4Projection);
         return ray;

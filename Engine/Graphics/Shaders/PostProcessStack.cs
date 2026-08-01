@@ -16,6 +16,7 @@ public class PostProcessStack : IDisposable {
 
     public static uint QuadVAO;
 
+    public bool Enabled = true;
     public List<PostProcessPass> Effects = new();
 
     int _width, _height;
@@ -118,14 +119,11 @@ public class PostProcessStack : IDisposable {
         //Renderer.GL.ColorMask(true, true, true, true);
     }
 
-    public void Run (bool enabled = true) => Run(_outputFbo, enabled: enabled);
-    public void Run (uint finalTargetFbo, bool enabled) {
+    public void Run () => Run(_outputFbo);
+    public void Run (uint finalTargetFbo) {
         Renderer.GL.Disable(EnableCap.DepthTest);
 
-        if (!enabled || Effects.Count == 0) {
-            CopySceneColor(finalTargetFbo);
-            CopySceneDepth(finalTargetFbo);
-        } else {
+        if (Enabled && 0 < Effects.Count) {
             uint currentInput = _sceneColor;
             int pingIndex = 0;
 
@@ -144,6 +142,9 @@ public class PostProcessStack : IDisposable {
                 }
             }
 
+            CopySceneDepth(finalTargetFbo);
+        } else {
+            CopySceneColor(finalTargetFbo);
             CopySceneDepth(finalTargetFbo);
         }
 

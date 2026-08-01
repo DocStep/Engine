@@ -34,7 +34,7 @@ public abstract class Component : ISavable {
 
 
     public virtual void DrawInspector () {
-        EditorUI.DrawObject(this);
+        Editor.Graphics.EditorUI.DrawObject(this);
     }
 
 
