@@ -21,10 +21,11 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         ImGui.LoadIniSettingsFromDisk(ImGui.GetIO().IniFilename);
 
-        new CameraEditor();
+        //new CameraEditor();
 
         Engine.Engine.Instance.de_Update += Update;
         Engine.Graphics.Renderer.Instance.de_LateUpdate += Gizmos.Update;
+
         Engine.Graphics.Renderer.Instance.de_ScreenResize = EditorResize;
         Engine.Graphics.Renderer.Instance.de_DrawUI += Draw;
         Engine.Graphics.Renderer.Instance.de_Dispose += Dispose;
@@ -56,7 +57,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
     public void Draw () {
         if (_isClosing) return;
-        
+
         /// Switch to the real backbuffer for ImGui — dockspace, panels, and the Scene image itself
         Engine.Graphics.Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         Engine.Graphics.Renderer.GL.DrawBuffer(GLEnum.Back);
@@ -87,6 +88,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.Begin("Scene");
 
         Vector2 avail = ImGui.GetContentRegionAvail();
+        Log.log("DrawSceneView", avail);
         _sceneAvail = new Vector2(MathF.Max(MathF.Floor(avail.X), 1), MathF.Max(MathF.Floor(avail.Y), 1));
 
         ImGui.Image((IntPtr)Engine.Graphics.Renderer.Instance.PostProcess.OutputTexture, _sceneAvail, new Vector2(0, 1), new Vector2(1, 0));

@@ -1,8 +1,10 @@
 ﻿using Silk.NET.OpenGL;
 using Engine.Input;
+using Engine.Graphics;
 using static Engine.Graphics.Shader;
+using Shader = Engine.Graphics.Shader;
 
-namespace Engine.Graphics;
+namespace Editor.Graphics;
 
 
 public class GizmoSelected : IDisposable {

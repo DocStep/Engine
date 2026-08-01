@@ -1,4 +1,4 @@
-﻿namespace Editor;
+﻿namespace Editor.Graphics;
 
 
 public static class ComponentsDraw {

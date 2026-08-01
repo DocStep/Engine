@@ -2,8 +2,9 @@
 using Engine.Graphics;
 using static Engine.AssetsEngine;
 using static Engine.Graphics.Shader;
+using Shader = Engine.Graphics.Shader;
 
-namespace Engine;
+namespace Editor.Graphics;
 
 
 public static class Gizmos {
@@ -11,7 +12,7 @@ public static class Gizmos {
         //Renderer.Instance.de_GizmosDraw += DrawGizmos;
         GL = Renderer.GL;
 
-        _sh_Outline = new Graphics.Shader(Assets.LoadText("src/Shaders/Outline_Vertex.shader"), Assets.LoadText("src/Shaders/Outline_Fragment.shader"), "Outline");
+        _sh_Outline = new Shader(Assets.LoadText("src/Shaders/Outline_Vertex.shader"), Assets.LoadText("src/Shaders/Outline_Fragment.shader"), "Outline");
         _sh_Outline.SetVector3(Color, Constants.cyan);
         
         //_sh_DepthClear = new Graphics.Shader(Assets.LoadText("src/Shaders/DepthClear_Vertex.shader"), Assets.LoadText("src/Shaders/DepthClear_Fragment.shader"), "DepthClear");
@@ -30,7 +31,7 @@ public static class Gizmos {
         _mat_GizmoWireframe.face = RenderFace.Both;
         _mat_GizmoWireframe.depthWrite = false;
 
-        _sh_GizmoGrid = new Graphics.Shader(Assets.LoadText("src/Shaders/Grid_Vertex.shader"), Assets.LoadText("src/Shaders/Grid_Fragment.shader"), "Grid");
+        _sh_GizmoGrid = new Shader(Assets.LoadText("src/Shaders/Grid_Vertex.shader"), Assets.LoadText("src/Shaders/Grid_Fragment.shader"), "Grid");
         _mat_GizmoGrid = new Material(_sh_GizmoGrid);
         _mat_GizmoGrid.SetVector3(Color, Constants.lightGray);
         _mat_GizmoGrid.SetFloat(Alpha, 0.2f);
@@ -40,7 +41,7 @@ public static class Gizmos {
         _mat_GizmoGrid.face = RenderFace.Both;
         _mat_GizmoGrid.depthWrite = false;
 
-        _sh_GizmoAxes = new Graphics.Shader(Assets.LoadText("src/Shaders/Axes_Vertex.shader"), Assets.LoadText("src/Shaders/Axes_Fragment.shader"), "Axes");
+        _sh_GizmoAxes = new Shader(Assets.LoadText("src/Shaders/Axes_Vertex.shader"), Assets.LoadText("src/Shaders/Axes_Fragment.shader"), "Axes");
         _mat_GizmoAxes = new Material(_sh_GizmoAxes);
         _mat_GizmoAxes.SetFloat(Alpha, 0.5f);
         _mat_GizmoAxes.SetFloat(Radius, 200f);
@@ -60,8 +61,8 @@ public static class Gizmos {
         _mesh_SphereWireframe = new Mesh(Sphere.GenerateWireframe());
         _mesh_CapsuleWireframe = new Mesh(Capsule.GenerateWireframe());
 
-        _mesh_PlaneWireframe = new Mesh(Graphics.Plane.GenerateWireframe());
-        _mesh_GridWireframe = new Mesh(Graphics.Plane.GenerateWireframe(size: Constants._gridScale,
+        _mesh_PlaneWireframe = new Mesh(Engine.Graphics.Plane.GenerateWireframe());
+        _mesh_GridWireframe = new Mesh(Engine.Graphics.Plane.GenerateWireframe(size: Constants._gridScale,
             divisions: (int)(Constants._gridScale*Constants._gridDivisionScale)));
 
         _mesh_AxesWireframe = new Mesh(Axes.GenerateWireframe(length: Constants._gridScale));
@@ -84,9 +85,9 @@ public static class Gizmos {
     public readonly static Mesh _mesh_Arrow3D = null!;
     public readonly static Mesh _mesh_ArrowWireframe = null!;
 
-    public readonly static Graphics.Shader _sh_GizmoGrid = null!;
-    public readonly static Graphics.Shader _sh_GizmoAxes = null!;
-    public readonly static Graphics.Shader _sh_Outline = null!;
+    public readonly static Shader _sh_GizmoGrid = null!;
+    public readonly static Shader _sh_GizmoAxes = null!;
+    public readonly static Shader _sh_Outline = null!;
     //public readonly static Graphics.Shader _sh_DepthClear = null!;
 
     public readonly static Material _mat_GizmoGrid = null!;
@@ -142,9 +143,9 @@ public static class Gizmos {
     private static void DrawGizmoAxesWidget () {
         const int gizmoSize = 90;
         const int gizmoMargin = 16;
-
-        int windowWidth = Engine.Window.Size.X;
-        int windowHeight = Engine.Window.Size.Y;
+            
+        int windowWidth = Engine.Engine.Window.Size.X;
+        int windowHeight = Engine.Engine.Window.Size.Y;
 
         int gizmoX = windowWidth - gizmoSize - gizmoMargin;
         int gizmoY = windowHeight - gizmoSize - gizmoMargin;
@@ -162,7 +163,7 @@ public static class Gizmos {
         Vector3 up = Vector3.Transform(Vector3.UnitY, rotation);
         Vector3 gizmoCamPos = -forward*5f;
         Matrix4x4 gizmoView = Matrix4x4.CreateLookAtLeftHanded(gizmoCamPos, Vector3.Zero, up);
-        float aspect = Engine.Window.Size.X/(float)Engine.Window.Size.Y;
+        float aspect = Engine.Engine.Window.Size.X/(float)Engine.Engine.Window.Size.Y;
         Matrix4x4 gizmoProjection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
             Camera.FOV/180*MathF.PI, aspect, Camera.planeNear, Camera.planeFar);
 
@@ -174,7 +175,7 @@ public static class Gizmos {
         _mesh_AxesWireframe.Draw(PrimitiveType.Lines);
 
         GL.Enable(EnableCap.DepthTest);
-        GL.Viewport(Engine.Window.Size);
+        GL.Viewport(Engine.Engine.Window.Size);
     }
     /*private static Material mat_GizmoCameraOrbitCenter = new Material() { Color = new Vector3(0.5f, 0.5f, 0.5f), Alpha = 0.2f, };
     private static void GizmoCameraOrbitCenter () {

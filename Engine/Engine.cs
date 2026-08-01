@@ -15,10 +15,10 @@ namespace Engine;
 
 
 public class Engine : IDisposable {
-    public Engine (Type? renderer = null) {
+    public Engine (Type? renderer = null, Type? camera = null, Action? de_Init = null) {
         if (Instance is not null) throw new Exception($"{typeof(Engine)}.{nameof(Instance)} is not null");
         Instance = this;
-        Init(renderer);
+        Init(renderer, camera, de_Init);
     }
 
     public static Engine Instance { get; private set; } = null!;
@@ -63,7 +63,7 @@ public class Engine : IDisposable {
         private set => Instance._fixedDeltaTime = value;
     }
 
-    public void Init (Type? renderer = null) {
+    public void Init (Type? renderer = null, Type? camera = null, Action? de_Init = null) {
         ArgsUtils.Init();
 
         ThreadUtils.Init();
@@ -99,7 +99,7 @@ public class Engine : IDisposable {
             (screenSize.X - options.Size.X)/2,
             (screenSize.Y - options.Size.Y)/2);
 
-        Window.Load += () => OnLoad(renderer ?? typeof(Graphics.Renderer));
+        Window.Load += () => OnLoad(renderer ?? typeof(Graphics.Renderer), camera ?? typeof(Graphics.Camera), de_Init);
         Window.Update += OnUpdate;
         Window.Closing += OnClosing;
     }
@@ -107,7 +107,7 @@ public class Engine : IDisposable {
         Silk.NET.Windowing.WindowExtensions.Run(Window);
     }
 
-    private void OnLoad (Type rendererType) {
+    private void OnLoad (Type rendererType, Type cameraType, Action? de_Init) {
         Input = Silk.NET.Input.InputWindowExtensions.CreateInput(Window);
         InputState.Init(Input);
 
@@ -116,6 +116,11 @@ public class Engine : IDisposable {
         object? renderer = Activator.CreateInstance(rendererType);
         if (renderer as Graphics.Renderer is null) throw new Exception("Renderer is null");
         Renderer = (Graphics.Renderer)renderer;
+
+        de_Init?.Invoke();
+
+        object? camera = Activator.CreateInstance(cameraType);
+        if (renderer as Graphics.Renderer is null) throw new Exception("camera is null");
 
         PhysicsManager.CreateSingleton();
         ComponentManager.CreateSingleton();

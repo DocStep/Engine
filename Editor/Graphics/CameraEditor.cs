@@ -5,11 +5,11 @@ using Engine.Graphics;
 using Engine.Input;
 using static Engine.Input.Inputs;
 
-namespace Engine.Graphics;
+namespace Editor.Graphics;
 
 
-internal sealed class CameraEditor : Camera {
-    internal CameraEditor () : base() {
+public sealed class CameraEditor : Camera {
+    public CameraEditor () : base() {
         Instance = this;
         SetTransformDefault();
     }
@@ -143,7 +143,7 @@ internal sealed class CameraEditor : Camera {
             Inputs.MouseHide();
         } else if (Inputs.Actions[CameraDrag].pressedUp) {
             if (!isCameraDragging) {
-                TryFocusOnPoint(mousePos_Window.X, mousePos_Window.Y, Engine.Window.Size.X, Engine.Window.Size.Y);
+                TryFocusOnPoint(mousePos_Window.X, mousePos_Window.Y, Engine.Engine.Window.Size.X, Engine.Engine.Window.Size.Y);
             }
         }
 
