@@ -10,8 +10,18 @@ public class PostProcessStack : IDisposable {
         QuadVAO = Renderer.GL.GenVertexArray();
 
         Engine.Window.FramebufferResize += Resize;
+        Engine.Instance.de_Update_Engine += Update;
 
         Resize(Renderer.Instance.Width, Renderer.Instance.Height);
+
+        //Effects.Add(new PostProcessPass(_mat_Fullscreen));
+        //Effects.Add(new PostProcessPass(_mat_Depth));
+        //Effects.Add(new PostProcessPass(_mat_Grayscale));
+        Effects.Add(new PostProcessPass(_mat_SSAO));
+        Effects.Add(new PostProcessPass(_mat_SSAOBlur));
+        Effects.Add(new PostProcessPass(_mat_SSAOComposite));
+        //Effects.Add(new PostProcessPass(_mat_CameraFocus));
+        Effects.Add(new PostProcessPass(_mat_Fxaa));
     }
 
     public static uint QuadVAO;
@@ -31,6 +41,12 @@ public class PostProcessStack : IDisposable {
     public uint SceneColorTexture => _sceneColor;
     public uint OutputTexture => _outputColor;
 
+
+    public void Update () {
+        if (Input.Inputs.Actions[Input.Inputs.PP].pressedDown) {
+            Enabled = !Enabled;
+        }
+    }
 
     public void Resize (int w, int h) {
         if (w <= 0 || h <= 0) return;

@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Editor": {
+      "commandName": "Project"
+    },
+    "Editor -console": {
+      "commandName": "Project",
+      "commandLineArgs": "-console"
+    }
+  }
+}

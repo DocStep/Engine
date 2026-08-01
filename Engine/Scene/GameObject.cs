@@ -59,25 +59,27 @@ public class GameObject : ISavable {
                 mesh.mesh = AssetsEngine._mesh_Plane;
                 //AddComponent<PhysicsComponent>();
                 break;
+
+            /// <> <!>
             case PrimitiveTypes.GizmoCube:
-                MeshComponent colliderMesh = AddComponent<MeshComponent>();
-                colliderMesh.mesh = Gizmos._mesh_CubeWireframe;
-                colliderMesh.material = Gizmos._mat_GizmosGreen;
+                //MeshComponent colliderMesh = AddComponent<MeshComponent>();
+                //colliderMesh.mesh = Gizmos._mesh_CubeWireframe;
+                //colliderMesh.material = Gizmos._mat_GizmosGreen;
                 break;
             case PrimitiveTypes.GizmoSphere:
-                colliderMesh = AddComponent<MeshComponent>();
-                colliderMesh.mesh = Gizmos._mesh_SphereWireframe;
-                colliderMesh.material = Gizmos._mat_GizmosGreen;
+                //colliderMesh = AddComponent<MeshComponent>();
+                //colliderMesh.mesh = Gizmos._mesh_SphereWireframe;
+                //colliderMesh.material = Gizmos._mat_GizmosGreen;
                 break;
             case PrimitiveTypes.GizmoCapsule:
-                colliderMesh = AddComponent<MeshComponent>();
-                colliderMesh.mesh = Gizmos._mesh_CapsuleWireframe;
-                colliderMesh.material = Gizmos._mat_GizmosGreen;
+                //colliderMesh = AddComponent<MeshComponent>();
+                //colliderMesh.mesh = Gizmos._mesh_CapsuleWireframe;
+                //colliderMesh.material = Gizmos._mat_GizmosGreen;
                 break;
             case PrimitiveTypes.GizmoPlane:
-                colliderMesh = AddComponent<MeshComponent>();
-                colliderMesh.mesh = Gizmos._mesh_PlaneWireframe;
-                colliderMesh.material = Gizmos._mat_GizmosGreen;
+                //colliderMesh = AddComponent<MeshComponent>();
+                //colliderMesh.mesh = Gizmos._mesh_PlaneWireframe;
+                //colliderMesh.material = Gizmos._mat_GizmosGreen;
                 break;
             default:
                 break;

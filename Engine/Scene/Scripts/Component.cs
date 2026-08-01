@@ -33,9 +33,10 @@ public abstract class Component : ISavable {
 
 
 
-    public virtual void DrawInspector () {
+    /*public virtual void DrawInspector () {
+        //de_DrawInspector.
         Editor.Graphics.EditorUI.DrawObject(this);
-    }
+    }*/
 
 
 

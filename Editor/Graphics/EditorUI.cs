@@ -14,7 +14,7 @@ namespace Editor.Graphics;
 public class EditorUI : Singleton<EditorUI>, IDisposable {
 
     protected override void Init () {
-        ImGUI = new ImGuiController(Renderer.GL, Engine.Engine.Window, Engine.Engine.Input);
+        ImGUI = new ImGuiController(Engine.Graphics.Renderer.GL, Engine.Engine.Window, Engine.Engine.Input);
 
         SetDock();
         //SetFont(AssetsEngine._fontData);
@@ -23,10 +23,11 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         new CameraEditor();
 
-        Renderer.Instance.de_LateUpdate += Gizmos.Update;
-        Renderer.Instance.de_ScreenResize = EditorResize;
-        Renderer.Instance.de_DrawUI += EditorUI.Instance.Draw;
-        Renderer.Instance.de_Dispose += Dispose;
+        Engine.Engine.Instance.de_Update += Update;
+        Engine.Graphics.Renderer.Instance.de_LateUpdate += Gizmos.Update;
+        Engine.Graphics.Renderer.Instance.de_ScreenResize = EditorResize;
+        Engine.Graphics.Renderer.Instance.de_DrawUI += Draw;
+        Engine.Graphics.Renderer.Instance.de_Dispose += Dispose;
     }
 
     public ImGuiController ImGUI = null!;
@@ -57,11 +58,11 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         if (_isClosing) return;
         
         /// Switch to the real backbuffer for ImGui — dockspace, panels, and the Scene image itself
-        Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-        Renderer.GL.DrawBuffer(GLEnum.Back);
-        Renderer.GL.Viewport(0, 0, (uint)Engine.Engine.Window.Size.X, (uint)Engine.Engine.Window.Size.Y);
-        Renderer.GL.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
-        Renderer.GL.Clear((uint)ClearBufferMask.ColorBufferBit);
+        Engine.Graphics.Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        Engine.Graphics.Renderer.GL.DrawBuffer(GLEnum.Back);
+        Engine.Graphics.Renderer.GL.Viewport(0, 0, (uint)Engine.Engine.Window.Size.X, (uint)Engine.Engine.Window.Size.Y);
+        Engine.Graphics.Renderer.GL.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
+        Engine.Graphics.Renderer.GL.Clear((uint)ClearBufferMask.ColorBufferBit);
 
         ImGuiViewportPtr viewport = ImGui.GetMainViewport();
         uint dockspaceId = ImGui.DockSpaceOverViewport(0, viewport, ImGuiDockNodeFlags.PassthruCentralNode);
@@ -88,7 +89,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         Vector2 avail = ImGui.GetContentRegionAvail();
         _sceneAvail = new Vector2(MathF.Max(MathF.Floor(avail.X), 1), MathF.Max(MathF.Floor(avail.Y), 1));
 
-        ImGui.Image((IntPtr)Renderer.Instance.PostProcess.OutputTexture, _sceneAvail, new Vector2(0, 1), new Vector2(1, 0));
+        ImGui.Image((IntPtr)Engine.Graphics.Renderer.Instance.PostProcess.OutputTexture, _sceneAvail, new Vector2(0, 1), new Vector2(1, 0));
 
         _sceneRectMin = ImGui.GetItemRectMin();
         _sceneRectMax = ImGui.GetItemRectMax();
@@ -138,7 +139,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.Begin("GL Info");
         ImGui.BeginDisabled();
 
-        DrawObject(Renderer.Instance.Stats);
+        DrawObject(Engine.Graphics.Renderer.Instance.Stats);
         ImGui.NewLine();
         DrawObject(Engine.Graphics.Shader.Stats);
 
@@ -279,7 +280,9 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
         io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
     }
-    public unsafe void SetFont (byte[] fontData) {
+
+    /// <> <?>
+    public /*unsafe*/ void SetFont (byte[] fontData) {
         ImGuiIOPtr io = ImGui.GetIO();
         io.Fonts.Clear();
 
@@ -302,7 +305,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
 
     private void EditorResize () {
-        Renderer.Instance.SetTargetSize((int)SceneAvail.X, (int)SceneAvail.Y);
+        Engine.Graphics.Renderer.Instance.SetTargetSize((int)SceneAvail.X, (int)SceneAvail.Y);
     }
 
 

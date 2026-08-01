@@ -3,7 +3,8 @@
 
 public static class ArgsUtils {
 
-    private static bool isConsole = true;
+    public static bool isConsole { get; private set; } = true;
+    public static bool isEditor = false;
 
 
     public static void Init () {
@@ -12,6 +13,10 @@ public static class ArgsUtils {
         if (args.Contains("-console")) {
             isConsole = true;
             ConsoleUtils.ConsoleStart();
+        }
+
+        if (args.Contains("-editor")) {
+            isEditor = true;
         }
 
     }

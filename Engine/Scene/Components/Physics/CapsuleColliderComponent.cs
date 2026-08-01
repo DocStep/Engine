@@ -12,20 +12,7 @@ public class CapsuleColliderComponent : ColliderComponent {
     public float Radius = 0.5f;
 
 
-    public override void Update () {
-        if (drawGizmos) {
-            Graphics.RenderInfo renderInfo = new Graphics.RenderInfo() {
-                pos = Position + owner.Transform.Position,
-                rot = owner.Transform.Rotation,
-                scale = owner.Transform.Scale,
-
-                mesh = Gizmos._mesh_CapsuleWireframe,
-                material = Gizmos._mat_GizmosGreen,
-                primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
-            };
-            Graphics.Renderer.Instance.AddRenderInfo(renderInfo);
-        }
-    }
+    public override void Update () { }
 
 
     /*public override void DrawInspector () {

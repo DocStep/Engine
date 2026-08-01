@@ -11,19 +11,6 @@ public class SphereColliderComponent : ColliderComponent {
     public float Radius = 0.5f;
 
 
-    public override void Update () {
-        if (drawGizmos) {
-            Graphics.RenderInfo renderInfo = new Graphics.RenderInfo() {
-                pos = Position + owner.Transform.Position,
-                rot = Vector3.Zero,
-                scale = 2f*Radius*owner.Transform.Scale,
-
-                mesh = Gizmos._mesh_SphereWireframe,
-                material = Gizmos._mat_GizmosGreen,
-                primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
-            };
-            Graphics.Renderer.Instance.AddRenderInfo(renderInfo);
-        }
-    }
+    public override void Update () { }
 
 }

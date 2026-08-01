@@ -5,6 +5,7 @@ public class ComponentManager : Singleton<ComponentManager> {
 
     private readonly Dictionary<Type, List<Component>> components =  new Dictionary<Type, List<Component>>();
     private readonly List<IComponentUpdate> componentsUpdate = new List<IComponentUpdate>();
+    public List<IComponentUpdate> ComponentsUpdate => componentsUpdate;
     private readonly List<IComponentFixedUpdate> componentsFixedUpdate = new List<IComponentFixedUpdate>();
     public int componentsCount => components.Count;
 
@@ -18,19 +19,19 @@ public class ComponentManager : Singleton<ComponentManager> {
         }
     }
 
-    internal void FixedUpdate () {
+    public void FixedUpdate () {
         for (int c = 0; c < componentsFixedUpdate.Count; c++) {
             if (!componentsFixedUpdate[c].Enabled) continue;
             componentsFixedUpdate[c].FixedUpdate();
         }
     }
-    internal void Update () {
+    public void Update () {
         for (int c = 0; c < componentsUpdate.Count; c++) {
             if (!componentsUpdate[c].Enabled) continue;
             componentsUpdate[c].Update();
         }
     }
-    internal void UpdateRender () {
+    public void UpdateRender () {
         for (int c = 0; c < componentsRender.Count; c++) {
             componentsRender[c].Update();
         }
@@ -47,7 +48,7 @@ public class ComponentManager : Singleton<ComponentManager> {
         if (component is IComponentUpdate iComponentUpdate) {
             componentsUpdate.Add(iComponentUpdate);
 
-            if (component is IRenderComponent iRenderComponent) {
+            if (component is IUpdateAtFreeze iRenderComponent) {
                 componentsRender.Add(iComponentUpdate);
             }
         }
@@ -66,7 +67,7 @@ public class ComponentManager : Singleton<ComponentManager> {
 
         if (component is IComponentUpdate iComponentUpdate) {
             componentsUpdate.Remove(iComponentUpdate);
-            if (component is IRenderComponent iRenderComponent) {
+            if (component is IUpdateAtFreeze iRenderComponent) {
                 componentsRender.Remove(iComponentUpdate);
             }
         }

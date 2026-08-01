@@ -1,5 +1,4 @@
 using System.Linq;
-using Silk.NET.OpenGL.Extensions.ImGui;
 using Engine.Input;
 
 namespace Engine;
@@ -15,16 +14,17 @@ namespace Engine;
 
 
 
-public class Engine: IDisposable {
-    public Engine () {
+public class Engine : IDisposable {
+    public Engine (Type? renderer = null) {
         if (Instance is not null) throw new Exception($"{typeof(Engine)}.{nameof(Instance)} is not null");
         Instance = this;
+        Init(renderer);
     }
 
     public static Engine Instance { get; private set; } = null!;
 
-    internal Action? de_Update_Engine = null;
-    internal Action? de_FixedUpdate_Engine = null;
+    public Action? de_Update_Engine = null;
+    public Action? de_FixedUpdate_Engine = null;
     public static string savesFolder = "Data";
 
     public Action? de_Update = null;
@@ -63,8 +63,7 @@ public class Engine: IDisposable {
         private set => Instance._fixedDeltaTime = value;
     }
 
-
-    public void Run () {
+    public void Init (Type? renderer = null) {
         ArgsUtils.Init();
 
         ThreadUtils.Init();
@@ -100,32 +99,31 @@ public class Engine: IDisposable {
             (screenSize.X - options.Size.X)/2,
             (screenSize.Y - options.Size.Y)/2);
 
-        Window.Load += OnLoad;
+        Window.Load += () => OnLoad(renderer ?? typeof(Graphics.Renderer));
         Window.Update += OnUpdate;
         Window.Closing += OnClosing;
-
+    }
+    public void Run () {
         Silk.NET.Windowing.WindowExtensions.Run(Window);
     }
 
-    private void OnLoad () {
+    private void OnLoad (Type rendererType) {
         Input = Silk.NET.Input.InputWindowExtensions.CreateInput(Window);
         InputState.Init(Input);
 
         Log.log($"===== Systems Layer =====", LogType.info);
 
-        Renderer = new Graphics.Renderer();
+        object? renderer = Activator.CreateInstance(rendererType);
+        if (renderer as Graphics.Renderer is null) throw new Exception("Renderer is null");
+        Renderer = (Graphics.Renderer)renderer;
 
         PhysicsManager.CreateSingleton();
         ComponentManager.CreateSingleton();
         SceneManager.CreateSingleton();
 
-        Editor.Graphics.EditorUI.CreateSingleton();
-
-        de_Update_Engine?.Invoke();
-
-        Log.log($"========== Init Finish ==========", LogType.info);
-
+        //de_Update_Engine?.Invoke();
         engineState = EngineStates.Ready;
+        Log.log($"========== Init Finish ==========", LogType.info);
     }
 
     private void OnUpdate (double dt) {
@@ -167,8 +165,7 @@ public class Engine: IDisposable {
         de_Update_Engine?.Invoke();
         ReflectionActionScripts.Instance.de_Actions_Update?.Invoke();
 
-        Editor.Graphics.EditorUI.Instance?.Update();
-        // your normal scene rendering here
+        /// Rendering here
 
         f3log();
 

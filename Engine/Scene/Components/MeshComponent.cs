@@ -3,7 +3,7 @@
 namespace Engine.Graphics;
 
 
-public class MeshComponent : Component, IRenderComponent, IComponentUpdate {
+public class MeshComponent : Component, IComponentUpdate, IUpdateAtFreeze {
 
     [JsonIgnore] public override string Name => nameof(MeshComponent);
 
@@ -43,9 +43,9 @@ public class MeshComponent : Component, IRenderComponent, IComponentUpdate {
     }
 
 
-    public override void DrawInspector () {
+    /*public override void DrawInspector () {
         ImGuiNET.ImGui.TextDisabled("Mesh: " + mesh?.Name);
         ImGuiNET.ImGui.TextDisabled("Shader: " + material?.shader.Name);
-    }
+    }*/
 
 }

@@ -37,7 +37,7 @@ public static class GLDebug {
     }
 
 
-    internal static void DrawAll () {
+    public static void DrawAll () {
         GL.Disable(EnableCap.DepthTest);
 
         //Renderer.Instance.SetSceneUniformsUnlit(AssetsEngine._sh_Unlit);

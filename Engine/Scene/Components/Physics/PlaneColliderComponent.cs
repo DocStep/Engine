@@ -12,19 +12,6 @@ public class PlaneColliderComponent : ColliderComponent {
     public Vector3 Scale = Vector3.One;
 
 
-    public override void Update () {
-        if (drawGizmos) {
-            Graphics.RenderInfo renderInfo = new Graphics.RenderInfo() {
-                pos = Position + owner.Transform.Position,
-                rot = Rotation + owner.Transform.Rotation,
-                scale = Scale*owner.Transform.Scale,
-
-                mesh = Gizmos._mesh_PlaneWireframe,
-                material = Gizmos._mat_GizmosGreen,
-                primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
-            };
-            Graphics.Renderer.Instance.AddRenderInfo(renderInfo);
-        }
-    }
+    public override void Update () { }
 
 }

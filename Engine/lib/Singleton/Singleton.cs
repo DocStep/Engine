@@ -26,10 +26,10 @@
                 Log.log($"[{Name}] Inited: {typeof(T)} ({obj.GetHashCode()})");
 
             obj.Init();
-            return instance;
+            return obj;
         }
     }
-    public static void InstanceNew () {
+    /*public static void InstanceNew () {
         lock (SingletonManager._lock) {
             if (instance is not null) {
                 Log.log($"[{Name}] ReInstanceNew: {typeof(T)}");
@@ -38,7 +38,7 @@
             }
             CreateSingleton();
         }
-    }
+    }*/
     /*public static void InstanceCheck () {
         lock (SingletonManager._lock) {
             if (instance is null)

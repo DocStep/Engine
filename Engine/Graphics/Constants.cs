@@ -7,7 +7,7 @@ public enum DrawMode {
 }
 
 
-internal static class Constants {
+public static class Constants {
 
     public readonly static Vector3 white = new Vector3(1, 1, 1);
     public readonly static Vector3 black = new Vector3(0, 0, 0);

@@ -1,11 +1,15 @@
 {
-  "profiles": {
-    "Game": {
-      "commandName": "Project"
-    },
-    "Game -console": {
-      "commandName": "Project",
-      "commandLineArgs": "-console"
+    "profiles": {
+        "Game": {
+            "commandName": "Project"
+        },
+        "Game -console": {
+            "commandName": "Project",
+            "commandLineArgs": "-console"
+        },
+        "Game -console -editor": {
+            "commandName": "Project",
+            "commandLineArgs": "-console -editor"
+        }
     }
-  }
 }

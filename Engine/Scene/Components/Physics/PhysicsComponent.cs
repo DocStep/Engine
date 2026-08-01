@@ -90,11 +90,11 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
     }
 
 
-    public override void DrawInspector () {
+   /* public override void DrawInspector () {
         ImGuiNET.ImGui.TextDisabled($"Mode: {Rigidbody.Data.MotionType}");
         ImGuiNET.ImGui.TextDisabled($"Velocity: {Rigidbody.Velocity.ToString3()}");
         ImGuiNET.ImGui.TextDisabled($"Angular Velocity: {Rigidbody.AngularVelocity.ToString3()}");
-    }
+    }*/
 
 
     /*public static Quaternion EulerToQuat (Vector3 euler) {

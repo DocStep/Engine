@@ -114,7 +114,7 @@ public static class Utils {
     public static float Lerp (float a, float b, float t) => a + (b - a)*t;
 
     extension(Matrix4x4) {
-        internal static float[] ToArray (Matrix4x4 m) => new[] {
+        public static float[] ToArray (Matrix4x4 m) => new[] {
             m.M11, m.M12, m.M13, m.M14,
             m.M21, m.M22, m.M23, m.M24,
             m.M31, m.M32, m.M33, m.M34,
@@ -132,7 +132,7 @@ public static class Utils {
         }
     }
     extension(Matrix4x4) {
-        internal static Matrix4x4 MatrixToMatrix (Silk.NET.Maths.Matrix4X4<float> m) {
+        public static Matrix4x4 MatrixToMatrix (Silk.NET.Maths.Matrix4X4<float> m) {
             return new Matrix4x4(
                 m.M11, m.M12, m.M13, m.M14,
                 m.M21, m.M22, m.M23, m.M24,
