@@ -1,5 +1,6 @@
 using System.Linq;
 using Engine.Input;
+using Silk.NET.GLFW;
 
 namespace Engine;
 
@@ -109,6 +110,8 @@ public class Engine : IDisposable {
     }
 
     private void OnLoad (Type rendererType, Type cameraType, Action? de_Init) {
+        //WindowUtils.EnableDarkMode(Window.Handle);
+
         Input = Silk.NET.Input.InputWindowExtensions.CreateInput(Window);
         InputState.Init(Input);
 

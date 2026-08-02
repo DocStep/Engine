@@ -17,6 +17,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGUI = new ImGuiController(Renderer.GL, Engine.Engine.Window, Engine.Engine.Input);
 
         SetDock();
+        EditorUIStyle.SetAccentColor();
         //SetFont(AssetsEngine._fontData);
 
         ImGui.LoadIniSettingsFromDisk(ImGui.GetIO().IniFilename);
@@ -34,6 +35,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     private bool _isClosing = false;
 
     public const float valueStep = 0.01f;
+
 
     private Vector2 _sceneAvail = new Vector2(1280, 720);
     public Vector2 SceneAvail => _sceneAvail;
@@ -64,14 +66,16 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         Renderer.GL.Clear((uint)ClearBufferMask.ColorBufferBit);
 
         ImGuiViewportPtr viewport = ImGui.GetMainViewport();
-        uint dockspaceId = ImGui.DockSpaceOverViewport(0, viewport, ImGuiDockNodeFlags.PassthruCentralNode);
+        //uint dockspaceId = ImGui.DockSpaceOverViewport(0, viewport, ImGuiDockNodeFlags.PassthruCentralNode);
+        uint dockspaceId = ImGui.GetID("MainDockspace");
+        ImGui.DockSpaceOverViewport(dockspaceId, viewport, ImGuiDockNodeFlags.PassthruCentralNode);
 
-        if (!_docked) ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
+        ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
 
         DrawSceneView(dockspaceId);
-
         DrawInspector(dockspaceId);
         DrawInfo(dockspaceId);
+        //ImGui.ShowMetricsWindow();
 
         ImGUI.Render();
 
@@ -142,7 +146,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.Begin("GL Info");
         ImGui.BeginDisabled();
 
-        DrawObject(Engine.Graphics.Renderer.Instance.Stats);
+        DrawObject(Renderer.Instance.Stats);
         ImGui.NewLine();
         DrawObject(Engine.Graphics.Shader.Stats);
 
@@ -283,7 +287,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
         io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
     }
-
+    
     /// <> <?>
     public /*unsafe*/ void SetFont (byte[] fontData) {
         ImGuiIOPtr io = ImGui.GetIO();

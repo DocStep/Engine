@@ -21,7 +21,7 @@ public class Renderer {
         
         Instance = this;
 
-        Engine.Window.Render += OnRender;
+        Engine.Window.Render += OnSceneRender;
         Engine.Window.FramebufferResize += OnFrameBufferResize;
         Engine.Window.Closing += Dispose;
 
@@ -100,14 +100,13 @@ public class Renderer {
     public Action? de_DrawUI = null;
     public Action? de_Final = null;
 
-    protected void OnRender (double deltaTime) {
+    protected void OnSceneRender (double deltaTime) {
         de_LateUpdate?.Invoke();
 
         Stats = new RendererStats();
 
         SetTargetSize();
         PostProcess.Resize(Width, Height);
-        //Log.log(Width, Height);
 
         /// Camera Matrix
         UpdateProjection(Width, Height);
@@ -132,8 +131,7 @@ public class Renderer {
         /// UI Stage
         de_DrawUI?.Invoke();
 
-        //de_Final?.Invoke();
-        PostProcess.PresentToBackbuffer(); /// blit _outputFbo into fbo 0
+        PresentToBackbuffer();
 
         iter++;
         DrawEnd();
@@ -142,6 +140,10 @@ public class Renderer {
         Width = Engine.Window.Size.X;
         Height = Engine.Window.Size.Y;
     }
+    public virtual void PresentToBackbuffer () {
+        PostProcess.PresentToBackbuffer(); /// blit _outputFbo into fbo 0
+    }
+
     protected void UpdateProjection (float width, float height) {
         float aspect = width/height;
         m4x4Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(

@@ -13,20 +13,16 @@ public static class WindowUtils {
 
     [DllImport("user32.dll")]
     private static extern int SetWindowPos (IntPtr hwnd, IntPtr hwndInsertAfter,
-    int x, int y, int cx, int cy, uint flags);
+        int x, int y, int cx, int cy, uint flags);
 
     private const uint SWP_NOMOVE = 0x0002;
     private const uint SWP_NOSIZE = 0x0001;
     private const uint SWP_NOZORDER = 0x0004;
     private const uint SWP_FRAMECHANGED = 0x0020;
 
-    public static void EnableDarkTitleBar (Silk.NET.Windowing.IWindow window) {
-        if (!OperatingSystem.IsWindows())
-            return;
-
-        IntPtr hwnd = window.Native?.Win32?.Hwnd ?? IntPtr.Zero;
-        if (hwnd == IntPtr.Zero)
-            return;
+    public static void EnableDarkMode (nint hwnd) {
+        if (!OperatingSystem.IsWindows()) return;
+        if (hwnd == IntPtr.Zero) return;
 
         int useDark = 1;
         int result = DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref useDark, sizeof(int));

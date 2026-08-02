@@ -48,21 +48,20 @@ public class PostProcessStack : IDisposable {
         }
     }
 
-    public void Resize (int w, int h) {
-        if (w <= 0 || h <= 0) return;
-        if (_width == w && _height == h && _sceneFbo != 0) return;
+    public void Resize (int width, int height) {
+        if (width <= 0 || height <= 0) return;
+        if (_width == width && _height == height && _sceneFbo != 0) return;
 
         DeleteTargets();
 
-        _width = w;
-        _height = h;
+        _width = width;
+        _height = height;
 
-        Log.log(_width, _height);
-        _sceneFbo = CreateFbo(w, h, out _sceneColor, out _sceneDepth, withDepth: true);
-        _pingFbo[0] = CreateFbo(w, h, out _pingColor[0], out _pingDepth0, withDepth: true);
-        _pingFbo[1] = CreateFbo(w, h, out _pingColor[1], out _pingDepth1, withDepth: true);
+        _sceneFbo = CreateFbo(width, height, out _sceneColor, out _sceneDepth, withDepth: true);
+        _pingFbo[0] = CreateFbo(width, height, out _pingColor[0], out _pingDepth0, withDepth: true);
+        _pingFbo[1] = CreateFbo(width, height, out _pingColor[1], out _pingDepth1, withDepth: true);
 
-        _outputFbo = CreateFbo(w, h, out _outputColor, out _outputDepth, withDepth: true);
+        _outputFbo = CreateFbo(width, height, out _outputColor, out _outputDepth, withDepth: true);
     }
     public void Resize (Silk.NET.Maths.Vector2D<int> newSize) => Resize(newSize.X, newSize.Y);
 

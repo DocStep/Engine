@@ -38,6 +38,9 @@ public class RendererEditor : Renderer {
         Width = (int)EditorUI.Instance.SceneAvail.X;
         Height = (int)EditorUI.Instance.SceneAvail.Y;
     }
+    public override void PresentToBackbuffer () {
+        
+    }
 
     protected override void DrawSceneAll () {
         switch (Constants.drawMode) {
