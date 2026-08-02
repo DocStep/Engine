@@ -6,10 +6,9 @@ namespace Engine;
 
 
 //[AttributeUsage(AttributeTargets.Field|AttributeTargets.Property)]
-public class WrapRotation : Attribute {
-    public WrapRotation (float min, float max) {
-        Min = min; Max = max;
+public class ChangeStep : Attribute {
+    public ChangeStep (float step = 1f) {
+        Step = step;
     }
-    public float Min;
-    public float Max;
+    public float Step = 1f;
 }

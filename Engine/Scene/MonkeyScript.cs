@@ -3,13 +3,11 @@
 
 public class MonkeyScript : Script, IComponentUpdate {
 
-    public string string1 = "kk";
-    public int int1 = 1;
-    public float float1 = 1.111f;
+    [ChangeStep(1f)] public Vector3 dir = new Vector3(0, 90, 0);
 
 
     public void Update () {
-        owner.Transform.Rotation += (float)Engine.deltaTime*new Vector3(0, 90, 0);
+        owner.Transform.Rotation += (float)Engine.deltaTime*dir;
     }
 
 }

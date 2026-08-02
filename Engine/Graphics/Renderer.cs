@@ -21,7 +21,7 @@ public class Renderer {
         
         Instance = this;
 
-        Engine.Window.Render += OnSceneRender;
+        Engine.Instance.de_Render += RenderScene;
         Engine.Window.FramebufferResize += OnFrameBufferResize;
         Engine.Window.Closing += Dispose;
 
@@ -81,8 +81,9 @@ public class Renderer {
     protected static float[] uProjection = [];
     public float[] UProjection => uProjection;
 
-    public RendererStats Stats = default;
-
+    //protected RendererStats stats = new RendererStats();
+    public RendererStats Stats = new RendererStats();
+    protected System.Diagnostics.Stopwatch sw_Latency = new System.Diagnostics.Stopwatch();
 
     protected readonly List<RenderInfo> RenderList = new List<RenderInfo>();
     protected readonly List<RenderInfo> RenderGizmoList = new List<RenderInfo>();
@@ -110,10 +111,11 @@ public class Renderer {
     public Action? de_DrawUI = null;
     public Action? de_Final = null;
 
-    protected void OnSceneRender (double deltaTime) {
+    public void RenderScene () {
         de_LateUpdate?.Invoke();
 
         Stats = new RendererStats();
+        sw_Latency.Restart();
 
         SetTargetSize();
         PostProcess.Resize(Width, Height);
@@ -124,7 +126,7 @@ public class Renderer {
 
         PostProcess.BeginScene();
 
-        //_skybox?.Draw(m4x4_View, m4x4Projection);
+        _skybox?.Draw(m4x4_View, m4x4Projection);
 
         DrawSceneAll();
 
@@ -153,6 +155,15 @@ public class Renderer {
     public virtual void PresentToBackbuffer () {
         PostProcess.PresentToBackbuffer(); /// blit _outputFbo into fbo 0
     }
+    protected void DrawEnd () {
+        Stats.Latency = (float)sw_Latency.Elapsed.TotalMilliseconds;
+        Stats.Frame = iter;
+
+        RenderList.Clear();
+        RenderGizmoList.Clear();
+        RenderUIList.Clear();
+    }
+
 
     protected void UpdateProjection (float width, float height) {
         float aspect = width/height;
@@ -160,11 +171,6 @@ public class Renderer {
             Camera.FOV/180*MathF.PI, aspect, Camera.planeNear, Camera.planeFar);
         uView = Matrix4x4.ToArray(m4x4_View);
         uProjection = Matrix4x4.ToArray(m4x4Projection);
-    }
-    protected void DrawEnd () {
-        RenderList.Clear();
-        RenderGizmoList.Clear();
-        RenderUIList.Clear();
     }
 
     protected virtual void DrawSceneAll () {

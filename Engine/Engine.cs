@@ -1,6 +1,4 @@
-using System.Linq;
 using Engine.Input;
-using Silk.NET.GLFW;
 
 namespace Engine;
 
@@ -30,39 +28,22 @@ public class Engine : IDisposable {
 
     public Action? de_Update = null;
     public Action? de_FixedUpdate = null;
+    public Action? de_Render = null;
 
     public static Silk.NET.Windowing.IWindow Window = null!;
     public static Silk.NET.Input.IInputContext Input = null!;
 
-    private Graphics.Renderer Renderer = null!;
     /// Debug
     public EngineStates engineState = EngineStates.Loading;
     public bool debug = false;
     public double sessionTime = 0f;
 
-    public float deltaTimeCalculated;
+    //protected EngineStatsUpdate stats = new EngineStatsUpdate();
+    public EngineStats Stats = new EngineStats();
+    protected System.Diagnostics.Stopwatch sw_LatencyUpdate = new System.Diagnostics.Stopwatch();
+    protected System.Diagnostics.Stopwatch sw_LatencyFixedUpdate = new System.Diagnostics.Stopwatch();
+    protected System.Diagnostics.Stopwatch sw_LatencySystems = new System.Diagnostics.Stopwatch();
 
-    private double _time = 0d;
-    public static double time {
-        get => Instance._time;
-        private set => Instance._time = value;
-    }
-    private double _accumulator = 0d;
-
-    private double _deltaTime;
-    public static double deltaTime {
-        get {
-            //Log.log($"Instance id: {Instance.GetHashCode()}");
-            return Instance._deltaTime;
-        }
-        private set => Instance._deltaTime = value;
-    }
-
-    private double _fixedDeltaTime = 1d/50d;
-    public static double fixedDeltaTime {
-        get => Instance._fixedDeltaTime;
-        private set => Instance._fixedDeltaTime = value;
-    }
 
     public void Init (Type? renderer = null, Type? camera = null, Action? de_Init = null) {
         ArgsUtils.Init();
@@ -85,33 +66,15 @@ public class Engine : IDisposable {
 
         ReflectionActionScripts.CreateSingleton();
 
-        Silk.NET.Windowing.WindowOptions options = Silk.NET.Windowing.WindowOptions.Default with {
-            Size = new Silk.NET.Maths.Vector2D<int>(1280, 720),
-            Title = "Engine",
-            VSync = false,
-            WindowBorder = Silk.NET.Windowing.WindowBorder.Resizable,
-        };
-
-        Window = Silk.NET.Windowing.Window.Create(options);
-
-        IEnumerable<Silk.NET.Windowing.IMonitor> monitors = Silk.NET.Windowing.Monitor.GetMonitors(Window);
-        Silk.NET.Windowing.IMonitor monitor = monitors.First();
-        Silk.NET.Maths.Vector2D<int> screenSize = monitor.VideoMode.Resolution ?? new Silk.NET.Maths.Vector2D<int>(1920, 1080);
-        Window.Position = new Silk.NET.Maths.Vector2D<int>(
-            (screenSize.X - options.Size.X)/2,
-            (screenSize.Y - options.Size.Y)/2);
-
+        Window = Windows.WindowCreate();
         Window.Load += () => OnLoad(renderer ?? typeof(Graphics.Renderer), camera ?? typeof(Graphics.Camera), de_Init);
         Window.Update += OnUpdate;
         Window.Closing += OnClosing;
+        de_Render += LogFrameEnd;
     }
-    public void Run () {
-        Silk.NET.Windowing.WindowExtensions.Run(Window);
-    }
+    public void Run () => Silk.NET.Windowing.WindowExtensions.Run(Window);
 
     private void OnLoad (Type rendererType, Type cameraType, Action? de_Init) {
-        //WindowUtils.EnableDarkMode(Window.Handle);
-
         Input = Silk.NET.Input.InputWindowExtensions.CreateInput(Window);
         InputState.Init(Input);
 
@@ -119,12 +82,10 @@ public class Engine : IDisposable {
 
         object? renderer = Activator.CreateInstance(rendererType);
         if (renderer as Graphics.Renderer is null) throw new Exception("Renderer is null");
-        Renderer = (Graphics.Renderer)renderer;
 
         de_Init?.Invoke();
 
-        object? camera = Activator.CreateInstance(cameraType);
-        if (renderer as Graphics.Renderer is null) throw new Exception("camera is null");
+        Activator.CreateInstance(cameraType);
 
         PhysicsManager.CreateSingleton();
         ComponentManager.CreateSingleton();
@@ -133,7 +94,30 @@ public class Engine : IDisposable {
         //de_Update_Engine?.Invoke();
         engineState = EngineStates.Ready;
         Log.log($"========== Init Finish ==========", LogType.info);
+
+        Engine.SetFPSMax(144);
     }
+
+
+    private double _time = 0d;
+    public static double time {
+        get => Instance._time;
+        private set => Instance._time = value;
+    }
+    private double _accumulator = 0d;
+
+    private double _deltaTime;
+    public static double deltaTime {
+        get => Instance._deltaTime;
+        private set => Instance._deltaTime = value;
+    }
+
+    private double _fixedDeltaTime = 1d/50d;
+    public static double fixedDeltaTime {
+        get => Instance._fixedDeltaTime;
+        private set => Instance._fixedDeltaTime = value;
+    }
+
 
     private void OnUpdate (double dt) {
         InputState.Update();
@@ -152,45 +136,50 @@ public class Engine : IDisposable {
                 FixedUpdate();
                 _accumulator -= fixedDeltaTime;
             }
+
+            f3log();
+
+            de_Render?.Invoke();
+
+            /// Counters
+            time += _deltaTime;
         } else {
             ComponentManager.Instance.UpdateRender();
         }
-
-        if (Inputs.Actions[Inputs.Exit].pressed) Window.Close();
+    }
+    void LogFrameEnd () {
+        Stats.LatencyFull = (float)sw_LatencyUpdate.Elapsed.TotalMilliseconds;
+        Stats.LatencyRender = Graphics.Renderer.Instance.Stats.Latency;
     }
 
-    private void FixedUpdate () {
-        DataEngine.global_audio_Mult = 1f;
-
-        ComponentManager.Instance.FixedUpdate();
-        PhysicsManager.Instance.FixedUpdate();
-
-        de_FixedUpdate_Engine?.Invoke();
-        ReflectionActionScripts.Instance.de_Actions_FixedUpdate?.Invoke();
-    }
     private void Update () {
+        sw_LatencyUpdate.Restart();
+
         ComponentManager.Instance.Update();
 
         de_Update_Engine?.Invoke();
         ReflectionActionScripts.Instance.de_Actions_Update?.Invoke();
 
-        /// Rendering here
-
-        f3log();
-
-        /// Counters
-        time += _deltaTime;
+        Stats.LatencyUpdate = (float)sw_LatencyUpdate.Elapsed.TotalMilliseconds;
     }
+    private void FixedUpdate () {
+        sw_LatencyFixedUpdate.Restart();
 
-    void f3log () {
-        Graphics.UI.TextRenderer.AddText($"Time: {time:F2}");
-        Graphics.UI.TextRenderer.AddText($"FPS: {(int)(1/Engine.Instance._deltaTime)}");
-        Graphics.UI.TextRenderer.AddText($"ms: {_deltaTime*1000:F3}");
-        Graphics.UI.TextRenderer.AddText($"Pos: {Graphics.Camera.Instance?.cameraPos:F3}");
-        Graphics.UI.TextRenderer.AddText($"MousePos: {Graphics.Camera.Instance?.mousePos_Window}");
-        Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.Instance.componentsCount}");
+        DataEngine.global_audio_Mult = 1f;
+
+        sw_LatencySystems.Restart();
+        PhysicsManager.Instance.FixedUpdate();
+        Stats.LatencyPhysics = (float)sw_LatencySystems.Elapsed.TotalMilliseconds;
+
+        sw_LatencySystems.Restart();
+        ComponentManager.Instance.FixedUpdate();
+        Stats.LatencyComponents = (float)sw_LatencySystems.Elapsed.TotalMilliseconds;
+
+        de_FixedUpdate_Engine?.Invoke();
+        ReflectionActionScripts.Instance.de_Actions_FixedUpdate?.Invoke();
+
+        Stats.LatencyFixedUpdate = (float)sw_LatencyFixedUpdate.Elapsed.TotalMilliseconds;
     }
-
 
     public static void SetFixedDeltaTime (double value) {
         if (value <= 0d) {
@@ -200,6 +189,20 @@ public class Engine : IDisposable {
         fixedDeltaTime = value;
     }
 
+
+    public static void SetFPSMax (double fpsMax) {
+        Window.FramesPerSecond = fpsMax;
+    }
+
+
+    void f3log () {
+        Graphics.UI.TextRenderer.AddText($"Time: {time:F2}");
+        Graphics.UI.TextRenderer.AddText($"FPS: {(int)(1/Engine.Instance._deltaTime)}");
+        Graphics.UI.TextRenderer.AddText($"ms: {_deltaTime*1000:F3}");
+        Graphics.UI.TextRenderer.AddText($"Pos: {Graphics.Camera.Instance?.cameraPos:F3}");
+        Graphics.UI.TextRenderer.AddText($"MousePos: {Graphics.Camera.Instance?.mousePos_Window}");
+        Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.Instance.componentsCount}");
+    }
 
 
     /*private void OnKeyDown (IKeyboard keyboard, Key key, int scancode) {

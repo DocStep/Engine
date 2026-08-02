@@ -134,6 +134,7 @@ public static class Inputs {
     public const string EditorSave = nameof(EditorSave);
     public const string Exit = nameof(Exit);
     public const string PP = nameof(PP);
+    public const string FullscreenSwitch = nameof(FullscreenSwitch);
 
 
     public static Dictionary<string, InputsGroup> Actions = null!;
@@ -187,6 +188,7 @@ public static class Inputs {
         [EditorSave] = new InputsGroup(new List<Keys>() { Keys.O }, hidden: true),
         [Exit] = new InputsGroup(new List<Keys>() { Keys.Escape }, hidden: true),
         [PP] = new InputsGroup(new List<Keys>() { Keys.Z }, hidden: true),
+        [FullscreenSwitch] = new InputsGroup(new List<Keys>() { Keys.F11 }, hidden: true),
     };
 
 

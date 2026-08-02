@@ -25,7 +25,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         Engine.Engine.Instance.de_Update_Engine += Update;
         Renderer.Instance.de_LateUpdate += Gizmos.Update;
 
-        Renderer.Instance.de_DrawUI += Draw;
+        Engine.Engine.Instance.de_Render += Draw;
         Renderer.Instance.de_Dispose += Dispose;
     }
 
@@ -74,7 +74,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         DrawSceneView(dockspaceId);
         DrawInspector(dockspaceId);
-        DrawInfo(dockspaceId);
+        DrawEngineInfo(dockspaceId);
+        DrawGLInfo(dockspaceId);
         //ImGui.ShowMetricsWindow();
 
         ImGUI.Render();
@@ -142,8 +143,18 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.End();
     }
 
-    private void DrawInfo (uint dockspaceId) {
-        ImGui.Begin("GL Info");
+    private void DrawEngineInfo (uint dockspaceId) {
+        ImGui.Begin("Engine Info");
+        ImGui.BeginDisabled();
+
+        DrawObject(Engine.Engine.Instance.Stats);
+
+        ImGui.EndDisabled();
+        ImGui.End();
+    }
+
+    private void DrawGLInfo (uint dockspaceId) {
+        ImGui.Begin("Renderer Info");
         ImGui.BeginDisabled();
 
         DrawObject(Renderer.Instance.Stats);
@@ -175,8 +186,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         }
     }
 
-    /*/// For structs - box, mutate the box, then write back to the ref
-    public static void DrawScript<T> (ref T target) where T : struct {
+    /// For structs - box, mutate the box, then write back to the ref
+    /*public static void DrawObject<T> (ref T target) where T : struct {
         Type type = typeof(T);
         object boxed = target;
 
@@ -209,20 +220,31 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         bool isReadonly = member.GetCustomAttribute<Readonly>() is not null;
         if (isReadonly) ImGui.BeginDisabled(true);
 
+        float step = valueStep;
+        ChangeStep? changeSpeed = member.GetCustomAttribute<ChangeStep>();
+        if (changeSpeed is not null) step = changeSpeed.Step;
+
         switch (value) {
             case Vector3 v3:
                 WrapRotation? clampAtt = member.GetCustomAttribute<WrapRotation>();
-                float speed = clampAtt is not null ? WrapRotation.Step : valueStep;
-                if (ImGui.DragFloat3(label, ref v3, speed, 0, 0, "%.2f")) {
+                if (ImGui.DragFloat3(label, ref v3, step, 0, 0, "%.2f")) {
                     if (clampAtt is not null) v3 = Utils.WrapVector3(v3, clampAtt.Min, clampAtt.Max);
                     result = v3;
                 }
                 break;
-            case float f:
-                if (ImGui.DragFloat(label, ref f, valueStep, 0, 0, "%.2f")) result = f;
-                break;
             case int i:
                 if (ImGui.DragInt(label, ref i)) result = i;
+                break;
+            case long l:
+                int temp_i = (int)l;
+                if (ImGui.DragInt(label, ref temp_i)) result = (long)temp_i;
+                break;
+            case float f:
+                if (ImGui.DragFloat(label, ref f, step, 0, 0, "%.2f")) result = f;
+                break;
+            case double d:
+                float temp_f = (float)d;
+                if (ImGui.DragFloat(label, ref temp_f, step, 0, 0, "%.2f")) result = (double)temp_f;
                 break;
             case bool b:
                 if (ImGui.Checkbox(label, ref b)) result = b;
