@@ -254,6 +254,10 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             case string s:
                 if (ImGui.InputText(label, ref s, 256)) result = s;
                 break;
+            case Guid g:
+                string temp_s = g.ToString();
+                if (ImGui.InputText(label, ref temp_s, 256)) result = temp_s;
+                break;
         }
 
         if (isReadonly) ImGui.EndDisabled();

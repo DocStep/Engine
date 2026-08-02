@@ -7,8 +7,8 @@ namespace Engine.Graphics;
 
 public class Camera : Component {
     public Camera () {
+        priority = 0 < Cameras.Count ? Cameras[0]._priority : 0;
         Cameras.Insert(0, this);
-        _priority = 0 < Cameras.Count ? Cameras[Cameras.Count-1]._priority : 0;
         //Log.log(GetType());
     }
 

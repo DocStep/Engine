@@ -8,16 +8,16 @@ namespace Engine;
 public abstract class Component : ISavable {
     public Component () { }
 
-    [Hide] public readonly Guid? Guid = lib.Guid;
+    public readonly Guid? Guid = lib.Guid;
     [Hide] public readonly long? Id = lib.Id;
 
     //[JsonIgnore] public bool enabled = true;
     public bool Enabled { get; set; } = true;
 
     [JsonIgnore] public GameObject owner = null!;
-    public Guid? ownerGuid = null;
+    public Guid? ownerGuid = null; /// For save
     [JsonIgnore] public Transform? parent = null;
-    public Guid? parentGuid = null;
+    public Guid? parentGuid = null; /// For save
     public abstract string Name { get; }
 
 

@@ -190,13 +190,21 @@ public class Renderer {
         }
     }
     protected void DrawScene () {
+        //Log.log("Objects");
+        //int c = SceneManager.ActiveScene.Objects.Count;
+        //for (int i = 0; i < c; i++) {
+        //    Log.log(SceneManager.ActiveScene.Objects[i].Name);
+        //}
         //DrawSame();
         RenderList.Sort((a, b) => a.material.pass.CompareTo(b.material.pass));
         int count = RenderList.Count;
+        int s = 0;
         for (int i = 0; i < count; i++) {
             RenderInfo info = RenderList[i];
+            if (info.mesh.Name == "SuzanneHighRes") s++;
             DrawInfo(info);
         }
+        Log.log("SuzanneHighRes", s);
     }
 
     public void DrawInfo (RenderInfo info) {

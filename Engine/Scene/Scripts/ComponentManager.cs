@@ -7,7 +7,7 @@ public class ComponentManager : Singleton<ComponentManager> {
     public int componentsCount => components.Count;
 
     private readonly List<IComponentUpdate> componentsUpdate = new List<IComponentUpdate>();
-    private readonly List<IComponentUpdate> componentsRender = new List<IComponentUpdate>();
+    private readonly List<IComponentUpdate> componentsUpdateAtFreeze = new List<IComponentUpdate>();
     private readonly List<IComponentFixedUpdate> componentsFixedUpdate = new List<IComponentFixedUpdate>();
 
     public List<IComponentUpdate> ComponentsUpdate => componentsUpdate;
@@ -21,14 +21,22 @@ public class ComponentManager : Singleton<ComponentManager> {
     }
 
     public void Update () {
+        Log.log("components");
+        foreach (var item in components) {
+            for (int i = 0; i < item.Value.Count; i++) {
+                Log.log(item.Key.Name, item.Value[i].owner.Name, item.Value[i].Guid);
+            }
+        }
+
         for (int c = 0; c < componentsUpdate.Count; c++) {
             if (!componentsUpdate[c].Enabled) continue;
             componentsUpdate[c].Update();
         }
     }
-    public void UpdateRender () {
-        for (int c = 0; c < componentsRender.Count; c++) {
-            componentsRender[c].Update();
+    public void UpdateAtFreeze () {
+        Log.log("UpdateAtFreeze", componentsUpdateAtFreeze.Count);
+        for (int c = 0; c < componentsUpdateAtFreeze.Count; c++) {
+            componentsUpdateAtFreeze[c].Update();
         }
     }
     public void FixedUpdate () {
@@ -50,7 +58,7 @@ public class ComponentManager : Singleton<ComponentManager> {
             componentsUpdate.Add(iComponentUpdate);
 
             if (component is IUpdateAtFreeze iRenderComponent) {
-                componentsRender.Add(iComponentUpdate);
+                componentsUpdateAtFreeze.Add(iComponentUpdate);
             }
         }
         if (component is IComponentFixedUpdate iComponentFixedUpdate) {
@@ -69,7 +77,7 @@ public class ComponentManager : Singleton<ComponentManager> {
         if (component is IComponentUpdate iComponentUpdate) {
             componentsUpdate.Remove(iComponentUpdate);
             if (component is IUpdateAtFreeze iRenderComponent) {
-                componentsRender.Remove(iComponentUpdate);
+                componentsUpdateAtFreeze.Remove(iComponentUpdate);
             }
         }
         if (component is IComponentFixedUpdate iComponentFixedUpdate) {

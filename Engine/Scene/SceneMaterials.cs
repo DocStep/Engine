@@ -14,7 +14,7 @@ public class SceneMaterials : Scene {
 
         /// Reflection
         x = 0;
-        GameObject reflectionSuzanneHightRes = new GameObject() { Name = "Reflection SuzanneHightRes", };
+        GameObject reflectionSuzanneHightRes = new GameObject() { Name = "Reflection SuzanneHighRes", };
         reflectionSuzanneHightRes.Transform.Position = new Vector3(x, 0, 0);
         reflectionSuzanneHightRes.Transform.Rotation = new Vector3(0, 180, 0);
         mesh = reflectionSuzanneHightRes.AddComponent<MeshComponent>();

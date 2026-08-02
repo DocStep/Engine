@@ -122,7 +122,7 @@ public class Engine : IDisposable {
             /// Counters
             Time.time += Time.deltaTime;
         } else {
-            ComponentManager.Instance.UpdateRender();
+            ComponentManager.Instance.UpdateAtFreeze();
         }
     }
     void LogFrameEnd () {
