@@ -4,27 +4,22 @@
 public class ComponentManager : Singleton<ComponentManager> {
 
     private readonly Dictionary<Type, List<Component>> components =  new Dictionary<Type, List<Component>>();
-    private readonly List<IComponentUpdate> componentsUpdate = new List<IComponentUpdate>();
-    public List<IComponentUpdate> ComponentsUpdate => componentsUpdate;
-    private readonly List<IComponentFixedUpdate> componentsFixedUpdate = new List<IComponentFixedUpdate>();
     public int componentsCount => components.Count;
 
+    private readonly List<IComponentUpdate> componentsUpdate = new List<IComponentUpdate>();
     private readonly List<IComponentUpdate> componentsRender = new List<IComponentUpdate>();
+    private readonly List<IComponentFixedUpdate> componentsFixedUpdate = new List<IComponentFixedUpdate>();
+
+    public List<IComponentUpdate> ComponentsUpdate => componentsUpdate;
 
 
     protected override void Init () {
         Type[] types = Reflection.FindAllSubclasses<Component>();
         for (int t = 0; t < types.Length; t++) {
-            components.Add(types[t], new());
+            components.Add(types[t], new List<Component>());
         }
     }
 
-    public void FixedUpdate () {
-        for (int c = 0; c < componentsFixedUpdate.Count; c++) {
-            if (!componentsFixedUpdate[c].Enabled) continue;
-            componentsFixedUpdate[c].FixedUpdate();
-        }
-    }
     public void Update () {
         for (int c = 0; c < componentsUpdate.Count; c++) {
             if (!componentsUpdate[c].Enabled) continue;
@@ -34,6 +29,12 @@ public class ComponentManager : Singleton<ComponentManager> {
     public void UpdateRender () {
         for (int c = 0; c < componentsRender.Count; c++) {
             componentsRender[c].Update();
+        }
+    }
+    public void FixedUpdate () {
+        for (int c = 0; c < componentsFixedUpdate.Count; c++) {
+            if (!componentsFixedUpdate[c].Enabled) continue;
+            componentsFixedUpdate[c].FixedUpdate();
         }
     }
 

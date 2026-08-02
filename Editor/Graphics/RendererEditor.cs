@@ -21,7 +21,7 @@ public class RendererEditor : Renderer {
 
         de_LateUpdate += DrawMaterialsGrid;
         de_DrawPostScene += DrawGizmos;
-        de_DrawOverlay += DrawGizmosRaw;
+        de_DrawAfterPostProcess += DrawGizmosRaw;
     }
 
 

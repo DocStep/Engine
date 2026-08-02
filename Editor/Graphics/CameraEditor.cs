@@ -14,16 +14,26 @@ public sealed class CameraEditor : Camera {
         SetTransformDefault();
 
         Renderer.Instance.de_LateUpdate += Update;
+
+        priority = -10;
     }
 
     public static CameraEditor Instance = null!;
 
     public override string Name { get; } = nameof(CameraEditor);
 
+    private float yaw;
+    private float pitch;
+
     private Vector3 _cameraPos = new Vector3(-2, 3, -10);
     private Vector3 _cameraOrbitCenterPos = Vector3.Zero;
 
+    public Vector3 _forward => Vector3.Transform(Vector3.UnitZ, cameraRot);
+
     /// Values
+    private const float _sensetivity = 0.1f;
+    private const float _sensetivityMultiplier = 0.01f;
+
     private const float _cameraSpeed = 10f;
     private const float _cameraSpeedShift = 30f;
 
@@ -209,11 +219,14 @@ public sealed class CameraEditor : Camera {
         cameraOrbitCenterPos += cameraPosDelta;
     }
 
+    Vector3 forward;
+    Vector3 position;
+    Vector3 worldUp;
     protected override void UpdateCamera () {
         Matrix4x4 rotation;
-        Vector3 forward;
-        Vector3 position;
-        Vector3 worldUp = MathF.Cos(pitch) < 0 ? -Vector3.UnitY : Vector3.UnitY;
+        //Vector3 forward;
+        //Vector3 position;
+        worldUp = MathF.Cos(pitch) < 0 ? -Vector3.UnitY : Vector3.UnitY;
 
         if (Inputs.Actions[Alt].pressed && Inputs.Actions[LMB].pressed) {
             /// Orbit Rotation
@@ -260,8 +273,10 @@ public sealed class CameraEditor : Camera {
             }
         }
         
-        Renderer.Instance.m4x4_View = Matrix4x4.CreateLookAtLeftHanded(position, position + forward, worldUp);
         cameraRot = rotation;
+    }
+    public override Matrix4x4 GetViewMatrix () {
+        return Matrix4x4.CreateLookAtLeftHanded(position, position + _forward, worldUp);
     }
 
     private void TryFocusOnPoint (float mouseX, float mouseY, int viewportWidth, int viewportHeight) {
@@ -293,7 +308,7 @@ public sealed class CameraEditor : Camera {
         dist = MathF.Max(_focusTargetDistanceMin, dist);
         dist = MathF.Min(dist, _focusTargetDistanceMax);
         focusTargetOrbitCenterPos = pos;
-        focusTargetCameraPos = pos - forward*dist;
+        focusTargetCameraPos = pos - _forward*dist;
         isFocusing = true;
     }
 
@@ -302,10 +317,10 @@ public sealed class CameraEditor : Camera {
         //UI.TextRenderer.AddText($"MousePos_Window: {mousePos_Window.X}, {mousePos_Window.Y}");
 
         //Vector2? scenePos = mousePos;
-        Vector2? scenePos = Editor.Graphics.EditorUI.Instance.GetSceneMousePos(mousePos_Window);
+        Vector2? scenePos = EditorUI.Instance.GetSceneMousePos(mousePos_Window);
         if (scenePos is null) return null;
 
-        Vector2 sceneSize = Editor.Graphics.EditorUI.Instance.SceneAvail;
+        Vector2 sceneSize = EditorUI.Instance.SceneAvail;
 
         //UI.TextRenderer.AddText($"MousePos_Scene: {scenePos.Value.X}, {scenePos.Value.Y}");
         //UI.TextRenderer.AddText($"SceneSize: {sceneSize.X}, {sceneSize.Y}");

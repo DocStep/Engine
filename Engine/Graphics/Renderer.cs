@@ -107,11 +107,18 @@ public class Renderer {
 
     public Action? de_LateUpdate = null;
     public Action? de_DrawPostScene = null;
-    public Action? de_DrawOverlay = null;
+    public Action? de_DrawAfterPostProcess = null;
     public Action? de_DrawUI = null;
     public Action? de_Final = null;
 
     public void RenderScene () {
+        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
+
+        if (Camera.Current is null) {
+            Log.log($"No {nameof(Camera)} found");
+            return;
+        }
+
         de_LateUpdate?.Invoke();
 
         Stats = new RendererStats();
@@ -121,13 +128,7 @@ public class Renderer {
         PostProcess.Resize(Width, Height);
 
         /// Camera Matrix
-        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
-
-        if (Camera.Current is null) {
-            Log.log($"No {nameof(Camera)} found");
-            return;
-        }
-
+        m4x4_View = Camera.Current.GetViewMatrix();
         UpdateProjection(Width, Height);
 
         PostProcess.BeginScene();
@@ -144,7 +145,7 @@ public class Renderer {
 
         PostProcess.BindOutputForOverlay();
 
-        de_DrawOverlay?.Invoke();
+        de_DrawAfterPostProcess?.Invoke();
 
         /// UI Stage
         de_DrawUI?.Invoke();
@@ -153,6 +154,8 @@ public class Renderer {
 
         iter++;
         DrawEnd();
+
+        Thread.Sleep(100);
     }
     public virtual void SetTargetSize () {
         Width = Engine.Window.Size.X;

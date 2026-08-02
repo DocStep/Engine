@@ -274,10 +274,12 @@ public class PostProcessStack : IDisposable {
         if (id != 0) Renderer.GL.DeleteRenderbuffer(id);
     }
 
-    public unsafe void DebugReadDepth (uint fbo, int x, int y) {
+    public void DebugReadDepth (uint fbo, int x, int y) {
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
         float depth = 0f;
-        Renderer.GL.ReadPixels(x, y, 1, 1, PixelFormat.DepthComponent, PixelType.Float, &depth);
+        unsafe {
+            Renderer.GL.ReadPixels(x, y, 1, 1, PixelFormat.DepthComponent, PixelType.Float, &depth);
+        }
         Log.log($"depth@({x},{y}) fbo={fbo}: {depth}");
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
     }

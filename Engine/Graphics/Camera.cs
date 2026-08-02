@@ -5,11 +5,11 @@
 namespace Engine.Graphics;
 
 
-public class Camera : Component, IComponentUpdate {
+public class Camera : Component {
     public Camera () {
         Cameras.Insert(0, this);
-        priority = 0;
-        Log.log(Name, priority);
+        _priority = 0 < Cameras.Count ? Cameras[Cameras.Count-1]._priority : 0;
+        //Log.log(GetType());
     }
 
     public override string Name { get; } = nameof(Camera);
@@ -22,18 +22,9 @@ public class Camera : Component, IComponentUpdate {
     }
 
 
-    /// Values
-    protected const float _sensetivity = 0.10f;
-    public const float _sensetivityMultiplier = 0.01f;
-
     public Vector3 cameraPos = Vector3.Zero;
     public Matrix4x4 cameraRot = Matrix4x4.Identity;
     public Vector2 mousePos_Window = Vector2.Zero;
-
-    public Vector3 forward => Vector3.Transform(Vector3.UnitZ, cameraRot);
-
-    protected float yaw;
-    protected float pitch;
 
     public float FOV = 60;
     public float planeNear = 0.1f;
@@ -42,34 +33,35 @@ public class Camera : Component, IComponentUpdate {
     public float priority {
         get => _priority;
         set {
-            if (priority == value) return;
+            if (_priority == value) return;
 
-            priority = value;
+            _priority = value;
             int posOld = Cameras.IndexOf(this);
-            int posNew = 0;
-            int count = Cameras.Count-1;
+            int count = Cameras.Count;
             for (int i = count-1; 0 <= i; i--) {
-                if (priority < Cameras[i].priority) {
-                    posNew = i;
+                if (_priority < Cameras[i]._priority) {
+                    Cameras.Remove(this);
+                    Cameras.Insert(i, this);
                     break;
                 }
             }
-            if (posOld != posNew) {
-                Cameras.RemoveAt(posOld);
-                Cameras.Insert(posNew, this);
-            }
+            Cameras.Sort((a, b) => a._priority.CompareTo(b._priority));
+
+            //Log.log("Cameras");
+            //for (int i = 0; i < count; i++) {
+            //    Log.log(Cameras[i].Name, Cameras[i]._priority);
+            //}
         }
     }
 
 
-    public virtual void Update () {
-        Vector3 pos = owner.Transform.Position;
-        Vector3 worldUp = MathF.Cos(pitch) < 0 ? -Vector3.UnitY : Vector3.UnitY;
-        Renderer.Instance.m4x4_View = Matrix4x4.CreateLookAtLeftHanded(pos, pos + forward, worldUp);
-        cameraRot = Utils.EulerToMatrix(owner.Transform.Rotation);
-    }
+    public virtual void Update () { }
     protected virtual void UpdateCamera () { }
 
+    public virtual Matrix4x4 GetViewMatrix () {
+        Vector3 pos = owner.Transform.Position;
+        return Matrix4x4.CreateLookAtLeftHanded(pos, pos + owner.Transform.Forward, owner.Transform.Up);
+    }
 
     public virtual Ray? RaycastMouse () {
         Vector2? scenePos = mousePos_Window;
