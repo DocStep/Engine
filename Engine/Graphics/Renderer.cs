@@ -42,6 +42,16 @@ public class Renderer {
 
         /// Delegates
         de_DrawUI += TextRenderer.Draw;
+
+
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_Fullscreen));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_Grayscale));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
     }
 
     public static Renderer Instance = null!;
@@ -114,7 +124,7 @@ public class Renderer {
 
         PostProcess.BeginScene();
 
-        _skybox?.Draw(m4x4_View, m4x4Projection);
+        //_skybox?.Draw(m4x4_View, m4x4Projection);
 
         DrawSceneAll();
 

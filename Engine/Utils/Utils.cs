@@ -8,6 +8,10 @@ public enum Axis { XY, XZ, YZ }
 
 public static class Utils {
 
+    public static float Rad2Deg => 180f/MathF.PI;
+    public static float Deg2Rad => MathF.PI/180f;
+
+
     extension(Matrix4x4) {
         public static Matrix4x4 Position (Vector3 position) {
             return Matrix4x4.CreateTranslation(position);
@@ -19,7 +23,6 @@ public static class Utils {
         }
     }
 
-    const float Deg2Rad = MathF.PI/180f;
     extension(Matrix4x4) {
         public static Matrix4x4 RotationEuler (float x, float y, float z) {
             Quaternion q = Quaternion.CreateFromYawPitchRoll(y*Deg2Rad, x*Deg2Rad, z*Deg2Rad);
@@ -77,8 +80,8 @@ public static class Utils {
     extension(Vector3) {
         public static Vector3 DirectionToEuler (Vector3 dir) {
             dir = Vector3.Normalize(dir);
-            float yaw = MathF.Atan2(dir.X, dir.Z);
-            float pitch = MathF.Asin(-dir.Y);
+            float pitch = MathF.Asin(-Math.Clamp(dir.Y, -1f, 1f))*Rad2Deg;
+            float yaw = MathF.Atan2(dir.X, dir.Z)*Rad2Deg;
             return new Vector3(pitch, yaw, 0f);
         }
     }

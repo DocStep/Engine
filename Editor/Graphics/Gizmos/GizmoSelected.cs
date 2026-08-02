@@ -64,34 +64,12 @@ public class GizmoSelected : IDisposable {
     public void Update () {
         if (selectedMeshComp is null) return;
 
-        Ray? rayOpt = Camera.Instance.RaycastMouse();
-        if (rayOpt is null) {
-            /// Mouse left the Scene panel mid-drag — release cleanly rather than leaving picking state stuck
-            if (selectedPositionMode != SelectedPositionGizmoMode.None && !Inputs.Actions[Inputs.LMB].pressed) {
-                selectedPositionMode = SelectedPositionGizmoMode.None;
-                if (isMouseBlocked) {
-                    isMouseBlocked = false;
-                    CameraEditor.Instance?.UnblockMouse(this);
-                }
-            }
-            return;
-        }
-        Ray ray = rayOpt.Value;
-
         Transform tr_obj = selectedMeshComp.owner.Transform;
         Vector3 camPos = Camera.Instance.cameraPos;
         Vector3 _objPos = tr_obj.Position;
         Vector3 _objRot = tr_obj.Rotation;
-
         float _dist = Vector3.Distance(camPos, _objPos);
         float half = 0.5f*_squareSize;
-        Vector3 axisCapsuleXOffset;
-        Vector3 axisCapsuleYOffset;
-        Vector3 axisCapsuleZOffset;
-        Vector3 quadXYOffset;
-        Vector3 quadXZOffset;
-        Vector3 quadYZOffset;
-        quadScale = _dist*_squareSize*Vector3.One;
 
         if (Inputs.Actions[Inputs.GizmoLocal].pressedDown) {
             selectedGizmoWorldSpace = !selectedGizmoWorldSpace;
@@ -106,9 +84,45 @@ public class GizmoSelected : IDisposable {
                 }
                 selectedPositionOverMode = SelectedPositionGizmoMode.None;
 
-                axisCapsuleXOffset = tr_obj.Position + gizmoRight*0.5f*_dist*_axisLength;
-                axisCapsuleYOffset = tr_obj.Position + gizmoUp*0.5f*_dist*_axisLength;
-                axisCapsuleZOffset = tr_obj.Position + gizmoForward*0.5f*_dist*_axisLength;
+                Vector3 axisCapsuleXOffset = tr_obj.Position + gizmoRight*0.5f*_dist*_axisLength;
+                Vector3 axisCapsuleYOffset = tr_obj.Position + gizmoUp*0.5f*_dist*_axisLength;
+                Vector3 axisCapsuleZOffset = tr_obj.Position + gizmoForward*0.5f*_dist*_axisLength;
+
+                /// Planes — always recomputed, independent of ray validity
+                Vector3 toCam = camPos - _objPos;
+                float signRight = Vector3.Dot(toCam, gizmoRight) < 0 ? -1 : 1;
+                float signUp = Vector3.Dot(toCam, gizmoUp) < 0 ? -1 : 1;
+                float signFront = Vector3.Dot(toCam, gizmoForward) < 0 ? -1 : 1;
+
+                Vector3 quadXYOffset = signRight*gizmoRight*0.5f + signUp*gizmoUp*0.5f;
+                Vector3 quadXZOffset = signRight*gizmoRight*0.5f + signFront*gizmoForward*0.5f;
+                Vector3 quadYZOffset = signUp*gizmoUp*0.5f + signFront*gizmoForward*0.5f;
+
+                /// Plane XY, Normal = forward
+                quadXYBasis = BasisToWorld(gizmoRight, gizmoForward, gizmoUp);
+                /// Plane XZ, Normal = up
+                quadXZBasis = BasisToWorld(gizmoRight, gizmoUp, gizmoForward);
+                /// Plane YZ, Normal = right
+                quadYZBasis = BasisToWorld(gizmoUp, gizmoRight, gizmoForward);
+
+                quadScale = _dist*_squareSize*Vector3.One;
+                quadXYPos = _objPos + _dist*_squareSize*quadXYOffset;
+                quadXZPos = _objPos + _dist*_squareSize*quadXZOffset;
+                quadYZPos = _objPos + _dist*_squareSize*quadYZOffset;
+
+                /// Ray-dependent picking/dragging only below this point
+                Ray? rayOpt = Camera.Instance.RaycastMouse();
+                if (rayOpt is null) {
+                    if (selectedPositionMode != SelectedPositionGizmoMode.None && !Inputs.Actions[Inputs.LMB].pressed) {
+                        selectedPositionMode = SelectedPositionGizmoMode.None;
+                        if (isMouseBlocked) {
+                            isMouseBlocked = false;
+                            CameraEditor.Instance?.UnblockMouse(this);
+                        }
+                    }
+                    break;
+                }
+                Ray ray = rayOpt.Value;
 
                 /// X
                 Vector3? axisPickXPos = TryPickCapsule(gizmoRight, _axisLength, _axisRadius);
@@ -137,23 +151,6 @@ public class GizmoSelected : IDisposable {
                         selectedDragMargin = _objPos - axisPickZPos.Value;
                     }
                 }
-
-                /// Planes
-                Vector3 toCam = camPos - _objPos;
-                float signRight = Vector3.Dot(toCam, gizmoRight) < 0 ? -1 : 1;
-                float signUp = Vector3.Dot(toCam, gizmoUp) < 0 ? -1 : 1;
-                float signFront = Vector3.Dot(toCam, gizmoForward) < 0 ? -1 : 1;
-
-                quadXYOffset = signRight*gizmoRight*0.5f + signUp*gizmoUp*0.5f;
-                quadXZOffset = signRight*gizmoRight*0.5f + signFront*gizmoForward*0.5f;
-                quadYZOffset = signUp*gizmoUp*0.5f + signFront*gizmoForward*0.5f;
-
-                /// Plane XY, Normal = forward
-                quadXYBasis = BasisToWorld(gizmoRight, gizmoForward, gizmoUp);
-                /// Plane XZ, Normal = up
-                quadXZBasis = BasisToWorld(gizmoRight, gizmoUp, gizmoForward);
-                /// Plane YZ, Normal = right
-                quadYZBasis = BasisToWorld(gizmoUp, gizmoRight, gizmoForward);
 
                 /// XY
                 Vector3? squarePickXYPos = TryPickQuad(quadXYOffset, gizmoForward, gizmoRight, gizmoUp);
@@ -222,23 +219,13 @@ public class GizmoSelected : IDisposable {
                 } else if (Inputs.Actions[Inputs.LMB].pressedUp) {
                     /// Release
                     selectedPositionMode = SelectedPositionGizmoMode.None;
-                    //selectedMesh.owner.Transform.SetRotation(selectedDragRot);
                     if (isMouseBlocked) {
                         isMouseBlocked = false;
                         CameraEditor.Instance?.UnblockMouse(this);
                     }
                 }
 
-                quadXYPos = _objPos + _dist*_squareSize*quadXYOffset;
-                quadXZPos = _objPos + _dist*_squareSize*quadXZOffset;
-                quadYZPos = _objPos + _dist*_squareSize*quadYZOffset;
-
-                
                 break;
-                /*case SelectedGizmoMode.Rotation:
-                    break;*/
-                /*case SelectedGizmoMode.Scale:
-                    break;*/
         }
 
         if (isMouseBlocked) {
@@ -248,6 +235,7 @@ public class GizmoSelected : IDisposable {
         }
 
         Vector3? TryPickCapsule (Vector3 axisDir, float length, float radius) {
+            Ray ray = Camera.Instance.RaycastMouse()!.Value;
             Vector3 segStart = _objPos;
             Vector3 segDir = Vector3.Normalize(axisDir);
             float segLen = _dist*length;
@@ -280,6 +268,7 @@ public class GizmoSelected : IDisposable {
             return null;
         }
         Vector3? TryPickQuad (Vector3 offset, Vector3 normal, Vector3 axisA, Vector3 axisB) {
+            Ray ray = Camera.Instance.RaycastMouse()!.Value;
             Vector3 quadCenter = _objPos + _dist*offset*_squareSize;
             float halfExtent = _dist*half;
             Vector3? hit = Raycast.IntersectPlane(ray, quadCenter, normal);

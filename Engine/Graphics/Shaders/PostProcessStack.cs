@@ -13,15 +13,6 @@ public class PostProcessStack : IDisposable {
         Engine.Instance.de_Update_Engine += Update;
 
         Resize(Renderer.Instance.Width, Renderer.Instance.Height);
-
-        //Effects.Add(new PostProcessPass(_mat_Fullscreen));
-        //Effects.Add(new PostProcessPass(_mat_Depth));
-        //Effects.Add(new PostProcessPass(_mat_Grayscale));
-        Effects.Add(new PostProcessPass(_mat_SSAO));
-        Effects.Add(new PostProcessPass(_mat_SSAOBlur));
-        Effects.Add(new PostProcessPass(_mat_SSAOComposite));
-        //Effects.Add(new PostProcessPass(_mat_CameraFocus));
-        Effects.Add(new PostProcessPass(_mat_Fxaa));
     }
 
     public static uint QuadVAO;
