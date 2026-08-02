@@ -65,7 +65,7 @@ public class GizmoSelected : IDisposable {
         if (selectedMeshComp is null) return;
 
         Transform tr_obj = selectedMeshComp.owner.Transform;
-        Vector3 camPos = Camera.Instance.cameraPos;
+        Vector3 camPos = Camera.Current.cameraPos;
         Vector3 _objPos = tr_obj.Position;
         Vector3 _objRot = tr_obj.Rotation;
         float _dist = Vector3.Distance(camPos, _objPos);
@@ -111,7 +111,7 @@ public class GizmoSelected : IDisposable {
                 quadYZPos = _objPos + _dist*_squareSize*quadYZOffset;
 
                 /// Ray-dependent picking/dragging only below this point
-                Ray? rayOpt = Camera.Instance.RaycastMouse();
+                Ray? rayOpt = Camera.Current.RaycastMouse();
                 if (rayOpt is null) {
                     if (selectedPositionMode != SelectedPositionGizmoMode.None && !Inputs.Actions[Inputs.LMB].pressed) {
                         selectedPositionMode = SelectedPositionGizmoMode.None;
@@ -235,7 +235,7 @@ public class GizmoSelected : IDisposable {
         }
 
         Vector3? TryPickCapsule (Vector3 axisDir, float length, float radius) {
-            Ray ray = Camera.Instance.RaycastMouse()!.Value;
+            Ray ray = Camera.Current.RaycastMouse()!.Value;
             Vector3 segStart = _objPos;
             Vector3 segDir = Vector3.Normalize(axisDir);
             float segLen = _dist*length;
@@ -268,7 +268,7 @@ public class GizmoSelected : IDisposable {
             return null;
         }
         Vector3? TryPickQuad (Vector3 offset, Vector3 normal, Vector3 axisA, Vector3 axisB) {
-            Ray ray = Camera.Instance.RaycastMouse()!.Value;
+            Ray ray = Camera.Current.RaycastMouse()!.Value;
             Vector3 quadCenter = _objPos + _dist*offset*_squareSize;
             float halfExtent = _dist*half;
             Vector3? hit = Raycast.IntersectPlane(ray, quadCenter, normal);
@@ -307,7 +307,7 @@ public class GizmoSelected : IDisposable {
         _sh_Unlit.Use();
         _sh_Unlit.SetMatrix4(View, RendererEditor.Instance.UView);
         _sh_Unlit.SetMatrix4(Projection, RendererEditor.Instance.UProjection);
-        _sh_Unlit.SetVector3(ViewPos, Camera.Instance.cameraPos);
+        _sh_Unlit.SetVector3(ViewPos, Camera.Current.cameraPos);
 
         DrawOutline();
         DrawGizmo();
@@ -321,7 +321,7 @@ public class GizmoSelected : IDisposable {
         GL.Enable(EnableCap.Blend);
 
         Transform tr_obj = selectedMeshComp.owner.Transform;
-        Vector3 camPos = Camera.Instance.cameraPos;
+        Vector3 camPos = Camera.Current.cameraPos;
         Vector3 _objPos = tr_obj.Position;
         Vector3 _objRot = tr_obj.Rotation;
         float _dist = Vector3.Distance(camPos, _objPos);
@@ -408,7 +408,7 @@ public class GizmoSelected : IDisposable {
             GL.StencilMask(0x00);
             GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
 
-            float dist = Vector3.Distance(Camera.Instance.cameraPos, renderInfo.pos);
+            float dist = Vector3.Distance(Camera.Current.cameraPos, renderInfo.pos);
 
             Matrix4x4 model = Matrix4x4.CreateScale(renderInfo.scale)
                 *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);

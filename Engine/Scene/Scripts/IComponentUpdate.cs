@@ -3,7 +3,7 @@
 
 public interface IComponentUpdate {
 
-    public void Update();
+    void Update();
     public bool Enabled { get; set; }
 
 }

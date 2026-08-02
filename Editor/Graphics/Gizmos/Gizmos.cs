@@ -118,7 +118,7 @@ public static class Gizmos {
         DrawGizmoAxesWidget();
     }
     private static void GizmoGrid () {
-        _mat_GizmoGrid.SetVector3(CameraPos, Camera.Instance.cameraPos);
+        _mat_GizmoGrid.SetVector3(CameraPos, Camera.Current.cameraPos);
         RendererEditor.Instance.AddRenderInfo(new RenderInfo() {
             mesh = _mesh_GridWireframe,
             primitiveType = PrimitiveType.Lines,
@@ -132,7 +132,7 @@ public static class Gizmos {
     static void GizmoGridPost () => GL.DepthRange(0, 1);
 
     private static void GizmoAxes () {
-        _mat_GizmoAxes.SetVector3(CameraPos, Camera.Instance.cameraPos);
+        _mat_GizmoAxes.SetVector3(CameraPos, Camera.Current.cameraPos);
         RendererEditor.Instance.AddRenderInfo(new RenderInfo() {
             mesh = _mesh_AxesWireframe,
             primitiveType = PrimitiveType.Lines,
@@ -158,14 +158,14 @@ public static class Gizmos {
         GL.Clear(ClearBufferMask.DepthBufferBit);
         GL.Disable(EnableCap.ScissorTest);
 
-        Matrix4x4 rotation = Camera.Instance.cameraRot;
+        Matrix4x4 rotation = Camera.Current.cameraRot;
         Vector3 forward = Vector3.Transform(Vector3.UnitZ, rotation);
         Vector3 up = Vector3.Transform(Vector3.UnitY, rotation);
         Vector3 gizmoCamPos = -forward*5f;
         Matrix4x4 gizmoView = Matrix4x4.CreateLookAtLeftHanded(gizmoCamPos, Vector3.Zero, up);
         float aspect = Engine.Engine.Window.Size.X/(float)Engine.Engine.Window.Size.Y;
         Matrix4x4 gizmoProjection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
-            Camera.FOV/180*MathF.PI, aspect, Camera.planeNear, Camera.planeFar);
+            Camera.Current.FOV/180*MathF.PI, aspect, Camera.Current.planeNear, Camera.Current.planeFar);
 
         _sh_GizmoAxes.Use();
         _sh_GizmoAxes.SetMatrix4(View, Matrix4x4.ToArray(gizmoView));

@@ -12,10 +12,13 @@ public sealed class CameraEditor : Camera {
     public CameraEditor () : base() {
         Instance = this;
         SetTransformDefault();
+
+        Renderer.Instance.de_LateUpdate += Update;
     }
 
-    new public static CameraEditor? Instance = null;
+    public static CameraEditor Instance = null!;
 
+    public override string Name { get; } = nameof(CameraEditor);
 
     private Vector3 _cameraPos = new Vector3(-2, 3, -10);
     private Vector3 _cameraOrbitCenterPos = Vector3.Zero;
@@ -88,11 +91,9 @@ public sealed class CameraEditor : Camera {
     }
 
 
-    protected override void Update (double deltaTime) {
+    public override void Update () {
         mousePos_Window.X = Inputs.MousePos.X;
         mousePos_Window.Y = Inputs.MousePos.Y;
-        //Log.log($"mousePos {mousePos}");
-        float dt = (float)deltaTime;
 
         if (Inputs.Actions[Reset].pressedDown) SetTransformDefault();
         if (Inputs.Actions[CameraFocusMaterial].pressedDown) SetTransformMaterialPreview();
@@ -116,7 +117,7 @@ public sealed class CameraEditor : Camera {
             isFocusing = false;
         }
 
-        UpdateCamera(deltaTime);
+        UpdateCamera();
 
         /// Middle Mouse: drag to pan, clean click (no drag) to focus
         if (Inputs.Actions[CameraDrag].pressedDown && mouseAllowed) {
@@ -156,7 +157,7 @@ public sealed class CameraEditor : Camera {
             Vector3 camDelta = focusTargetCameraPos - cameraPos;
             Vector3 orbitDelta = focusTargetOrbitCenterPos - cameraOrbitCenterPos;
 
-            float _t = MathF.Min(1f, _focusGlideSpeed*dt);
+            float _t = MathF.Min(1f, _focusGlideSpeed*(float)Time.deltaTime);
             cameraPos += camDelta*_t;
             cameraOrbitCenterPos += orbitDelta*_t;
 
@@ -187,7 +188,7 @@ public sealed class CameraEditor : Camera {
             Vector3 moveDirection = Vector3.Normalize(cameraPosDelta);
 
             bool continuousMovement = moveDirection != Vector3.Zero;
-            moveHoldTime = continuousMovement ? moveHoldTime + dt : 0f;
+            moveHoldTime = continuousMovement ? moveHoldTime + (float)Time.deltaTime : 0f;
 
             float rampT = Utils.Clamp(moveHoldTime / _moveRampUpTime, 0f, 1f);
             float speedFactor = Utils.Lerp(_moveStartSpeedFactor, 1f, rampT);
@@ -198,7 +199,7 @@ public sealed class CameraEditor : Camera {
                 speedFactor = Utils.Lerp(1f, _moveOvershootSpeedFactor, overshootT);
             }
 
-            cameraPosDelta = moveDirection * baseSpeed * speedFactor * dt;
+            cameraPosDelta = moveDirection*baseSpeed*speedFactor*(float)Time.deltaTime;
             isFocusing = false;
         } else {
             moveHoldTime = 0f;
@@ -208,7 +209,7 @@ public sealed class CameraEditor : Camera {
         cameraOrbitCenterPos += cameraPosDelta;
     }
 
-    protected override void UpdateCamera (double deltaTime) {
+    protected override void UpdateCamera () {
         Matrix4x4 rotation;
         Vector3 forward;
         Vector3 position;

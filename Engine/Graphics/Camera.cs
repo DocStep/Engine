@@ -5,14 +5,22 @@
 namespace Engine.Graphics;
 
 
-public class Camera {
+public class Camera : Component, IComponentUpdate {
     public Camera () {
-        Instance = this;
-
-        Engine.Window.Update += Update;
+        Cameras.Insert(0, this);
+        priority = 0;
+        Log.log(Name, priority);
     }
 
-    public static Camera Instance = null!;
+    public override string Name { get; } = nameof(Camera);
+
+    public static List<Camera> Cameras { get; private set; } = new List<Camera>();
+    public static Camera? Current {
+        get {
+            return 0 < Cameras.Count ? Cameras[0] : null;
+        }
+    }
+
 
     /// Values
     protected const float _sensetivity = 0.10f;
@@ -27,18 +35,33 @@ public class Camera {
     protected float yaw;
     protected float pitch;
 
-    public static float FOV = 60;
-    public static float planeNear = 0.1f;
-    public static float planeFar = 1000f;
+    public float FOV = 60;
+    public float planeNear = 0.1f;
+    public float planeFar = 1000f;
+    public float priority = 0f;
 
 
-    protected virtual void Update (double deltaTime) {
-        
-    }
+    public virtual void Update () { }
+    protected virtual void UpdateCamera () { }
 
 
-    protected virtual void UpdateCamera (double deltaTime) {
-        
+    public void SetPriority (float newPriority) {
+        if (priority == newPriority) return;
+
+        priority = newPriority;
+        int posOld = Cameras.IndexOf(this);
+        int posNew = 0;
+        int count = Cameras.Count-1;
+        for (int i = count-1; 0 <= i; i--) {
+            if (priority < Cameras[i].priority) {
+                posNew = i;
+                break;
+            }
+        }
+        if (posOld != posNew) {
+            Cameras.RemoveAt(posOld);
+            Cameras.Insert(posNew, this);
+        }
     }
 
 

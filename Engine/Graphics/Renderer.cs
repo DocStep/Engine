@@ -124,6 +124,11 @@ public class Renderer {
         UpdateProjection(Width, Height);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
+        if (Camera.Current is null) {
+            Log.log($"No {nameof(Camera)} found");
+            return;
+        }
+
         PostProcess.BeginScene();
 
         _skybox?.Draw(m4x4_View, m4x4Projection);
@@ -168,7 +173,7 @@ public class Renderer {
     protected void UpdateProjection (float width, float height) {
         float aspect = width/height;
         m4x4Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
-            Camera.FOV/180*MathF.PI, aspect, Camera.planeNear, Camera.planeFar);
+            Camera.Current.FOV/180*MathF.PI, aspect, Camera.Current.planeNear, Camera.Current.planeFar);
         uView = Matrix4x4.ToArray(m4x4_View);
         uProjection = Matrix4x4.ToArray(m4x4Projection);
     }
@@ -340,7 +345,7 @@ public class Renderer {
         shader.Use();
         shader.SetMatrix4(View, uView);
         shader.SetMatrix4(Projection, uProjection);
-        shader.SetVector3(ViewPos, Camera.Instance.cameraPos);
+        shader.SetVector3(ViewPos, Camera.Current.cameraPos);
     }
     public static void SetSceneUniformsLit (Shader shader) {
         shader.SetVector3(SunLightDir, Constants.sunLightDir);

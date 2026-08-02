@@ -3,7 +3,7 @@
 
 public interface IComponentFixedUpdate {
 
-    public void FixedUpdate ();
+    void FixedUpdate ();
     public bool Enabled { get; set; }
 
 }

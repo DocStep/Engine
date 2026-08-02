@@ -30,7 +30,7 @@ public static class Constants {
 
     //public readonly static Vector3 clearColor = new Vector3(0.1f, 0.1f, 0.15f);
     public readonly static Vector3 clearColor = black;
-    public readonly static float _gridScale = Camera.planeFar;
+    public readonly static float _gridScale = 1000;
     public readonly static float _gridDivisionScale = 1f;
 
     public static bool _drawArrowAsMesh = true;
