@@ -52,13 +52,13 @@ public class Engine : IDisposable {
         Log.CreateSingleton();
         Log.log($"========== Run ==========", LogType.info);
         Log.log($"===== Utils Layer =====", LogType.info);
-        TimeUtils.Init();
+        Time.Init();
         //CrashHandlers.Init();
 
         Reflection.CreateSingleton();
         Json.CreateSingleton();
 
-        Log.log($"[{TimeUtils.getCurrentTime}]");
+        Log.log($"[{Time.getCurrentTime}]");
 
         Inputs.OverrideActions(DataEngine.InputsData);
 
@@ -99,26 +99,6 @@ public class Engine : IDisposable {
     }
 
 
-    private double _time = 0d;
-    public static double time {
-        get => Instance._time;
-        private set => Instance._time = value;
-    }
-    private double _accumulator = 0d;
-
-    private double _deltaTime;
-    public static double deltaTime {
-        get => Instance._deltaTime;
-        private set => Instance._deltaTime = value;
-    }
-
-    private double _fixedDeltaTime = 1d/50d;
-    public static double fixedDeltaTime {
-        get => Instance._fixedDeltaTime;
-        private set => Instance._fixedDeltaTime = value;
-    }
-
-
     private void OnUpdate (double dt) {
         InputState.Update();
         Inputs.Update();
@@ -128,13 +108,13 @@ public class Engine : IDisposable {
             else if (engineState == EngineStates.Paused) engineState = EngineStates.Ready;
         }
         if (engineState == EngineStates.Ready) {
-            _deltaTime = dt;
-            _accumulator += dt;
+            Time.deltaTime = dt;
+            Time.accumulator += dt;
 
             Update();
-            while (fixedDeltaTime <= _accumulator) {
+            while (Time.fixedDeltaTime <= Time.accumulator) {
                 FixedUpdate();
-                _accumulator -= fixedDeltaTime;
+                Time.accumulator -= Time.fixedDeltaTime;
             }
 
             f3log();
@@ -142,7 +122,7 @@ public class Engine : IDisposable {
             de_Render?.Invoke();
 
             /// Counters
-            time += _deltaTime;
+            Time.time += Time.deltaTime;
         } else {
             ComponentManager.Instance.UpdateRender();
         }
@@ -186,7 +166,8 @@ public class Engine : IDisposable {
             Log.log("fixedDeltaTime must be > 0");
             return;
         }
-        fixedDeltaTime = value;
+
+        Time.fixedDeltaTime = value;
     }
 
 
@@ -196,9 +177,9 @@ public class Engine : IDisposable {
 
 
     void f3log () {
-        Graphics.UI.TextRenderer.AddText($"Time: {time:F2}");
-        Graphics.UI.TextRenderer.AddText($"FPS: {(int)(1/Engine.Instance._deltaTime)}");
-        Graphics.UI.TextRenderer.AddText($"ms: {_deltaTime*1000:F3}");
+        Graphics.UI.TextRenderer.AddText($"Time: {Time.time:F2}");
+        Graphics.UI.TextRenderer.AddText($"FPS: {(int)(1/Time.deltaTime)}");
+        Graphics.UI.TextRenderer.AddText($"ms: {Time.deltaTime*1000:F3}");
         Graphics.UI.TextRenderer.AddText($"Pos: {Graphics.Camera.Instance?.cameraPos:F3}");
         Graphics.UI.TextRenderer.AddText($"MousePos: {Graphics.Camera.Instance?.mousePos_Window}");
         Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.Instance.componentsCount}");

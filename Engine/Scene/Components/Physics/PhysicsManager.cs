@@ -19,7 +19,7 @@ public class PhysicsManager : Singleton<PhysicsManager> {
 
 
     public void FixedUpdate () {
-        float dt = (float)Engine.fixedDeltaTime;
+        float dt = (float)Time.fixedDeltaTime;
 
         World.Step(dt, multiThread: true);
 

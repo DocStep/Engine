@@ -7,7 +7,7 @@ public class MonkeyScript : Script, IComponentUpdate {
 
 
     public void Update () {
-        owner.Transform.Rotation += (float)Engine.deltaTime*dir;
+        owner.Transform.Rotation += (float)Time.deltaTime*dir;
     }
 
 }

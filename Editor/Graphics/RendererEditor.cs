@@ -161,7 +161,7 @@ public class RendererEditor : Renderer {
 
                 float _x = x/testGridDensity + offsetX;
                 float _z = z/testGridDensity + offsetZ;
-                float y = 0.25f*MathF.Sin(_x + speed*(float)Engine.Engine.time) * MathF.Cos(_z + speed*(float)Engine.Engine.time);
+                float y = 0.25f*MathF.Sin(_x + speed*(float)Time.time) * MathF.Cos(_z + speed*(float)Time.time);
                 RenderInfo info = new RenderInfo() {
                     pos = new Vector3(_x, y, _z),
                     mesh = _mesh_Sphere,

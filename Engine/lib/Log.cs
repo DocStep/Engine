@@ -238,7 +238,7 @@ public class Log : Singleton<Log> {
         public LogEntry (string text, LogType type) {
             this.text = text;
             stackTrace = new StackTrace(1);
-            timestamp = TimeUtils.getCurrentTimeLog;
+            timestamp = Time.getCurrentTimeLog;
             this.type = type;
         }
 

@@ -48,7 +48,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     public void Update () {
         if (_isClosing) return;
 
-        ImGUI.Update((float)Engine.Engine.deltaTime);
+        ImGUI.Update((float)Time.deltaTime);
 
         bool wantCapture = ImGui.GetIO().WantCaptureMouse || ImGui.IsAnyItemActive();
         isUIClick = wantCapture && !isUIHovered;
