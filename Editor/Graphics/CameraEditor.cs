@@ -260,7 +260,7 @@ public sealed class CameraEditor : Camera {
             }
         }
         
-        RendererEditor.Instance.m4x4_View = Matrix4x4.CreateLookAtLeftHanded(position, position + forward, worldUp);
+        Renderer.Instance.m4x4_View = Matrix4x4.CreateLookAtLeftHanded(position, position + forward, worldUp);
         cameraRot = rotation;
     }
 

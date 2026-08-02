@@ -114,6 +114,39 @@ public static class Utils {
         return Matrix4x4.CreateRotationZ(roll)*Matrix4x4.CreateRotationX(-pitch)*Matrix4x4.CreateRotationY(-yaw);
     }
 
+    /// Converts Euler angles (degrees) to a rotation matrix, Unity order: Y * X * Z
+    public static Matrix4x4 EulerToMatrix (Vector3 eulerDegrees) {
+        float x = eulerDegrees.X * MathF.PI/180f;
+        float y = eulerDegrees.Y * MathF.PI/180f;
+        float z = eulerDegrees.Z * MathF.PI/180f;
+
+        float sx = MathF.Sin(x), cx = MathF.Cos(x);
+        float sy = MathF.Sin(y), cy = MathF.Cos(y);
+        float sz = MathF.Sin(z), cz = MathF.Cos(z);
+
+        /// Row-vector rotation matrices (LH), each transforms v' = v*M
+        var rx = new Matrix4x4(
+            1, 0, 0, 0,
+            0, cx, sx, 0,
+            0, -sx, cx, 0,
+            0, 0, 0, 1);
+
+        var ry = new Matrix4x4(
+            cy, 0, -sy, 0,
+            0, 1, 0, 0,
+            sy, 0, cy, 0,
+            0, 0, 0, 1);
+
+        var rz = new Matrix4x4(
+            cz, sz, 0, 0,
+            -sz, cz, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1);
+
+        /// Combined: yaw * pitch * roll, applied in that order to a row vector
+        return rz * rx * ry;
+    }
+
     public static float Lerp (float a, float b, float t) => a + (b - a)*t;
 
     extension(Matrix4x4) {

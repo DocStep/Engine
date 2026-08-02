@@ -38,31 +38,37 @@ public class Camera : Component, IComponentUpdate {
     public float FOV = 60;
     public float planeNear = 0.1f;
     public float planeFar = 1000f;
-    public float priority = 0f;
+    private float _priority = 0f;
+    public float priority {
+        get => _priority;
+        set {
+            if (priority == value) return;
 
-
-    public virtual void Update () { }
-    protected virtual void UpdateCamera () { }
-
-
-    public void SetPriority (float newPriority) {
-        if (priority == newPriority) return;
-
-        priority = newPriority;
-        int posOld = Cameras.IndexOf(this);
-        int posNew = 0;
-        int count = Cameras.Count-1;
-        for (int i = count-1; 0 <= i; i--) {
-            if (priority < Cameras[i].priority) {
-                posNew = i;
-                break;
+            priority = value;
+            int posOld = Cameras.IndexOf(this);
+            int posNew = 0;
+            int count = Cameras.Count-1;
+            for (int i = count-1; 0 <= i; i--) {
+                if (priority < Cameras[i].priority) {
+                    posNew = i;
+                    break;
+                }
+            }
+            if (posOld != posNew) {
+                Cameras.RemoveAt(posOld);
+                Cameras.Insert(posNew, this);
             }
         }
-        if (posOld != posNew) {
-            Cameras.RemoveAt(posOld);
-            Cameras.Insert(posNew, this);
-        }
     }
+
+
+    public virtual void Update () {
+        Vector3 pos = owner.Transform.Position;
+        Vector3 worldUp = MathF.Cos(pitch) < 0 ? -Vector3.UnitY : Vector3.UnitY;
+        Renderer.Instance.m4x4_View = Matrix4x4.CreateLookAtLeftHanded(pos, pos + forward, worldUp);
+        cameraRot = Utils.EulerToMatrix(owner.Transform.Rotation);
+    }
+    protected virtual void UpdateCamera () { }
 
 
     public virtual Ray? RaycastMouse () {

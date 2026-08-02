@@ -67,14 +67,14 @@ public class Engine : IDisposable {
         ReflectionActionScripts.CreateSingleton();
 
         Window = Windows.WindowCreate();
-        Window.Load += () => OnLoad(renderer ?? typeof(Graphics.Renderer), camera ?? typeof(Graphics.Camera), de_Init);
+        Window.Load += () => OnLoad(renderer ?? typeof(Graphics.Renderer), de_Init);
         Window.Update += OnUpdate;
         Window.Closing += OnClosing;
         de_Render += LogFrameEnd;
     }
     public void Run () => Silk.NET.Windowing.WindowExtensions.Run(Window);
 
-    private void OnLoad (Type rendererType, Type cameraType, Action? de_Init) {
+    private void OnLoad (Type rendererType, Action? de_Init) {
         Input = Silk.NET.Input.InputWindowExtensions.CreateInput(Window);
         InputState.Init(Input);
 
@@ -84,8 +84,6 @@ public class Engine : IDisposable {
         if (renderer as Graphics.Renderer is null) throw new Exception("Renderer is null");
 
         de_Init?.Invoke();
-
-        Activator.CreateInstance(cameraType);
 
         PhysicsManager.CreateSingleton();
         ComponentManager.CreateSingleton();

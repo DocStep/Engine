@@ -27,6 +27,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         Engine.Engine.Instance.de_Render += Draw;
         Renderer.Instance.de_Dispose += Dispose;
+
+        new CameraEditor();
     }
 
     public ImGuiController ImGUI = null!;

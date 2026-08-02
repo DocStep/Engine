@@ -121,13 +121,14 @@ public class Renderer {
         PostProcess.Resize(Width, Height);
 
         /// Camera Matrix
-        UpdateProjection(Width, Height);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
         if (Camera.Current is null) {
             Log.log($"No {nameof(Camera)} found");
             return;
         }
+
+        UpdateProjection(Width, Height);
 
         PostProcess.BeginScene();
 
@@ -194,64 +195,6 @@ public class Renderer {
             DrawInfo(info);
         }
     }
-    /*protected virtual void DrawSceneWireframe () {
-        GL.PolygonMode(TriangleFace.FrontAndBack, GLEnum.Line);
-
-        /// Gizmo
-        GL.Enable(EnableCap.Blend);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-
-        /// Both
-        GL.Disable(EnableCap.CullFace);
-
-        /// DepthTest
-        GL.Disable(EnableCap.DepthTest);
-        GL.DepthMask(false);
-
-        RenderList.Sort((a, b) => a.material.pass.CompareTo(b.material.pass));
-        int count = RenderList.Count;
-        for (int i = 0; i < count; i++) {
-            RenderInfo info = RenderList[i];
-            if (info.material.pass == RenderPass.Opaque || info.material.pass == RenderPass.Transparent)
-                DrawInfoWireframe(info);
-            else DrawInfo(info);
-        }
-
-        GL.Enable(EnableCap.CullFace);
-        GL.PolygonMode(TriangleFace.FrontAndBack, GLEnum.Fill);
-    }*/
-    /*private void DrawGizmos () {
-        GL.Enable(EnableCap.Blend);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-
-        GL.Disable(EnableCap.CullFace);
-
-        //GL.Disable(EnableCap.DepthTest);
-
-        int count = RenderGizmoList.Count;
-        for (int i = 0; i < count; i++) {
-            RenderInfo info = RenderGizmoList[i];
-            DrawInfo(info);
-            Shader shader = info.material.shader;
-            //SetSceneUniformsUnlit(shader);
-            //SetSceneUniformsLit(shader);
-            //SetSceneUniformsSkybox(shader, _skybox.texture, _skybox.maxLod);
-
-            //Matrix4x4 mesh_m4x4 = info.modelOverride ?? Matrix4x4.CreateScale(info.scale)
-            //    *Matrix4x4.RotationEuler(info.rot)*Matrix4x4.Position(info.pos);
-            //float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
-            //shader.SetMatrix4(Model, mesh_uModel);
-            //info.material.Apply();
-
-            //info.de_Pre?.Invoke();
-            //info.mesh.Draw(info.primitiveType);
-            //info.de_Post?.Invoke();
-        }
-
-        GL.Enable(EnableCap.CullFace);
-        GL.PolygonMode(TriangleFace.FrontAndBack, GLEnum.Fill);
-    }*/
-
 
     public void DrawInfo (RenderInfo info) {
         if (info.mesh is null) return;
@@ -309,37 +252,8 @@ public class Renderer {
         info.de_Pre?.Invoke();
         info.mesh.Draw(info.primitiveType);
         info.de_Post?.Invoke();
-
-        //if (info.depthRangeNear != 0 || info.depthRangeFar != 1)
-        //    GL.DepthRange(0, 1);
     }
-    /*private void DrawInfoWireframe (RenderInfo info) {
-        if (info.mesh is null) return;
-
-        Shader shader = Gizmos._mat_GizmoWireframe.shader;
-
-        SetSceneUniformsUnlit(shader);
-
-        Matrix4x4 mesh_m4x4 = info.modelOverride ?? Matrix4x4.CreateScale(info.scale)
-            *Matrix4x4.RotationEuler(info.rot)*Matrix4x4.Position(info.pos);
-        float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
-        shader.SetMatrix4(Model, mesh_uModel);
-        Gizmos._mat_GizmoWireframe.Apply();
-
-        info.mesh.Draw(info.primitiveType);
-
-        if (info.depthRangeNear != 0 || info.depthRangeFar != 1)
-            GL.DepthRange(0, 1);
-    }*/
-
-    /*public void DrawGizmosRaw () {
-        GL.Enable(EnableCap.Blend);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-
-        Gizmos.Draw();
-        Gizmos._gizmo_Selected.Draw();
-    }*/
-
+    
 
     public static void SetSceneUniformsUnlit (Shader shader) {
         shader.Use();
