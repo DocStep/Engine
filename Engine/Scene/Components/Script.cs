@@ -7,6 +7,7 @@ namespace Engine;
 
 
 public class Script : Component {
+    //public override string Name { get; } = nameof(Script) + ": " + GetType().Name;
     public override string Name => nameof(Script) + ": " + GetType().Name;
 
 }

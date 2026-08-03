@@ -89,6 +89,7 @@ public class Renderer {
     protected readonly List<RenderInfo> RenderGizmoList = new List<RenderInfo>();
     protected readonly List<RenderInfo> RenderUIList = new List<RenderInfo>();
     public void AddRenderInfo (RenderInfo renderInfo) {
+        //Log.log("AddRenderInfo\n", new System.Diagnostics.StackTrace());
         switch (renderInfo.material.pass) {
             case RenderPass.Opaque:
                 RenderList.Add(renderInfo);
@@ -155,7 +156,7 @@ public class Renderer {
         iter++;
         DrawEnd();
 
-        Thread.Sleep(100);
+        //Thread.Sleep(500);
     }
     public virtual void SetTargetSize () {
         Width = Engine.Window.Size.X;
@@ -196,15 +197,16 @@ public class Renderer {
         //    Log.log(SceneManager.ActiveScene.Objects[i].Name);
         //}
         //DrawSame();
+        //Log.log("RenderList", RenderList.Count);
+        //int s = 0;
         RenderList.Sort((a, b) => a.material.pass.CompareTo(b.material.pass));
         int count = RenderList.Count;
-        int s = 0;
         for (int i = 0; i < count; i++) {
             RenderInfo info = RenderList[i];
-            if (info.mesh.Name == "SuzanneHighRes") s++;
+            //if (info.mesh.Name == "SuzanneHighRes") s++;
             DrawInfo(info);
         }
-        Log.log("SuzanneHighRes", s);
+        //Log.log("SuzanneHighRes", s);
     }
 
     public void DrawInfo (RenderInfo info) {

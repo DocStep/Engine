@@ -12,6 +12,12 @@ public class SceneMaterials : Scene {
         float x;
         MeshComponent? mesh;
 
+        x = -1;
+        //GameObject cam = new GameObject() { Name = "Camera", };
+        //cam.Transform.Position = new Vector3(x, 1, -2);
+        //Camera camera = cam.AddComponent<Camera>();
+        //camera.priority = 0;
+
         /// Reflection
         x = 0;
         GameObject reflectionSuzanneHightRes = new GameObject() { Name = "Reflection SuzanneHighRes", };
@@ -37,7 +43,7 @@ public class SceneMaterials : Scene {
         mesh.mesh = AssetsEngine._mesh_Torus;
         mesh.material = AssetsEngine._mat_MaterialPreview;
 
-        /// Primitives
+        ///// Primitives
         x = 4;
         GameObject plane = new GameObject(PrimitiveTypes.Plane, position: new(x, 0, -2)) { Name = "Plane", };
         plane.RemoveComponent<PhysicsComponent>();
@@ -48,15 +54,15 @@ public class SceneMaterials : Scene {
         GameObject sphere = new GameObject(PrimitiveTypes.Sphere, position: new(x, 0, 2)) { Name = "Sphere", };
         sphere.RemoveComponent<PhysicsComponent>();
 
-        GameObject capsule = new GameObject(PrimitiveTypes.Capsule, position: new(x, 0, 4)) { Name = "Capsule", };
-        capsule.RemoveComponent<PhysicsComponent>();
+        //GameObject capsule = new GameObject(PrimitiveTypes.Capsule, position: new(x, 0, 4)) { Name = "Capsule", };
+        //capsule.RemoveComponent<PhysicsComponent>();
 
-        /// Gizmos
-        x = 6;
-        GameObject gizmosPlane = new GameObject(PrimitiveTypes.GizmoPlane, position: new(x, 0, -2)) { Name = "Gizmos Plane", };
-        GameObject gizmosCube = new GameObject(PrimitiveTypes.GizmoCube, position: new(x, 0, 0)) { Name = "Gizmos Cube", };
-        GameObject gizmosSphere = new GameObject(PrimitiveTypes.GizmoSphere, position: new(x, 0, 2)) { Name = "Gizmos Sphere", };
-        GameObject gizmosCapsule = new GameObject(PrimitiveTypes.GizmoCapsule, position: new(x, 0, 4)) { Name = "Gizmos Capsule", };
+        ///// Gizmos
+        //x = 6;
+        //GameObject gizmosPlane = new GameObject(PrimitiveTypes.GizmoPlane, position: new(x, 0, -2)) { Name = "Gizmos Plane", };
+        //GameObject gizmosCube = new GameObject(PrimitiveTypes.GizmoCube, position: new(x, 0, 0)) { Name = "Gizmos Cube", };
+        //GameObject gizmosSphere = new GameObject(PrimitiveTypes.GizmoSphere, position: new(x, 0, 2)) { Name = "Gizmos Sphere", };
+        //GameObject gizmosCapsule = new GameObject(PrimitiveTypes.GizmoCapsule, position: new(x, 0, 4)) { Name = "Gizmos Capsule", };
 
         x = 8;
         GameObject sphereR = new GameObject() { Name = "Sphere R", };

@@ -55,7 +55,7 @@ public class Engine : IDisposable {
         Time.Init();
         //CrashHandlers.Init();
 
-        Reflection.CreateSingleton();
+        //Reflection.CreateSingleton();
         Json.CreateSingleton();
 
         Log.log($"[{Time.getCurrentTime}]");
@@ -122,7 +122,7 @@ public class Engine : IDisposable {
             /// Counters
             Time.time += Time.deltaTime;
         } else {
-            ComponentManager.Instance.UpdateAtFreeze();
+            //ComponentManager.Instance.UpdateAtFreeze();
         }
     }
     void LogFrameEnd () {
@@ -136,7 +136,7 @@ public class Engine : IDisposable {
         ComponentManager.Instance.Update();
 
         de_Update_Engine?.Invoke();
-        ReflectionActionScripts.Instance.de_Actions_Update?.Invoke();
+        ReflectionActionScripts.Instance?.de_Actions_Update?.Invoke();
 
         Stats.LatencyUpdate = (float)sw_LatencyUpdate.Elapsed.TotalMilliseconds;
     }
@@ -154,7 +154,7 @@ public class Engine : IDisposable {
         Stats.LatencyComponents = (float)sw_LatencySystems.Elapsed.TotalMilliseconds;
 
         de_FixedUpdate_Engine?.Invoke();
-        ReflectionActionScripts.Instance.de_Actions_FixedUpdate?.Invoke();
+        ReflectionActionScripts.Instance?.de_Actions_FixedUpdate?.Invoke();
 
         Stats.LatencyFixedUpdate = (float)sw_LatencyFixedUpdate.Elapsed.TotalMilliseconds;
     }

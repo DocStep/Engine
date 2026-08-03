@@ -172,14 +172,14 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     public static void DrawObject (object target) {
         Type type = target.GetType();
         
-        FieldInfo[] fields = type.GetFields(BindingFlags.Public|BindingFlags.Instance);
+        FieldInfo[] fields = type.GetFields(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance);
         foreach (FieldInfo field in fields) {
             object? value = field.GetValue(target);
             object? drawn = DrawField(field, value);
             if (drawn is not null) field.SetValue(target, drawn);
         }
 
-        PropertyInfo[] props = type.GetProperties(BindingFlags.Public|BindingFlags.Instance);
+        PropertyInfo[] props = type.GetProperties(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance);
         foreach (PropertyInfo prop in props) {
             if (!prop.CanRead || !prop.CanWrite) continue;
             object? value = prop.GetValue(target);

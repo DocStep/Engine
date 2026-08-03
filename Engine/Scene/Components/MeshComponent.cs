@@ -21,8 +21,8 @@ public class MeshComponent : Component, IComponentUpdate, IUpdateAtFreeze {
     public void Update () {
         if (mesh is null || material is null) return;
 
-        if (mesh?.Name == "SuzanneHighRes") 
-            Log.log($"[{Guid}] AddRenderInfo {mesh?.Name}");
+        //if (mesh?.Name == "SuzanneHighRes") 
+            //Log.log($"[{Guid}] AddRenderInfo {mesh?.Name}");
         Renderer.Instance.AddRenderInfo(CreateRenderInfo);
     }
 

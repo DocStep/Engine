@@ -1,9 +1,11 @@
-﻿namespace Engine;
+﻿using Engine.Graphics;
+
+namespace Engine;
 
 
 public class ComponentManager : Singleton<ComponentManager> {
 
-    private readonly Dictionary<Type, List<Component>> components =  new Dictionary<Type, List<Component>>();
+    private readonly Dictionary<Type, List<Component>> components = new Dictionary<Type, List<Component>>();
     public int componentsCount => components.Count;
 
     private readonly List<IComponentUpdate> componentsUpdate = new List<IComponentUpdate>();
@@ -21,24 +23,17 @@ public class ComponentManager : Singleton<ComponentManager> {
     }
 
     public void Update () {
-        Log.log("components");
-        foreach (var item in components) {
-            for (int i = 0; i < item.Value.Count; i++) {
-                Log.log(item.Key.Name, item.Value[i].owner.Name, item.Value[i].Guid);
-            }
-        }
-
         for (int c = 0; c < componentsUpdate.Count; c++) {
             if (!componentsUpdate[c].Enabled) continue;
             componentsUpdate[c].Update();
         }
     }
-    public void UpdateAtFreeze () {
+    /*public void UpdateAtFreeze () {
         Log.log("UpdateAtFreeze", componentsUpdateAtFreeze.Count);
         for (int c = 0; c < componentsUpdateAtFreeze.Count; c++) {
             componentsUpdateAtFreeze[c].Update();
         }
-    }
+    }*/
     public void FixedUpdate () {
         for (int c = 0; c < componentsFixedUpdate.Count; c++) {
             if (!componentsFixedUpdate[c].Enabled) continue;
@@ -76,6 +71,7 @@ public class ComponentManager : Singleton<ComponentManager> {
 
         if (component is IComponentUpdate iComponentUpdate) {
             componentsUpdate.Remove(iComponentUpdate);
+
             if (component is IUpdateAtFreeze iRenderComponent) {
                 componentsUpdateAtFreeze.Remove(iComponentUpdate);
             }

@@ -17,7 +17,7 @@ namespace Editor.Graphics;
 
 public class RendererEditor : Renderer {
     public RendererEditor() : base() {
-        Engine.Engine.Instance.de_Update_Engine += EngineUpdate;
+        //Engine.Engine.Instance.de_Update_Engine += EngineUpdate;
 
         de_LateUpdate += DrawMaterialsGrid;
         de_DrawPostScene += DrawGizmos;
@@ -25,14 +25,14 @@ public class RendererEditor : Renderer {
     }
 
 
-    public void EngineUpdate () {
+    /*public void EngineUpdate () {
         List<IComponentUpdate> list = ComponentManager.Instance.ComponentsUpdate;
         int count = list.Count;
         for (int c = 0; c < count; c++) {
             if (!list[c].Enabled) continue;
             list[c].Update();
         }
-    }
+    }*/
 
     public override void SetTargetSize () {
         Width = (int)EditorUI.Instance.SceneAvail.X;
