@@ -18,7 +18,7 @@ public class SceneManager : Singleton<SceneManager> {
         //scene = new ScenePhysics();
         //scene = new SceneGizmos();
 
-        Engine.Instance.de_Update_Engine += Update;
+        Engine.Instance.de_Update += Update;
     }
 
 

@@ -7,16 +7,16 @@
 /// with Cube/Sphere/Plane/Cylinder/Capsule.
 public static class Axes {
 
-    public static MeshData GenerateWireframe (float length = 1f) {
+    public static MeshData GenerateWireframe () {
         Vertex[] vertices = {
             new(Vector3.Zero, Vector3.UnitX, Vector2.Zero),
-            new(Vector3.UnitX*length, Vector3.UnitX, Vector2.Zero),
+            new(Vector3.UnitX, Vector3.UnitX, Vector2.Zero),
 
             new(Vector3.Zero, Vector3.UnitY, Vector2.Zero),
-            new(Vector3.UnitY*length, Vector3.UnitY, Vector2.Zero),
+            new(Vector3.UnitY, Vector3.UnitY, Vector2.Zero),
 
             new(Vector3.Zero, Vector3.UnitZ, Vector2.Zero),
-            new(Vector3.UnitZ*length, Vector3.UnitZ, Vector2.Zero),
+            new(Vector3.UnitZ, Vector3.UnitZ, Vector2.Zero),
         };
 
         uint[] indices = {

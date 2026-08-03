@@ -22,7 +22,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         ImGui.LoadIniSettingsFromDisk(ImGui.GetIO().IniFilename);
 
-        Engine.Engine.Instance.de_Update_Engine += Update;
+        Engine.Engine.Instance.de_Update += Update;
         Renderer.Instance.de_LateUpdate += Gizmos.Update;
 
         Engine.Engine.Instance.de_Render += Draw;
@@ -172,14 +172,14 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     public static void DrawObject (object target) {
         Type type = target.GetType();
         
-        FieldInfo[] fields = type.GetFields(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance);
+        FieldInfo[] fields = type.GetFields(BindingFlags.Public|BindingFlags.Instance);
         foreach (FieldInfo field in fields) {
             object? value = field.GetValue(target);
             object? drawn = DrawField(field, value);
             if (drawn is not null) field.SetValue(target, drawn);
         }
 
-        PropertyInfo[] props = type.GetProperties(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance);
+        PropertyInfo[] props = type.GetProperties(BindingFlags.Public|BindingFlags.Instance);
         foreach (PropertyInfo prop in props) {
             if (!prop.CanRead || !prop.CanWrite) continue;
             object? value = prop.GetValue(target);

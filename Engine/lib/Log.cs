@@ -14,7 +14,7 @@ public enum LogType {
 public class Log : Singleton<Log> {
 
     protected override void Init () {
-        Engine.Instance.de_Update_Engine += Update;
+        Engine.Instance.de_Update += Update;
 
     }
 

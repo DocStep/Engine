@@ -22,8 +22,8 @@ public class Engine : IDisposable {
 
     public static Engine Instance { get; private set; } = null!;
 
-    public Action? de_Update_Engine = null;
-    public Action? de_FixedUpdate_Engine = null;
+    //public Action? de_Update_Engine = null;
+    //public Action? de_FixedUpdate_Engine = null;
     public static string savesFolder = "Data";
 
     public Action? de_Update = null;
@@ -135,7 +135,7 @@ public class Engine : IDisposable {
 
         ComponentManager.Instance.Update();
 
-        de_Update_Engine?.Invoke();
+        de_Update?.Invoke();
         ReflectionActionScripts.Instance?.de_Actions_Update?.Invoke();
 
         Stats.LatencyUpdate = (float)sw_LatencyUpdate.Elapsed.TotalMilliseconds;
@@ -153,7 +153,7 @@ public class Engine : IDisposable {
         ComponentManager.Instance.FixedUpdate();
         Stats.LatencyComponents = (float)sw_LatencySystems.Elapsed.TotalMilliseconds;
 
-        de_FixedUpdate_Engine?.Invoke();
+        de_FixedUpdate?.Invoke();
         ReflectionActionScripts.Instance?.de_Actions_FixedUpdate?.Invoke();
 
         Stats.LatencyFixedUpdate = (float)sw_LatencyFixedUpdate.Elapsed.TotalMilliseconds;

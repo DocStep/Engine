@@ -17,7 +17,7 @@ public static class Windows {
         Silk.NET.Maths.Vector2D<int> screenSize = monitor.VideoMode.Resolution ?? new Silk.NET.Maths.Vector2D<int>(1920, 1080);
         Window.Position = new Silk.NET.Maths.Vector2D<int>((screenSize.X - options.Size.X)/2, (screenSize.Y - options.Size.Y)/2);
 
-        Engine.Instance.de_Update_Engine += Update;
+        Engine.Instance.de_Update += Update;
         return Window;
     }
 

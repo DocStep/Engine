@@ -12,7 +12,7 @@ public class Transform : Component {
     [JsonIgnore] public override string Name => nameof(Transform);
 
     public Vector3 Position = Vector3.Zero;
-    [JsonIgnore][WrapRotation(0, 360)][ChangeStep(1f)] internal Vector3 rotation = Vector3.Zero;
+    [JsonIgnore][WrapRotation(0, 360)][ChangeStep(1f)] public Vector3 rotation = Vector3.Zero;
     [Hide] public Vector3 Rotation {
         get => rotation;
         set {
