@@ -39,12 +39,19 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     public const float valueStep = 0.01f;
 
 
-    private Vector2 _sceneAvail = new Vector2(1280, 720);
-    public Vector2 SceneAvail => _sceneAvail;
+    private Vector2 sceneAvail = new Vector2(1280, 720);
+    public Vector2 SceneAvail => sceneAvail;
 
     private Vector2 _sceneRectMin;
     private Vector2 _sceneRectMax;
-    public bool isUIHovered { get; private set; }
+    public bool isSceneUIHovered { get; private set; }
+    public bool isMouseHooked () {
+        Vector2 availSize = ImGui.GetContentRegionAvail();
+        Vector2 elementPos = ImGui.GetCursorScreenPos();
+
+
+        return true;
+    }
 
 
     public void Update () {
@@ -53,7 +60,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGUI.Update((float)Time.deltaTime);
 
         bool wantCapture = ImGui.GetIO().WantCaptureMouse || ImGui.IsAnyItemActive();
-        isUIClick = wantCapture && !isUIHovered;
+        isUIClick = wantCapture && !isSceneUIHovered;
         //isUIClick = wantCapture;
     }
 
@@ -94,31 +101,53 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     private void DrawSceneView (uint dockspaceId) {
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         ImGui.Begin("Scene");
-        Vector2 winSize = ImGui.GetWindowSize();
-        Vector2 avail = ImGui.GetContentRegionAvail();
-        _sceneAvail = new Vector2(MathF.Max(MathF.Floor(avail.X), 1), MathF.Max(MathF.Floor(avail.Y), 1));
 
-        //Log.log("win", winSize, "avail", avail, "_sceneAvail", _sceneAvail);
-
-        ImGui.Image((IntPtr)Renderer.Instance.PostProcess.OutputTexture,
-            _sceneAvail, new Vector2(0, 1), new Vector2(1, 0));
+        sceneAvail = getSceneAvail();
+        ImGui.Image((IntPtr)Renderer.Instance.PostProcess.OutputTexture, sceneAvail, new Vector2(0, 1), new Vector2(1, 0));
 
         _sceneRectMin = ImGui.GetItemRectMin();
         _sceneRectMax = ImGui.GetItemRectMax();
-        isUIHovered = ImGui.IsItemHovered();
+        isSceneUIHovered = ImGui.IsItemHovered();
+
+        /*if (GetSceneMousePos(CameraEditor.Instance.mousePos_Window, out Vector2 mousePos_Scene)) {
+            //Log.log("sceneAvail", sceneAvail, "mousePos_Scene", mousePos_Scene, "isUIHovered", isSceneUIHovered);
+            float deltaX = 0;
+            float deltaY = 0;
+
+        }*/
+        Vector2 mousePos_Scene = Engine.Input.InputState.Mouse!.Position - ImGui.GetItemRectMin();
+        float deltaX = MathF.Floor(mousePos_Scene.X/sceneAvail.X)*sceneAvail.X;
+        float deltaY = MathF.Floor(mousePos_Scene.Y/sceneAvail.Y)*sceneAvail.Y;
+
+
+        if (Engine.Input.Inputs.isMouseVisible) {
+            Engine.Input.InputState.TeleportMouseDelta(-new Vector2(deltaX, deltaY));
+            Log.log(sceneAvail, mousePos_Scene, isSceneUIHovered, new Vector2(deltaX, deltaY));
+        }
+            
+
+        //Log.log("sceneAvail", sceneAvail, "mousePos_Scene", mousePos_Scene, "isUIHovered", isSceneUIHovered);
+        //Log.log("mousePos_Scene", mousePos_Scene);
+
 
         ImGui.End();
         ImGui.PopStyleVar();
     }
+
+    public Vector2 getSceneAvail () {
+        Vector2 avail = ImGui.GetContentRegionAvail();
+        Vector2 _sceneAvail = new Vector2(MathF.Max(MathF.Floor(avail.X), 1), MathF.Max(MathF.Floor(avail.Y), 1));
+        return _sceneAvail;
+    }
+
     /// Mouse position remapped into Scene FBO pixel space, or null if outside the panel
-    public Vector2? GetSceneMousePos (Vector2 mousePosWindow) {
-        if (!isUIHovered) return null;
+    public bool GetSceneMousePos (Vector2 mousePosWindow, out Vector2 local) {
+        local = mousePosWindow - _sceneRectMin;
 
-        Vector2 local = mousePosWindow - _sceneRectMin;
-        if (local.X < 0 || local.Y < 0 || local.X > _sceneAvail.X || local.Y > _sceneAvail.Y)
-            return null;
+        if (!isSceneUIHovered) return false;
+        if (local.X < 0 || local.Y < 0 || sceneAvail.X < local.X || sceneAvail.Y < local.Y) return false;
 
-        return local;
+        return true;
     }
 
     private void DrawInspector (uint dockspaceId) {

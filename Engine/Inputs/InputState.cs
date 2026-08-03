@@ -16,7 +16,7 @@ public static class InputState {
     private static HashSet<Keys> previous = new HashSet<Keys>();
     private static float wheelDelta = 0f;
 
-    private static System.Numerics.Vector2 lastMousePos;
+    private static Vector2 lastMousePos;
     private static bool firstMouseSample = true;
 
 
@@ -39,6 +39,15 @@ public static class InputState {
     }
 
     static void OnScroll (Silk.NET.Input.IMouse mouse, Silk.NET.Input.ScrollWheel wheel) => wheelDelta = wheel.Y;
+    public static void TeleportMouse (Vector2 pos) {
+        Vector2 delta = pos - MousePos;
+        mouse!.Position = pos;
+        lastMousePos += delta;
+    }
+    public static void TeleportMouseDelta (Vector2 delta) {
+        mouse!.Position += delta;
+        lastMousePos += delta;
+    }
 
     public static void Update () {
         previous = new HashSet<Keys>(current);

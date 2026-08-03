@@ -75,6 +75,8 @@ public class GizmoSelected : IDisposable {
             selectedGizmoWorldSpace = !selectedGizmoWorldSpace;
         }
 
+        bool rayTrue = Camera.Current.RaycastMouse(out Ray ray);
+
         switch (selectedGizmoMode) {
             case SelectedGizmoMode.Position:
                 if (selectedPositionMode == SelectedPositionGizmoMode.None) {
@@ -111,8 +113,7 @@ public class GizmoSelected : IDisposable {
                 quadYZPos = _objPos + _dist*_squareSize*quadYZOffset;
 
                 /// Ray-dependent picking/dragging only below this point
-                Ray? rayOpt = Camera.Current.RaycastMouse();
-                if (rayOpt is null) {
+                if (!rayTrue) {
                     if (selectedPositionMode != SelectedPositionGizmoMode.None && !Inputs.Actions[Inputs.LMB].pressed) {
                         selectedPositionMode = SelectedPositionGizmoMode.None;
                         if (isMouseBlocked) {
@@ -122,7 +123,6 @@ public class GizmoSelected : IDisposable {
                     }
                     break;
                 }
-                Ray ray = rayOpt.Value;
 
                 /// X
                 Vector3? axisPickXPos = TryPickCapsule(gizmoRight, _axisLength, _axisRadius);
@@ -235,7 +235,6 @@ public class GizmoSelected : IDisposable {
         }
 
         Vector3? TryPickCapsule (Vector3 axisDir, float length, float radius) {
-            Ray ray = Camera.Current.RaycastMouse()!.Value;
             Vector3 segStart = _objPos;
             Vector3 segDir = Vector3.Normalize(axisDir);
             float segLen = _dist*length;
@@ -268,7 +267,6 @@ public class GizmoSelected : IDisposable {
             return null;
         }
         Vector3? TryPickQuad (Vector3 offset, Vector3 normal, Vector3 axisA, Vector3 axisB) {
-            Ray ray = Camera.Current.RaycastMouse()!.Value;
             Vector3 quadCenter = _objPos + _dist*offset*_squareSize;
             float halfExtent = _dist*half;
             Vector3? hit = Raycast.IntersectPlane(ray, quadCenter, normal);

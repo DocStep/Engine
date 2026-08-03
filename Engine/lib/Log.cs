@@ -67,7 +67,7 @@ public class Log : Singleton<Log> {
     public static void log (params object[] args) {
         string text = string.Empty;
         for (int i = 0; i < args.Length; i++) {
-            text += args[i].ToString() + " ";
+            text += args[i]?.ToString() + " ";
         }
         log(text);
     }

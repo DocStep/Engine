@@ -102,6 +102,9 @@ public sealed class CameraEditor : Camera {
 
 
     public override void Update () {
+        //if (!EditorUI.Instance.isUIHovered) return;
+        //if (!EditorUI.Instance.isSceneUIHovered) return;
+
         mousePos_Window.X = Inputs.MousePos.X;
         mousePos_Window.Y = Inputs.MousePos.Y;
 
@@ -261,14 +264,15 @@ public sealed class CameraEditor : Camera {
         }
 
         /// Select
-        if (mouseAllowed && !Editor.Graphics.EditorUI.Instance.isUIClick) {
-            Ray? ray = RaycastMouse();
-            if (ray is not null && Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
-                Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray.Value, out MeshComponent? hitMeshComp, out Vector3 hitPos, out Vector3 hitNormal);
-                if (hitMeshComp is not null) {
-                    Gizmos._gizmo_Selected.UpdateSelectedMesh(hitMeshComp);
-                } else {
-                    Gizmos._gizmo_Selected.UpdateSelectedMesh(null);
+        if (mouseAllowed && !EditorUI.Instance.isUIClick) {
+            if (RaycastMouse(out Ray ray)) {
+                if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
+                    Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray, out MeshComponent? hitMeshComp, out Vector3 hitPos, out Vector3 hitNormal);
+                    if (hitMeshComp is not null) {
+                        Gizmos._gizmo_Selected.UpdateSelectedMesh(hitMeshComp);
+                    } else {
+                        Gizmos._gizmo_Selected.UpdateSelectedMesh(null);
+                    }
                 }
             }
         }
@@ -281,10 +285,8 @@ public sealed class CameraEditor : Camera {
 
     private void TryFocusOnPoint (float mouseX, float mouseY, int viewportWidth, int viewportHeight) {
         float? bestT = null;
-        Ray? rayOpt = RaycastMouse();
-        if (rayOpt is null) return;
+        if (!RaycastMouse(out Ray ray)) return;
 
-        Ray ray = rayOpt.Value;
         Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
         if (hitMesh is not null) {
             bestT = Vector3.Distance(cameraPos, hitPos);
@@ -313,21 +315,23 @@ public sealed class CameraEditor : Camera {
     }
 
 
-    public override Ray? RaycastMouse () {
+    public override bool RaycastMouse (out Ray ray) {
         //UI.TextRenderer.AddText($"MousePos_Window: {mousePos_Window.X}, {mousePos_Window.Y}");
-
+        
         //Vector2? scenePos = mousePos;
-        Vector2? scenePos = EditorUI.Instance.GetSceneMousePos(mousePos_Window);
-        if (scenePos is null) return null;
+        if (!EditorUI.Instance.GetSceneMousePos(mousePos_Window, out Vector2 scenePos)) {
+            ray = default;
+            return false;
+        }
 
         Vector2 sceneSize = EditorUI.Instance.SceneAvail;
 
-        //UI.TextRenderer.AddText($"MousePos_Scene: {scenePos.Value.X}, {scenePos.Value.Y}");
-        //UI.TextRenderer.AddText($"SceneSize: {sceneSize.X}, {sceneSize.Y}");
+        Engine.Graphics.UI.TextRenderer.AddText($"MousePos_Scene: {scenePos.X}, {scenePos.Y}");
+        Engine.Graphics.UI.TextRenderer.AddText($"SceneSize: {sceneSize.X}, {sceneSize.Y}");
 
-        Ray ray = Raycast.ScreenPointToRay(scenePos.Value.X, scenePos.Value.Y, (int)sceneSize.X, (int)sceneSize.Y,
+        ray = Raycast.ScreenPointToRay(scenePos.X, scenePos.Y, (int)sceneSize.X, (int)sceneSize.Y,
             RendererEditor.Instance.m4x4_View, RendererEditor.Instance.m4x4Projection);
-        return ray;
+        return true;
     }
 
     /*private void LookAtOrbitCenter () {

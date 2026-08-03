@@ -5,9 +5,6 @@ namespace Engine.Input;
 
 public static class Inputs {
 
-    public static void MouseShow () => InputState.Mouse?.Cursor.CursorMode = Silk.NET.Input.CursorMode.Raw;
-    public static void MouseHide () => InputState.Mouse?.Cursor.CursorMode = Silk.NET.Input.CursorMode.Normal;
-
     public static Vector2 WASD = Vector2.Zero;
     public static Vector2 MousePos = Vector2.Zero;
     public static Vector2 MouseDelta = Vector2.Zero;
@@ -82,6 +79,18 @@ public static class Inputs {
     };
     public static readonly Dictionary<Keys, string> KeysName = InitKeyNames();
     public static readonly Dictionary<string, Keys> NameKeys = InitNamesKey();
+
+
+    public static void MouseShow () {
+        InputState.Mouse?.Cursor.CursorMode = Silk.NET.Input.CursorMode.Raw;
+        isMouseVisible = true;
+    }
+    public static void MouseHide () {
+        InputState.Mouse?.Cursor.CursorMode = Silk.NET.Input.CursorMode.Normal;
+        isMouseVisible = false;
+    }
+    public static bool isMouseVisible { get; private set; } = true;
+
 
     public const string LMB = nameof(LMB);
     public const string RMB = nameof(RMB);

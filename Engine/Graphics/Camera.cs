@@ -25,6 +25,7 @@ public class Camera : Component {
     public Vector3 cameraPos = Vector3.Zero;
     public Matrix4x4 cameraRot = Matrix4x4.Identity;
     public Vector2 mousePos_Window = Vector2.Zero;
+    public static bool wantWarpPos = false;
 
     public float FOV = 60;
     public float planeNear = 0.1f;
@@ -63,14 +64,12 @@ public class Camera : Component {
         return Matrix4x4.CreateLookAtLeftHanded(pos, pos + owner.Transform.Forward, owner.Transform.Up);
     }
 
-    public virtual Ray? RaycastMouse () {
-        Vector2? scenePos = mousePos_Window;
-        if (scenePos is null) return null;
-
-        Vector2 sceneSize = scenePos.Value;
-        Ray ray = Raycast.ScreenPointToRay(scenePos.Value.X, scenePos.Value.Y, (int)sceneSize.X, (int)sceneSize.Y,
+    public virtual bool RaycastMouse (out Ray ray) {
+        Vector2 sceneSize = mousePos_Window;
+        Vector2 mousePos = mousePos_Window;
+        ray = Raycast.ScreenPointToRay(mousePos.X, mousePos.Y, (int)sceneSize.X, (int)sceneSize.Y,
             Renderer.Instance.m4x4_View, Renderer.Instance.m4x4Projection);
-        return ray;
+        return true;
     }
 
 }

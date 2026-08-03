@@ -252,7 +252,7 @@ public class Renderer {
         //if (info.depthRangeNear != 0 || info.depthRangeFar != 1)
         //    GL.DepthRange(info.depthRangeNear, info.depthRangeFar);
 
-        SetSceneUniformsUnlit(shader);
+        SetSceneUniformsUnlit(shader, Camera.Current.cameraPos);
         SetSceneUniformsLit(shader);
         SetSceneUniformsSkybox(shader, _skybox.texture, _skybox.maxLod);
 
@@ -268,11 +268,11 @@ public class Renderer {
     }
     
 
-    public static void SetSceneUniformsUnlit (Shader shader) {
+    public static void SetSceneUniformsUnlit (Shader shader, Vector3 viewPos) {
         shader.Use();
         shader.SetMatrix4(View, uView);
         shader.SetMatrix4(Projection, uProjection);
-        shader.SetVector3(ViewPos, Camera.Current.cameraPos);
+        shader.SetVector3(ViewPos, viewPos);
     }
     public static void SetSceneUniformsLit (Shader shader) {
         shader.SetVector3(SunLightDir, Constants.sunLightDir);
