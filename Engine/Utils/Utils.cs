@@ -110,7 +110,7 @@ public static class Utils {
     }
 
 
-    public static Matrix4x4 CreateFromYawPitchRoll (float yaw, float pitch, float roll) {
+    public static Matrix4x4 Matrix4x4FromYawPitchRoll (float yaw, float pitch, float roll) {
         return Matrix4x4.CreateRotationZ(roll)*Matrix4x4.CreateRotationX(-pitch)*Matrix4x4.CreateRotationY(-yaw);
     }
 

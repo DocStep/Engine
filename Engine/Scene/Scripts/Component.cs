@@ -8,7 +8,7 @@ namespace Engine;
 public abstract class Component : ISavable {
     public Component () { }
 
-    public readonly Guid? Guid = lib.Guid;
+    [Hide] public readonly Guid? Guid = lib.Guid;
     [Hide] public readonly long? Id = lib.Id;
 
     //[JsonIgnore] public bool enabled = true;

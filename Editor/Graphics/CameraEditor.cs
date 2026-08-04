@@ -29,6 +29,10 @@ public sealed class CameraEditor : Camera {
     private Vector3 _cameraOrbitCenterPos = Vector3.Zero;
 
     public Vector3 _forward => Vector3.Transform(Vector3.UnitZ, cameraRot);
+    Vector3 forward;
+    Vector3 position;
+    Vector3 worldUp;
+
 
     /// Values
     private const float _sensetivity = 0.1f;
@@ -111,7 +115,7 @@ public sealed class CameraEditor : Camera {
         if (Inputs.Actions[Reset].pressedDown) SetTransformDefault();
         if (Inputs.Actions[CameraFocusMaterial].pressedDown) SetTransformMaterialPreview();
 
-        cameraRot = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
+        cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
         Vector3 forward = Vector3.Transform(Vector3.UnitZ, cameraRot);
         Vector3 right = Vector3.Transform(Vector3.UnitX, cameraRot);
         Vector3 up = Vector3.Transform(Vector3.UnitY, cameraRot);
@@ -130,7 +134,56 @@ public sealed class CameraEditor : Camera {
             isFocusing = false;
         }
 
-        UpdateCamera();
+        Matrix4x4 rotation;
+        worldUp = MathF.Cos(pitch) < 0 ? -Vector3.UnitY : Vector3.UnitY;
+
+        if (Inputs.Actions[Alt].pressed && Inputs.Actions[LMB].pressed) {
+            /// Orbit Rotation
+            rotation = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
+
+            float orbitDistance = (cameraPos - cameraOrbitCenterPos).Length();
+            if (orbitDistance < 0.01f) orbitDistance = 5f;
+
+            Vector3 offset = Vector3.Transform(Vector3.UnitZ * orbitDistance, rotation);
+            position = cameraOrbitCenterPos - offset; /// was +offset
+            forward = Vector3.Normalize(cameraOrbitCenterPos - position); /// unchanged, now correctly = +offset/|offset| = Transform(UnitZ, rotation) direction
+            cameraPos = position;
+
+            Inputs.MouseShow();
+        } else if (Inputs.Actions[RMB].pressed) {
+            /// Center Rotation
+            rotation = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
+            forward = Vector3.Transform(Vector3.UnitZ, rotation); /// was -UnitZ
+            position = cameraPos;
+
+            float orbitDistance = (cameraOrbitCenterPos - cameraPos).Length();
+            if (orbitDistance < 0.01f) orbitDistance = 5f;
+            cameraOrbitCenterPos = position + forward * orbitDistance;
+
+            Inputs.MouseShow();
+        } else {
+            rotation = cameraRot;
+            forward = Vector3.Transform(Vector3.UnitZ, rotation); /// was -UnitZ
+            position = cameraPos;
+
+            Inputs.MouseHide();
+        }
+
+        /// Select
+        if (mouseAllowed && !EditorUI.Instance.isUIClick) {
+            if (RaycastMouse(out Ray ray)) {
+                if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
+                    Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray, out MeshComponent? hitMeshComp, out Vector3 hitPos, out Vector3 hitNormal);
+                    if (hitMeshComp is not null) {
+                        Gizmos._gizmo_Selected.UpdateSelectedMesh(hitMeshComp);
+                    } else {
+                        Gizmos._gizmo_Selected.UpdateSelectedMesh(null);
+                    }
+                }
+            }
+        }
+
+        cameraRot = rotation;
 
         /// Middle Mouse: drag to pan, clean click (no drag) to focus
         if (Inputs.Actions[CameraDrag].pressedDown && mouseAllowed) {
@@ -222,63 +275,7 @@ public sealed class CameraEditor : Camera {
         cameraOrbitCenterPos += cameraPosDelta;
     }
 
-    Vector3 forward;
-    Vector3 position;
-    Vector3 worldUp;
-    protected override void UpdateCamera () {
-        Matrix4x4 rotation;
-        //Vector3 forward;
-        //Vector3 position;
-        worldUp = MathF.Cos(pitch) < 0 ? -Vector3.UnitY : Vector3.UnitY;
 
-        if (Inputs.Actions[Alt].pressed && Inputs.Actions[LMB].pressed) {
-            /// Orbit Rotation
-            rotation = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
-
-            float orbitDistance = (cameraPos - cameraOrbitCenterPos).Length();
-            if (orbitDistance < 0.01f) orbitDistance = 5f;
-
-            Vector3 offset = Vector3.Transform(Vector3.UnitZ * orbitDistance, rotation);
-            position = cameraOrbitCenterPos - offset; /// was +offset
-            forward = Vector3.Normalize(cameraOrbitCenterPos - position); /// unchanged, now correctly = +offset/|offset| = Transform(UnitZ, rotation) direction
-            cameraPos = position;
-
-            Inputs.MouseShow();
-        } else if (Inputs.Actions[RMB].pressed) {
-            /// Center Rotation
-            rotation = Utils.CreateFromYawPitchRoll(yaw, pitch, 0f);
-            forward = Vector3.Transform(Vector3.UnitZ, rotation); /// was -UnitZ
-            position = cameraPos;
-
-            float orbitDistance = (cameraOrbitCenterPos - cameraPos).Length();
-            if (orbitDistance < 0.01f) orbitDistance = 5f;
-            cameraOrbitCenterPos = position + forward * orbitDistance;
-
-            Inputs.MouseShow();
-        } else {
-            rotation = cameraRot;
-            forward = Vector3.Transform(Vector3.UnitZ, rotation); /// was -UnitZ
-            position = cameraPos;
-
-            Inputs.MouseHide();
-        }
-
-        /// Select
-        if (mouseAllowed && !EditorUI.Instance.isUIClick) {
-            if (RaycastMouse(out Ray ray)) {
-                if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
-                    Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray, out MeshComponent? hitMeshComp, out Vector3 hitPos, out Vector3 hitNormal);
-                    if (hitMeshComp is not null) {
-                        Gizmos._gizmo_Selected.UpdateSelectedMesh(hitMeshComp);
-                    } else {
-                        Gizmos._gizmo_Selected.UpdateSelectedMesh(null);
-                    }
-                }
-            }
-        }
-        
-        cameraRot = rotation;
-    }
     public override Matrix4x4 GetViewMatrix () {
         return Matrix4x4.CreateLookAtLeftHanded(position, position + _forward, worldUp);
     }

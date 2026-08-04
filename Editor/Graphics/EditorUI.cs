@@ -48,8 +48,6 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     public bool isMouseHooked () {
         Vector2 availSize = ImGui.GetContentRegionAvail();
         Vector2 elementPos = ImGui.GetCursorScreenPos();
-
-
         return true;
     }
 
@@ -109,26 +107,19 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         _sceneRectMax = ImGui.GetItemRectMax();
         isSceneUIHovered = ImGui.IsItemHovered();
 
-        /*if (GetSceneMousePos(CameraEditor.Instance.mousePos_Window, out Vector2 mousePos_Scene)) {
-            //Log.log("sceneAvail", sceneAvail, "mousePos_Scene", mousePos_Scene, "isUIHovered", isSceneUIHovered);
-            float deltaX = 0;
-            float deltaY = 0;
-
-        }*/
-        Vector2 mousePos_Scene = Engine.Input.InputState.Mouse!.Position - ImGui.GetItemRectMin();
-        float deltaX = MathF.Floor(mousePos_Scene.X/sceneAvail.X)*sceneAvail.X;
-        float deltaY = MathF.Floor(mousePos_Scene.Y/sceneAvail.Y)*sceneAvail.Y;
-
-
-        if (Engine.Input.Inputs.isMouseVisible) {
-            Engine.Input.InputState.TeleportMouseDelta(-new Vector2(deltaX, deltaY));
-            Log.log(sceneAvail, mousePos_Scene, isSceneUIHovered, new Vector2(deltaX, deltaY));
+        if (!Engine.Input.Inputs.isMouseVisible) {
+            Vector2 mousePos_Scene = Engine.Input.InputState.Mouse!.Position - ImGui.GetItemRectMin();
+            float deltaX = MathF.Floor(mousePos_Scene.X/sceneAvail.X)*sceneAvail.X;
+            float deltaY = MathF.Floor(mousePos_Scene.Y/sceneAvail.Y)*sceneAvail.Y;
+            Vector2 delta = new Vector2(deltaX, deltaY);
+            if (0 < delta.LengthSquared()) {
+                Engine.Input.InputState.TeleportMouseDelta(-delta);
+                Log.log(sceneAvail, mousePos_Scene, isSceneUIHovered, delta);
+            }
         }
-            
 
         //Log.log("sceneAvail", sceneAvail, "mousePos_Scene", mousePos_Scene, "isUIHovered", isSceneUIHovered);
         //Log.log("mousePos_Scene", mousePos_Scene);
-
 
         ImGui.End();
         ImGui.PopStyleVar();

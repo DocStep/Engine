@@ -9,7 +9,7 @@ public class Camera : Component {
     public Camera () {
         priority = 0 < Cameras.Count ? Cameras[0]._priority : 0;
         Cameras.Insert(0, this);
-        //Log.log(GetType());
+        Log.log(GetType(), _priority);
     }
 
     public override string Name { get; } = nameof(Camera);
@@ -57,7 +57,7 @@ public class Camera : Component {
 
 
     public virtual void Update () { }
-    protected virtual void UpdateCamera () { }
+
 
     public virtual Matrix4x4 GetViewMatrix () {
         Vector3 pos = owner.Transform.Position;

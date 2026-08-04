@@ -84,10 +84,12 @@ public static class Inputs {
     public static void MouseShow () {
         InputState.Mouse?.Cursor.CursorMode = Silk.NET.Input.CursorMode.Raw;
         isMouseVisible = true;
+        Log.log("MouseShow");
     }
     public static void MouseHide () {
         InputState.Mouse?.Cursor.CursorMode = Silk.NET.Input.CursorMode.Normal;
         isMouseVisible = false;
+        Log.log("MouseHide\n", new System.Diagnostics.StackTrace());
     }
     public static bool isMouseVisible { get; private set; } = true;
 
