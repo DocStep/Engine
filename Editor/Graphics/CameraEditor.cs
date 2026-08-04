@@ -99,15 +99,20 @@ public sealed class CameraEditor : Camera {
         Vector3 dir = Vector3.Normalize(cameraOrbitCenterPos - cameraPos);
         yaw = -MathF.Atan2(dir.X, dir.Z);
         pitch = MathF.Asin(dir.Y);
+        UpdateWorldUp();
 
         isFocusing = false;
         moveHoldTime = 0f;
+    }
+    private void UpdateWorldUp () {
+        worldUp = MathF.Cos(pitch) < 0 ? -Vector3.UnitY : Vector3.UnitY;
     }
 
 
     public override void Update () {
         //if (!EditorUI.Instance.isUIHovered) return;
         //if (!EditorUI.Instance.isSceneUIHovered) return;
+        Log.log("Update", Inputs.isMouseVisible);
 
         mousePos_Window.X = Inputs.MousePos.X;
         mousePos_Window.Y = Inputs.MousePos.Y;
@@ -130,68 +135,40 @@ public sealed class CameraEditor : Camera {
             yaw += -dx*_sensetivityMultiplier*_sensetivity*flipSign;
             pitch += -dy*_sensetivityMultiplier*_sensetivity;
             pitch = Utils.WrapAngle(pitch);
+            UpdateWorldUp();
 
             isFocusing = false;
         }
 
-        Matrix4x4 rotation;
-        worldUp = MathF.Cos(pitch) < 0 ? -Vector3.UnitY : Vector3.UnitY;
-
         if (Inputs.Actions[Alt].pressed && Inputs.Actions[LMB].pressed) {
             /// Orbit Rotation
-            rotation = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
+            cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
 
             float orbitDistance = (cameraPos - cameraOrbitCenterPos).Length();
             if (orbitDistance < 0.01f) orbitDistance = 5f;
 
-            Vector3 offset = Vector3.Transform(Vector3.UnitZ * orbitDistance, rotation);
+            Vector3 offset = Vector3.Transform(Vector3.UnitZ * orbitDistance, cameraRot);
             position = cameraOrbitCenterPos - offset; /// was +offset
             forward = Vector3.Normalize(cameraOrbitCenterPos - position); /// unchanged, now correctly = +offset/|offset| = Transform(UnitZ, rotation) direction
             cameraPos = position;
 
-            Inputs.MouseShow();
+            Inputs.MouseHide();
         } else if (Inputs.Actions[RMB].pressed) {
             /// Center Rotation
-            rotation = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
-            forward = Vector3.Transform(Vector3.UnitZ, rotation); /// was -UnitZ
+            cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
+            forward = Vector3.Transform(Vector3.UnitZ, cameraRot); /// was -UnitZ
             position = cameraPos;
 
             float orbitDistance = (cameraOrbitCenterPos - cameraPos).Length();
             if (orbitDistance < 0.01f) orbitDistance = 5f;
             cameraOrbitCenterPos = position + forward * orbitDistance;
 
-            Inputs.MouseShow();
-        } else {
-            rotation = cameraRot;
-            forward = Vector3.Transform(Vector3.UnitZ, rotation); /// was -UnitZ
-            position = cameraPos;
-
             Inputs.MouseHide();
-        }
-
-        /// Select
-        if (mouseAllowed && !EditorUI.Instance.isUIClick) {
-            if (RaycastMouse(out Ray ray)) {
-                if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
-                    Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray, out MeshComponent? hitMeshComp, out Vector3 hitPos, out Vector3 hitNormal);
-                    if (hitMeshComp is not null) {
-                        Gizmos._gizmo_Selected.UpdateSelectedMesh(hitMeshComp);
-                    } else {
-                        Gizmos._gizmo_Selected.UpdateSelectedMesh(null);
-                    }
-                }
-            }
-        }
-
-        cameraRot = rotation;
-
-        /// Middle Mouse: drag to pan, clean click (no drag) to focus
-        if (Inputs.Actions[CameraDrag].pressedDown && mouseAllowed) {
+        } else if (Inputs.Actions[CameraDrag].pressedDown) { /// Middle Mouse: drag to pan, clean click (no drag) to focus
             cameraDragStartX = mousePos_Window.X;
             cameraDragStartY = mousePos_Window.Y;
             isCameraDragging = false;
-        }
-        if (Inputs.Actions[CameraDrag].pressed) {
+        } else if (Inputs.Actions[CameraDrag].pressed) {
             const float dragSpeed = 0.001f;
             float dx = Inputs.MouseDelta.X;
             float dy = Inputs.MouseDelta.Y;
@@ -206,17 +183,44 @@ public sealed class CameraEditor : Camera {
             cameraPosDelta = posDeltaL*dragSpeed*(-right*dx + up*dy);
             cameraPos += cameraPosDelta;
             cameraOrbitCenterPos += cameraPosDelta;
+            position = cameraPos;
 
             Inputs.MouseHide();
         } else if (Inputs.Actions[CameraDrag].pressedUp) {
             if (!isCameraDragging) {
                 TryFocusOnPoint(mousePos_Window.X, mousePos_Window.Y, Engine.Engine.Window.Size.X, Engine.Engine.Window.Size.Y);
             }
+        } else {
+            forward = Vector3.Transform(Vector3.UnitZ, cameraRot); /// was -UnitZ
+            position = cameraPos;
+
+            Inputs.MouseShow();
         }
 
-        if (Inputs.Actions[Inputs.CameraFocus].pressedDown && mouseAllowed) 
+        if (Inputs.Actions[Inputs.CameraFocus].pressedDown) 
             if (Gizmos._gizmo_Selected.selectedMeshComp is not null) 
                 FocusAtPoint(Gizmos._gizmo_Selected.selectedMeshComp.owner.Transform.Position);
+
+
+        /// Zoom
+        if (InputState.WheelDelta != 0) {
+            cameraPos += posDeltaL*_zoomSpeed*InputState.WheelDelta*forward;
+            isFocusing = false;
+        }
+
+        /// Select
+        if (!EditorUI.Instance.isUIClick) {
+            if (RaycastMouse(out Ray ray)) {
+                if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
+                    Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray, out MeshComponent? hitMeshComp, out Vector3 hitPos, out Vector3 hitNormal);
+                    if (hitMeshComp is not null) {
+                        Gizmos._gizmo_Selected.UpdateSelectedMesh(hitMeshComp);
+                    } else {
+                        Gizmos._gizmo_Selected.UpdateSelectedMesh(null);
+                    }
+                }
+            }
+        }
 
         /// Smoothly glide toward the focus target
         if (isFocusing) {
@@ -234,11 +238,6 @@ public sealed class CameraEditor : Camera {
             }
         }
 
-        /// Zoom
-        if (InputState.WheelDelta != 0) {
-            cameraPos += posDeltaL*_zoomSpeed*InputState.WheelDelta*forward;
-            isFocusing = false;
-        }
 
         /// Move
         float baseSpeed = Inputs.Actions[Shift].pressed ? _cameraSpeedShift : _cameraSpeed;

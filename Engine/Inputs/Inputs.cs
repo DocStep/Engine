@@ -81,15 +81,15 @@ public static class Inputs {
     public static readonly Dictionary<string, Keys> NameKeys = InitNamesKey();
 
 
-    public static void MouseShow () {
+    public static void MouseHide () {
         InputState.Mouse?.Cursor.CursorMode = Silk.NET.Input.CursorMode.Raw;
+        isMouseVisible = false;
+        Log.log("MouseHide");
+    }
+    public static void MouseShow () {
+        InputState.Mouse?.Cursor.CursorMode = Silk.NET.Input.CursorMode.Normal;
         isMouseVisible = true;
         Log.log("MouseShow");
-    }
-    public static void MouseHide () {
-        InputState.Mouse?.Cursor.CursorMode = Silk.NET.Input.CursorMode.Normal;
-        isMouseVisible = false;
-        Log.log("MouseHide\n", new System.Diagnostics.StackTrace());
     }
     public static bool isMouseVisible { get; private set; } = true;
 
