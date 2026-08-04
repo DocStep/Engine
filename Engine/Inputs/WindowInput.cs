@@ -1,7 +1,7 @@
 ﻿namespace Engine.Input;
 
 
-public static class InputState {
+public static class WindowInput {
 
     private static Silk.NET.Input.IKeyboard? keyboard;
     public static Silk.NET.Input.IKeyboard? Keyboard => keyboard;

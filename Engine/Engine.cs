@@ -14,10 +14,10 @@ namespace Engine;
 
 
 public class Engine : IDisposable {
-    public Engine (Type? renderer = null, Type? camera = null, Action? de_Init = null) {
+    public Engine (Type? renderer = null, Action? de_Init = null) {
         if (Instance is not null) throw new Exception($"{typeof(Engine)}.{nameof(Instance)} is not null");
         Instance = this;
-        Init(renderer, camera, de_Init);
+        Init(renderer, de_Init);
     }
 
     public static Engine Instance { get; private set; } = null!;
@@ -29,9 +29,6 @@ public class Engine : IDisposable {
     public Action? de_Update = null;
     public Action? de_FixedUpdate = null;
     public Action? de_Render = null;
-
-    public static Silk.NET.Windowing.IWindow Window = null!;
-    public static Silk.NET.Input.IInputContext Input = null!;
 
     /// Debug
     public EngineStates engineState = EngineStates.Loading;
@@ -45,7 +42,7 @@ public class Engine : IDisposable {
     protected System.Diagnostics.Stopwatch sw_LatencySystems = new System.Diagnostics.Stopwatch();
 
 
-    public void Init (Type? renderer = null, Type? camera = null, Action? de_Init = null) {
+    public void Init (Type? renderer = null, Action? de_Init = null) {
         ArgsUtils.Init();
 
         ThreadUtils.Init();
@@ -66,30 +63,34 @@ public class Engine : IDisposable {
 
         ReflectionActionScripts.CreateSingleton();
 
-        Window = Windows.WindowCreate();
-        Window.Load += () => OnLoad(renderer ?? typeof(Graphics.Renderer), de_Init);
-        Window.Update += OnUpdate;
-        Window.Closing += OnClosing;
-        de_Render += LogFrameEnd;
+        Windows.Window = Windows.WindowCreate();
+        Windows.Window.Load += () => OnLoad(renderer ?? typeof(Graphics.Renderer), de_Init);
+        Windows.Window.Update += OnUpdate;
+        Windows.Window.Closing += OnClosing;
     }
-    public void Run () => Silk.NET.Windowing.WindowExtensions.Run(Window);
+    public void Run () => Silk.NET.Windowing.WindowExtensions.Run(Windows.Window);
 
     private void OnLoad (Type rendererType, Action? de_Init) {
-        Input = Silk.NET.Input.InputWindowExtensions.CreateInput(Window);
-        InputState.Init(Input);
+        Windows.Input = Silk.NET.Input.InputWindowExtensions.CreateInput(Windows.Window);
+        WindowInput.Init(Windows.Input);
 
         Log.log($"===== Systems Layer =====", LogType.info);
 
         object? renderer = Activator.CreateInstance(rendererType);
         if (renderer as Graphics.Renderer is null) throw new Exception("Renderer is null");
 
-        de_Init?.Invoke();
-
         PhysicsManager.CreateSingleton();
         ComponentManager.CreateSingleton();
         SceneManager.CreateSingleton();
 
-        //de_Update_Engine?.Invoke();
+        Log.log($"===== Hook Layer =====", LogType.info);
+
+        de_Init?.Invoke();
+        //ReflectionActionScripts.CreateSingleton();
+
+        //de_Update?.Invoke();
+        //de_Render?.Invoke();
+
         engineState = EngineStates.Ready;
         Log.log($"========== Init Finish ==========", LogType.info);
 
@@ -98,7 +99,7 @@ public class Engine : IDisposable {
 
 
     private void OnUpdate (double dt) {
-        InputState.Update();
+        WindowInput.Update();
         Inputs.Update();
 
         if (Inputs.Actions[Inputs.EditorPause].pressedDown) {
@@ -118,6 +119,8 @@ public class Engine : IDisposable {
             f3log();
 
             de_Render?.Invoke();
+
+            LogFrameEnd();
 
             /// Counters
             Time.time += Time.deltaTime;
@@ -170,7 +173,7 @@ public class Engine : IDisposable {
 
 
     public static void SetFPSMax (double fpsMax) {
-        Window.FramesPerSecond = fpsMax;
+        Windows.Window.FramesPerSecond = fpsMax;
     }
 
 
@@ -178,9 +181,9 @@ public class Engine : IDisposable {
         Graphics.UI.TextRenderer.AddText($"Time: {Time.time:F2}");
         Graphics.UI.TextRenderer.AddText($"FPS: {(int)(1/Time.deltaTime)}");
         Graphics.UI.TextRenderer.AddText($"ms: {Time.deltaTime*1000:F3}");
-        Graphics.UI.TextRenderer.AddText($"Pos: {Graphics.Camera.Current?.cameraPos:F3}");
-        Graphics.UI.TextRenderer.AddText($"MousePos_Window: {Inputs.MousePos}");
+        Graphics.UI.TextRenderer.AddText($"CameraPos: {Graphics.Camera.Current?.cameraPos:F3}");
         Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.Instance.componentsCount}");
+        Graphics.UI.TextRenderer.AddText($"MousePos_Window: {Inputs.MousePos}");
     }
 
 
@@ -195,7 +198,7 @@ public class Engine : IDisposable {
     }
 
     public void Dispose () {
-        Window?.Dispose();
+        Windows.Window?.Dispose();
     }
 
 }

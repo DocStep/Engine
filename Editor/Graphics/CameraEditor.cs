@@ -115,6 +115,7 @@ public sealed class CameraEditor : Camera {
         //Log.log("Update", Inputs.isMouseVisible);
         float baseSpeed = Inputs.Actions[Shift].pressed ? _cameraSpeedShift : _cameraSpeed;
         Vector3 cameraPosDelta = Vector3.Zero;
+        cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
         position = cameraPos;
 
         if (!EditorUI.Instance.isSceneUIHovered) {
@@ -122,7 +123,6 @@ public sealed class CameraEditor : Camera {
             return;
         }
 
-        cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
         Vector3 forward = Vector3.Transform(Vector3.UnitZ, cameraRot);
         Vector3 right = Vector3.Transform(Vector3.UnitX, cameraRot);
         Vector3 up = Vector3.Transform(Vector3.UnitY, cameraRot);
@@ -189,7 +189,7 @@ public sealed class CameraEditor : Camera {
             Inputs.MouseHide();
         } else if (Inputs.Actions[CameraDrag].pressedUp && !mouseBlocked) {
             if (!isCameraDragging) {
-                TryFocusOnPoint(Inputs.MousePos.X, Inputs.MousePos.Y, Engine.Engine.Window.Size.X, Engine.Engine.Window.Size.Y);
+                TryFocusOnPoint(Inputs.MousePos.X, Inputs.MousePos.Y, Windows.Window.Size.X, Windows.Window.Size.Y);
             }
         } else {
             forward = Vector3.Transform(Vector3.UnitZ, cameraRot); /// was -UnitZ
@@ -204,8 +204,8 @@ public sealed class CameraEditor : Camera {
                 FocusAtPoint(Gizmos._gizmo_Selected.selectedMeshComp.owner.Transform.Position);
 
         /// Zoom
-        if (InputState.WheelDelta != 0) {
-            cameraPos += posDeltaL*_zoomSpeed*InputState.WheelDelta*forward;
+        if (WindowInput.WheelDelta != 0) {
+            cameraPos += posDeltaL*_zoomSpeed*WindowInput.WheelDelta*forward;
             isFocusing = false;
         }
 

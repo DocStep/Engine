@@ -82,12 +82,12 @@ public static class Inputs {
 
 
     public static void MouseHide () {
-        InputState.Mouse?.Cursor.CursorMode = Silk.NET.Input.CursorMode.Raw;
+        WindowInput.Mouse?.Cursor.CursorMode = Silk.NET.Input.CursorMode.Raw;
         isMouseVisible = false;
         //Log.log("MouseHide");
     }
     public static void MouseShow () {
-        InputState.Mouse?.Cursor.CursorMode = Silk.NET.Input.CursorMode.Normal;
+        WindowInput.Mouse?.Cursor.CursorMode = Silk.NET.Input.CursorMode.Normal;
         isMouseVisible = true;
         //Log.log("MouseShow");
     }
@@ -307,16 +307,16 @@ public static class Inputs {
             for (int k = 0; k < group.Keys.Count; k++) {
                 /// Wheel Key Exclusions — WheelUp/WheelDown are pulsed once per Update by InputState, not held
                 if (group.Keys[k] == Keys.WheelUp) {
-                    if (InputState.GetKey(Keys.WheelUp)) group.pressedDown = true;
+                    if (WindowInput.GetKey(Keys.WheelUp)) group.pressedDown = true;
                     continue;
                 } else if (group.Keys[k] == Keys.WheelDown) {
-                    if (InputState.GetKey(Keys.WheelDown)) group.pressedDown = true;
+                    if (WindowInput.GetKey(Keys.WheelDown)) group.pressedDown = true;
                     continue;
                 }
 
-                if (InputState.GetKeyDown(group.Keys[k])) group.pressedDown = true;
-                if (InputState.GetKey(group.Keys[k])) group.pressed = true;
-                if (InputState.GetKeyUp(group.Keys[k])) group.pressedUp = true;
+                if (WindowInput.GetKeyDown(group.Keys[k])) group.pressedDown = true;
+                if (WindowInput.GetKey(group.Keys[k])) group.pressed = true;
+                if (WindowInput.GetKeyUp(group.Keys[k])) group.pressedUp = true;
             }
         }
 
@@ -324,11 +324,11 @@ public static class Inputs {
         WASD.Y = (Actions["MoveForward"].pressed ? 1 : 0) + (Actions["MoveBack"].pressed ? -1 : 0);
 
         /// Mouse
-        MousePos = InputState.MousePos;
-        MouseDelta = InputState.MouseDelta;
+        MousePos = WindowInput.MousePos;
+        MouseDelta = WindowInput.MouseDelta;
 
         /// Wheel
-        Wheel = InputState.WheelDelta;
+        Wheel = WindowInput.WheelDelta;
     }
 
 

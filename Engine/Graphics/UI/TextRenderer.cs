@@ -72,8 +72,8 @@ public class TextRenderer : IDisposable {
     public unsafe void DrawText (string text, float x, float y, int targetWidth, int targetHeight) {
         _vertices.Clear();
         float cursorX = x;
-        float screenWidth = Engine.Window.Size.X;
-        float screenHeight = Engine.Window.Size.Y;
+        float screenWidth = Windows.Window.Size.X;
+        float screenHeight = Windows.Window.Size.Y;
 
         foreach (char c in text) {
             if (!_atlas.Chars.TryGetValue(c, out FontAtlas.CharInfo ci)) continue;

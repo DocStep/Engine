@@ -1,13 +1,15 @@
 ﻿using System.Linq;
 using Engine;
+using Inputs = Engine.Input.Inputs;
 
 namespace Engine;
 
 
 public static class Windows {
 
-    //public static Silk.NET.Windowing.IWindow Window = null!;
-    //public static Silk.NET.Input.IInputContext Input = null!;
+    public static Silk.NET.Windowing.IWindow Window = null!;
+    public static Silk.NET.Input.IInputContext Input = null!;
+
 
     public static Silk.NET.Windowing.IWindow WindowCreate () {
         Silk.NET.Windowing.IWindow Window = Silk.NET.Windowing.Window.Create(options);
@@ -30,16 +32,16 @@ public static class Windows {
 
 
     private static void Update () {
-        if (Input.Inputs.Actions[Input.Inputs.FullscreenSwitch].pressedDown) {
+        if (Inputs.Actions[Inputs.FullscreenSwitch].pressedDown) {
             Log.log("FullscreenSwitch");
-            if (Engine.Window.WindowState == Silk.NET.Windowing.WindowState.Fullscreen) {
-                Engine.Window.WindowState = Silk.NET.Windowing.WindowState.Normal;
+            if (Windows.Window.WindowState == Silk.NET.Windowing.WindowState.Fullscreen) {
+                Windows.Window.WindowState = Silk.NET.Windowing.WindowState.Normal;
             } else {
-                Engine.Window.WindowState = Silk.NET.Windowing.WindowState.Fullscreen;
+                Windows.Window.WindowState = Silk.NET.Windowing.WindowState.Fullscreen;
             }
         }
 
-        if (Input.Inputs.Actions[Input.Inputs.Exit].pressed) Engine.Window.Close();
+        if (Inputs.Actions[Inputs.Exit].pressed) Windows.Window.Close();
     }
 
 }

@@ -8,8 +8,7 @@ namespace Engine.Graphics;
 public class PostProcessStack : IDisposable {
     public PostProcessStack () {
         QuadVAO = Renderer.GL.GenVertexArray();
-
-        Engine.Window.FramebufferResize += Resize;
+        Windows.Window.FramebufferResize += Resize;
         Engine.Instance.de_Update += Update;
 
         Resize(Renderer.Instance.Width, Renderer.Instance.Height);

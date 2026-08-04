@@ -8,7 +8,7 @@ public class MaterialFxaa : Material {
 
 
     public override void ApplyCustom () {
-        shader.SetVector2(InvResolution, new Vector2(1f/Engine.Window.Size.X, 1f/Engine.Window.Size.Y));
+        shader.SetVector2(InvResolution, new Vector2(1f/Windows.Window.Size.X, 1f/Windows.Window.Size.Y));
     }
 
 }

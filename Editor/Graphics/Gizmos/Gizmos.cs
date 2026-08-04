@@ -177,8 +177,8 @@ public static class Gizmos {
         const int gizmoSize = 90;
         const int gizmoMargin = 16;
             
-        int windowWidth = Engine.Engine.Window.Size.X;
-        int windowHeight = Engine.Engine.Window.Size.Y;
+        int windowWidth = Windows.Window.Size.X;
+        int windowHeight = Windows.Window.Size.Y;
 
         int gizmoX = windowWidth - gizmoSize - gizmoMargin;
         int gizmoY = windowHeight - gizmoSize - gizmoMargin;
@@ -196,7 +196,7 @@ public static class Gizmos {
         Vector3 up = Vector3.Transform(Vector3.UnitY, rotation);
         Vector3 gizmoCamPos = -forward*5f;
         Matrix4x4 gizmoView = Matrix4x4.CreateLookAtLeftHanded(gizmoCamPos, Vector3.Zero, up);
-        float aspect = Engine.Engine.Window.Size.X/(float)Engine.Engine.Window.Size.Y;
+        float aspect = Windows.Window.Size.X/(float)Windows.Window.Size.Y;
         Matrix4x4 gizmoProjection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
             Camera.Current.FOV/180*MathF.PI, aspect, Camera.Current.planeNear, Camera.Current.planeFar);
 
@@ -208,7 +208,7 @@ public static class Gizmos {
         _mesh_AxesWireframe.Draw(PrimitiveType.Lines);
 
         GL.Enable(EnableCap.DepthTest);
-        GL.Viewport(Engine.Engine.Window.Size);
+        GL.Viewport(Windows.Window.Size);
     }
     /*private static Material mat_GizmoCameraOrbitCenter = new Material() { Color = new Vector3(0.5f, 0.5f, 0.5f), Alpha = 0.2f, };
     private static void GizmoCameraOrbitCenter () {

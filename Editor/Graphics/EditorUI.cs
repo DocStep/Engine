@@ -14,7 +14,7 @@ namespace Editor.Graphics;
 public class EditorUI : Singleton<EditorUI>, IDisposable {
 
     protected override void Init () {
-        ImGUI = new ImGuiController(Renderer.GL, Engine.Engine.Window, Engine.Engine.Input);
+        ImGUI = new ImGuiController(Renderer.GL, Windows.Window, Windows.Input);
 
         SetDock();
         EditorUIStyle.SetAccentColor();
@@ -68,7 +68,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         /// Switch to the real backbuffer for ImGui — dockspace, panels, and the Scene image itself
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         Renderer.GL.DrawBuffer(GLEnum.Back);
-        Renderer.GL.Viewport(0, 0, (uint)Engine.Engine.Window.Size.X, (uint)Engine.Engine.Window.Size.Y);
+        Renderer.GL.Viewport(0, 0, (uint)Windows.Window.Size.X, (uint)Windows.Window.Size.Y);
         Renderer.GL.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
         Renderer.GL.Clear((uint)ClearBufferMask.ColorBufferBit);
 
@@ -108,13 +108,13 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         isSceneUIHovered = ImGui.IsItemHovered();
 
         if (!Engine.Input.Inputs.isMouseVisible) {
-            Vector2 mousePos_Scene = Engine.Input.InputState.Mouse!.Position - ImGui.GetItemRectMin();
+            Vector2 mousePos_Scene = Engine.Input.WindowInput.Mouse!.Position - ImGui.GetItemRectMin();
             float deltaX = MathF.Floor(mousePos_Scene.X/sceneAvail.X)*sceneAvail.X;
             float deltaY = MathF.Floor(mousePos_Scene.Y/sceneAvail.Y)*sceneAvail.Y;
             Vector2 delta = new Vector2(deltaX, deltaY);
             if (0 < delta.LengthSquared()) {
-                Engine.Input.InputState.TeleportMouseDelta(-delta);
-                Log.log(sceneAvail, mousePos_Scene, isSceneUIHovered, delta);
+                Engine.Input.WindowInput.TeleportMouseDelta(-delta);
+                //Log.log(sceneAvail, mousePos_Scene, isSceneUIHovered, delta);
             }
         }
 

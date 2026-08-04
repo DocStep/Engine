@@ -22,10 +22,10 @@ public class Renderer {
         Instance = this;
 
         Engine.Instance.de_Render += RenderScene;
-        Engine.Window.FramebufferResize += OnFrameBufferResize;
-        Engine.Window.Closing += Dispose;
+        Windows.Window.FramebufferResize += OnFrameBufferResize;
+        Windows.Window.Closing += Dispose;
 
-        _GL = Engine.Window.CreateOpenGL();
+        _GL = Windows.Window.CreateOpenGL();
         GLDebug.Init();
         GL.FrontFace(FrontFaceDirection.CW);
         GL.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
@@ -56,7 +56,7 @@ public class Renderer {
 
     public static Renderer Instance = null!;
 
-    protected readonly GL _GL = Engine.Window.CreateOpenGL();
+    protected readonly GL _GL = Windows.Window.CreateOpenGL();
     public static GL GL => Instance._GL;
 
     public readonly TextRenderer TextRenderer = null!;
@@ -156,11 +156,11 @@ public class Renderer {
         iter++;
         DrawEnd();
 
-        //Thread.Sleep(500);
+        Thread.Sleep(500);
     }
     public virtual void SetTargetSize () {
-        Width = Engine.Window.Size.X;
-        Height = Engine.Window.Size.Y;
+        Width = Windows.Window.Size.X;
+        Height = Windows.Window.Size.Y;
     }
     public virtual void PresentToBackbuffer () {
         PostProcess.PresentToBackbuffer(); /// blit _outputFbo into fbo 0
