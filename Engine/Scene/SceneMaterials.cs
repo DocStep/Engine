@@ -25,7 +25,7 @@ public class SceneMaterials : Scene {
         mesh = reflectionSuzanneHightRes.AddComponent<MeshComponent>();
         mesh.mesh = AssetsEngine._mesh_SuzanneHighRes;
         mesh.material = AssetsEngine._mat_MaterialPreview;
-        //reflectionSuzanneHightRes.AddComponent<MonkeyScript>();
+        reflectionSuzanneHightRes.AddComponent<MonkeyScript>();
         //Camera camera = reflectionSuzanneHightRes.AddComponent<Camera>();
         //camera.priority = 0;
 
