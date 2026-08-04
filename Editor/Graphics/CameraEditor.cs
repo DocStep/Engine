@@ -70,7 +70,7 @@ public sealed class CameraEditor : Camera {
     private float moveHoldTime;
 
     private List<object> mouseBlockingObjects = new List<object>();
-    public bool mouseAllowed => mouseBlockingObjects.Count == 0;
+    public bool mouseBlocked => 0 < mouseBlockingObjects.Count;
     public void BlockMouse (object obj) {
         if (!mouseBlockingObjects.Contains(obj))
             mouseBlockingObjects.Add(obj);
@@ -94,11 +94,13 @@ public sealed class CameraEditor : Camera {
         NewTransform();
     }
     private void NewTransform () {
-        cameraRot = Matrix4x4.CreateLookAtLeftHanded(cameraPos, cameraOrbitCenterPos, Vector3.UnitY);
+        position = cameraPos;
 
         Vector3 dir = Vector3.Normalize(cameraOrbitCenterPos - cameraPos);
         yaw = -MathF.Atan2(dir.X, dir.Z);
         pitch = MathF.Asin(dir.Y);
+        cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
+        forward = Vector3.Transform(Vector3.UnitZ, cameraRot);
         UpdateWorldUp();
 
         isFocusing = false;
@@ -110,37 +112,35 @@ public sealed class CameraEditor : Camera {
 
 
     public override void Update () {
-        //if (!EditorUI.Instance.isUIHovered) return;
-        //if (!EditorUI.Instance.isSceneUIHovered) return;
-        Log.log("Update", Inputs.isMouseVisible);
+        //Log.log("Update", Inputs.isMouseVisible);
+        float baseSpeed = Inputs.Actions[Shift].pressed ? _cameraSpeedShift : _cameraSpeed;
+        Vector3 cameraPosDelta = Vector3.Zero;
+        position = cameraPos;
 
-        mousePos_Window.X = Inputs.MousePos.X;
-        mousePos_Window.Y = Inputs.MousePos.Y;
-
-        if (Inputs.Actions[Reset].pressedDown) SetTransformDefault();
-        if (Inputs.Actions[CameraFocusMaterial].pressedDown) SetTransformMaterialPreview();
+        if (!EditorUI.Instance.isSceneUIHovered) {
+            move();
+            return;
+        }
 
         cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
         Vector3 forward = Vector3.Transform(Vector3.UnitZ, cameraRot);
         Vector3 right = Vector3.Transform(Vector3.UnitX, cameraRot);
         Vector3 up = Vector3.Transform(Vector3.UnitY, cameraRot);
-        Vector3 cameraPosDelta = Vector3.Zero;
         float posDeltaL = MathF.Max(0, (cameraOrbitCenterPos - cameraPos).Length());
 
-        if ((Inputs.Actions[LMB].pressed && Inputs.Actions[Alt].pressed || Inputs.Actions[RMB].pressed) && mouseAllowed) {
+        if ((Inputs.Actions[LMB].pressed && Inputs.Actions[Alt].pressed || Inputs.Actions[RMB].pressed) && !mouseBlocked) {
             float dx = Inputs.MouseDelta.X;
             float dy = Inputs.MouseDelta.Y;
-
             float flipSign = 1f;
             yaw += -dx*_sensetivityMultiplier*_sensetivity*flipSign;
             pitch += -dy*_sensetivityMultiplier*_sensetivity;
             pitch = Utils.WrapAngle(pitch);
-            UpdateWorldUp();
 
             isFocusing = false;
         }
+        
 
-        if (Inputs.Actions[Alt].pressed && Inputs.Actions[LMB].pressed) {
+        if (Inputs.Actions[Alt].pressed && Inputs.Actions[LMB].pressed && !mouseBlocked) {
             /// Orbit Rotation
             cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
 
@@ -153,7 +153,7 @@ public sealed class CameraEditor : Camera {
             cameraPos = position;
 
             Inputs.MouseHide();
-        } else if (Inputs.Actions[RMB].pressed) {
+        } else if (Inputs.Actions[RMB].pressed && !mouseBlocked) {
             /// Center Rotation
             cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
             forward = Vector3.Transform(Vector3.UnitZ, cameraRot); /// was -UnitZ
@@ -164,17 +164,18 @@ public sealed class CameraEditor : Camera {
             cameraOrbitCenterPos = position + forward * orbitDistance;
 
             Inputs.MouseHide();
-        } else if (Inputs.Actions[CameraDrag].pressedDown) { /// Middle Mouse: drag to pan, clean click (no drag) to focus
-            cameraDragStartX = mousePos_Window.X;
-            cameraDragStartY = mousePos_Window.Y;
+        } else if (Inputs.Actions[CameraDrag].pressedDown && !mouseBlocked) {
+            /// Middle Mouse: drag to pan, clean click (no drag) to focus
+            cameraDragStartX = Inputs.MousePos.X;
+            cameraDragStartY = Inputs.MousePos.Y;
             isCameraDragging = false;
-        } else if (Inputs.Actions[CameraDrag].pressed) {
+        } else if (Inputs.Actions[CameraDrag].pressed && !mouseBlocked) {
             const float dragSpeed = 0.001f;
             float dx = Inputs.MouseDelta.X;
             float dy = Inputs.MouseDelta.Y;
 
-            float totalDx = mousePos_Window.X - cameraDragStartX;
-            float totalDy = mousePos_Window.Y - cameraDragStartY;
+            float totalDx = Inputs.MousePos.X - cameraDragStartX;
+            float totalDy = Inputs.MousePos.Y - cameraDragStartY;
             if (_clickDragThresholdPixels*_clickDragThresholdPixels < totalDx*totalDx + totalDy*totalDy) {
                 isCameraDragging = true;
                 isFocusing = false;
@@ -186,9 +187,9 @@ public sealed class CameraEditor : Camera {
             position = cameraPos;
 
             Inputs.MouseHide();
-        } else if (Inputs.Actions[CameraDrag].pressedUp) {
+        } else if (Inputs.Actions[CameraDrag].pressedUp && !mouseBlocked) {
             if (!isCameraDragging) {
-                TryFocusOnPoint(mousePos_Window.X, mousePos_Window.Y, Engine.Engine.Window.Size.X, Engine.Engine.Window.Size.Y);
+                TryFocusOnPoint(Inputs.MousePos.X, Inputs.MousePos.Y, Engine.Engine.Window.Size.X, Engine.Engine.Window.Size.Y);
             }
         } else {
             forward = Vector3.Transform(Vector3.UnitZ, cameraRot); /// was -UnitZ
@@ -197,16 +198,19 @@ public sealed class CameraEditor : Camera {
             Inputs.MouseShow();
         }
 
+
         if (Inputs.Actions[Inputs.CameraFocus].pressedDown) 
             if (Gizmos._gizmo_Selected.selectedMeshComp is not null) 
                 FocusAtPoint(Gizmos._gizmo_Selected.selectedMeshComp.owner.Transform.Position);
-
 
         /// Zoom
         if (InputState.WheelDelta != 0) {
             cameraPos += posDeltaL*_zoomSpeed*InputState.WheelDelta*forward;
             isFocusing = false;
         }
+
+        if (Inputs.Actions[Reset].pressedDown) SetTransformDefault();
+        if (Inputs.Actions[CameraFocusMaterial].pressedDown) SetTransformMaterialPreview();
 
         /// Select
         if (!EditorUI.Instance.isUIClick) {
@@ -240,38 +244,40 @@ public sealed class CameraEditor : Camera {
 
 
         /// Move
-        float baseSpeed = Inputs.Actions[Shift].pressed ? _cameraSpeedShift : _cameraSpeed;
-        cameraPosDelta = Vector3.Zero;
         if (Inputs.Actions[MoveForward].pressed) cameraPosDelta += forward;
         if (Inputs.Actions[MoveBack].pressed) cameraPosDelta += -forward;
         if (Inputs.Actions[MoveRight].pressed) cameraPosDelta += right;
         if (Inputs.Actions[MoveLeft].pressed) cameraPosDelta += -right;
         if (Inputs.Actions[MoveUp].pressed) cameraPosDelta += up;
         if (Inputs.Actions[MoveDown].pressed) cameraPosDelta += -up;
+        move();
 
-        if (0.0001f < cameraPosDelta.LengthSquared()) {
-            Vector3 moveDirection = Vector3.Normalize(cameraPosDelta);
+        void move () {
+            if (0.0001f < cameraPosDelta.LengthSquared()) {
+                Vector3 moveDirection = Vector3.Normalize(cameraPosDelta);
 
-            bool continuousMovement = moveDirection != Vector3.Zero;
-            moveHoldTime = continuousMovement ? moveHoldTime + (float)Time.deltaTime : 0f;
+                bool continuousMovement = moveDirection != Vector3.Zero;
+                moveHoldTime = continuousMovement ? moveHoldTime + (float)Time.deltaTime : 0f;
 
-            float rampT = Utils.Clamp(moveHoldTime / _moveRampUpTime, 0f, 1f);
-            float speedFactor = Utils.Lerp(_moveStartSpeedFactor, 1f, rampT);
+                float rampT = Utils.Clamp(moveHoldTime / _moveRampUpTime, 0f, 1f);
+                float speedFactor = Utils.Lerp(_moveStartSpeedFactor, 1f, rampT);
 
-            if (_moveRampUpTime < moveHoldTime) {
-                float overshootT = Utils.Clamp(
-                    (moveHoldTime - _moveRampUpTime)/(_moveMaxHoldTime - _moveRampUpTime), 0f, 1f);
-                speedFactor = Utils.Lerp(1f, _moveOvershootSpeedFactor, overshootT);
+                if (_moveRampUpTime < moveHoldTime) {
+                    float overshootT = Utils.Clamp(
+                        (moveHoldTime - _moveRampUpTime)/(_moveMaxHoldTime - _moveRampUpTime), 0f, 1f);
+                    speedFactor = Utils.Lerp(1f, _moveOvershootSpeedFactor, overshootT);
+                }
+
+                cameraPosDelta = moveDirection*baseSpeed*speedFactor*(float)Time.deltaTime;
+                isFocusing = false;
+            } else {
+                moveHoldTime = 0f;
             }
 
-            cameraPosDelta = moveDirection*baseSpeed*speedFactor*(float)Time.deltaTime;
-            isFocusing = false;
-        } else {
-            moveHoldTime = 0f;
+            cameraPos += cameraPosDelta;
+            cameraOrbitCenterPos += cameraPosDelta;
+            UpdateWorldUp();
         }
-
-        cameraPos += cameraPosDelta;
-        cameraOrbitCenterPos += cameraPosDelta;
     }
 
 
@@ -315,7 +321,7 @@ public sealed class CameraEditor : Camera {
         //UI.TextRenderer.AddText($"MousePos_Window: {mousePos_Window.X}, {mousePos_Window.Y}");
         
         //Vector2? scenePos = mousePos;
-        if (!EditorUI.Instance.GetSceneMousePos(mousePos_Window, out Vector2 scenePos)) {
+        if (!EditorUI.Instance.GetSceneMousePos(Inputs.MousePos, out Vector2 scenePos)) {
             ray = default;
             return false;
         }

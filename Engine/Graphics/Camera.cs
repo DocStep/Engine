@@ -24,7 +24,7 @@ public class Camera : Component {
 
     public Vector3 cameraPos = Vector3.Zero;
     public Matrix4x4 cameraRot = Matrix4x4.Identity;
-    public Vector2 mousePos_Window = Vector2.Zero;
+    //public Vector2 mousePos_Window = Vector2.Zero;
     public static bool wantWarpPos = false;
 
     public float FOV = 60;
@@ -65,8 +65,8 @@ public class Camera : Component {
     }
 
     public virtual bool RaycastMouse (out Ray ray) {
-        Vector2 sceneSize = mousePos_Window;
-        Vector2 mousePos = mousePos_Window;
+        Vector2 sceneSize = Input.Inputs.MousePos;
+        Vector2 mousePos = Input.Inputs.MousePos;
         ray = Raycast.ScreenPointToRay(mousePos.X, mousePos.Y, (int)sceneSize.X, (int)sceneSize.Y,
             Renderer.Instance.m4x4_View, Renderer.Instance.m4x4Projection);
         return true;
