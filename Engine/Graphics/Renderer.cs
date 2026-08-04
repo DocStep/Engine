@@ -156,7 +156,7 @@ public class Renderer {
         iter++;
         DrawEnd();
 
-        Thread.Sleep(500);
+        //Thread.Sleep(500);
     }
     public virtual void SetTargetSize () {
         Width = Windows.Window.Size.X;
@@ -252,7 +252,7 @@ public class Renderer {
         //if (info.depthRangeNear != 0 || info.depthRangeFar != 1)
         //    GL.DepthRange(info.depthRangeNear, info.depthRangeFar);
 
-        SetSceneUniformsUnlit(shader, Camera.Current.cameraPos);
+        SetSceneUniformsUnlit(shader, Camera.Current.CameraPos);
         SetSceneUniformsLit(shader);
         SetSceneUniformsSkybox(shader, _skybox.texture, _skybox.maxLod);
 

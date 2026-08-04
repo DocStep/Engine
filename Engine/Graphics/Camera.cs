@@ -22,8 +22,8 @@ public class Camera : Component {
     }
 
 
-    public Vector3 cameraPos = Vector3.Zero;
-    public Matrix4x4 cameraRot = Matrix4x4.Identity;
+    public virtual Vector3 CameraPos => owner.Transform.Position;
+    //public Matrix4x4 cameraRot = Matrix4x4.Identity;
     //public Vector2 mousePos_Window = Vector2.Zero;
     public static bool wantWarpPos = false;
 
@@ -59,6 +59,9 @@ public class Camera : Component {
     public virtual void Update () { }
 
 
+    public virtual Matrix4x4 GetRotationMatrix () {
+        return Matrix4x4.Identity;
+    }
     public virtual Matrix4x4 GetViewMatrix () {
         Vector3 pos = owner.Transform.Position;
         return Matrix4x4.CreateLookAtLeftHanded(pos, pos + owner.Transform.Forward, owner.Transform.Up);

@@ -65,7 +65,7 @@ public class GizmoSelected : IDisposable {
         if (selectedMeshComp is null) return;
 
         Transform tr_obj = selectedMeshComp.owner.Transform;
-        Vector3 camPos = Camera.Current.cameraPos;
+        Vector3 camPos = Camera.Current.CameraPos;
         Vector3 _objPos = tr_obj.Position;
         Vector3 _objRot = tr_obj.Rotation;
         float _dist = Vector3.Distance(camPos, _objPos);
@@ -305,7 +305,7 @@ public class GizmoSelected : IDisposable {
         _sh_Unlit.Use();
         _sh_Unlit.SetMatrix4(View, RendererEditor.Instance.UView);
         _sh_Unlit.SetMatrix4(Projection, RendererEditor.Instance.UProjection);
-        _sh_Unlit.SetVector3(ViewPos, Camera.Current.cameraPos);
+        _sh_Unlit.SetVector3(ViewPos, Camera.Current.CameraPos);
 
         DrawOutline();
         DrawGizmo();
@@ -319,7 +319,7 @@ public class GizmoSelected : IDisposable {
         GL.Enable(EnableCap.Blend);
 
         Transform tr_obj = selectedMeshComp.owner.Transform;
-        Vector3 camPos = Camera.Current.cameraPos;
+        Vector3 camPos = Camera.Current.CameraPos;
         Vector3 _objPos = tr_obj.Position;
         Vector3 _objRot = tr_obj.Rotation;
         float _dist = Vector3.Distance(camPos, _objPos);
@@ -406,7 +406,7 @@ public class GizmoSelected : IDisposable {
             GL.StencilMask(0x00);
             GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
 
-            float dist = Vector3.Distance(Camera.Current.cameraPos, renderInfo.pos);
+            float dist = Vector3.Distance(Camera.Current.CameraPos, renderInfo.pos);
 
             Matrix4x4 model = Matrix4x4.CreateScale(renderInfo.scale)
                 *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);

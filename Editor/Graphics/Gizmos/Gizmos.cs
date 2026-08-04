@@ -131,7 +131,7 @@ public static class Gizmos {
         DrawGizmoAxesWidget();
     }
     private static void GizmoGrid () {
-        Vector3 pos = Camera.Current.cameraPos;
+        Vector3 pos = Camera.Current.CameraPos;
         _mat_GizmoGrid.SetVector3(CameraPos, pos);
 
         RendererEditor.Instance.AddRenderInfo(new RenderInfo() {
@@ -148,7 +148,7 @@ public static class Gizmos {
     static void GizmoGridPost () => GL.DepthRange(0, 1);
 
     private static void GizmoAxes () {
-        Vector3 pos = Camera.Current.cameraPos;
+        Vector3 pos = Camera.Current.CameraPos;
         _mat_GizmoAxisLine.SetVector3(CameraPos, pos);
 
         /// X Red
@@ -191,7 +191,7 @@ public static class Gizmos {
         GL.Clear(ClearBufferMask.DepthBufferBit);
         GL.Disable(EnableCap.ScissorTest);
 
-        Matrix4x4 rotation = Camera.Current.cameraRot;
+        Matrix4x4 rotation = Camera.Current.GetRotationMatrix();
         Vector3 forward = Vector3.Transform(Vector3.UnitZ, rotation);
         Vector3 up = Vector3.Transform(Vector3.UnitY, rotation);
         Vector3 gizmoCamPos = -forward*5f;

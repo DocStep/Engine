@@ -181,7 +181,7 @@ public class Engine : IDisposable {
         Graphics.UI.TextRenderer.AddText($"Time: {Time.time:F2}");
         Graphics.UI.TextRenderer.AddText($"FPS: {(int)(1/Time.deltaTime)}");
         Graphics.UI.TextRenderer.AddText($"ms: {Time.deltaTime*1000:F3}");
-        Graphics.UI.TextRenderer.AddText($"CameraPos: {Graphics.Camera.Current?.cameraPos:F3}");
+        Graphics.UI.TextRenderer.AddText($"CameraPos: {Graphics.Camera.Current?.CameraPos:F3}");
         Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.Instance.componentsCount}");
         Graphics.UI.TextRenderer.AddText($"MousePos_Window: {Inputs.MousePos}");
     }

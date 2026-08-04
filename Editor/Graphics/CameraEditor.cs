@@ -28,7 +28,10 @@ public sealed class CameraEditor : Camera {
     private Vector3 _cameraPos = new Vector3(-2, 3, -10);
     private Vector3 _cameraOrbitCenterPos = Vector3.Zero;
 
-    public Vector3 _forward => Vector3.Transform(Vector3.UnitZ, cameraRot);
+    public Vector3 cameraPos = Vector3.Zero;
+    public override Vector3 CameraPos => cameraPos;
+
+    public Vector3 _forward => Vector3.Transform(Vector3.UnitZ, GetRotationMatrix());
     Vector3 forward;
     Vector3 position;
     Vector3 worldUp;
@@ -94,12 +97,13 @@ public sealed class CameraEditor : Camera {
         NewTransform();
     }
     private void NewTransform () {
-        position = cameraPos;
+        position = CameraPos;
 
-        Vector3 dir = Vector3.Normalize(cameraOrbitCenterPos - cameraPos);
+        Vector3 dir = Vector3.Normalize(cameraOrbitCenterPos - CameraPos);
         yaw = -MathF.Atan2(dir.X, dir.Z);
         pitch = MathF.Asin(dir.Y);
-        cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
+        //Matrix4x4 cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
+        Matrix4x4 cameraRot = GetRotationMatrix();
         forward = Vector3.Transform(Vector3.UnitZ, cameraRot);
         UpdateWorldUp();
 
@@ -115,8 +119,9 @@ public sealed class CameraEditor : Camera {
         //Log.log("Update", Inputs.isMouseVisible);
         float baseSpeed = Inputs.Actions[Shift].pressed ? _cameraSpeedShift : _cameraSpeed;
         Vector3 cameraPosDelta = Vector3.Zero;
-        cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
-        position = cameraPos;
+        //Matrix4x4 cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
+        Matrix4x4 cameraRot = GetRotationMatrix();
+        position = CameraPos;
 
         if (!EditorUI.Instance.isSceneUIHovered) {
             move();
@@ -126,7 +131,7 @@ public sealed class CameraEditor : Camera {
         Vector3 forward = Vector3.Transform(Vector3.UnitZ, cameraRot);
         Vector3 right = Vector3.Transform(Vector3.UnitX, cameraRot);
         Vector3 up = Vector3.Transform(Vector3.UnitY, cameraRot);
-        float posDeltaL = MathF.Max(0, (cameraOrbitCenterPos - cameraPos).Length());
+        float posDeltaL = MathF.Max(0, (cameraOrbitCenterPos - CameraPos).Length());
 
         if ((Inputs.Actions[LMB].pressed && Inputs.Actions[Alt].pressed || Inputs.Actions[RMB].pressed) && !mouseBlocked) {
             float dx = Inputs.MouseDelta.X;
@@ -144,7 +149,7 @@ public sealed class CameraEditor : Camera {
             /// Orbit Rotation
             cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
 
-            float orbitDistance = (cameraPos - cameraOrbitCenterPos).Length();
+            float orbitDistance = (CameraPos - cameraOrbitCenterPos).Length();
             if (orbitDistance < 0.01f) orbitDistance = 5f;
 
             Vector3 offset = Vector3.Transform(Vector3.UnitZ * orbitDistance, cameraRot);
@@ -157,9 +162,9 @@ public sealed class CameraEditor : Camera {
             /// Center Rotation
             cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
             forward = Vector3.Transform(Vector3.UnitZ, cameraRot); /// was -UnitZ
-            position = cameraPos;
+            position = CameraPos;
 
-            float orbitDistance = (cameraOrbitCenterPos - cameraPos).Length();
+            float orbitDistance = (cameraOrbitCenterPos - CameraPos).Length();
             if (orbitDistance < 0.01f) orbitDistance = 5f;
             cameraOrbitCenterPos = position + forward * orbitDistance;
 
@@ -184,7 +189,7 @@ public sealed class CameraEditor : Camera {
             cameraPosDelta = posDeltaL*dragSpeed*(-right*dx + up*dy);
             cameraPos += cameraPosDelta;
             cameraOrbitCenterPos += cameraPosDelta;
-            position = cameraPos;
+            position = CameraPos;
 
             Inputs.MouseHide();
         } else if (Inputs.Actions[CameraDrag].pressedUp && !mouseBlocked) {
@@ -193,7 +198,7 @@ public sealed class CameraEditor : Camera {
             }
         } else {
             forward = Vector3.Transform(Vector3.UnitZ, cameraRot); /// was -UnitZ
-            position = cameraPos;
+            position = CameraPos;
 
             Inputs.MouseShow();
         }
@@ -228,7 +233,7 @@ public sealed class CameraEditor : Camera {
 
         /// Smoothly glide toward the focus target
         if (isFocusing) {
-            Vector3 camDelta = focusTargetCameraPos - cameraPos;
+            Vector3 camDelta = focusTargetCameraPos - CameraPos;
             Vector3 orbitDelta = focusTargetOrbitCenterPos - cameraOrbitCenterPos;
 
             float _t = MathF.Min(1f, _focusGlideSpeed*(float)Time.deltaTime);
@@ -281,6 +286,9 @@ public sealed class CameraEditor : Camera {
     }
 
 
+    public override Matrix4x4 GetRotationMatrix () {
+        return Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
+    }
     public override Matrix4x4 GetViewMatrix () {
         return Matrix4x4.CreateLookAtLeftHanded(position, position + _forward, worldUp);
     }
@@ -291,7 +299,7 @@ public sealed class CameraEditor : Camera {
 
         Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
         if (hitMesh is not null) {
-            bestT = Vector3.Distance(cameraPos, hitPos);
+            bestT = Vector3.Distance(CameraPos, hitPos);
         }
 
         /// Fallback: ground plane at Y = 0
@@ -308,7 +316,7 @@ public sealed class CameraEditor : Camera {
     }
 
     public void FocusAtPoint (Vector3 pos) {
-        float dist = Vector3.Distance(cameraPos, cameraOrbitCenterPos);
+        float dist = Vector3.Distance(CameraPos, cameraOrbitCenterPos);
         dist = MathF.Max(_focusTargetDistanceMin, dist);
         dist = MathF.Min(dist, _focusTargetDistanceMax);
         focusTargetOrbitCenterPos = pos;

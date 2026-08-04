@@ -120,7 +120,7 @@ public class RendererEditor : Renderer {
 
         Shader shader = Gizmos._mat_GizmoWireframe.shader;
 
-        SetSceneUniformsUnlit(shader, Camera.Current.cameraPos);
+        SetSceneUniformsUnlit(shader, Camera.Current.CameraPos);
 
         Matrix4x4 mesh_m4x4 = info.modelOverride ?? Matrix4x4.CreateScale(info.scale)
             *Matrix4x4.RotationEuler(info.rot)*Matrix4x4.Position(info.pos);

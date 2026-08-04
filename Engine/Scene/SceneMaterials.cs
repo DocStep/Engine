@@ -12,11 +12,10 @@ public class SceneMaterials : Scene {
         float x;
         MeshComponent? mesh;
 
-        x = -1;
-        //GameObject cam = new GameObject() { Name = "Camera", };
-        //cam.Transform.Position = new Vector3(x, 1, -2);
-        //Camera camera = cam.AddComponent<Camera>();
-        //camera.priority = 0;
+        GameObject cam = new GameObject() { Name = "Camera", };
+        cam.Transform.Position = new Vector3(-2, 3, -10);
+        Camera camera = cam.AddComponent<Camera>();
+        camera.priority = 0;
 
         /// Reflection
         x = 0;
@@ -26,9 +25,9 @@ public class SceneMaterials : Scene {
         mesh = reflectionSuzanneHightRes.AddComponent<MeshComponent>();
         mesh.mesh = AssetsEngine._mesh_SuzanneHighRes;
         mesh.material = AssetsEngine._mat_MaterialPreview;
-        reflectionSuzanneHightRes.AddComponent<MonkeyScript>();
-        Camera camera = reflectionSuzanneHightRes.AddComponent<Camera>();
-        camera.priority = 0;
+        //reflectionSuzanneHightRes.AddComponent<MonkeyScript>();
+        //Camera camera = reflectionSuzanneHightRes.AddComponent<Camera>();
+        //camera.priority = 0;
 
         GameObject reflectionSuzanne = new GameObject() { Name = "Reflection Suzanne", };
         reflectionSuzanne.Transform.Position = new Vector3(x, 0, 4);
