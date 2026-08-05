@@ -139,7 +139,7 @@ public sealed class CameraEditor : Camera {
             float flipSign = 1f;
             yaw += -dx*_sensetivityMultiplier*_sensetivity*flipSign;
             pitch += -dy*_sensetivityMultiplier*_sensetivity;
-            pitch = Utils.WrapAngle(pitch);
+            pitch = Mathf.WrapAngle(pitch);
 
             isFocusing = false;
         }
@@ -147,7 +147,7 @@ public sealed class CameraEditor : Camera {
 
         if (Inputs.Actions[Alt].pressed && Inputs.Actions[LMB].pressed && !mouseBlocked) {
             /// Orbit Rotation
-            cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
+            cameraRot = Mathf.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
 
             float orbitDistance = (CameraPos - cameraOrbitCenterPos).Length();
             if (orbitDistance < 0.01f) orbitDistance = 5f;
@@ -160,7 +160,7 @@ public sealed class CameraEditor : Camera {
             Inputs.MouseHide();
         } else if (Inputs.Actions[RMB].pressed && !mouseBlocked) {
             /// Center Rotation
-            cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
+            cameraRot = Mathf.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
             forward = Vector3.Transform(Vector3.UnitZ, cameraRot); /// was -UnitZ
             position = CameraPos;
 
@@ -264,13 +264,13 @@ public sealed class CameraEditor : Camera {
                 bool continuousMovement = moveDirection != Vector3.Zero;
                 moveHoldTime = continuousMovement ? moveHoldTime + (float)Time.deltaTime : 0f;
 
-                float rampT = Utils.Clamp(moveHoldTime / _moveRampUpTime, 0f, 1f);
-                float speedFactor = Utils.Lerp(_moveStartSpeedFactor, 1f, rampT);
+                float rampT = Mathf.Clamp(moveHoldTime / _moveRampUpTime, 0f, 1f);
+                float speedFactor = Mathf.Lerp(_moveStartSpeedFactor, 1f, rampT);
 
                 if (_moveRampUpTime < moveHoldTime) {
-                    float overshootT = Utils.Clamp(
+                    float overshootT = Mathf.Clamp(
                         (moveHoldTime - _moveRampUpTime)/(_moveMaxHoldTime - _moveRampUpTime), 0f, 1f);
-                    speedFactor = Utils.Lerp(1f, _moveOvershootSpeedFactor, overshootT);
+                    speedFactor = Mathf.Lerp(1f, _moveOvershootSpeedFactor, overshootT);
                 }
 
                 cameraPosDelta = moveDirection*baseSpeed*speedFactor*(float)Time.deltaTime;
@@ -287,7 +287,7 @@ public sealed class CameraEditor : Camera {
 
 
     public override Matrix4x4 GetRotationMatrix () {
-        return Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
+        return Mathf.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
     }
     public override Matrix4x4 GetViewMatrix () {
         return Matrix4x4.CreateLookAtLeftHanded(position, position + _forward, worldUp);

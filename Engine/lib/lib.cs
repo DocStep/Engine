@@ -9,8 +9,6 @@ public static class lib {
     //public static FastNoiseLite Noise = new FastNoiseLite();
 
     public const float TAU = 6.2831855f;
-    public const float Deg2Rad = MathF.PI/180f;
-    public const float Rad2Deg = 180f/MathF.PI;
 
     public static Random random = new Random(25565);
     public static float R () => (float)random.NextDouble();

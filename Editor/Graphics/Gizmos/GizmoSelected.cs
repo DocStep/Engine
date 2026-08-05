@@ -434,7 +434,7 @@ public class GizmoSelected : IDisposable {
     }
 
     private Mesh SelectedOutlineNewMesh (MeshData data) {
-        MeshData welded = data.Weld(1e-5f);
+        MeshData welded = data.Weld();
         welded.RecalculateOutlineNormals();
         return new Mesh(welded);
     }

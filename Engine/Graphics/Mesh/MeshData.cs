@@ -94,7 +94,7 @@ public class MeshData {
         var newVerts = new List<Vertex>();
         uint[] newIndices = new uint[Indices.Length];
 
-        long Quantize(float v) => (long)Math.Round(v / epsilon);
+        long Quantize(float v) => (long)Math.Round(v/epsilon);
 
         for (int i = 0; i < Vertices.Length; i++) {
             var p = Vertices[i].Position;

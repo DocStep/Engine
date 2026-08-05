@@ -16,8 +16,8 @@ public class Transform : Component {
     [Hide][JsonIgnore][WrapRotation(0, 360)][ChangeStep(1f)] public Vector3 RotationEuler {
         get => rotationEuler;
         set {
-            rotationEuler = Utils.WrapVector3(value, 0, 360);
-            rotation = Utils.QuaternionFromEuler(rotationEuler);
+            rotationEuler = Mathf.WrapVector3(value, 0, 360);
+            rotation = Mathf.QuaternionFromEuler(rotationEuler);
         }
     }
     public Vector3 Scale = Vector3.One;
@@ -26,7 +26,7 @@ public class Transform : Component {
     [JsonIgnore] public Vector3 Up => Vector3.Transform(Vector3.UnitY, rotation);
     [JsonIgnore] public Vector3 Forward => Vector3.Transform(Vector3.UnitZ, rotation);
 
-    public static float DegreesToRadians (float angle) => angle*lib.Deg2Rad;
+    public static float DegreesToRadians (float angle) => angle*Mathf.Deg2Rad;
 
 
     public void SetPosition (Vector3 position) {
@@ -38,7 +38,7 @@ public class Transform : Component {
     }
 
     public void SetRotation (Vector3 euler) {
-        rotation = Utils.JQuaternionFromEuler(Utils.WrapVector3(euler, 0, 360));
+        rotation = Mathf.JQuaternionFromEuler(Mathf.WrapVector3(euler, 0, 360));
 
         PhysicsComponent? physicsComponent = owner.GetComponent<PhysicsComponent>();
         if (physicsComponent is not null)
@@ -79,15 +79,15 @@ public class Transform : Component {
         }
 
         return new Vector3(
-            pitch*lib.Rad2Deg,
-            yaw*lib.Rad2Deg,
-            roll*lib.Rad2Deg);
+            pitch*Mathf.Rad2Deg,
+            yaw*Mathf.Rad2Deg,
+            roll*Mathf.Rad2Deg);
     }
     public static Quaternion QuaternionFromEuler (Vector3 euler) {
         return Quaternion.CreateFromYawPitchRoll(
-            euler.Y*lib.Deg2Rad,
-            euler.X*lib.Deg2Rad,
-            euler.Z*lib.Deg2Rad);
+            euler.Y*Mathf.Deg2Rad,
+            euler.X*Mathf.Deg2Rad,
+            euler.Z*Mathf.Deg2Rad);
     }
 
     public Matrix4x4 GetWorldMatrix () {

@@ -63,10 +63,10 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
         float roll = MathF.Atan2(2f*(w*z + x*y), 1f - 2f*(x*x + z*z));
         
         Vector3 eulerRadians = new Vector3(pitch, yaw, roll);
-        return lib.Rad2Deg*eulerRadians;
+        return Mathf.Rad2Deg*eulerRadians;
     }
     public static JQuaternion FromEulerYXZ (Vector3 eulerDegrees) {
-        Vector3 euler = eulerDegrees*lib.Deg2Rad;
+        Vector3 euler = eulerDegrees*Mathf.Deg2Rad;
         float pitch = euler.X;
         float yaw = euler.Y;
         float roll = euler.Z;

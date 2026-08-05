@@ -195,7 +195,7 @@ public class Renderer {
     protected void UpdateProjection (float width, float height) {
         float aspect = width/height;
         m4x4Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
-            Camera.Current.FOV*Utils.Deg2Rad, aspect, Camera.Current.planeNear, Camera.Current.planeFar);
+            Camera.Current.FOV*Mathf.Deg2Rad, aspect, Camera.Current.planeNear, Camera.Current.planeFar);
         uView = Matrix4x4.ToArray(m4x4_View);
         uProjection = Matrix4x4.ToArray(m4x4Projection);
     }

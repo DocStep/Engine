@@ -261,20 +261,20 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 break;
             case Vector2 v2:
                 if (ImGui.DragFloat2(label, ref v2, step, 0, 0, "%.2f")) {
-                    if (clampAtt is not null) v2 = Utils.WrapVector2(v2, clampAtt.Min, clampAtt.Max);
+                    if (clampAtt is not null) v2 = Mathf.WrapVector2(v2, clampAtt.Min, clampAtt.Max);
                     result = v2;
                 }
                 break;
             case Vector3 v3:
                 if (ImGui.DragFloat3(label, ref v3, step, 0, 0, "%.2f")) {
-                    if (clampAtt is not null) v3 = Utils.WrapVector3(v3, clampAtt.Min, clampAtt.Max);
+                    if (clampAtt is not null) v3 = Mathf.WrapVector3(v3, clampAtt.Min, clampAtt.Max);
                     result = v3;
                 }
                 break;
             case Quaternion q:
                 Vector4 temp_v4 = new Vector4(q.X, q.Y, q.Z, q.W);
                 if (ImGui.DragFloat4(label, ref temp_v4, step, 0, 0, "%.2f")) {
-                    if (clampAtt is not null) temp_v4 = Utils.WrapVector4(temp_v4, clampAtt.Min, clampAtt.Max);
+                    if (clampAtt is not null) temp_v4 = Mathf.WrapVector4(temp_v4, clampAtt.Min, clampAtt.Max);
                     result = new Quaternion(temp_v4.X, temp_v4.Y, temp_v4.Z, temp_v4.W);
                 }
                 break;

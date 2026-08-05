@@ -2,12 +2,13 @@
 
 
 public struct RenderInfo () {
+
     public string name = string.Empty;
     /// Transform
     public Vector3 pos = Vector3.Zero;
     public Quaternion rot = Quaternion.Identity;
     public Vector3 rotEuler { 
-        set => rot = Utils.QuaternionFromEuler(Utils.WrapVector3(value, 0, 360));
+        set => rot = Mathf.QuaternionFromEuler(Mathf.WrapVector3(value, 0, 360));
     }
     public Vector3 scale = Vector3.One;
     public Matrix4x4? modelOverride = null;
