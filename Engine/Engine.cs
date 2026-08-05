@@ -28,6 +28,7 @@ public class Engine : IDisposable {
 
     public Action? de_Update = null;
     public Action? de_FixedUpdate = null;
+    public Action? de_StateReset = null;
     public Action? de_Render = null;
 
     /// Debug
@@ -88,9 +89,6 @@ public class Engine : IDisposable {
         de_Init?.Invoke();
         //ReflectionActionScripts.CreateSingleton();
 
-        //de_Update?.Invoke();
-        //de_Render?.Invoke();
-
         engineState = EngineStates.Ready;
         Log.log($"========== Init Finish ==========", LogType.info);
 
@@ -99,6 +97,8 @@ public class Engine : IDisposable {
 
 
     private void OnUpdate (double dt) {
+        de_StateReset?.Invoke();
+
         WindowInput.Update();
         Inputs.Update();
 

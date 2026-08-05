@@ -40,6 +40,8 @@ public class Renderer {
         
         TextRenderer = new TextRenderer();
 
+        Stats = new RendererStats();
+
         /// Delegates
         de_DrawUI += TextRenderer.Draw;
 
@@ -84,6 +86,7 @@ public class Renderer {
     //protected RendererStats stats = new RendererStats();
     public RendererStats Stats = new RendererStats();
     protected System.Diagnostics.Stopwatch sw_Latency = new System.Diagnostics.Stopwatch();
+    public long iter { get; protected set; } = 0;
 
     protected readonly List<RenderInfo> RenderList = new List<RenderInfo>();
     protected readonly List<RenderInfo> RenderGizmoList = new List<RenderInfo>();
@@ -103,7 +106,6 @@ public class Renderer {
                 break;
         }
     }
-    protected long iter = 0;
 
 
     public Action? de_LateUpdate = null;
@@ -112,7 +114,14 @@ public class Renderer {
     public Action? de_DrawUI = null;
     public Action? de_Final = null;
 
+
+    public void RenderReset () {
+        
+    }
+
     public void RenderScene () {
+        de_LateUpdate?.Invoke();
+
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
         if (Camera.Current is null) {
@@ -120,9 +129,12 @@ public class Renderer {
             return;
         }
 
-        de_LateUpdate?.Invoke();
+        Stats.DrawCalls = 0;
+        Stats.PostProccessCalls = 0;
+        Stats.DrawCallsUI = 0;
+        Stats.WindowSize = new Vector2(Windows.Window.Size.X, Windows.Window.Size.Y);
+        Stats.SceneSize = new Vector2(Width, Height);
 
-        Stats = new RendererStats();
         sw_Latency.Restart();
 
         SetTargetSize();
@@ -156,7 +168,7 @@ public class Renderer {
         iter++;
         DrawEnd();
 
-        //Thread.Sleep(500);
+        Thread.Sleep(500);
     }
     public virtual void SetTargetSize () {
         Width = Windows.Window.Size.X;
@@ -178,7 +190,7 @@ public class Renderer {
     protected void UpdateProjection (float width, float height) {
         float aspect = width/height;
         m4x4Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
-            Camera.Current.FOV/180*MathF.PI, aspect, Camera.Current.planeNear, Camera.Current.planeFar);
+            Camera.Current.FOV*Utils.Deg2Rad, aspect, Camera.Current.planeNear, Camera.Current.planeFar);
         uView = Matrix4x4.ToArray(m4x4_View);
         uProjection = Matrix4x4.ToArray(m4x4Projection);
     }

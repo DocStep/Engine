@@ -28,7 +28,7 @@ public class PostProcessPass {
         Renderer.GL.BindVertexArray(0);
 
         Renderer.Instance.Stats.DrawCalls++;
-        Renderer.Instance.Stats.PostProcessCalls++;
+        Renderer.Instance.Stats.PostProccessCalls++;
     }
 
 }

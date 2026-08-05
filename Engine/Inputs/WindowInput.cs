@@ -38,7 +38,11 @@ public static class WindowInput {
         firstMouseSample = true;
     }
 
-    static void OnScroll (Silk.NET.Input.IMouse mouse, Silk.NET.Input.ScrollWheel wheel) => wheelDelta = wheel.Y;
+    static void OnScroll (Silk.NET.Input.IMouse mouse, Silk.NET.Input.ScrollWheel wheel) {
+        if (Windows.Window.IsClosing) return;
+
+        wheelDelta = wheel.Y;
+    }
     public static void TeleportMouse (Vector2 pos) {
         Vector2 delta = pos - MousePos;
         mouse!.Position = pos;
@@ -50,6 +54,8 @@ public static class WindowInput {
     }
 
     public static void Update () {
+        if (Windows.Window.IsClosing) return;
+
         previous = new HashSet<Keys>(current);
         current.Clear();
 

@@ -326,21 +326,18 @@ public sealed class CameraEditor : Camera {
 
 
     public override bool RaycastMouse (out Ray ray) {
-        //UI.TextRenderer.AddText($"MousePos_Window: {mousePos_Window.X}, {mousePos_Window.Y}");
-        
-        //Vector2? scenePos = mousePos;
         if (!EditorUI.Instance.GetSceneMousePos(Inputs.MousePos, out Vector2 scenePos)) {
             ray = default;
             return false;
         }
 
         Vector2 sceneSize = EditorUI.Instance.SceneAvail;
+        ray = Raycast.ScreenPointToRay(scenePos.X, scenePos.Y, (int)sceneSize.X, (int)sceneSize.Y,
+            RendererEditor.Instance.m4x4_View, RendererEditor.Instance.m4x4Projection);
 
         Engine.Graphics.UI.TextRenderer.AddText($"MousePos_Scene: {scenePos.X}, {scenePos.Y}");
         Engine.Graphics.UI.TextRenderer.AddText($"SceneSize: {sceneSize.X}, {sceneSize.Y}");
 
-        ray = Raycast.ScreenPointToRay(scenePos.X, scenePos.Y, (int)sceneSize.X, (int)sceneSize.Y,
-            RendererEditor.Instance.m4x4_View, RendererEditor.Instance.m4x4Projection);
         return true;
     }
 

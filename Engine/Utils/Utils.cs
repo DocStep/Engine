@@ -213,6 +213,14 @@ public static class Utils {
         return angle;
     }
 
+    public static Vector2 WrapVector3 (Vector2 v2, float min, float max) {
+        float range = max - min;
+        v2.X = v2.X%range;
+        if (v2.X < 0f) v2.X += range;
+        v2.Y = v2.Y%range;
+        if (v2.Y < 0f) v2.Y += range;
+        return v2;
+    }
     public static Vector3 WrapVector3 (Vector3 v3, float min, float max) {
         float range = max - min;
         v3.X = v3.X%range;

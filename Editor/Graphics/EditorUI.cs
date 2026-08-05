@@ -100,7 +100,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         ImGui.Begin("Scene");
 
-        sceneAvail = getSceneAvail();
+        if (_docked) sceneAvail = getSceneAvail();
+
         ImGui.Image((IntPtr)Renderer.Instance.PostProcess.OutputTexture, sceneAvail, new Vector2(0, 1), new Vector2(1, 0));
 
         _sceneRectMin = ImGui.GetItemRectMin();
@@ -179,6 +180,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.Begin("Renderer Info");
         ImGui.BeginDisabled();
 
+        Renderer.Instance.Stats.SceneSize = sceneAvail;
         DrawObject(Renderer.Instance.Stats);
         ImGui.NewLine();
         DrawObject(Engine.Graphics.Shader.Stats);
@@ -246,14 +248,9 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ChangeStep? changeSpeed = member.GetCustomAttribute<ChangeStep>();
         if (changeSpeed is not null) step = changeSpeed.Step;
 
+        WrapRotation? clampAtt = member.GetCustomAttribute<WrapRotation>();
+
         switch (value) {
-            case Vector3 v3:
-                WrapRotation? clampAtt = member.GetCustomAttribute<WrapRotation>();
-                if (ImGui.DragFloat3(label, ref v3, step, 0, 0, "%.2f")) {
-                    if (clampAtt is not null) v3 = Utils.WrapVector3(v3, clampAtt.Min, clampAtt.Max);
-                    result = v3;
-                }
-                break;
             case int i:
                 if (ImGui.DragInt(label, ref i)) result = i;
                 break;
@@ -277,6 +274,18 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             case Guid g:
                 string temp_s = g.ToString();
                 if (ImGui.InputText(label, ref temp_s, 256)) result = temp_s;
+                break;
+            case Vector2 v2:
+                if (ImGui.DragFloat2(label, ref v2, step, 0, 0, "%.2f")) {
+                    if (clampAtt is not null) v2 = Utils.WrapVector3(v2, clampAtt.Min, clampAtt.Max);
+                    result = v2;
+                }
+                break;
+            case Vector3 v3:
+                if (ImGui.DragFloat3(label, ref v3, step, 0, 0, "%.2f")) {
+                    if (clampAtt is not null) v3 = Utils.WrapVector3(v3, clampAtt.Min, clampAtt.Max);
+                    result = v3;
+                }
                 break;
         }
 

@@ -20,6 +20,8 @@ public class TextRenderer : IDisposable {
         GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, stride, (void*)0);
         GL.EnableVertexAttribArray(1);
         GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, stride, (void*)(2*sizeof(float)));
+
+        Engine.Instance.de_StateReset += Reset;
     }
 
     struct Vertex {
@@ -49,6 +51,9 @@ public class TextRenderer : IDisposable {
         }
     }
 
+    public void Reset () {
+        Texts.Clear();
+    }
 
     internal void Draw () {
         if (Input.Inputs.Actions[Input.Inputs.F3].pressedDown) _renderF3 = !_renderF3;
@@ -65,7 +70,6 @@ public class TextRenderer : IDisposable {
                 y += yStep;
                 DrawText(Texts[i].text, Constants.textRendererMarginLeft, y, targetWidth, targetHeight);
             }
-            Texts.Clear();
         }
     }
 
