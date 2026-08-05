@@ -102,6 +102,7 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, _sceneFbo);
         SetDrawBuffer(_sceneFbo);
         Renderer.GL.Viewport(0, 0, (uint)Renderer.Instance.Width, (uint)Renderer.Instance.Height);
+        Log.log("PPS Viewport", (uint)Renderer.Instance.Width, (uint)Renderer.Instance.Height);
         Renderer.GL.ColorMask(true, true, true, true);
         Renderer.GL.DepthMask(true);
         Renderer.GL.DepthFunc(DepthFunction.Less);
@@ -163,7 +164,7 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.ReadBuffer(GLEnum.ColorAttachment0);
         Renderer.GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
         Renderer.GL.DrawBuffer(GLEnum.Back);
-        Renderer.GL.BlitFramebuffer(0, 0, _width, _height,0, 0, Renderer.Instance.Width, Renderer.Instance.Height,
+        Renderer.GL.BlitFramebuffer(0, 0, _width, _height, 0, 0, Renderer.Instance.Width, Renderer.Instance.Height,
             ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
     }

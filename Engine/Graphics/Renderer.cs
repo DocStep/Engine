@@ -58,6 +58,15 @@ public class Renderer {
 
     public static Renderer Instance = null!;
 
+    public Action? de_LateUpdate = null;
+
+    public Action? de_PreRender = null;
+    public Action? de_DrawPostScene = null;
+    public Action? de_DrawAfterPostProcess = null;
+    public Action? de_DrawUI = null;
+    public Action? de_PostRender = null;
+
+
     protected readonly GL _GL = Windows.Window.CreateOpenGL();
     public static GL GL => Instance._GL;
 
@@ -70,10 +79,6 @@ public class Renderer {
     public readonly PostProcessStack PostProcess = null!;
 
 
-    public int Width { get; protected set; }
-    public int Height { get; protected set; }
-
-
     /// Debug
     public Matrix4x4 m4x4_View = Matrix4x4.Identity;
     public Matrix4x4 m4x4Projection = Matrix4x4.Identity;
@@ -83,44 +88,20 @@ public class Renderer {
     protected static float[] uProjection = [];
     public float[] UProjection => uProjection;
 
-    //protected RendererStats stats = new RendererStats();
-    public RendererStats Stats = new RendererStats();
-    protected System.Diagnostics.Stopwatch sw_Latency = new System.Diagnostics.Stopwatch();
-    public long iter { get; protected set; } = 0;
-
     protected readonly List<RenderInfo> RenderList = new List<RenderInfo>();
     protected readonly List<RenderInfo> RenderGizmoList = new List<RenderInfo>();
     protected readonly List<RenderInfo> RenderUIList = new List<RenderInfo>();
-    public void AddRenderInfo (RenderInfo renderInfo) {
-        //Log.log("AddRenderInfo\n", new System.Diagnostics.StackTrace());
-        switch (renderInfo.material.pass) {
-            case RenderPass.Opaque:
-                RenderList.Add(renderInfo);
-                break;
-            case RenderPass.Transparent:
-            case RenderPass.Gizmo:
-                RenderGizmoList.Add(renderInfo);
-                break;
-            case RenderPass.UI:
-                RenderUIList.Add(renderInfo);
-                break;
-        }
-    }
+
+    public RendererStats Stats = new RendererStats();
+    public int Width => (int)Stats.SceneSize.X;
+    public int Height => (int)Stats.SceneSize.Y;
+
+    protected System.Diagnostics.Stopwatch sw_Latency = new System.Diagnostics.Stopwatch();
 
 
-    public Action? de_LateUpdate = null;
-    public Action? de_DrawPostScene = null;
-    public Action? de_DrawAfterPostProcess = null;
-    public Action? de_DrawUI = null;
-    public Action? de_Final = null;
-
-
-    public void RenderReset () {
-        
-    }
 
     public void RenderScene () {
-        de_LateUpdate?.Invoke();
+        de_LateUpdate?.Invoke(); 
 
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
@@ -129,13 +110,9 @@ public class Renderer {
             return;
         }
 
-        Stats.DrawCalls = 0;
-        Stats.PostProccessCalls = 0;
-        Stats.DrawCallsUI = 0;
-        Stats.WindowSize = new Vector2(Windows.Window.Size.X, Windows.Window.Size.Y);
-        Stats.SceneSize = new Vector2(Width, Height);
+        DrawStart();
 
-        sw_Latency.Restart();
+        de_PreRender?.Invoke();
 
         SetTargetSize();
         PostProcess.Resize(Width, Height);
@@ -156,7 +133,7 @@ public class Renderer {
 
         de_DrawPostScene?.Invoke();
 
-        PostProcess.BindOutputForOverlay();
+        //PostProcess.BindOutputForOverlay();
 
         de_DrawAfterPostProcess?.Invoke();
 
@@ -165,27 +142,55 @@ public class Renderer {
 
         PresentToBackbuffer();
 
-        iter++;
+        de_PostRender?.Invoke();
+
+        Stats.Frame++;
+        Log.log(Stats.Frame, Windows.Window.Size, Stats.SceneSize);
         DrawEnd();
 
         Thread.Sleep(500);
     }
-    public virtual void SetTargetSize () {
-        Width = Windows.Window.Size.X;
-        Height = Windows.Window.Size.Y;
+    public void RenderReset () {
+
     }
-    public virtual void PresentToBackbuffer () {
-        PostProcess.PresentToBackbuffer(); /// blit _outputFbo into fbo 0
+    protected void DrawStart () {
+        sw_Latency.Restart();
+
+        Stats.DrawCalls = 0;
+        Stats.PostProccessCalls = 0;
+        Stats.DrawCallsUI = 0;
+        Stats.WindowSize = new Vector2(Windows.Window.Size.X, Windows.Window.Size.Y);
+        Stats.SceneSize = Stats.WindowSize;
     }
     protected void DrawEnd () {
         Stats.Latency = (float)sw_Latency.Elapsed.TotalMilliseconds;
-        Stats.Frame = iter;
 
         RenderList.Clear();
         RenderGizmoList.Clear();
         RenderUIList.Clear();
     }
+    public virtual void SetTargetSize () {
+        Stats.SceneSize = new Vector2(Windows.Window.Size.X, Windows.Window.Size.Y);
+    }
+    public virtual void PresentToBackbuffer () {
+        PostProcess.PresentToBackbuffer(); /// blit _outputFbo into fbo 0
+    }
 
+    public void AddRenderInfo (RenderInfo renderInfo) {
+        //Log.log("AddRenderInfo\n", new System.Diagnostics.StackTrace());
+        switch (renderInfo.material.pass) {
+            case RenderPass.Opaque:
+                RenderList.Add(renderInfo);
+                break;
+            case RenderPass.Transparent:
+            case RenderPass.Gizmo:
+                RenderGizmoList.Add(renderInfo);
+                break;
+            case RenderPass.UI:
+                RenderUIList.Add(renderInfo);
+                break;
+        }
+    }
 
     protected void UpdateProjection (float width, float height) {
         float aspect = width/height;
@@ -310,7 +315,7 @@ public class Renderer {
 
     protected List<RenderInfo> RenderListSame = new List<RenderInfo>();
     protected void DrawSame () {
-        if (iter == 0) {
+        if (Stats.Frame == 0) {
             RenderListSame.AddRange(RenderList);
         } else {
             RenderList.Clear();

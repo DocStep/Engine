@@ -29,11 +29,14 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         Renderer.Instance.de_Dispose += Dispose;
 
         new CameraEditor();
+
+        Draw();
     }
 
     public ImGuiController ImGUI = null!;
     public bool isUIClick = false;
     private bool _docked = false;
+    private bool _dockBuilt = false;
     private bool _isClosing = false;
 
     public const float valueStep = 0.01f;
@@ -68,7 +71,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         /// Switch to the real backbuffer for ImGui — dockspace, panels, and the Scene image itself
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         Renderer.GL.DrawBuffer(GLEnum.Back);
-        Renderer.GL.Viewport(0, 0, (uint)Windows.Window.Size.X, (uint)Windows.Window.Size.Y);
+        Renderer.GL.Viewport(0, 0, (uint)Renderer.Instance.Stats.WindowSize.X, (uint)Renderer.Instance.Stats.WindowSize.Y);
         Renderer.GL.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
         Renderer.GL.Clear((uint)ClearBufferMask.ColorBufferBit);
 
@@ -95,19 +98,21 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         _docked = true;
     }
+    public void UpdateAvail () {
+        if (_docked) sceneAvail = getSceneAvail();
+    }
 
     private void DrawSceneView (uint dockspaceId) {
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         ImGui.Begin("Scene");
 
-        if (_docked) sceneAvail = getSceneAvail();
-
+        EditorUI.Instance.UpdateAvail();
         ImGui.Image((IntPtr)Renderer.Instance.PostProcess.OutputTexture, sceneAvail, new Vector2(0, 1), new Vector2(1, 0));
 
         _sceneRectMin = ImGui.GetItemRectMin();
         _sceneRectMax = ImGui.GetItemRectMax();
         isSceneUIHovered = ImGui.IsItemHovered();
-
+            
         if (!Engine.Input.Inputs.isMouseVisible) {
             Vector2 mousePos_Scene = Engine.Input.WindowInput.Mouse!.Position - ImGui.GetItemRectMin();
             float deltaX = MathF.Floor(mousePos_Scene.X/sceneAvail.X)*sceneAvail.X;
@@ -180,7 +185,6 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.Begin("Renderer Info");
         ImGui.BeginDisabled();
 
-        Renderer.Instance.Stats.SceneSize = sceneAvail;
         DrawObject(Renderer.Instance.Stats);
         ImGui.NewLine();
         DrawObject(Engine.Graphics.Shader.Stats);

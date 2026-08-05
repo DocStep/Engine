@@ -35,12 +35,9 @@ public class RendererEditor : Renderer {
     }*/
 
     public override void SetTargetSize () {
-        Width = (int)EditorUI.Instance.SceneAvail.X;
-        Height = (int)EditorUI.Instance.SceneAvail.Y;
+        Stats.SceneSize = EditorUI.Instance.SceneAvail;
     }
-    public override void PresentToBackbuffer () {
-        
-    }
+    public override void PresentToBackbuffer () { }
 
     protected override void DrawSceneAll () {
         switch (Constants.drawMode) {

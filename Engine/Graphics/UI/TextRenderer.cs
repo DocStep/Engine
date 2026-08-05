@@ -60,7 +60,7 @@ public class TextRenderer : IDisposable {
         if (_renderF3) {
             int targetWidth = Renderer.Instance.Width;
             int targetHeight = Renderer.Instance.Height;
-            GL.Viewport(0, 0, (uint)Renderer.Instance.Width, (uint)Renderer.Instance.Height);
+            GL.Viewport(0, 0, (uint)targetWidth, (uint)targetHeight);
             GL.Disable(EnableCap.CullFace);
 
             int count = Texts.Count;
