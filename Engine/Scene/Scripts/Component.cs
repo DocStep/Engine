@@ -18,10 +18,7 @@ public abstract class Component : ISavable {
     public Guid? ownerGuid = null; /// For save
     [JsonIgnore] public Transform? parent = null;
     public Guid? parentGuid = null; /// For save
-    public abstract string Name { get; }
-
-
-    //protected string? typeName = null;
+    [Readonly] public abstract string Name { get; }
 
 
     public virtual void SetParent (GameObject gameObject) {
@@ -30,13 +27,6 @@ public abstract class Component : ISavable {
 
     public virtual void OnAdd () { }
     public virtual void OnRemove () { }
-
-
-
-    /*public virtual void DrawInspector () {
-        //de_DrawInspector.
-        Editor.Graphics.EditorUI.DrawObject(this);
-    }*/
 
 
 
