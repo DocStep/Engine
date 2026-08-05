@@ -154,7 +154,7 @@ public static class Gizmos {
         /// X Red
         RenderInfo info = new RenderInfo () {
             pos = new Vector3(pos.X, 0, 0),
-            rot = new Vector3(0, 90, 0),
+            rotEuler = new Vector3(0, 90, 0),
             scale = Constants._gridScale*Vector3.One,
             mesh = _mesh_Line,
             primitiveType = PrimitiveType.Lines,
@@ -165,12 +165,12 @@ public static class Gizmos {
 
         /// Y Green
         info.pos = new Vector3(0, pos.Y, 0);
-        info.rot = new Vector3(-90, 0, 0);
+        info.rotEuler = new Vector3(-90, 0, 0);
         RendererEditor.Instance.AddRenderInfo(info);
 
         /// Z Blue
         info.pos = new Vector3(0, 0, pos.Z);
-        info.rot = new Vector3(0, 0, 0);
+        info.rotEuler = new Vector3(0, 0, 0);
         RendererEditor.Instance.AddRenderInfo(info);
     }
     private static void DrawGizmoAxesWidget () {
@@ -231,7 +231,7 @@ public static class Gizmos {
         if (!Constants.drawGizmosSun) return;
         RendererEditor.Instance.AddRenderInfo(new RenderInfo() {
             pos = new Vector3(0f, 5f, 0f),
-            rot = Vector3.DirectionToEuler(Constants.sunLightDir),
+            rotEuler = Vector3.DirectionToEuler(Constants.sunLightDir),
             mesh = Constants._drawArrowAsMesh ? _mesh_Arrow3D : _mesh_ArrowWireframe,
             primitiveType = Constants._drawArrowAsMesh ? PrimitiveType.Triangles : PrimitiveType.Lines,
             material = _mat_GizmoSun,

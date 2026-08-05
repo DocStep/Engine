@@ -8,7 +8,7 @@ public static class ComponentsDraw {
             if (comp.drawGizmos) {
                 Engine.Graphics.RenderInfo renderInfo = new Engine.Graphics.RenderInfo() {
                     pos = comp.Position + comp.owner.Transform.Position,
-                    rot = comp.owner.Transform.Rotation,
+                    rot = comp.owner.Transform.rotation,
                     scale = comp.Scale*comp.owner.Transform.Scale,
 
                     mesh = Gizmos._mesh_CubeWireframe,
@@ -25,7 +25,7 @@ public static class ComponentsDraw {
             if (comp.drawGizmos) {
                 Engine.Graphics.RenderInfo renderInfo = new Engine.Graphics.RenderInfo() {
                     pos = comp.Position + comp.owner.Transform.Position,
-                    rot = comp.owner.Transform.Rotation,
+                    rot = comp.owner.Transform.rotation,
                     scale = comp.owner.Transform.Scale,
 
                     mesh = Gizmos._mesh_CapsuleWireframe,
@@ -42,7 +42,7 @@ public static class ComponentsDraw {
             if (comp.drawGizmos) {
                 Engine.Graphics.RenderInfo renderInfo = new Engine.Graphics.RenderInfo() {
                     pos = comp.Position + comp.owner.Transform.Position,
-                    rot = comp.owner.Transform.Rotation,
+                    rot = comp.owner.Transform.rotation,
                     scale = comp.owner.Transform.Scale,
 
                     mesh = Gizmos._mesh_PlaneWireframe,
@@ -59,7 +59,7 @@ public static class ComponentsDraw {
             if (comp.drawGizmos) {
                 Engine.Graphics.RenderInfo renderInfo = new Engine.Graphics.RenderInfo() {
                     pos = comp.Position + comp.owner.Transform.Position,
-                    rot = comp.owner.Transform.Rotation,
+                    rot = comp.owner.Transform.rotation,
                     scale = 2f*comp.Radius*comp.owner.Transform.Scale,
 
                     mesh = Gizmos._mesh_SphereWireframe,

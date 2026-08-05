@@ -67,7 +67,7 @@ public class GizmoSelected : IDisposable {
         Transform tr_obj = selectedMeshComp.owner.Transform;
         Vector3 camPos = Camera.Current.CameraPos;
         Vector3 _objPos = tr_obj.Position;
-        Vector3 _objRot = tr_obj.Rotation;
+        Vector3 _objRot = tr_obj.RotationEuler;
         float _dist = Vector3.Distance(camPos, _objPos);
         float half = 0.5f*_squareSize;
 
@@ -321,7 +321,7 @@ public class GizmoSelected : IDisposable {
         Transform tr_obj = selectedMeshComp.owner.Transform;
         Vector3 camPos = Camera.Current.CameraPos;
         Vector3 _objPos = tr_obj.Position;
-        Vector3 _objRot = tr_obj.Rotation;
+        Vector3 _objRot = tr_obj.RotationEuler;
         float _dist = Vector3.Distance(camPos, _objPos);
         bool isColorSelected;
 
@@ -339,7 +339,7 @@ public class GizmoSelected : IDisposable {
         drawQuad(quadYZPos, quadYZBasis, selectedPositionOverMode == SelectedPositionGizmoMode.YZ ? Constants.redLight : Constants.red);
 
         void drawQuad (Vector3 pos, Matrix4x4 basis, Vector3 color) {
-            Matrix4x4 m4x4_selected = Matrix4x4.CreateScale(quadScale)*basis*Matrix4x4.Position(pos);
+            Matrix4x4 m4x4_selected = Matrix4x4.CreateScale(quadScale)*basis*Matrix4x4.CreateTranslation(pos);
             _sh_Unlit.SetMatrix4(Model, Matrix4x4.ToArray(m4x4_selected));
             _sh_Unlit.SetVector3(Color, color); 
             _sh_Unlit.SetFloat(Alpha, 0.5f);
@@ -360,7 +360,7 @@ public class GizmoSelected : IDisposable {
         drawArrow(Vector3.Zero, isColorSelected ? Constants.blueLight : Constants.blue);
 
         void drawArrow (Vector3 rot, Vector3 color) {
-            Matrix4x4 m4x4_selected = _m4x4_selectedScale*Matrix4x4.RotationEuler(rot)*gizmoBasis*Matrix4x4.Position(pos3);
+            Matrix4x4 m4x4_selected = _m4x4_selectedScale*Matrix4x4.RotationEuler(rot)*gizmoBasis*Matrix4x4.CreateTranslation(pos3);
             float[] mesh_uModel = Matrix4x4.ToArray(m4x4_selected);
             _sh_Unlit.SetMatrix4(Model, mesh_uModel);
             _sh_Unlit.SetVector3(Color, color);
@@ -409,7 +409,7 @@ public class GizmoSelected : IDisposable {
             float dist = Vector3.Distance(Camera.Current.CameraPos, renderInfo.pos);
 
             Matrix4x4 model = Matrix4x4.CreateScale(renderInfo.scale)
-                *Matrix4x4.RotationEuler(renderInfo.rot)*Matrix4x4.Position(renderInfo.pos);
+                *Matrix4x4.CreateFromQuaternion(renderInfo.rot)*Matrix4x4.CreateTranslation(renderInfo.pos);
 
             _sh_Outline.Use();
             _sh_Outline.SetMatrix4(View, RendererEditor.Instance.UView);

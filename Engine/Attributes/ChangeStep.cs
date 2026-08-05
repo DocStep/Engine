@@ -6,9 +6,6 @@ namespace Engine;
 
 
 //[AttributeUsage(AttributeTargets.Field|AttributeTargets.Property)]
-public class ChangeStep : Attribute {
-    public ChangeStep (float step = 1f) {
-        Step = step;
-    }
-    public float Step = 1f;
+public class ChangeStep (float step = 1f) : Attribute {
+    public float Step = step;
 }

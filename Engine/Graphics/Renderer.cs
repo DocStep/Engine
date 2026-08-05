@@ -145,10 +145,10 @@ public class Renderer {
         de_PostRender?.Invoke();
 
         Stats.Frame++;
-        Log.log(Stats.Frame, Windows.Window.Size, Stats.SceneSize);
+        //Log.log("Renderer", Stats.Frame, Windows.Window.Size, Stats.SceneSize);
         DrawEnd();
 
-        Thread.Sleep(500);
+        //Thread.Sleep(500);
     }
     public void RenderReset () {
 
@@ -274,7 +274,7 @@ public class Renderer {
         SetSceneUniformsSkybox(shader, _skybox.texture, _skybox.maxLod);
 
         Matrix4x4 mesh_m4x4 = info.modelOverride ?? Matrix4x4.CreateScale(info.scale)
-            *Matrix4x4.RotationEuler(info.rot)*Matrix4x4.Position(info.pos);
+            *Matrix4x4.CreateFromQuaternion(info.rot)*Matrix4x4.CreateTranslation(info.pos);
         float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
         shader.SetMatrix4(Model, mesh_uModel);
         info.material.Apply();

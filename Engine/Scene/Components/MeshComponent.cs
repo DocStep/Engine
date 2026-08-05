@@ -33,7 +33,7 @@ public class MeshComponent : Component, IComponentUpdate, IUpdateAtFreeze {
 
             RenderInfo renderInfo = new RenderInfo() {
                 pos = owner.Transform.Position,
-                rot = owner.Transform.Rotation,
+                rot = owner.Transform.rotation,
                 scale = owner.Transform.Scale,
 
                 mesh = mesh,

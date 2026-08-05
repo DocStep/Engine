@@ -38,7 +38,7 @@ public class GameObject : ISavable {
 
         Transform.owner = this;
         Transform.Position = position;
-        Transform.Rotation = rotation;
+        Transform.rotation = Utils.QuaternionFromEuler(rotation);
         Transform.Scale = scale;
         
         MeshComponent mesh = AddComponent<MeshComponent>();

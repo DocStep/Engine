@@ -194,7 +194,6 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     }
 
 
-    /// For classes / reference types
     public static void DrawObject (object target) {
         Type type = target.GetType();
         
@@ -214,28 +213,6 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         }
     }
 
-    /// For structs - box, mutate the box, then write back to the ref
-    /*public static void DrawObject<T> (ref T target) where T : struct {
-        Type type = typeof(T);
-        object boxed = target;
-
-        FieldInfo[] fields = type.GetFields(BindingFlags.Public|BindingFlags.Instance);
-        foreach (FieldInfo field in fields) {
-            object? value = field.GetValue(boxed);
-            object? drawn = DrawField(field, value);
-            if (drawn is not null) field.SetValue(boxed, drawn);
-        }
-
-        //PropertyInfo[] props = type.GetProperties(BindingFlags.Public|BindingFlags.Instance);
-        //foreach (PropertyInfo prop in props) {
-        //    if (!prop.CanRead || !prop.CanWrite) continue;
-        //    object? value = prop.GetValue(boxed);
-        //    object? drawn = EditorUI.DrawField(prop, value);
-        //    if (drawn != null) prop.SetValue(boxed, drawn);
-        //}
-
-        target = (T)boxed;
-    }*/
 
     /// Draws one ImGui widget based on the runtime type of value, returns the new value if changed, null otherwise
     public static object? DrawField (MemberInfo member, object? value) {
@@ -244,6 +221,9 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         object? result = null;
         string label = member.Name;
         label = Utils.NameCapital(label);
+
+        DrawName? drawName = member.GetCustomAttribute<DrawName>();
+        if (drawName is not null) label = drawName.Name;
 
         bool isReadonly = member.GetCustomAttribute<Readonly>() is not null;
         if (isReadonly) ImGui.BeginDisabled(true);
@@ -281,7 +261,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 break;
             case Vector2 v2:
                 if (ImGui.DragFloat2(label, ref v2, step, 0, 0, "%.2f")) {
-                    if (clampAtt is not null) v2 = Utils.WrapVector3(v2, clampAtt.Min, clampAtt.Max);
+                    if (clampAtt is not null) v2 = Utils.WrapVector2(v2, clampAtt.Min, clampAtt.Max);
                     result = v2;
                 }
                 break;
@@ -291,56 +271,20 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                     result = v3;
                 }
                 break;
+            case Quaternion q:
+                Vector4 temp_v4 = new Vector4(q.X, q.Y, q.Z, q.W);
+                if (ImGui.DragFloat4(label, ref temp_v4, step, 0, 0, "%.2f")) {
+                    if (clampAtt is not null) temp_v4 = Utils.WrapVector4(temp_v4, clampAtt.Min, clampAtt.Max);
+                    result = new Quaternion(temp_v4.X, temp_v4.Y, temp_v4.Z, temp_v4.W);
+                }
+                break;
         }
 
         if (isReadonly) ImGui.EndDisabled();
 
         return result;
     }
-    private static void DragDisabledFloat (string name, ref float value) {
-        ImGui.Text(name);
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(-1f);
-
-        ImGui.BeginDisabled(true);
-        ImGui.DragFloat($"##{name}", ref value);
-        ImGui.EndDisabled();
-    }
-    private static void DragDisabledInt (string name, ref int value) {
-        ImGui.Text(name);
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(-1f);
-
-        ImGui.BeginDisabled(true);
-        ImGui.DragInt($"##{name}", ref value);
-        ImGui.EndDisabled();
-    }
-    private static void DragDisabledBool (string name, ref bool value) {
-        ImGui.Text(name);
-        ImGui.SameLine();
-
-        ImGui.BeginDisabled(true);
-        ImGui.Checkbox($"##{name}", ref value);
-        ImGui.EndDisabled();
-    }
-    private static void DragDisabledString (string name, ref string value) {
-        ImGui.Text(name);
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(-1f);
-
-        ImGui.BeginDisabled(true);
-        ImGui.InputText($"##{name}", ref value, 256);
-        ImGui.EndDisabled();
-    }
-    private static void DragDisabledFloat3 (string name, ref Vector3 value) {
-        ImGui.Text(name);
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(-1f);
-
-        ImGui.BeginDisabled(true);
-        ImGui.DragFloat3($"##{name}", ref value);
-        ImGui.EndDisabled();
-    }
+    
 
 
     public void SetDock () {

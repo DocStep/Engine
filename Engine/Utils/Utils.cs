@@ -12,11 +12,35 @@ public static class Utils {
     public static float Deg2Rad => MathF.PI/180f;
 
 
-    extension(Matrix4x4) {
-        public static Matrix4x4 Position (Vector3 position) {
-            return Matrix4x4.CreateTranslation(position);
-        }
+    public static Quaternion QuaternionFromEuler (Vector3 euler) {
+        return Quaternion.CreateFromYawPitchRoll(
+            euler.Y*lib.Deg2Rad,
+            euler.X*lib.Deg2Rad,
+            euler.Z*lib.Deg2Rad);
     }
+
+    public static Vector3 EulerFromQuaternion (Quaternion q) {
+        Matrix4x4 m = Matrix4x4.CreateFromQuaternion(q);
+
+        float pitch = MathF.Asin(-m.M23);
+
+        float yaw;
+        float roll;
+
+        if (MathF.Abs(m.M23) < 0.999999f) {
+            yaw = MathF.Atan2(m.M13, m.M33);
+            roll = MathF.Atan2(m.M21, m.M22);
+        } else {
+            yaw = MathF.Atan2(-m.M31, m.M11);
+            roll = 0;
+        }
+
+        return new Vector3(
+            pitch*lib.Rad2Deg,
+            yaw*lib.Rad2Deg,
+            roll*lib.Rad2Deg);
+    }
+
     extension(Matrix4x4) {
         public static Matrix4x4 Position (float x, float y, float z) {
             return Matrix4x4.CreateTranslation(new Vector3(x, y, z));
@@ -91,7 +115,7 @@ public static class Utils {
     }
 
 
-    public static JQuaternion QuaternionFromEuler (Vector3 rot) {
+    public static JQuaternion JQuaternionFromEuler (Vector3 rot) {
         Vector3 rad = rot*(MathF.PI/180f);
         JQuaternion qx = JQuaternion.CreateFromAxisAngle(JVector.UnitX, rad.X);
         JQuaternion qy = JQuaternion.CreateFromAxisAngle(JVector.UnitY, rad.Y);
@@ -213,7 +237,7 @@ public static class Utils {
         return angle;
     }
 
-    public static Vector2 WrapVector3 (Vector2 v2, float min, float max) {
+    /*public static Vector2 WrapVector2 (Vector2 v2, float min, float max) {
         float range = max - min;
         v2.X = v2.X%range;
         if (v2.X < 0f) v2.X += range;
@@ -230,6 +254,29 @@ public static class Utils {
         v3.Z = v3.Z%range;
         if (v3.Z < 0f) v3.Z += range;
         return v3;
+    }*/
+
+    public static float Wrap (float value, float min, float max) {
+        float range = max - min;
+        return ((value - min)%range + range)%range + min;
+    }
+    public static Vector2 WrapVector2 (Vector2 v, float min, float max) {
+        return new Vector2(
+            Wrap(v.X, min, max),
+            Wrap(v.Y, min, max));
+    }
+    public static Vector3 WrapVector3 (Vector3 v, float min, float max) {
+        return new Vector3(
+            Wrap(v.X, min, max),
+            Wrap(v.Y, min, max),
+            Wrap(v.Z, min, max));
+    }
+    public static Vector4 WrapVector4 (Vector4 v, float min, float max) {
+        return new Vector4(
+            Wrap(v.X, min, max),
+            Wrap(v.Y, min, max),
+            Wrap(v.Z, min, max),
+            Wrap(v.W, min, max));
     }
 
     public static string NameCapital (string text) {

@@ -6,13 +6,9 @@ namespace Engine;
 
 
 //[AttributeUsage(AttributeTargets.Field|AttributeTargets.Property)]
-public class WrapFloat : Attribute {
-    public float Min;
-    public float Max;
-    public const float step = 1f;
-    public WrapFloat (float min, float max) {
-        Min = min; Max = max;
-    }
+public class WrapFloat (float min, float max) : Attribute {
+    public float Min = min;
+    public float Max = max;
 
     public float Update (float value) {
         value = value % 360f;
