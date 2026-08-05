@@ -373,7 +373,7 @@ public class GizmoSelected : IDisposable {
         if (selectedMeshComp is null) return;
         if (selectedMeshComp.mesh is null) return;
 
-        RenderInfo renderInfo = selectedMeshComp.CreateRenderInfo;
+        RenderInfo renderInfo = selectedMeshComp.renderInfo;
 
         try {
             GL.Enable(EnableCap.StencilTest);

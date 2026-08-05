@@ -15,7 +15,7 @@ public class MeshComponent : Component, IComponentUpdate, IUpdateAtFreeze {
     [JsonProperty("material")] public string? materialPath = null;
     //[JsonProperty("pass")] public RenderPass pass = RenderPass.Opaque;
 
-    [JsonIgnore] private RenderInfo renderInfo;
+    [JsonIgnore] public RenderInfo renderInfo { get; private set; }
 
 
     public void Update () {
@@ -40,6 +40,8 @@ public class MeshComponent : Component, IComponentUpdate, IUpdateAtFreeze {
                 material = material,
                 primitiveType = mesh.Data is not null ? mesh.Data.PrimitiveType : default,
             };
+
+            this.renderInfo = renderInfo;
             return renderInfo;
         }
     }
