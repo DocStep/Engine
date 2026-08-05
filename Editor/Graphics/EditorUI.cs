@@ -8,6 +8,7 @@ using Silk.NET.OpenGL.Extensions.ImGui;
 using ImGuiNET;
 using Engine;
 using Engine.Graphics;
+using Engine.Input;
 
 namespace Editor.Graphics;
 
@@ -22,6 +23,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         //SetFont(AssetsEngine._fontData);
 
         ImGui.LoadIniSettingsFromDisk(ImGui.GetIO().IniFilename);
+
+        Inputs.de_UpdateInput += UpdateInput;
 
         Engine.Engine.Instance.de_Update += Update;
         Renderer.Instance.de_LateUpdate += Gizmos.Update;
@@ -56,6 +59,9 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     }
 
 
+    public void UpdateInput () {
+        GetSceneMousePos(Inputs.MousePos, out Inputs.MousePos_Scene);
+    }
     public void Update () {
         if (_isClosing) return;
 
@@ -99,10 +105,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         _docked = true;
     }
-    public void UpdateAvail () {
-        if (_docked) sceneAvail = getSceneAvail();
-    }
-
+    
     private void DrawSceneView (uint dockspaceId) {
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         ImGui.Begin("Scene");
@@ -130,22 +133,6 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         ImGui.End();
         ImGui.PopStyleVar();
-    }
-
-    public Vector2 getSceneAvail () {
-        Vector2 avail = ImGui.GetContentRegionAvail();
-        Vector2 _sceneAvail = new Vector2(MathF.Max(MathF.Floor(avail.X), 1), MathF.Max(MathF.Floor(avail.Y), 1));
-        return _sceneAvail;
-    }
-
-    /// Mouse position remapped into Scene FBO pixel space, or null if outside the panel
-    public bool GetSceneMousePos (Vector2 mousePosWindow, out Vector2 local) {
-        local = mousePosWindow - _sceneRectMin;
-
-        if (!isSceneUIHovered) return false;
-        if (local.X < 0 || local.Y < 0 || sceneAvail.X < local.X || sceneAvail.Y < local.Y) return false;
-
-        return true;
     }
 
     private void DrawInspector (uint dockspaceId) {
@@ -221,7 +208,6 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     }
     public static IEnumerable<MemberInfo> GetMembersInOrder (Type type) {
         List<MemberInfo> result = new();
-
         List<Type> types = new();
 
         while (type != null && type != typeof(object)) {
@@ -230,38 +216,24 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         }
 
         foreach (Type t in types) {
-            MemberInfo[] members = t.GetMembers(
-                BindingFlags.Public |
-                BindingFlags.Instance |
-                BindingFlags.DeclaredOnly)
-                .Where(x =>
-                    x.MemberType == MemberTypes.Field ||
-                    x.MemberType == MemberTypes.Property)
-                .OrderBy(x => x.MetadataToken)
-                .ToArray();
+            MemberInfo[] members = t.GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                .Where(x => x.MemberType == MemberTypes.Field || x.MemberType == MemberTypes.Property)
+                .OrderBy(x => x.MetadataToken).ToArray();
 
             foreach (MemberInfo member in members) {
                 // Property replaces matching backing field
                 if (member is PropertyInfo prop) {
                     string backingName = char.ToLower(prop.Name[0]) + prop.Name.Substring(1);
-
-                    int backingIndex = result.FindIndex(x =>
-                        x is FieldInfo f && f.Name == backingName);
-
-                    if (backingIndex >= 0) {
+                    int backingIndex = result.FindIndex(x => x is FieldInfo f && f.Name == backingName);
+                    if (0 <= backingIndex) {
                         result[backingIndex] = member;
                         continue;
                     }
                 }
 
-                int index = result.FindIndex(x =>
-                    x.Name == member.Name &&
-                    x.MemberType == member.MemberType);
-
-                if (index >= 0)
-                    result[index] = member;
-                else
-                    result.Add(member);
+                int index = result.FindIndex(x => x.Name == member.Name && x.MemberType == member.MemberType);
+                if (0 <= index) result[index] = member;
+                else result.Add(member);
             }
         }
 
@@ -339,8 +311,26 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         return result;
     }
-    
 
+
+    public void UpdateAvail () {
+        if (_docked) sceneAvail = getSceneAvail();
+    }
+    public Vector2 getSceneAvail () {
+        Vector2 avail = ImGui.GetContentRegionAvail();
+        Vector2 _sceneAvail = new Vector2(MathF.Max(MathF.Floor(avail.X), 1), MathF.Max(MathF.Floor(avail.Y), 1));
+        return _sceneAvail;
+    }
+
+    /// Mouse position remapped into Scene FBO pixel space, or null if outside the panel
+    public bool GetSceneMousePos (Vector2 mousePos_Window, out Vector2 mousePos_Scene) {
+        mousePos_Scene = mousePos_Window - _sceneRectMin;
+
+        if (!isSceneUIHovered) return false;
+        if (mousePos_Scene.X < 0 || mousePos_Scene.Y < 0 || sceneAvail.X < mousePos_Scene.X || sceneAvail.Y < mousePos_Scene.Y) return false;
+
+        return true;
+    }
 
     public void SetDock () {
         ImGuiIOPtr io = ImGui.GetIO();

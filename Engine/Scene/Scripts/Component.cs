@@ -15,9 +15,9 @@ public abstract class Component : ISavable {
     public bool Enabled { get; set; } = true;
 
     [JsonIgnore] public GameObject owner = null!;
-    public Guid? ownerGuid = null; /// For save
+    [Hide] public Guid? ownerGuid = null; /// For save
     [JsonIgnore] public Transform? parent = null;
-    public Guid? parentGuid = null; /// For save
+    [Hide] public Guid? parentGuid = null; /// For save
     [Readonly] public abstract string Name { get; }
 
 

@@ -75,7 +75,7 @@ public class GizmoSelected : IDisposable {
             selectedGizmoWorldSpace = !selectedGizmoWorldSpace;
         }
 
-        bool rayTrue = Camera.Current.RaycastMouse(out Ray ray);
+        bool rayTrue = Camera.Current.GetRayMouse(out Ray ray);
 
         switch (selectedGizmoMode) {
             case SelectedGizmoMode.Position:

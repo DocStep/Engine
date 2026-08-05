@@ -219,7 +219,7 @@ public sealed class CameraEditor : Camera {
 
         /// Select
         if (!EditorUI.Instance.isUIClick) {
-            if (RaycastMouse(out Ray ray)) {
+            if (GetRayMouse(out Ray ray)) {
                 if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
                     Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray, out MeshComponent? hitMeshComp, out Vector3 hitPos, out Vector3 hitNormal);
                     if (hitMeshComp is not null) {
@@ -295,7 +295,7 @@ public sealed class CameraEditor : Camera {
 
     private void TryFocusOnPoint (float mouseX, float mouseY, int viewportWidth, int viewportHeight) {
         float? bestT = null;
-        if (!RaycastMouse(out Ray ray)) return;
+        if (!GetRayMouse(out Ray ray)) return;
 
         Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray, out MeshComponent? hitMesh, out Vector3 hitPos, out Vector3 hitNormal);
         if (hitMesh is not null) {
@@ -325,18 +325,18 @@ public sealed class CameraEditor : Camera {
     }
 
 
-    public override bool RaycastMouse (out Ray ray) {
+    public override bool GetRayMouse (out Ray ray) {
         if (!EditorUI.Instance.GetSceneMousePos(Inputs.MousePos, out Vector2 scenePos)) {
             ray = default;
             return false;
         }
 
         Vector2 sceneSize = EditorUI.Instance.SceneAvail;
-        ray = Raycast.ScreenPointToRay(scenePos.X, scenePos.Y, (int)sceneSize.X, (int)sceneSize.Y,
+        ray = Raycast.ScreenPointToRay(scenePos.X, scenePos.Y, (int)sceneSize.X, (int)sceneSize.Y, 
             RendererEditor.Instance.m4x4_View, RendererEditor.Instance.m4x4Projection);
 
-        Engine.Graphics.UI.TextRenderer.AddText($"MousePos_Scene: {scenePos.X}, {scenePos.Y}");
-        Engine.Graphics.UI.TextRenderer.AddText($"SceneSize: {sceneSize.X}, {sceneSize.Y}");
+        //Engine.Graphics.UI.TextRenderer.AddText($"MousePos_Scene: {scenePos.X}, {scenePos.Y}");
+        //Engine.Graphics.UI.TextRenderer.AddText($"SceneSize: {sceneSize.X}, {sceneSize.Y}");
 
         return true;
     }

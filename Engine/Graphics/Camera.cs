@@ -67,7 +67,7 @@ public class Camera : Component {
         return Matrix4x4.CreateLookAtLeftHanded(pos, pos + owner.Transform.Forward, owner.Transform.Up);
     }
 
-    public virtual bool RaycastMouse (out Ray ray) {
+    public virtual bool GetRayMouse (out Ray ray) {
         Vector2 sceneSize = Input.Inputs.MousePos;
         Vector2 mousePos = Input.Inputs.MousePos;
         ray = Raycast.ScreenPointToRay(mousePos.X, mousePos.Y, (int)sceneSize.X, (int)sceneSize.Y,

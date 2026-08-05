@@ -5,8 +5,11 @@ namespace Engine.Input;
 
 public static class Inputs {
 
+    public static Action? de_UpdateInput = null;
+
     public static Vector2 WASD = Vector2.Zero;
     public static Vector2 MousePos = Vector2.Zero;
+    public static Vector2 MousePos_Scene = Vector2.Zero;
     public static Vector2 MouseDelta = Vector2.Zero;
     public static float Wheel = 0;
 
@@ -325,10 +328,14 @@ public static class Inputs {
 
         /// Mouse
         MousePos = WindowInput.MousePos;
+        MousePos_Scene = MousePos;
         MouseDelta = WindowInput.MouseDelta;
 
         /// Wheel
         Wheel = WindowInput.WheelDelta;
+
+        de_UpdateInput?.Invoke();
+        Log.log("MousePos_Scene", MousePos_Scene);
     }
 
 
