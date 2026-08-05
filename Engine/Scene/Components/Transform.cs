@@ -8,12 +8,13 @@ public class Transform : Component {
     [Hide] public bool Enabled { get; set; } = true;
 #pragma warning restore CS0108
 
-    [JsonIgnore] public override string Name => nameof(Transform);
+    public override string Name => nameof(Transform);
 
     public Vector3 Position = Vector3.Zero;
     [Hide][JsonIgnore] public Quaternion rotation = Quaternion.Identity;
-    [DrawName("Rotation")][JsonIgnore] public Vector3 rotationEuler;
-    [Hide][JsonIgnore][WrapRotation(0, 360)][ChangeStep(1f)] public Vector3 RotationEuler {
+    [Hide] public Vector3 rotationEuler;
+    [DrawName("Rotation")][WrapRotation(0, 360)][ChangeStep(1f)][JsonIgnore]
+    public Vector3 RotationEuler {
         get => rotationEuler;
         set {
             rotationEuler = Mathf.WrapVector3(value, 0, 360);
@@ -22,9 +23,9 @@ public class Transform : Component {
     }
     public Vector3 Scale = Vector3.One;
 
-    [JsonIgnore] public Vector3 Right => Vector3.Transform(Vector3.UnitX, rotation);
-    [JsonIgnore] public Vector3 Up => Vector3.Transform(Vector3.UnitY, rotation);
-    [JsonIgnore] public Vector3 Forward => Vector3.Transform(Vector3.UnitZ, rotation);
+    [Hide][JsonIgnore] public Vector3 Right => Vector3.Transform(Vector3.UnitX, rotation);
+    [Hide][JsonIgnore] public Vector3 Up => Vector3.Transform(Vector3.UnitY, rotation);
+    [Hide][JsonIgnore] public Vector3 Forward => Vector3.Transform(Vector3.UnitZ, rotation);
 
     public static float DegreesToRadians (float angle) => angle*Mathf.Deg2Rad;
 
