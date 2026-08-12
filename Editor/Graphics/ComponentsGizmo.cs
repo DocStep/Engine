@@ -1,7 +1,7 @@
 ﻿namespace Editor.Graphics;
 
 
-public static class ComponentsDraw {
+public static class ComponentsGizmo {
 
     extension(BoxColliderComponent comp) {
         public void DrawGizmo () {

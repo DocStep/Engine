@@ -23,7 +23,7 @@
             instance = obj;
 
             if (obj.debugLog)
-                Log.log($"[{Name}] Inited: {typeof(T)} ({obj.GetHashCode()})");
+                Log.log($"[{Name}] Inited: {typeof(T)} ({obj.GetHashCode()})", LogType.info);
 
             obj.Init();
             return obj;

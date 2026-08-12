@@ -6,10 +6,9 @@ public class ReflectionActionScripts : Singleton<ReflectionActionScripts> {
     protected override void Init () {
         Type[] types = Reflection.FindAllSubclasses<IActionScript>(doAbstract: true);
         for (int t = 0; t < types.Length; t++) {
-            Log.log(types[t]);
             IActionScript? script = Activator.CreateInstance(types[t]) as IActionScript;
             if (script is null) {
-                Log.log($"Failed to construct {types[t]}");
+                Log.log("[ReflectionActionScripts]", "Failed to construct", types[t], LogType.warning);
                 continue;
             }
 
@@ -26,6 +25,8 @@ public class ReflectionActionScripts : Singleton<ReflectionActionScripts> {
             if (script is IActionScript_Exit action_exit) {
                 de_Actions_Exit += Wrap(action_exit.OnScriptAction_Exit, types[t]);
             }
+
+            Log.log("[ReflectionActionScripts]", "Registered:", types[t]);
         }
     }
 

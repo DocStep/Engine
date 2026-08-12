@@ -30,22 +30,15 @@ public class Transform : Component {
 
     public void SetPosition (Vector3 position) {
         Position = position;
-
-        PhysicsComponent? physicsComponent = owner.GetComponent<PhysicsComponent>();
-        if (physicsComponent is not null)
-            physicsComponent.Rigidbody.Position = Position;
+        owner.GetComponent<PhysicsComponent>()?.SetPosition(position);
     }
     public void SetRotation (Quaternion rotation) {
-        //rotation = Quaternion.Normalize(rotation);
         Rotation = rotation;
-
-        PhysicsComponent? physicsComponent = owner.GetComponent<PhysicsComponent>();
-        physicsComponent?.Rigidbody.Orientation = rotation;
+        owner.GetComponent<PhysicsComponent>()?.SetRotation(rotation);
     }
-
-
     public void SetScale (Vector3 scale) {
         Scale = scale;
+        owner.GetComponent<PhysicsComponent>()?.SetScale(scale);
     }
 
     public void Stop () {

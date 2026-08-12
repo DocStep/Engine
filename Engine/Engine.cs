@@ -1,4 +1,3 @@
-using Engine.Graphics;
 using Engine.Input;
 
 namespace Engine;
@@ -49,8 +48,8 @@ public class Engine : IDisposable {
 
         ThreadUtils.Init();
         Log.CreateSingleton();
-        Log.log($"========== Run ==========", LogType.info);
-        Log.log($"===== Utils Layer =====", LogType.info);
+        Log.log($"========== Run ==========", LogType.warning);
+        Log.log($"===== Utils Layer =====", LogType.warning);
         Time.Init();
         //CrashHandlers.Init();
 
@@ -76,7 +75,7 @@ public class Engine : IDisposable {
         Windows.Input = Silk.NET.Input.InputWindowExtensions.CreateInput(Windows.Window);
         WindowInput.Init(Windows.Input);
 
-        Log.log($"===== Systems Layer =====", LogType.info);
+        Log.log($"===== Systems Layer =====", LogType.warning);
 
         object? renderer = Activator.CreateInstance(rendererType);
         if (renderer as Graphics.Renderer is null) throw new Exception("Renderer is null");
@@ -85,13 +84,13 @@ public class Engine : IDisposable {
         ComponentManager.CreateSingleton();
         SceneManager.CreateSingleton();
 
-        Log.log($"===== Hook Layer =====", LogType.info);
+        Log.log($"===== Hook Layer =====", LogType.warning);
 
         de_Init?.Invoke();
         //ReflectionActionScripts.CreateSingleton();
 
         engineState = EngineStates.Ready;
-        Log.log($"========== Init Finish ==========", LogType.info);
+        Log.log($"========== Init Finish ==========", LogType.warning);
 
         Engine.SetFPSMax(144);
     }
@@ -183,7 +182,7 @@ public class Engine : IDisposable {
         Graphics.UI.TextRenderer.AddText($"FPS: {(int)(1/Time.deltaTime)}");
         Graphics.UI.TextRenderer.AddText($"ms: {Time.deltaTime*1000:F3}");
         Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.Instance.componentsCount}");
-        Graphics.UI.TextRenderer.AddText($"SceneSize: {Renderer.Instance.Stats.SceneSize}");
+        Graphics.UI.TextRenderer.AddText($"SceneSize: {Graphics.Renderer.Instance.Stats.SceneSize}");
         Graphics.UI.TextRenderer.AddText($"MousePos_Window: {Inputs.MousePos}");
         Graphics.UI.TextRenderer.AddText($"MousePos_Scene: {Inputs.MousePos_Scene}");
         Graphics.UI.TextRenderer.AddText($"isMouseOver: {Inputs.isMouseOver}");

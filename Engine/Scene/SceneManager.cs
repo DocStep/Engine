@@ -14,8 +14,8 @@ public class SceneManager : Singleton<SceneManager> {
 
     protected override void Init () {
         Scene scene;
-        scene = new SceneMaterials();
-        //scene = new ScenePhysics();
+        //scene = new SceneMaterials();
+        scene = new ScenePhysics();
         //scene = new SceneGizmos();
 
         Engine.Instance.de_Update += Update;

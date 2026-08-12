@@ -1,17 +1,27 @@
-﻿using Jitter2;
-using Jitter2.Dynamics;
+﻿using BepuPhysics;
+using BepuPhysics.Collidables;
+using BepuUtilities.Memory;
+using System.Numerics;
 
 namespace Engine;
 
 
 public class PhysicsManager : Singleton<PhysicsManager> {
     public PhysicsManager () {
-        World.SolverIterations = (solver: 100, relaxation: 100); /// def: 6, 4
-        World.Gravity = Gravity;
-        World.SubstepCount = 5; /// def: 4
+        BufferPool = new BufferPool();
+        BodyMaterials = new CollidableProperty<BodyMaterial>();
+
+        Simulation = Simulation.Create(
+            BufferPool,
+            new NarrowPhaseCallbacks(BodyMaterials),
+            new PoseIntegratorCallbacks(Gravity),
+            new SolveDescription(velocityIterationCount: 8, substepCount: 5)
+        );
     }
 
-    public readonly World World = new World();
+    public readonly BufferPool BufferPool;
+    public readonly Simulation Simulation;
+    public readonly CollidableProperty<BodyMaterial> BodyMaterials;
 
     public static Vector3 Gravity = new(0f, -9.81f, 0f);
 
@@ -21,7 +31,7 @@ public class PhysicsManager : Singleton<PhysicsManager> {
     public void FixedUpdate () {
         float dt = (float)Time.fixedDeltaTime;
 
-        World.Step(dt, multiThread: true);
+        Simulation.Timestep(dt);
 
         int count = PhysicsComponents.Count;
         for (int i = 0; i < count; i++) {
@@ -30,15 +40,20 @@ public class PhysicsManager : Singleton<PhysicsManager> {
     }
 
 
-    public RigidBody AddRigidbody (PhysicsComponent physicsComponent) {
-        RigidBody rigidBody = World.CreateRigidBody();
+    public void RegisterRigidbody (PhysicsComponent physicsComponent) {
         PhysicsComponents.Add(physicsComponent);
-        return rigidBody;
     }
-    public void RemoveRigidbody (PhysicsComponent physicsComponent, RigidBody rigidBody) {
+    public void RemoveRigidbody (PhysicsComponent physicsComponent) {
         PhysicsComponents.Remove(physicsComponent);
-        World.Remove(rigidBody);
+        Simulation.Bodies.Remove(physicsComponent.Handle);
     }
+}
 
 
+/// Per-body material data, looked up by the narrow phase during
+/// contact resolution. Mirrors Jitter2's per-RigidBody friction/restitution.
+public struct BodyMaterial {
+    public float Friction;
+    public float MaximumRecoveryVelocity;
+    public BepuPhysics.Constraints.SpringSettings SpringSettings;
 }

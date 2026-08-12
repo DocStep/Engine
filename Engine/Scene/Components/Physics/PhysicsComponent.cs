@@ -1,22 +1,23 @@
-﻿using Jitter2.Collision.Shapes;
-using Jitter2.Dynamics;
-using Jitter2.LinearMath;
+﻿using BepuPhysics;
+using BepuPhysics.Collidables;
 using Newtonsoft.Json;
+using System.Numerics;
 
 namespace Engine;
 
 
 public class PhysicsComponent : Component, IComponentFixedUpdate {
-    public PhysicsComponent () {
-        Rigidbody = PhysicsManager.Instance.AddRigidbody(this);
-        Rigidbody.Restitution = 0.0f;
-        Rigidbody.Friction = 0.5f;
-    }
-
     [JsonIgnore] public override string Name => nameof(PhysicsComponent);
 
-    [JsonIgnore] public readonly RigidBody Rigidbody = null!;
-
+    [JsonIgnore] public BodyHandle Handle { get; private set; }
+    [JsonIgnore] public BodyReference Rigidbody { get; private set; }
+    [JsonIgnore] TypedIndex shapeIndex;
+    [JsonIgnore] float mass = 1f;
+    [JsonIgnore] float friction = 2f;
+    [JsonIgnore] float maximumRecoveryVelocity = 1f;
+    [JsonIgnore] float frequency = 300f;
+    [JsonIgnore] float dampingRation = 10f;
+    [JsonIgnore] public StaticHandle? StaticHandle { get; private set; }
 
 
     public void FixedUpdate () {
@@ -24,95 +25,84 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
     }
 
     public override void OnAdd () {
-        Rigidbody.AddShape(new BoxShape(owner.Transform.Scale));
-        UpdateRigidbody();
+        Vector3 scale = owner.Transform.Scale;
+        Box shape = new Box(scale.X, scale.Y, scale.Z);
+        shapeIndex = PhysicsManager.Instance.Simulation.Shapes.Add(shape);
+
+        BodyDescription description = BodyDescription.CreateDynamic(
+            new RigidPose(owner.Transform.Position, owner.Transform.Rotation),
+            shape.ComputeInertia(mass),
+            new CollidableDescription(shapeIndex, 0.1f),
+            new BodyActivityDescription(0.01f)
+        );
+
+        Handle = PhysicsManager.Instance.Simulation.Bodies.Add(description);
+        Rigidbody = PhysicsManager.Instance.Simulation.Bodies.GetBodyReference(Handle);
+
+        PhysicsManager.Instance.BodyMaterials.Allocate(Handle) = new BodyMaterial {
+            Friction = friction,
+            MaximumRecoveryVelocity = maximumRecoveryVelocity,
+            SpringSettings = new BepuPhysics.Constraints.SpringSettings(frequency, dampingRation)
+        };
+
+        PhysicsManager.Instance.RegisterRigidbody(this);
     }
     public override void OnRemove () {
-        PhysicsManager.Instance.RemoveRigidbody(this, Rigidbody);
+        PhysicsManager.Instance.RemoveRigidbody(this);
     }
 
+
+    public void SetPosition (Vector3 position) {
+        Rigidbody.Pose.Position = position;
+        PhysicsManager.Instance.Simulation.Awakener.AwakenBody(Handle);
+    }
+    public void SetRotation (Quaternion rotation) {
+        Rigidbody.Pose.Orientation = rotation;
+        PhysicsManager.Instance.Simulation.Awakener.AwakenBody(Handle);
+    }
+    public void SetScale (Vector3 scale) {
+        
+
+    }
 
     public void UpdateTransform () {
-        owner.Transform.Position = Rigidbody.Position;
-        owner.Transform.Rotation = Rigidbody.Orientation;
+        owner.Transform.Position = Rigidbody.Pose.Position;
+        owner.Transform.Rotation = Rigidbody.Pose.Orientation;
     }
     public void UpdateRigidbody () {
-        Rigidbody.Position = owner.Transform.Position;
-        Rigidbody.Orientation = owner.Transform.Rotation;
+        Rigidbody.Pose.Position = owner.Transform.Position;
+        Rigidbody.Pose.Orientation = owner.Transform.Rotation;
     }
     public void Stop () {
-        if (Rigidbody.Data.MotionType != MotionType.Dynamic) return;
+        if (Rigidbody.Kinematic) return;
 
-        Rigidbody.Velocity = Vector3.Zero;
-        Rigidbody.AngularVelocity = Vector3.Zero;
+        Rigidbody.Velocity.Linear = Vector3.Zero;
+        Rigidbody.Velocity.Angular = Vector3.Zero;
     }
 
-
-    public static Vector3 ToEulerYXZ (JQuaternion q) {
-        float x = q.X, y = q.Y, z = q.Z, w = q.W;
-
-        /// pitch (X)
-        float sinPitch = 2f*(w*x - y*z);
-        sinPitch = Math.Clamp(sinPitch, -1f, 1f);
-        float pitch = MathF.Asin(sinPitch);
-
-        /// yaw (Y)
-        float yaw = MathF.Atan2(2f*(w*y + x*z), 1f - 2f*(x*x + y*y));
-
-        /// roll (Z)
-        float roll = MathF.Atan2(2f*(w*z + x*y), 1f - 2f*(x*x + z*z));
-        
-        Vector3 eulerRadians = new Vector3(pitch, yaw, roll);
-        return Mathf.Rad2Deg*eulerRadians;
+    public void SetFriction (float friction) {
+        ref BodyMaterial material = ref PhysicsManager.Instance.BodyMaterials[Handle];
+        material.Friction = friction;
+        //PhysicsManager.Instance.BodyMaterials.Allocate(Handle) = material;
     }
-    public static JQuaternion FromEulerYXZ (Vector3 eulerDegrees) {
-        Vector3 euler = eulerDegrees*Mathf.Deg2Rad;
-        float pitch = euler.X;
-        float yaw = euler.Y;
-        float roll = euler.Z;
+    public void SetBounciness (float bounciness, bool isStaticLike = false) {
+        BodyMaterial material = PhysicsManager.Instance.BodyMaterials[Handle];
 
-        float cy = MathF.Cos(yaw*0.5f);
-        float sy = MathF.Sin(yaw*0.5f);
-        float cx = MathF.Cos(pitch*0.5f);
-        float sx = MathF.Sin(pitch*0.5f);
-        float cz = MathF.Cos(roll*0.5f);
-        float sz = MathF.Sin(roll*0.5f);
+        material.MaximumRecoveryVelocity = isStaticLike ? 100f : 4f;
+        material.SpringSettings = isStaticLike
+            ? new BepuPhysics.Constraints.SpringSettings(180, 10)
+            : new BepuPhysics.Constraints.SpringSettings(30, 3); /// softer, lets torque develop
 
-        /// q = qYaw * qPitch * qRoll, matching the YXZ composition order
-        /// used in ToEulerYXZ's decomposition.
-        JQuaternion q;
-        q.W = cy*cx*cz + sy*sx*sz;
-        q.X = cy*sx*cz + sy*cx*sz;
-        q.Y = sy*cx*cz - cy*sx*sz;
-        q.Z = cy*cx*sz - sy*sx*cz;
-
-        return q;
+        PhysicsManager.Instance.BodyMaterials.Allocate(Handle) = material;
     }
-
-
-   /* public override void DrawInspector () {
-        ImGuiNET.ImGui.TextDisabled($"Mode: {Rigidbody.Data.MotionType}");
-        ImGuiNET.ImGui.TextDisabled($"Velocity: {Rigidbody.Velocity.ToString3()}");
-        ImGuiNET.ImGui.TextDisabled($"Angular Velocity: {Rigidbody.AngularVelocity.ToString3()}");
-    }*/
-
-
-    /*public static Quaternion EulerToQuat (Vector3 euler) {
-        const float d2r = MathF.PI / 180f;
-        return Quaternion.CreateFromYawPitchRoll(euler.Y * d2r, euler.X * d2r, euler.Z * d2r);
+    public void SetKinematic () {
+        Rigidbody.LocalInertia = new BodyInertia();
     }
+    public void SetDynamic () {
+        Box shape = PhysicsManager.Instance.Simulation.Shapes.GetShape<Box>(shapeIndex.Index);
+        Rigidbody.LocalInertia = shape.ComputeInertia(mass);
 
-    public static Vector3 QuatToEuler (Quaternion q) {
-        const float r2d = 180f / MathF.PI;
-        // YPR → Euler XYZ (pitch/yaw/roll)
-        float sinP = 2f * (q.W * q.X - q.Y * q.Z);
-        float pitch = MathF.Abs(sinP) >= 1f
-            ? MathF.CopySign(MathF.PI / 2f, sinP)
-            : MathF.Asin(sinP);
-        float yaw = MathF.Atan2(2f * (q.W * q.Y + q.Z * q.X), 1f - 2f * (q.X * q.X + q.Y * q.Y));
-        float roll = MathF.Atan2(2f * (q.W * q.Z + q.X * q.Y), 1f - 2f * (q.Y * q.Y + q.Z * q.Z));
-        return new Vector3(pitch * r2d, yaw * r2d, roll * r2d);
-    }*/
-
+        PhysicsManager.Instance.Simulation.Awakener.AwakenBody(Handle);
+    }
 
 }

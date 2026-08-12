@@ -9,6 +9,7 @@ using ImGuiNET;
 using Engine;
 using Engine.Graphics;
 using Engine.Input;
+using Editor;
 
 namespace Editor.Graphics;
 
@@ -35,10 +36,16 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         new CameraEditor();
 
         Draw();
+
+        //ComponentManager.Instance.de_RegisterType += RegisterType;
+        RegisterTypes();
     }
 
     public ImGuiController ImGUI = null!;
-    public bool isUIClick = false;
+
+    private static readonly Dictionary<Type, Action<Component>> _drawers = new Dictionary<Type, Action<Component>>();
+
+    public bool isUIClick { get; private set; } = false;
     private bool _docked = false;
     private bool _dockBuilt = false;
     private bool _isClosing = false;
@@ -114,13 +121,13 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         _sceneRectMax = ImGui.GetItemRectMax();
         isSceneUIHovered = ImGui.IsItemHovered();
             
-        if (!Engine.Input.Inputs.isMouseVisible) {
-            Vector2 mousePos_Scene = Engine.Input.WindowInput.Mouse!.Position - ImGui.GetItemRectMin();
+        if (!Inputs.isMouseVisible) {
+            Vector2 mousePos_Scene = WindowInput.Mouse!.Position - ImGui.GetItemRectMin();
             float deltaX = MathF.Floor(mousePos_Scene.X/sceneAvail.X)*sceneAvail.X;
             float deltaY = MathF.Floor(mousePos_Scene.Y/sceneAvail.Y)*sceneAvail.Y;
             Vector2 delta = new Vector2(deltaX, deltaY);
             if (0 < delta.LengthSquared()) {
-                Engine.Input.WindowInput.TeleportMouseDelta(-delta);
+                WindowInput.TeleportMouseDelta(-delta);
                 //Log.log(sceneAvail, mousePos_Scene, isSceneUIHovered, delta);
             }
         }
@@ -148,7 +155,13 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             for (int c = 0; c < selectedGO.Components.Count; c++) {
                 ImGui.Text(selectedGO.Components[c].Name);
                 ImGui.PushID(selectedGO.Components[c].GetHashCode());
-                selectedGO.Components[c].DrawInspector();
+                //selectedGO.Components[c].DrawInspector();
+                Component comp = selectedGO.Components[c];
+                if (_drawers.TryGetValue(comp.GetType(), out var draw)) {
+                    draw(comp);
+                } else {
+                    comp.DrawInspector(); // fallback to base Component extension
+                }
                 ImGui.PopID();
             }
         }
@@ -237,25 +250,28 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         return result;
     }
 
-    /// Draws one ImGui widget based on the runtime type of value, returns the new value if changed, null otherwise
     public static object? DrawField (MemberInfo member, object? value) {
         if (member.GetCustomAttribute<Hide>() is not null) return null;
 
-        object? result = null;
-        string label = member.Name;
-        label = Utils.NameCapital(label);
+        string label = Utils.NameCapital(member.Name);
 
         DrawName? drawName = member.GetCustomAttribute<DrawName>();
         if (drawName is not null) label = drawName.Name;
 
         bool isReadonly = member.GetCustomAttribute<Readonly>() is not null;
-        if (isReadonly) ImGui.BeginDisabled(true);
 
         float step = valueStep;
         ChangeStep? changeSpeed = member.GetCustomAttribute<ChangeStep>();
         if (changeSpeed is not null) step = changeSpeed.Step;
 
-        WrapRotation? clampAtt = member.GetCustomAttribute<WrapRotation>();
+        return DrawField(label, value, isReadonly, step);
+    }
+
+    /// Core widget drawer, callable directly without reflection
+    public static object? DrawField (string label, object? value, bool isReadonly = false, float step = valueStep) {
+        object? result = null;
+
+        if (isReadonly) ImGui.BeginDisabled(true);
 
         switch (value) {
             case int i:
@@ -283,30 +299,59 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 if (ImGui.InputText(label, ref temp_s, 256)) result = temp_s;
                 break;
             case Vector2 v2:
-                if (ImGui.DragFloat2(label, ref v2, step, 0, 0, "%.2f")) {
-                    //if (clampAtt is not null) v2 = Mathf.WrapVector2(v2, clampAtt.Min, clampAtt.Max);
-                    result = v2;
-                }
+                if (ImGui.DragFloat2(label, ref v2, step, 0, 0, "%.2f")) result = v2;
                 break;
             case Vector3 v3:
-                if (ImGui.DragFloat3(label, ref v3, step, 0, 0, "%.2f")) {
-                    //if (clampAtt is not null) v3 = Mathf.WrapVector3(v3, clampAtt.Min, clampAtt.Max);
-                    Log.log(clampAtt);
-                    result = v3;
-                }
+                if (ImGui.DragFloat3(label, ref v3, step, 0, 0, "%.2f")) result = v3;
                 break;
             case Quaternion q:
                 Vector4 temp_v4 = new Vector4(q.X, q.Y, q.Z, q.W);
-                if (ImGui.DragFloat4(label, ref temp_v4, step, 0, 0, "%.2f")) {
-                    //if (clampAtt is not null) temp_v4 = Mathf.WrapVector4(temp_v4, clampAtt.Min, clampAtt.Max);
-                    result = new Quaternion(temp_v4.X, temp_v4.Y, temp_v4.Z, temp_v4.W);
-                }
+                if (ImGui.DragFloat4(label, ref temp_v4, step, 0, 0, "%.2f")) result = new Quaternion(temp_v4.X, temp_v4.Y, temp_v4.Z, temp_v4.W);
+                break;
+            default:
+                ImGui.TextDisabled($"{label}: {value}");
                 break;
         }
 
         if (isReadonly) ImGui.EndDisabled();
 
         return result;
+    }
+
+
+    private void RegisterTypes () {
+        List<MethodInfo> drawMethods = Assembly.GetExecutingAssembly()
+            .GetTypes()
+            .Where(t => t.IsAbstract && t.IsSealed) /// static classes
+            .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static))
+            .Where(m => m.Name == "DrawInspector" && m.GetParameters().Length == 1)
+            .Where(m => typeof(Component).IsAssignableFrom(m.GetParameters()[0].ParameterType))
+            .ToList();
+
+        foreach (var kv in ComponentManager.Instance.Components) {
+            Type componentType = kv.Key;
+
+            MethodInfo? best = drawMethods
+                .Where(m => m.GetParameters()[0].ParameterType.IsAssignableFrom(componentType))
+                .OrderByDescending(m => InheritanceDepth(m.GetParameters()[0].ParameterType))
+                .FirstOrDefault();
+
+            if (best is null) continue;
+
+            MethodInfo method = best; /// capture per-iteration
+            _drawers.Add(componentType, c => method.Invoke(null, new object[] { c }));
+
+            Log.log("EditorUI.ComponentRegister", componentType.Name, "->", method.DeclaringType?.Name);
+        }
+    }
+
+    private static int InheritanceDepth (Type t) {
+        int depth = 0;
+        while (t != null) {
+            depth++;
+            t = t.BaseType;
+        }
+        return depth;
     }
 
 
