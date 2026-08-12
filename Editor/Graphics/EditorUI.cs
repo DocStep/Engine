@@ -59,9 +59,6 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     }
 
 
-    public void UpdateInput () {
-        GetSceneMousePos(Inputs.MousePos, out Inputs.MousePos_Scene);
-    }
     public void Update () {
         if (_isClosing) return;
 
@@ -323,13 +320,19 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     }
 
     /// Mouse position remapped into Scene FBO pixel space, or null if outside the panel
-    public bool GetSceneMousePos (Vector2 mousePos_Window, out Vector2 mousePos_Scene) {
-        mousePos_Scene = mousePos_Window - _sceneRectMin;
+    public void UpdateInput () {
+        Inputs.MousePos_Scene = Inputs.MousePos - _sceneRectMin;
 
-        if (!isSceneUIHovered) return false;
-        if (mousePos_Scene.X < 0 || mousePos_Scene.Y < 0 || sceneAvail.X < mousePos_Scene.X || sceneAvail.Y < mousePos_Scene.Y) return false;
+        if (!isSceneUIHovered) {
+            Inputs.isMouseOverScene = false;
+            return;
+        }
+        if (Inputs.MousePos_Scene.X < 0 || Inputs.MousePos_Scene.Y < 0 || 
+            sceneAvail.X < Inputs.MousePos_Scene.X || sceneAvail.Y < Inputs.MousePos_Scene.Y) {
+            Inputs.isMouseOverScene = false;
+        }
 
-        return true;
+        Inputs.isMouseOverScene = true;
     }
 
     public void SetDock () {

@@ -22,9 +22,9 @@ public class MaterialSSAO : Material {
 
 
     public override void ApplyCustom () {
-        Matrix4x4.Invert(Renderer.Instance.m4x4Projection, out invProjection);
+        Matrix4x4.Invert(Renderer.Instance.m4x4_Projection, out invProjection);
 
-        shader.SetMatrix4x4(Shader.Projection, Renderer.Instance.m4x4Projection);
+        shader.SetMatrix4x4(Shader.Projection, Renderer.Instance.m4x4_Projection);
         shader.SetMatrix4x4(Shader.InvProjection, invProjection);
         shader.SetVector2(TexelSize, new Vector2(1f/Renderer.Instance.Width, 1f/Renderer.Instance.Height));
         shader.SetFloat(Radius, radius);

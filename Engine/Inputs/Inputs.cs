@@ -12,6 +12,9 @@ public static class Inputs {
     public static Vector2 MousePos_Scene = Vector2.Zero;
     public static Vector2 MouseDelta = Vector2.Zero;
     public static float Wheel = 0;
+    public static bool isMouseOver { get; set; } = false;
+    public static bool isMouseOverScene { get; set; } = false;
+
 
     public static Dictionary<Keys, string> KeysNameOverride = new Dictionary<Keys, string>() {
         /// Mouse
@@ -323,8 +326,8 @@ public static class Inputs {
             }
         }
 
-        WASD.X = (Actions["MoveRight"].pressed ? 1 : 0) + (Actions["MoveLeft"].pressed ? -1 : 0);
-        WASD.Y = (Actions["MoveForward"].pressed ? 1 : 0) + (Actions["MoveBack"].pressed ? -1 : 0);
+        WASD.X = (Actions[MoveRight].pressed ? 1 : 0) + (Actions[MoveLeft].pressed ? -1 : 0);
+        WASD.Y = (Actions[MoveForward].pressed ? 1 : 0) + (Actions[MoveBack].pressed ? -1 : 0);
 
         /// Mouse
         MousePos = WindowInput.MousePos;
@@ -334,8 +337,12 @@ public static class Inputs {
         /// Wheel
         Wheel = WindowInput.WheelDelta;
 
+        isMouseOver = 0 <= MousePos.X && MousePos.X < Windows.Window.Size.X && 0 <= MousePos.Y && MousePos.Y < Windows.Window.Size.Y;
+        isMouseOverScene = isMouseOver;
+
         de_UpdateInput?.Invoke();
-        Log.log("MousePos_Scene", MousePos_Scene);
+
+        //Log.log("MousePos_Scene", MousePos_Scene);
     }
 
 

@@ -81,7 +81,7 @@ public class Renderer {
 
     /// Debug
     public Matrix4x4 m4x4_View = Matrix4x4.Identity;
-    public Matrix4x4 m4x4Projection = Matrix4x4.Identity;
+    public Matrix4x4 m4x4_Projection = Matrix4x4.Identity;
     protected static float[] uView = [];
     public float[] UView => uView;
 
@@ -123,7 +123,7 @@ public class Renderer {
 
         PostProcess.BeginScene();
 
-        _skybox?.Draw(m4x4_View, m4x4Projection);
+        _skybox?.Draw(m4x4_View, m4x4_Projection);
 
         DrawSceneAll();
 
@@ -194,10 +194,10 @@ public class Renderer {
 
     protected void UpdateProjection (float width, float height) {
         float aspect = width/height;
-        m4x4Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
+        m4x4_Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
             Camera.Current.FOV*Mathf.Deg2Rad, aspect, Camera.Current.planeNear, Camera.Current.planeFar);
         uView = Matrix4x4.ToArray(m4x4_View);
-        uProjection = Matrix4x4.ToArray(m4x4Projection);
+        uProjection = Matrix4x4.ToArray(m4x4_Projection);
     }
 
     protected virtual void DrawSceneAll () {

@@ -186,6 +186,8 @@ public class Engine : IDisposable {
         Graphics.UI.TextRenderer.AddText($"SceneSize: {Renderer.Instance.Stats.SceneSize}");
         Graphics.UI.TextRenderer.AddText($"MousePos_Window: {Inputs.MousePos}");
         Graphics.UI.TextRenderer.AddText($"MousePos_Scene: {Inputs.MousePos_Scene}");
+        Graphics.UI.TextRenderer.AddText($"isMouseOver: {Inputs.isMouseOver}");
+        Graphics.UI.TextRenderer.AddText($"isMouseOverScene: {Inputs.isMouseOverScene}");
     }
 
 

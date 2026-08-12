@@ -71,7 +71,7 @@ public class Camera : Component {
         Vector2 sceneSize = Input.Inputs.MousePos;
         Vector2 mousePos = Input.Inputs.MousePos;
         ray = Raycast.ScreenPointToRay(mousePos.X, mousePos.Y, (int)sceneSize.X, (int)sceneSize.Y,
-            Renderer.Instance.m4x4_View, Renderer.Instance.m4x4Projection);
+            Renderer.Instance.m4x4_View, Renderer.Instance.m4x4_Projection);
         return true;
     }
 
