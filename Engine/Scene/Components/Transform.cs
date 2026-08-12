@@ -11,23 +11,21 @@ public class Transform : Component {
     public override string Name => nameof(Transform);
 
     public Vector3 Position = Vector3.Zero;
-    [Hide][JsonIgnore] public Quaternion rotation = Quaternion.Identity;
+    [Hide][JsonIgnore] public Quaternion Rotation = Quaternion.Identity;
     [Hide] public Vector3 rotationEuler;
     [DrawName("Rotation")][WrapRotation(0, 360)][ChangeStep(1f)][JsonIgnore]
     public Vector3 RotationEuler {
         get => rotationEuler;
         set {
             rotationEuler = Mathf.WrapVector3(value, 0, 360);
-            rotation = Mathf.QuaternionFromEuler(rotationEuler);
+            Rotation = Mathf.EulerToQuaternion(rotationEuler);
         }
     }
     public Vector3 Scale = Vector3.One;
 
-    [Hide][JsonIgnore] public Vector3 Right => Vector3.Transform(Vector3.UnitX, rotation);
-    [Hide][JsonIgnore] public Vector3 Up => Vector3.Transform(Vector3.UnitY, rotation);
-    [Hide][JsonIgnore] public Vector3 Forward => Vector3.Transform(Vector3.UnitZ, rotation);
-
-    public static float DegreesToRadians (float angle) => angle*Mathf.Deg2Rad;
+    [Hide][JsonIgnore] public Vector3 Right => Vector3.Transform(Vector3.UnitX, Rotation);
+    [Hide][JsonIgnore] public Vector3 Up => Vector3.Transform(Vector3.UnitY, Rotation);
+    [Hide][JsonIgnore] public Vector3 Forward => Vector3.Transform(Vector3.UnitZ, Rotation);
 
 
     public void SetPosition (Vector3 position) {
@@ -37,22 +35,14 @@ public class Transform : Component {
         if (physicsComponent is not null)
             physicsComponent.Rigidbody.Position = Position;
     }
-
-    public void SetRotation (Vector3 euler) {
-        rotation = Mathf.JQuaternionFromEuler(Mathf.WrapVector3(euler, 0, 360));
-
-        PhysicsComponent? physicsComponent = owner.GetComponent<PhysicsComponent>();
-        if (physicsComponent is not null)
-            physicsComponent.Rigidbody.Orientation = rotation;
-    }
-
     public void SetRotation (Quaternion rotation) {
-        rotation = Quaternion.Normalize(rotation);
+        //rotation = Quaternion.Normalize(rotation);
+        Rotation = rotation;
 
         PhysicsComponent? physicsComponent = owner.GetComponent<PhysicsComponent>();
-        if (physicsComponent is not null)
-            physicsComponent.Rigidbody.Orientation = rotation;
+        physicsComponent?.Rigidbody.Orientation = rotation;
     }
+
 
     public void SetScale (Vector3 scale) {
         Scale = scale;
@@ -93,7 +83,7 @@ public class Transform : Component {
 
     public Matrix4x4 GetWorldMatrix () {
         Matrix4x4 scaleMat = Matrix4x4.CreateScale(Scale);
-        Matrix4x4 rotMat = Matrix4x4.CreateFromQuaternion(rotation);
+        Matrix4x4 rotMat = Matrix4x4.CreateFromQuaternion(Rotation);
         Matrix4x4 transMat = Matrix4x4.CreateTranslation(Position);
         return scaleMat*rotMat*transMat;
     }

@@ -38,7 +38,7 @@ public class GizmoSelected : IDisposable {
     private const float _width = 0.1f;
 
     public Vector3 selectedDragPos;
-    public Vector3 selectedDragRot;
+    public Quaternion selectedDragRot;
     public Vector3 selectedDragMargin;
     public bool selectedGizmoWorldSpace = true;
     private bool isMouseBlocked = false;
@@ -67,7 +67,7 @@ public class GizmoSelected : IDisposable {
         Transform tr_obj = selectedMeshComp.owner.Transform;
         Vector3 camPos = Camera.Current.CameraPos;
         Vector3 _objPos = tr_obj.Position;
-        Vector3 _objRot = tr_obj.RotationEuler;
+        Quaternion _objRot = tr_obj.Rotation;
         float _dist = Vector3.Distance(camPos, _objPos);
         float half = 0.5f*_squareSize;
 

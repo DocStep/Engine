@@ -34,11 +34,11 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
 
     public void UpdateTransform () {
         owner.Transform.Position = Rigidbody.Position;
-        owner.Transform.rotation = Rigidbody.Orientation;
+        owner.Transform.Rotation = Rigidbody.Orientation;
     }
     public void UpdateRigidbody () {
         Rigidbody.Position = owner.Transform.Position;
-        Rigidbody.Orientation = owner.Transform.rotation;
+        Rigidbody.Orientation = owner.Transform.Rotation;
     }
     public void Stop () {
         if (Rigidbody.Data.MotionType != MotionType.Dynamic) return;

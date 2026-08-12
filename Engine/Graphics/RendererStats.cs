@@ -13,4 +13,6 @@ public struct RendererStats () {
     public Vector2 WindowSize = default;
     public Vector2 SceneSize = default;
 
+    public bool isMouseOverScene = false;
+
 }

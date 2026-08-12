@@ -11,7 +11,7 @@ public static class Mathf {
     public const float Deg2Rad = MathF.PI/180f;
 
 
-    public static Vector3 EulerFromQuaternion (Quaternion q) {
+    public static Vector3 QuaternionToEuler (Quaternion q) {
         Matrix4x4 m = Matrix4x4.CreateFromQuaternion(q);
 
         float pitch = MathF.Asin(-m.M23);
@@ -32,7 +32,7 @@ public static class Mathf {
             yaw*Rad2Deg,
             roll*Rad2Deg);
     }
-    public static Quaternion QRotationFromDirection (Vector3 direction, Vector3 up = default) {
+    public static Quaternion DirectionToQRotation (Vector3 direction, Vector3 up = default) {
         direction = Vector3.Normalize(direction);
         if (up == default) up = Vector3.UnitY;
 
@@ -52,7 +52,7 @@ public static class Mathf {
         return Quaternion.CreateFromRotationMatrix(m);
     }
 
-    public static Quaternion QuaternionFromEuler (Vector3 euler) {
+    public static Quaternion EulerToQuaternion (Vector3 euler) {
         return Quaternion.CreateFromYawPitchRoll(
             euler.Y*Deg2Rad,
             euler.X*Deg2Rad,
@@ -60,7 +60,7 @@ public static class Mathf {
     }
 
 
-    public static JQuaternion JQuaternionFromEuler (Vector3 rot) {
+    public static JQuaternion EulerToJQuaternion (Vector3 rot) {
         Vector3 rad = rot*(MathF.PI/180f);
         JQuaternion qx = JQuaternion.CreateFromAxisAngle(JVector.UnitX, rad.X);
         JQuaternion qy = JQuaternion.CreateFromAxisAngle(JVector.UnitY, rad.Y);
