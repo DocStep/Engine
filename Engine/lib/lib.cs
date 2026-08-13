@@ -1,4 +1,3 @@
-using System.Text;
 using System.Linq;
 using System.Security.Cryptography;
 
@@ -6,37 +5,12 @@ namespace Engine;
 
 
 public static class lib {
-    //public static FastNoiseLite Noise = new FastNoiseLite();
-
-    public const float TAU = 6.2831855f;
-
-    public static Random random = new Random(25565);
-    public static float R () => (float)random.NextDouble();
-    public static int R (int max) => random.Next(0, max);
-    public static int R (int min, int max) => random.Next(min, max);
-    public static float R (float min, float max) => min + (float)random.NextDouble()*(max - min);
-
-    public static float Booly1 (this float f, bool b) {
-        return b ? f : 1;
-    }
-    public static float Booly05 (this float f, bool b) {
-        return b ? f : 0.5f;
-    }
-    public static float Booly0 (this float f, bool b) {
-        return b ? f : 0;
-    }
-
-    public static float Lerp (float a, float b, float t) {
-        return a + (b-a)*t;
-    }
-
 
     public static Guid Guid => Guid.NewGuid();
     public static string Uuid => Guid.ToString("N");
     public static long Id => BitConverter.ToInt64(Guid.NewGuid().ToByteArray(), 0);
 
-    public static StringBuilder StringBuilder = new StringBuilder("", 1000);
-
+    private static System.Text.StringBuilder StringBuilder = new System.Text.StringBuilder("", 1000);
 
 
     public static int Dictionary_CountAll (IDictionary dictionary) {
@@ -81,49 +55,6 @@ public static class lib {
             .ToDictionary(e => e, e => e.ToString());
     }
 
-    /// <summary> 1->0 = 0 </summary>
-    public static bool Implies (bool a, bool b) => !a || b;
-    /// 0 0 1
-    /// 0 1 1
-    /// 1 0 0
-    /// 1 1 1
-
-
-    public static float easeInQuad (float x) {
-        return x*x;
-    }
-    public static float easeInCubic (float x) {
-        return x*x*x;
-    }
-    public static float easeInSine (float x) {
-        return 1 - MathF.Cos(0.5f*(x*MathF.PI));
-    }
-
-    public static float easeOutQuad (float x) {
-        return 1 - (1 - x)*(1 - x);
-    }
-    public static float easeOutCirc (float x) {
-        return MathF.Sqrt(1f - (x - 1f)*(x - 1f));
-    }
-
-    public static float easeInOutSine (float x) {
-        return x < 0.5f ?
-            4f*x*x*x :
-            1f - MathF.Pow(-2f*x + 2f, 3f)*0.5f;
-    }
-    public static float easeInOutCubic (float x) {
-        return x < 0.5f ? 
-            4f*x*x*x : 
-            1f - MathF.Pow(-2f*x + 2f, 3f)*0.5f;
-    }
-
-
-
-    public static float Remap01 (float value, float start, float end) => (value - start)/(end - start);
-
-    public static float Remap (float value, float startSrc, float endSrc, float startDst, float endDst) {
-        return startDst + (value - startSrc)*(endDst - startDst)/(endSrc - startSrc);
-    }
 
 
     public static bool ArrayConstains<T> (T[] array, T value) {
@@ -182,42 +113,14 @@ public static class lib {
         return avg;
     }
 
-    public static float Saturate (float value) => value < 0 ? 0 : value;
-    public static int Saturate (int value) => value < 0 ? 0 : value;
-    public static float Saturate (float value, float edge) => value < edge ? edge : value;
-    public static float Saturate1 (float value) => value < 1 ? 1 : value;
-    public static float SaturateNegative (float value) => value < 0 ? value : 0;
-
-    public static int Sum (params int[] values) {
-        if (values == null || values.Length == 0) return 0;
-        int sum = 0;
-        foreach (int v in values) sum += v;
-        return sum;
-    }
-    public static float Sum (params float[] values) {
-        if (values == null || values.Length == 0) return 0f;
-        float sum = 0f;
-        foreach (float v in values) sum += v;
-        return sum;
-    }
-    public static float Avg (params float[] values) {
-        if (values == null || values.Length == 0) return 0f;
-        return Sum(values)/values.Length;
-    }
-    public static bool InRadius (float x, float y, float radius) {
-        return x*x + y*y < radius*radius;
-    }
-    public static bool InSquare (float x, float y, float radius) {
-        return -radius <= x && x <= radius && -radius <= y && y <= radius;
-    }
-
+    
 
     public static string UID (string name) {
         string input = name;
         byte[] bytes = System.Text.Encoding.UTF8.GetBytes(input);
         using (MD5 md5 = MD5.Create()) {
             byte[] hash = md5.ComputeHash(bytes);
-            return new System.Guid(hash).ToString();
+            return new Guid(hash).ToString();
         }
     }
 

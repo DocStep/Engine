@@ -18,7 +18,7 @@ public class Transform : Component {
         get => rotationEuler;
         set {
             rotationEuler = Mathf.WrapVector3(value, 0, 360);
-            Rotation = Mathf.EulerToQuaternion(rotationEuler);
+            Rotation = Mathf.ToQuaternion(rotationEuler);
         }
     }
     public Vector3 Scale = Vector3.One;

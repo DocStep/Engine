@@ -121,7 +121,7 @@ public class CoT {
             return;
 
         foreach (CoT cot in bag) {
-            if (!lib.Implies(cot.locked, forceLocked))
+            if (!Mathf.Implies(cot.locked, forceLocked))
                 continue;
 
             cot.cts?.Cancel(); /// safe
@@ -129,7 +129,7 @@ public class CoT {
     }
 
     public static void Stop(CoT cot, bool forceLocked = false) {
-        if (!lib.Implies(cot.locked, forceLocked))
+        if (!Mathf.Implies(cot.locked, forceLocked))
             return;
 
         cot.cts?.Cancel();

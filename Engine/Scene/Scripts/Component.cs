@@ -11,7 +11,7 @@ public abstract class Component : ISavable {
     [Hide] public readonly Guid Guid = lib.Guid;
     [Hide] public readonly long Id = lib.Id;
 
-    public bool Enabled { get; set; } = true;
+    [Hide] public bool Enabled { get; set; } = true;
 
     [Hide][JsonIgnore] public GameObject owner = null!;
     [Hide] public Guid? ownerGuid = null; /// For save

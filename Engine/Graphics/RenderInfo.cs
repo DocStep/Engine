@@ -8,7 +8,7 @@ public struct RenderInfo () {
     public Vector3 pos = Vector3.Zero;
     public Quaternion rot = Quaternion.Identity;
     public Vector3 rotEuler { 
-        set => rot = Mathf.EulerToQuaternion(Mathf.WrapVector3(value, 0, 360));
+        set => rot = Mathf.ToQuaternion(Mathf.WrapVector3(value, 0, 360));
     }
     public Vector3 scale = Vector3.One;
     public Matrix4x4? modelOverride = null;

@@ -59,6 +59,8 @@ public sealed class CameraEditor : Camera {
     private const float _focusTargetDistanceMax = 100f;
     //private float _focusTargetDistance;
 
+    private const float dragSpeed = 0.001f;
+
     internal Vector3 cameraOrbitCenterPos = Vector3.Zero;
 
     private float cameraDragStartX;
@@ -119,23 +121,23 @@ public sealed class CameraEditor : Camera {
         //Log.log("Update", Inputs.isMouseVisible);
         float baseSpeed = Inputs.Actions[Shift].pressed ? _cameraSpeedShift : _cameraSpeed;
         Vector3 cameraPosDelta = Vector3.Zero;
-        //Matrix4x4 cameraRot = Utils.Matrix4x4FromYawPitchRoll(yaw, pitch, 0f);
         Matrix4x4 cameraRot = GetRotationMatrix();
         position = CameraPos;
 
         if (!EditorUI.Instance.isSceneUIHovered) {
-            move();
+            focusing();
             return;
         }
 
+
+        float dx = Inputs.MouseDelta.X;
+        float dy = Inputs.MouseDelta.Y;
         Vector3 forward = Vector3.Transform(Vector3.UnitZ, cameraRot);
         Vector3 right = Vector3.Transform(Vector3.UnitX, cameraRot);
         Vector3 up = Vector3.Transform(Vector3.UnitY, cameraRot);
         float posDeltaL = MathF.Max(0, (cameraOrbitCenterPos - CameraPos).Length());
 
         if ((Inputs.Actions[LMB].pressed && Inputs.Actions[Alt].pressed || Inputs.Actions[RMB].pressed) && !mouseBlocked) {
-            float dx = Inputs.MouseDelta.X;
-            float dy = Inputs.MouseDelta.Y;
             float flipSign = 1f;
             yaw += -dx*_sensetivityMultiplier*_sensetivity*flipSign;
             pitch += -dy*_sensetivityMultiplier*_sensetivity;
@@ -175,10 +177,6 @@ public sealed class CameraEditor : Camera {
             cameraDragStartY = Inputs.MousePos.Y;
             isCameraDragging = false;
         } else if (Inputs.Actions[CameraDrag].pressed && !mouseBlocked) {
-            const float dragSpeed = 0.001f;
-            float dx = Inputs.MouseDelta.X;
-            float dy = Inputs.MouseDelta.Y;
-
             float totalDx = Inputs.MousePos.X - cameraDragStartX;
             float totalDy = Inputs.MousePos.Y - cameraDragStartY;
             if (_clickDragThresholdPixels*_clickDragThresholdPixels < totalDx*totalDx + totalDy*totalDy) {
@@ -233,22 +231,8 @@ public sealed class CameraEditor : Camera {
         }
 
         /// Smoothly glide toward the focus target
-        if (isFocusing) {
-            Vector3 camDelta = focusTargetCameraPos - CameraPos;
-            Vector3 orbitDelta = focusTargetOrbitCenterPos - cameraOrbitCenterPos;
-
-            float _t = MathF.Min(1f, _focusGlideSpeed*(float)Time.deltaTime);
-            cameraPos += camDelta*_t;
-            cameraOrbitCenterPos += orbitDelta*_t;
-
-            if (camDelta.LengthSquared() < _snapThreshold*_snapThreshold && orbitDelta.LengthSquared() < _snapThreshold*_snapThreshold) {
-                cameraPos = focusTargetCameraPos;
-                cameraOrbitCenterPos = focusTargetOrbitCenterPos;
-                isFocusing = false;
-            }
-        }
-
-
+        focusing();
+        
         /// Move
         if (Inputs.Actions[MoveForward].pressed) cameraPosDelta += forward;
         if (Inputs.Actions[MoveBack].pressed) cameraPosDelta += -forward;
@@ -258,6 +242,22 @@ public sealed class CameraEditor : Camera {
         if (Inputs.Actions[MoveDown].pressed) cameraPosDelta += -up;
         move();
 
+        void focusing () {
+            if (isFocusing) {
+                Vector3 camDelta = focusTargetCameraPos - CameraPos;
+                Vector3 orbitDelta = focusTargetOrbitCenterPos - cameraOrbitCenterPos;
+
+                float _t = MathF.Min(1f, _focusGlideSpeed*(float)Time.deltaTime);
+                cameraPos += camDelta*_t;
+                cameraOrbitCenterPos += orbitDelta*_t;
+
+                if (camDelta.LengthSquared() < _snapThreshold*_snapThreshold && orbitDelta.LengthSquared() < _snapThreshold*_snapThreshold) {
+                    cameraPos = focusTargetCameraPos;
+                    cameraOrbitCenterPos = focusTargetOrbitCenterPos;
+                    isFocusing = false;
+                }
+            }
+        }
         void move () {
             if (0.0001f < cameraPosDelta.LengthSquared()) {
                 Vector3 moveDirection = Vector3.Normalize(cameraPosDelta);

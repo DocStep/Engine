@@ -5,17 +5,80 @@ namespace Engine;
 
 public static class Mathf {
 
-
-
     public const float Rad2Deg = 180f/MathF.PI;
     public const float Deg2Rad = MathF.PI/180f;
+    public const float TAU = 6.2831855f;
 
 
-    public static Vector3 QuaternionToEuler (Quaternion q) {
+    public static Random random = new Random(25565);
+    public static float R () => (float)random.NextDouble();
+    public static int R (int max) => random.Next(0, max);
+    public static int R (int min, int max) => random.Next(min, max);
+    public static float R (float min, float max) => min + (float)random.NextDouble()*(max - min);
+
+
+    public static float Clamp (float value, float min, float max) {
+        if (value < min) return min;
+        if (value > max) return max;
+        return value;
+    }
+    public static float Lerp (float a, float b, float t) => a + (b - a)*t;
+
+    public static float Remap (float value, float startSrc, float endSrc, float startDst, float endDst) {
+        return startDst + (value - startSrc)*(endDst - startDst)/(endSrc - startSrc);
+    }
+    public static float Remap01 (float value, float start, float end) => (value - start)/(end - start);
+
+    public static float Saturate (float value) => value < 0 ? 0 : value;
+    public static int Saturate (int value) => value < 0 ? 0 : value;
+    public static float Saturate (float value, float edge) => value < edge ? edge : value;
+    public static float Saturate1 (float value) => value < 1 ? 1 : value;
+    public static float SaturateNegative (float value) => value < 0 ? value : 0;
+
+    public static int Sum (params int[] values) {
+        if (values == null || values.Length == 0) return 0;
+        int sum = 0;
+        foreach (int v in values) sum += v;
+        return sum;
+    }
+    public static float Sum (params float[] values) {
+        if (values == null || values.Length == 0) return 0f;
+        float sum = 0f;
+        foreach (float v in values) sum += v;
+        return sum;
+    }
+    public static float Avg (params float[] values) {
+        return values == null || values.Length == 0 ? 0 : Sum(values)/values.Length;
+    }
+
+    public static bool InRadius (float x, float y, float radius) => x*x + y*y <= radius*radius;
+    public static bool InRadiusStrict (float x, float y, float radius) => x*x + y*y < radius*radius;
+    public static bool InSquare (float x, float y, float radius) => -radius <= x && x <= radius && -radius <= y && y <= radius;
+    public static bool InSquareStrict (float x, float y, float radius) => -radius < x && x < radius && -radius < y && y < radius;
+
+    /// <summary> 0->0 = 1 | 0->1 = 1 | 1->0 = 0 | 1->1 = 1 </summary>
+    public static bool Implies (bool a, bool b) => !a || b;
+
+    //public static float Booly1 (this float f, bool b) => b ? f : 1;
+    //public static float Booly05 (this float f, bool b) => b ? f : 0.5f;
+    //public static float Booly0 (this float f, bool b) => b ? f : 0;
+
+
+    public static float easeInQuad (float x) => x*x;
+    public static float easeInCubic (float x) => x*x*x;
+    public static float easeInSine (float x) => 1 - MathF.Cos(0.5f*(x*MathF.PI));
+
+    public static float easeOutQuad (float x) => 1 - (1 - x)*(1 - x);
+    public static float easeOutCirc (float x) => MathF.Sqrt(1f - (x - 1f)*(x - 1f));
+
+    public static float easeInOutSine (float x) => x < 0.5f ? 4f*x*x*x : 1f - MathF.Pow(-2f*x + 2f, 3f)*0.5f;
+    public static float easeInOutCubic (float x) => x < 0.5f ? 4f*x*x*x : 1f - MathF.Pow(-2f*x + 2f, 3f)*0.5f;
+
+
+    public static Vector3 ToEuler (Quaternion q) {
         Matrix4x4 m = Matrix4x4.CreateFromQuaternion(q);
 
         float pitch = MathF.Asin(-m.M23);
-
         float yaw;
         float roll;
 
@@ -27,12 +90,12 @@ public static class Mathf {
             roll = 0;
         }
 
-        return new Vector3(
-            pitch*Rad2Deg,
-            yaw*Rad2Deg,
-            roll*Rad2Deg);
+        return new Vector3(pitch*Rad2Deg, yaw*Rad2Deg, roll*Rad2Deg);
     }
-    public static Quaternion DirectionToQRotation (Vector3 direction, Vector3 up = default) {
+    public static Quaternion ToQuaternion (Vector3 euler) {
+        return Quaternion.CreateFromYawPitchRoll(euler.Y*Deg2Rad, euler.X*Deg2Rad, euler.Z*Deg2Rad);
+    }
+    public static Quaternion ToRotationQ (Vector3 direction, Vector3 up = default) {
         direction = Vector3.Normalize(direction);
         if (up == default) up = Vector3.UnitY;
 
@@ -50,32 +113,6 @@ public static class Mathf {
             0f, 0f, 0f, 1f
         );
         return Quaternion.CreateFromRotationMatrix(m);
-    }
-
-    public static Quaternion EulerToQuaternion (Vector3 euler) {
-        return Quaternion.CreateFromYawPitchRoll(
-            euler.Y*Deg2Rad,
-            euler.X*Deg2Rad,
-            euler.Z*Deg2Rad);
-    }
-
-
-    public static JQuaternion EulerToJQuaternion (Vector3 rot) {
-        Vector3 rad = rot*(MathF.PI/180f);
-        JQuaternion qx = JQuaternion.CreateFromAxisAngle(JVector.UnitX, rad.X);
-        JQuaternion qy = JQuaternion.CreateFromAxisAngle(JVector.UnitY, rad.Y);
-        JQuaternion qz = JQuaternion.CreateFromAxisAngle(JVector.UnitZ, rad.Z);
-        return qx*qy*qz;
-    }
-
-
-
-
-
-    public static float Clamp (float value, float min, float max) {
-        if (value < min) return min;
-        if (value > max) return max;
-        return value;
     }
 
 
@@ -116,8 +153,6 @@ public static class Mathf {
         return rz * rx * ry;
     }
 
-    public static float Lerp (float a, float b, float t) => a + (b - a)*t;
-    
 
     /// Wraps an angle to [-pi, pi].
     public static float WrapAngle (float angle) {
@@ -133,22 +168,13 @@ public static class Mathf {
         return ((value - min)%range + range)%range + min;
     }
     public static Vector2 WrapVector2 (Vector2 v, float min, float max) {
-        return new Vector2(
-            Wrap(v.X, min, max),
-            Wrap(v.Y, min, max));
+        return new Vector2(Wrap(v.X, min, max), Wrap(v.Y, min, max));
     }
     public static Vector3 WrapVector3 (Vector3 v, float min, float max) {
-        return new Vector3(
-            Wrap(v.X, min, max),
-            Wrap(v.Y, min, max),
-            Wrap(v.Z, min, max));
+        return new Vector3( Wrap(v.X, min, max), Wrap(v.Y, min, max), Wrap(v.Z, min, max));
     }
     public static Vector4 WrapVector4 (Vector4 v, float min, float max) {
-        return new Vector4(
-            Wrap(v.X, min, max),
-            Wrap(v.Y, min, max),
-            Wrap(v.Z, min, max),
-            Wrap(v.W, min, max));
+        return new Vector4( Wrap(v.X, min, max), Wrap(v.Y, min, max), Wrap(v.Z, min, max), Wrap(v.W, min, max));
     }
 
 
@@ -180,16 +206,11 @@ public static class Mathf {
             );
         }
     }
-
-
-
-
     extension(Matrix4x4) {
         public static Matrix4x4 Position (float x, float y, float z) {
             return Matrix4x4.CreateTranslation(new Vector3(x, y, z));
         }
     }
-
     extension(Matrix4x4) {
         public static Matrix4x4 RotationEuler (float x, float y, float z) {
             Quaternion q = Quaternion.CreateFromYawPitchRoll(y*Mathf.Deg2Rad, x*Mathf.Deg2Rad, z*Mathf.Deg2Rad);
@@ -203,7 +224,6 @@ public static class Mathf {
             return Matrix4x4.CreateFromQuaternion(q);
         }
     }
-
     extension(Matrix4x4) {
         public static Matrix4x4 RotationFromDirection (Vector3 direction, Vector3 up = default) {
             if (up == default) up = Vector3.UnitY;
@@ -224,7 +244,6 @@ public static class Mathf {
             );
         }
     }
-
     extension(Vector3) {
         public static Vector3 DirectionToEuler (Vector3 dir) {
             dir = Vector3.Normalize(dir);

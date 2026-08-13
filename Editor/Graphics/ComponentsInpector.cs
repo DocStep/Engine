@@ -7,16 +7,19 @@ public static class ComponentsInpector {
 
     extension(Component component) {
         public void DrawInspector () {
+            bool temp_b = component.Enabled;
+            if (ImGui.Checkbox("##" + nameof(component.Enabled), ref temp_b)) {
+                component.Enabled = temp_b;
+            }
             Graphics.EditorUI.DrawObject(component);
         }
     }
 
-    /*extension(Engine.Graphics.MeshComponent component) {
+    extension(Transform component) {
         public void DrawInspector () {
-            Graphics.EditorUI.DrawField("Mesh", component.mesh?.Name, isReadonly: true);
-            Graphics.EditorUI.DrawField("Shader", component.material?.shader.Name, isReadonly: true);
+            Graphics.EditorUI.DrawObject(component);
         }
-    }*/
+    }
 
     extension(PhysicsComponent component) {
         public void DrawInspector () {
@@ -31,13 +34,6 @@ public static class ComponentsInpector {
             Graphics.EditorUI.DrawField("InvInertia", invInertia, isReadonly: true);
         }
     }
-
-
-    /*extension (Transform comp) {
-        public void DrawInspector () {
-            Graphics.EditorUI.DrawObject(comp);
-        }
-    }*/
 
 
 }

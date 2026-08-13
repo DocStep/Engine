@@ -145,30 +145,30 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         GameObject? selectedGO = Gizmos._gizmo_Selected.selectedMeshComp?.owner;
         if (selectedGO is not null) {
-            ImGui.Text("Selected:");
-            ImGui.InputText("Name", ref selectedGO.Name, int.MaxValue);
+            bool temp_b = selectedGO.Enabled;
+            if (ImGui.Checkbox("##" + nameof(selectedGO.Enabled), ref temp_b)) selectedGO.Enabled = temp_b;
+            ImGui.SameLine();
+            ImGui.InputText(nameof(selectedGO.Name), ref selectedGO.Name, int.MaxValue);
 
-            ImGui.PushID("Transform");
-            if (ImGui.CollapsingHeader("Transform", ImGuiTreeNodeFlags.DefaultOpen)) {
-                selectedGO.Transform.DrawInspector();
-            }
-            ImGui.PopID();
+            DrawComponent(selectedGO.Transform);
 
             for (int c = 0; c < selectedGO.Components.Count; c++) {
-                Component comp = selectedGO.Components[c];
-                ImGui.PushID(comp.GetHashCode());
-                if (ImGui.CollapsingHeader(comp.Name, ImGuiTreeNodeFlags.DefaultOpen)) {
-                    if (_drawers.TryGetValue(comp.GetType(), out var draw)) {
-                        draw(comp);
-                    } else {
-                        comp.DrawInspector();
-                    }
-                }
-                ImGui.PopID();
+                DrawComponent(selectedGO.Components[c]);
             }
         }
 
         ImGui.End();
+    }
+    public void DrawComponent (Component component) {
+        ImGui.PushID(component.GetHashCode());
+        if (ImGui.CollapsingHeader(component.Name, ImGuiTreeNodeFlags.DefaultOpen)) {
+            if (_drawers.TryGetValue(component.GetType(), out var componentDrawer)) {
+                componentDrawer(component);
+            } else {
+                component.DrawInspector();
+            }
+        }
+        ImGui.PopID();
     }
 
     private void DrawEngineInfo (uint dockspaceId) {
@@ -194,18 +194,23 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     }
 
 
-    public static void DrawObject (object target) {
+    public static void DrawObject (object target, bool useCollumns = true) {
         ImGui.PushID(target.GetHashCode());
 
         if (drawInverted) {
-            if (ImGui.BeginTable("##inspectorTable", 2, ImGuiTableFlags.Resizable | ImGuiTableFlags.NoSavedSettings)) {
-                ImGui.TableSetupColumn("Label", ImGuiTableColumnFlags.WidthStretch, 0.4f);
-                ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch);
+            if (useCollumns) {
+                if (ImGui.BeginTable("##inspectorTable", 2, ImGuiTableFlags.Resizable | ImGuiTableFlags.NoSavedSettings)) {
+                    ImGui.TableSetupColumn("Label", ImGuiTableColumnFlags.WidthStretch, 0.4f);
+                    ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch);
 
+                    foreach (MemberInfo member in GetMembersInOrder(target.GetType()))
+                        DrawMember(target, member);
+
+                    ImGui.EndTable();
+                }
+            } else {
                 foreach (MemberInfo member in GetMembersInOrder(target.GetType()))
                     DrawMember(target, member);
-
-                ImGui.EndTable();
             }
         } else {
             foreach (MemberInfo member in GetMembersInOrder(target.GetType()))
@@ -386,7 +391,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 break;
             case Material mat:
                 if (ImGui.TreeNodeEx(id, ImGuiTreeNodeFlags.DefaultOpen, label)) {
-                    DrawObject(mat);
+                    DrawObject(mat, useCollumns: false);
                     ImGui.TreePop();
                 }
                 break;

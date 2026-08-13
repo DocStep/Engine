@@ -11,6 +11,10 @@ public class ComponentManager : Singleton<ComponentManager> {
     public int componentsCount => components.Count;
     public Dictionary<Type, List<Component>> Components => components;
 
+    private readonly List<IComponentAwake> componentsAwake = new List<IComponentAwake>();
+    private readonly List<IComponentAwake> _componentsAwake = new List<IComponentAwake>();
+    private readonly List<IComponentStart> componentsStart = new List<IComponentStart>();
+    private readonly List<IComponentStart> _componentsStart = new List<IComponentStart>();
     private readonly List<IComponentUpdate> componentsUpdate = new List<IComponentUpdate>();
     private readonly List<IComponentUpdate> componentsUpdateAtFreeze = new List<IComponentUpdate>();
     private readonly List<IComponentFixedUpdate> componentsFixedUpdate = new List<IComponentFixedUpdate>();
@@ -31,7 +35,28 @@ public class ComponentManager : Singleton<ComponentManager> {
     }
 
     public void Update () {
-        for (int c = 0; c < componentsUpdate.Count; c++) {
+        int count;
+
+        _componentsAwake.AddRange(componentsAwake);
+        componentsAwake.Clear();
+        count = _componentsAwake.Count;
+        for (int c = 0; c < count; c++) {
+            if (!_componentsAwake[c].Enabled) continue;
+            _componentsAwake[c].Awake();
+        }
+        _componentsAwake.Clear();
+
+        _componentsStart.AddRange(componentsStart);
+        componentsStart.Clear();
+        count = _componentsStart.Count;
+        for (int c = 0; c < count; c++) {
+            if (!_componentsStart[c].Enabled) continue;
+            _componentsStart[c].Start();
+        }
+        _componentsStart.Clear();
+
+        count = componentsUpdate.Count;
+        for (int c = 0; c < count; c++) {
             if (!componentsUpdate[c].Enabled) continue;
             componentsUpdate[c].Update();
         }
@@ -60,7 +85,12 @@ public class ComponentManager : Singleton<ComponentManager> {
             throw new Exception(message);
         }
 
-
+        if (component is IComponentAwake iComponentAwake) {
+            componentsAwake.Add(iComponentAwake);
+        }
+        if (component is IComponentStart iComponentStart) {
+            componentsStart.Add(iComponentStart);
+        }
         if (component is IComponentUpdate iComponentUpdate) {
             componentsUpdate.Add(iComponentUpdate);
 
@@ -86,6 +116,9 @@ public class ComponentManager : Singleton<ComponentManager> {
             throw new Exception(message);
         }
 
+        if (component is IComponentStart iComponentStart) {
+            componentsStart.Remove(iComponentStart);
+        }
         if (component is IComponentUpdate iComponentUpdate) {
             componentsUpdate.Remove(iComponentUpdate);
 
@@ -96,6 +129,7 @@ public class ComponentManager : Singleton<ComponentManager> {
         if (component is IComponentFixedUpdate iComponentFixedUpdate) {
             componentsFixedUpdate.Remove(iComponentFixedUpdate);
         }
+        
 
         component.OnRemove();
         //Log.log("ComponentManager.ComponentUnregister", component);
