@@ -148,7 +148,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             bool temp_b = selectedGO.Enabled;
             if (ImGui.Checkbox("##" + nameof(selectedGO.Enabled), ref temp_b)) selectedGO.Enabled = temp_b;
             ImGui.SameLine();
-            ImGui.InputText(nameof(selectedGO.Name), ref selectedGO.Name, int.MaxValue);
+            ImGui.InputText(nameof(selectedGO.Name), ref selectedGO.Name, 256);
 
             DrawComponent(selectedGO.Transform);
 
@@ -199,7 +199,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         if (drawInverted) {
             if (useCollumns) {
-                if (ImGui.BeginTable("##inspectorTable", 2, ImGuiTableFlags.Resizable | ImGuiTableFlags.NoSavedSettings)) {
+                if (ImGui.BeginTable("##InspectorTable", 2, ImGuiTableFlags.Resizable | ImGuiTableFlags.NoSavedSettings)) {
                     ImGui.TableSetupColumn("Label", ImGuiTableColumnFlags.WidthStretch, 0.4f);
                     ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch);
 
