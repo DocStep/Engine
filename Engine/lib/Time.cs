@@ -64,5 +64,6 @@ public static class Time {
         internal set => _fixedDeltaTime = value;
     }
 
+    public static int FPS => (int)(0 < Windows.Window.FramesPerSecond ? Windows.Window.FramesPerSecond : (int)(1/Time.deltaTime));
 
 }

@@ -21,10 +21,12 @@ public class GizmoSelected : IDisposable {
     public void UpdateSelectedMesh (MeshComponent? selectedMeshComp) {
         mesh_selectedLast = selectedMeshComp?.mesh;
         this.selectedMeshComp = selectedMeshComp;
-        if (this.selectedMeshComp?.mesh?.Data is not null) 
+        if (this.selectedMeshComp?.mesh?.Data is not null)
             mesh_outlined = SelectedOutlineNewMesh(this.selectedMeshComp.mesh.Data);
     }
     private Mesh mesh_outlined = null!;
+    public bool isInteracting => selectedPositionMode != SelectedPositionGizmoMode.None
+        || selectedPositionOverMode != SelectedPositionGizmoMode.None;
 
 
     public SelectedGizmoMode selectedGizmoMode = SelectedGizmoMode.Position;
@@ -314,16 +316,18 @@ public class GizmoSelected : IDisposable {
     private void DrawGizmo () {
         if (selectedMeshComp is null) return;
 
-        GL.Disable(EnableCap.CullFace);
-        GL.Disable(EnableCap.DepthTest);
-        GL.Enable(EnableCap.Blend);
-
         Transform tr_obj = selectedMeshComp.owner.Transform;
-        Vector3 camPos = Camera.Current.CameraPos;
+        Matrix4x4.Invert(Renderer.Instance.m4x4_View, out Matrix4x4 invView);
+        Vector3 camPos = invView.Translation;
         Vector3 _objPos = tr_obj.Position;
         Vector3 _objRot = tr_obj.RotationEuler;
         float _dist = Vector3.Distance(camPos, _objPos);
         bool isColorSelected;
+
+
+        GL.Disable(EnableCap.CullFace);
+        GL.Disable(EnableCap.DepthTest);
+        GL.Enable(EnableCap.Blend);
 
         Shader _sh_Unlit = AssetsEngine._sh_Unlit;
         _sh_Unlit.Use();
@@ -345,7 +349,6 @@ public class GizmoSelected : IDisposable {
             _sh_Unlit.SetFloat(Alpha, 0.5f);
             AssetsEngine._mesh_PlaneQuad.Draw();
         }
-
 
         /// Axes
         Matrix4x4 gizmoBasis = BasisToWorld(gizmoRight, gizmoUp, gizmoForward);
@@ -406,7 +409,8 @@ public class GizmoSelected : IDisposable {
             GL.StencilMask(0x00);
             GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
 
-            float dist = Vector3.Distance(Camera.Current.CameraPos, renderInfo.pos);
+            Matrix4x4.Invert(RendererEditor.Instance.m4x4_View, out Matrix4x4 invView);
+            float dist = Vector3.Distance(invView.Translation, renderInfo.pos);
 
             Matrix4x4 model = Matrix4x4.CreateScale(renderInfo.scale)
                 *Matrix4x4.CreateFromQuaternion(renderInfo.rot)*Matrix4x4.CreateTranslation(renderInfo.pos);
@@ -420,14 +424,14 @@ public class GizmoSelected : IDisposable {
             _sh_Outline.SetFloat(Alpha, 1f);
             mesh_outlined.Draw();
         } finally {
+            GL.CullFace(TriangleFace.Back);
+
             GL.ColorMask(true, true, true, true);
 
             GL.DepthMask(true);
             GL.DepthFunc(DepthFunction.Less);
 
             GL.StencilMask(0xFF);
-
-            GL.CullFace(TriangleFace.Back);
 
             GL.Disable(EnableCap.StencilTest);
         }

@@ -220,7 +220,8 @@ public sealed class CameraEditor : Camera {
         /// Select
         if (!EditorUI.Instance.isUIClick) {
             if (GetRayMouse(out Ray ray)) {
-                if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed) {
+                if (Inputs.Actions[LMB].pressedDown && !Inputs.Actions[Alt].pressed && !Inputs.Actions[RMB].pressed
+                    && !Gizmos._gizmo_Selected.isInteracting) {
                     Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray, out MeshComponent? hitMeshComp, out Vector3 hitPos, out Vector3 hitNormal);
                     if (hitMeshComp is not null) {
                         Gizmos._gizmo_Selected.UpdateSelectedMesh(hitMeshComp);

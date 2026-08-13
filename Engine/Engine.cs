@@ -179,7 +179,8 @@ public class Engine : IDisposable {
 
     void f3log () {
         Graphics.UI.TextRenderer.AddText($"Time: {Time.time:F2}");
-        Graphics.UI.TextRenderer.AddText($"FPS: {(int)(1/Time.deltaTime)}");
+        //Graphics.UI.TextRenderer.AddText($"FPS: {(int)(1/Time.deltaTime)}");
+        Graphics.UI.TextRenderer.AddText($"FPS: {Time.FPS}");
         Graphics.UI.TextRenderer.AddText($"ms: {Time.deltaTime*1000:F3}");
         Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.Instance.componentsCount}");
         Graphics.UI.TextRenderer.AddText($"SceneSize: {Graphics.Renderer.Instance.Stats.SceneSize}");
@@ -197,7 +198,7 @@ public class Engine : IDisposable {
     }*/
 
     private void OnClosing () {
-
+        Console.ResetColor();
     }
 
     public void Dispose () {

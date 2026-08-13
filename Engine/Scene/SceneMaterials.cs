@@ -15,7 +15,7 @@ public class SceneMaterials : Scene {
         GameObject cam = new GameObject() { Name = "Camera", };
         cam.Transform.Position = new Vector3(-2, 3, -10);
         Camera camera = cam.AddComponent<Camera>();
-        camera.priority = 0;
+        //camera.priority = 0;
 
         /// Reflection
         x = 0;
