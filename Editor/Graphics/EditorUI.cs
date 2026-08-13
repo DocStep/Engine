@@ -161,6 +161,11 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     }
     public void DrawComponent (Component component) {
         ImGui.PushID(component.GetHashCode());
+        bool enabled = component.Enabled;
+        if (ImGui.Checkbox("##" + nameof(component.Enabled), ref enabled)) {
+            component.Enabled = enabled;
+        }
+        ImGui.SameLine();
         if (ImGui.CollapsingHeader(component.Name, ImGuiTreeNodeFlags.DefaultOpen)) {
             if (_drawers.TryGetValue(component.GetType(), out var componentDrawer)) {
                 componentDrawer(component);

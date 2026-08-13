@@ -7,16 +7,6 @@ public static class ComponentsInpector {
 
     extension(Component component) {
         public void DrawInspector () {
-            bool temp_b = component.Enabled;
-            if (ImGui.Checkbox("##" + nameof(component.Enabled), ref temp_b)) {
-                component.Enabled = temp_b;
-            }
-            Graphics.EditorUI.DrawObject(component);
-        }
-    }
-
-    extension(Transform component) {
-        public void DrawInspector () {
             Graphics.EditorUI.DrawObject(component);
         }
     }
