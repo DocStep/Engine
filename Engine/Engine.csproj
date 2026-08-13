@@ -39,7 +39,9 @@
 
 
 	<ItemGroup>
-	  <Folder Include="Editor\" />
+	  <Compile Remove="Editor\**" />
+	  <EmbeddedResource Remove="Editor\**" />
+	  <None Remove="Editor\**" />
 	</ItemGroup>
 
 </Project>

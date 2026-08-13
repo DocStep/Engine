@@ -20,6 +20,8 @@ public static class ComponentsInpector {
 
     extension(PhysicsComponent component) {
         public void DrawInspector () {
+            ((Component)component).DrawInspector();
+
             Graphics.EditorUI.DrawField("Mode", component.Rigidbody.Kinematic ? "Kinematic" : "Dynamic", isReadonly: true);
             Graphics.EditorUI.DrawField("Velocity", component.Rigidbody.Velocity.Linear, isReadonly: true);
             Graphics.EditorUI.DrawField("Angular Velocity", component.Rigidbody.Velocity.Angular, isReadonly: true);

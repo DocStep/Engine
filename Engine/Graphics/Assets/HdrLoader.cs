@@ -6,23 +6,21 @@
 /// ready to upload as a GL texture; no cubemap conversion happens here,
 /// the image stays equirectangular.
 public static class HdrLoader {
-    public static (float[] Data, int Width, int Height) Load (string path) {
+    public static void Load (string path, out float[] Data, out int Width, out int Height) {
         using FileStream stream = File.OpenRead(path);
 
-        int width = 0, height = 0;
-        ReadHeader(stream, out width, out height);
+        Width = Height = 0;
+        ReadHeader(stream, out Width, out Height);
 
-        float[] data = new float[width*height*3];
+        Data = new float[Width*Height*3];
 
-        for (int y = 0; y < height; y++) {
-            float[] scanline = ReadScanline(stream, width);
+        for (int y = 0; y < Height; y++) {
+            float[] scanline = ReadScanline(stream, Width);
             /// HDR scanlines are stored top-to-bottom; flip to match standard
             /// bottom-left-origin GL texture coordinates.
-            int destRow = height - 1 - y;
-            Array.Copy(scanline, 0, data, destRow*width*3, width*3);
+            int destRow = Height - 1 - y;
+            Array.Copy(scanline, 0, Data, destRow*Width*3, Width*3);
         }
-
-        return (data, width, height);
     }
 
     private static void ReadHeader (Stream stream, out int width, out int height) {

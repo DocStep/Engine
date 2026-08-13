@@ -28,10 +28,10 @@ public class Material /*: IDisposable*/ {
 
     [Hide] public Shader shader = null!;
 
-    public readonly Dictionary<string, int> ints = new();
-    public readonly Dictionary<string, float> floats = new(); 
-    public readonly Dictionary<string, Vector2> vectors2 = new();
-    public readonly Dictionary<string, Vector3> vectors3 = new();
+    [Raw] public readonly Dictionary<string, int> ints = new();
+    [Raw] public readonly Dictionary<string, float> floats = new(); 
+    [Raw] public readonly Dictionary<string, Vector2> vectors2 = new();
+    [Raw] public readonly Dictionary<string, Vector3> vectors3 = new();
     ///private readonly Silk.NET.OpenGL.Texture?[] textures = new Silk.NET.OpenGL.Texture?[4];
 
     /// Render State

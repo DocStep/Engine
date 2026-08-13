@@ -50,6 +50,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     private bool _dockBuilt = false;
     private bool _isClosing = false;
 
+    public const bool drawInverted = true;
     public const float valueStep = 0.01f;
 
 
@@ -195,34 +196,38 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
     public static void DrawObject (object target) {
         ImGui.PushID(target.GetHashCode());
-        if (ImGui.BeginTable("##inspectorTable", 2, ImGuiTableFlags.Resizable)) {
-            ImGui.TableSetupColumn("Label", ImGuiTableColumnFlags.WidthStretch, 0.4f);
-            ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch);
 
-            foreach (MemberInfo member in GetMembersInOrder(target.GetType())) {
-                object? value = member switch {
-                    FieldInfo f => f.GetValue(target),
-                    PropertyInfo p when p.CanRead => p.GetValue(target),
-                    _ => null,
-                };
+        if (drawInverted) {
+            if (ImGui.BeginTable("##inspectorTable", 2, ImGuiTableFlags.Resizable | ImGuiTableFlags.NoSavedSettings)) {
+                ImGui.TableSetupColumn("Label", ImGuiTableColumnFlags.WidthStretch, 0.4f);
+                ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch);
 
-                object? drawn = DrawField(member, value);
-                if (drawn is null) continue;
+                foreach (MemberInfo member in GetMembersInOrder(target.GetType()))
+                    DrawMember(target, member);
 
-                switch (member) {
-                    case FieldInfo f:
-                        f.SetValue(target, drawn);
-                        break;
-
-                    case PropertyInfo p when p.CanWrite:
-                        p.SetValue(target, drawn);
-                        break;
-                }
+                ImGui.EndTable();
             }
-
-            ImGui.EndTable();
+        } else {
+            foreach (MemberInfo member in GetMembersInOrder(target.GetType()))
+                DrawMember(target, member);
         }
+
         ImGui.PopID();
+    }
+    private static void DrawMember (object target, MemberInfo member) {
+        object? value = member switch {
+            FieldInfo f => f.GetValue(target),
+            PropertyInfo p when p.CanRead => p.GetValue(target),
+            _ => null,
+        };
+
+        object? drawn = DrawField(member, value);
+        if (drawn is null) return;
+
+        switch (member) {
+            case FieldInfo f: f.SetValue(target, drawn); break;
+            case PropertyInfo p when p.CanWrite: p.SetValue(target, drawn); break;
+        }
     }
 
     public static IEnumerable<MemberInfo> GetMembersInOrder (Type type) {
@@ -273,24 +278,32 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ChangeStep? changeSpeed = member.GetCustomAttribute<ChangeStep>();
         if (changeSpeed is not null) step = changeSpeed.Step;
 
-        return DrawField(label, value, isReadonly, step);
+        bool isRaw = false;
+        if (member.GetCustomAttribute<Raw>() is not null) isRaw = true;
+
+        return DrawField(label, value, isReadonly: isReadonly, step: step, isRaw: isRaw);
     }
 
     /// Core widget drawer, callable directly without reflection.
     /// Must be called while a 2-column ImGui table is open (see DrawObject).
-    public static object? DrawField (string label, object? value, bool isReadonly = false, float step = valueStep) {
+    public static object? DrawField (string label, object? value, bool isReadonly = false, 
+        float step = valueStep, bool isRaw = false) {
         object? result = null;
 
         if (isReadonly) ImGui.BeginDisabled(true);
 
-        ImGui.TableNextRow();
-        ImGui.TableSetColumnIndex(0);
-        ImGui.AlignTextToFramePadding();
-        ImGui.Text(label);
-        ImGui.TableSetColumnIndex(1);
-        ImGui.SetNextItemWidth(-1);
+        bool isRawCollection = isRaw && value is IDictionary;
 
-        string id = "##" + label;
+        string id = label;
+        if (drawInverted && !isRawCollection) {
+            ImGui.TableNextRow();
+            ImGui.TableSetColumnIndex(0);
+            ImGui.AlignTextToFramePadding();
+            ImGui.Text(label);
+            ImGui.TableSetColumnIndex(1);
+            ImGui.SetNextItemWidth(-1);
+            id = "##" + label;
+        }
 
         switch (value) {
             case int i:
@@ -317,11 +330,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 Array values = Enum.GetValues(e.GetType());
                 string[] names = Enum.GetNames(e.GetType());
                 int current = Array.IndexOf(values, e);
-                if (ImGui.Combo(id, ref current, names, names.Length)) {
-                    result = values.GetValue(current);
-                }
+                if (ImGui.Combo(id, ref current, names, names.Length)) result = values.GetValue(current);
                 break;
-
             case Guid g:
                 string temp_s = g.ToString();
                 if (ImGui.InputText(id, ref temp_s, 256)) result = temp_s;
@@ -334,18 +344,32 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 break;
             case Quaternion q:
                 Vector4 temp_v4 = new Vector4(q.X, q.Y, q.Z, q.W);
-                if (ImGui.DragFloat4(id, ref temp_v4, step, 0, 0, "%.2f")) result = new Quaternion(temp_v4.X, temp_v4.Y, temp_v4.Z, temp_v4.W);
+                if (ImGui.DragFloat4(id, ref temp_v4, step, 0, 0, "%.2f"))
+                    result = new Quaternion(temp_v4.X, temp_v4.Y, temp_v4.Z, temp_v4.W);
                 break;
-
             case IDictionary dict:
-                if (ImGui.TreeNodeEx(id, ImGuiTreeNodeFlags.DefaultOpen, label)) {
+                if (isRaw) {
                     foreach (object key in dict.Keys) {
                         object? entryValue = dict[key];
-                        object? drawn = DrawField(key.ToString()!, entryValue, isReadonly, step);
+                        object? drawn = DrawField(key.ToString()!, entryValue, isReadonly: isReadonly, step: step, isRaw: isRaw);
                         if (drawn is not null) dict[key] = drawn;
                     }
-                    ImGui.TreePop();
+                } else {
+                    if (ImGui.TreeNodeEx(id, ImGuiTreeNodeFlags.DefaultOpen, label)) {
+                        foreach (object key in dict.Keys) {
+                            object? entryValue = dict[key];
+                            object? drawn = DrawField(key.ToString()!, entryValue, isReadonly: isReadonly, step: step, isRaw: isRaw);
+                            if (drawn is not null) dict[key] = drawn;
+                        }
+                        ImGui.TreePop();
+                    }
                 }
+                break;
+
+            case object o when o.GetType().IsGenericType && o.GetType().GetGenericTypeDefinition() == typeof(KeyValuePair<,>):
+                object kvpKey = o.GetType().GetProperty("Key")!.GetValue(o)!;
+                object? kvpVal = o.GetType().GetProperty("Value")!.GetValue(o);
+                result = DrawField(kvpKey.ToString()!, kvpVal, isReadonly: isReadonly, step: step, isRaw: isRaw);
                 break;
 
             case GameObject go:
@@ -370,14 +394,12 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 temp_s = mesh.Name;
                 if (ImGui.InputText(id, ref temp_s, 256)) result = temp_s;
                 break;
-
             case null:
                 ImGui.BeginDisabled();
                 string nullLabel = "null";
                 ImGui.InputText(id, ref nullLabel, 256);
                 ImGui.EndDisabled();
                 break;
-
             default:
                 ImGui.TextDisabled($"[fallback] {value}");
                 break;
