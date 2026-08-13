@@ -16,7 +16,7 @@ public enum PrimitiveTypes {
 }
 
 
-public class GameObject : ISavable {
+public class GameObject : ISavable, IDisposable {
     public GameObject() {
         Id = lib.Id;
         Transform.owner = this;
@@ -142,6 +142,11 @@ public class GameObject : ISavable {
     }
 
     public void PostLoad () {
+        
+    }
+
+
+    public void Dispose () {
         
     }
 

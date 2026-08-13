@@ -147,20 +147,21 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             ImGui.Text("Selected:");
             ImGui.InputText("Name", ref selectedGO.Name, int.MaxValue);
 
-            ImGui.Text("Transform");
-            //ImGui.PushID(selectedGO.Transform.GetHashCode());
-            selectedGO.Transform.DrawInspector();
+            ImGui.PushID("Transform");
+            if (ImGui.CollapsingHeader("Transform", ImGuiTreeNodeFlags.DefaultOpen)) {
+                selectedGO.Transform.DrawInspector();
+            }
             ImGui.PopID();
 
             for (int c = 0; c < selectedGO.Components.Count; c++) {
-                ImGui.Text(selectedGO.Components[c].Name);
-                ImGui.PushID(selectedGO.Components[c].GetHashCode());
-                //selectedGO.Components[c].DrawInspector();
                 Component comp = selectedGO.Components[c];
-                if (_drawers.TryGetValue(comp.GetType(), out var draw)) {
-                    draw(comp);
-                } else {
-                    comp.DrawInspector(); // fallback to base Component extension
+                ImGui.PushID(comp.GetHashCode());
+                if (ImGui.CollapsingHeader(comp.Name, ImGuiTreeNodeFlags.DefaultOpen)) {
+                    if (_drawers.TryGetValue(comp.GetType(), out var draw)) {
+                        draw(comp);
+                    } else {
+                        comp.DrawInspector();
+                    }
                 }
                 ImGui.PopID();
             }
@@ -193,27 +194,37 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
 
     public static void DrawObject (object target) {
-        foreach (MemberInfo member in GetMembersInOrder(target.GetType())) {
-            object? value = member switch {
-                FieldInfo f => f.GetValue(target),
-                PropertyInfo p when p.CanRead => p.GetValue(target),
-                _ => null,
-            };
+        ImGui.PushID(target.GetHashCode());
+        if (ImGui.BeginTable("##inspectorTable", 2, ImGuiTableFlags.Resizable)) {
+            ImGui.TableSetupColumn("Label", ImGuiTableColumnFlags.WidthStretch, 0.4f);
+            ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch);
 
-            object? drawn = DrawField(member, value);
-            if (drawn is null) continue;
+            foreach (MemberInfo member in GetMembersInOrder(target.GetType())) {
+                object? value = member switch {
+                    FieldInfo f => f.GetValue(target),
+                    PropertyInfo p when p.CanRead => p.GetValue(target),
+                    _ => null,
+                };
 
-            switch (member) {
-                case FieldInfo f:
-                    f.SetValue(target, drawn);
-                    break;
+                object? drawn = DrawField(member, value);
+                if (drawn is null) continue;
 
-                case PropertyInfo p when p.CanWrite:
-                    p.SetValue(target, drawn);
-                    break;
+                switch (member) {
+                    case FieldInfo f:
+                        f.SetValue(target, drawn);
+                        break;
+
+                    case PropertyInfo p when p.CanWrite:
+                        p.SetValue(target, drawn);
+                        break;
+                }
             }
+
+            ImGui.EndTable();
         }
+        ImGui.PopID();
     }
+
     public static IEnumerable<MemberInfo> GetMembersInOrder (Type type) {
         List<MemberInfo> result = new();
         List<Type> types = new();
@@ -262,75 +273,114 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ChangeStep? changeSpeed = member.GetCustomAttribute<ChangeStep>();
         if (changeSpeed is not null) step = changeSpeed.Step;
 
-
-
         return DrawField(label, value, isReadonly, step);
     }
 
-    /// Core widget drawer, callable directly without reflection
+    /// Core widget drawer, callable directly without reflection.
+    /// Must be called while a 2-column ImGui table is open (see DrawObject).
     public static object? DrawField (string label, object? value, bool isReadonly = false, float step = valueStep) {
         object? result = null;
 
         if (isReadonly) ImGui.BeginDisabled(true);
 
+        ImGui.TableNextRow();
+        ImGui.TableSetColumnIndex(0);
+        ImGui.AlignTextToFramePadding();
+        ImGui.Text(label);
+        ImGui.TableSetColumnIndex(1);
+        ImGui.SetNextItemWidth(-1);
+
+        string id = "##" + label;
+
         switch (value) {
             case int i:
-                if (ImGui.DragInt(label, ref i)) result = i;
+                if (ImGui.DragInt(id, ref i)) result = i;
                 break;
             case long l:
                 int temp_i = (int)l;
-                if (ImGui.DragInt(label, ref temp_i)) result = (long)temp_i;
+                if (ImGui.DragInt(id, ref temp_i)) result = (long)temp_i;
                 break;
             case float f:
-                if (ImGui.DragFloat(label, ref f, step, 0, 0, "%.2f")) result = f;
+                if (ImGui.DragFloat(id, ref f, step, 0, 0, "%.2f")) result = f;
                 break;
             case double d:
                 float temp_f = (float)d;
-                if (ImGui.DragFloat(label, ref temp_f, step, 0, 0, "%.2f")) result = (double)temp_f;
+                if (ImGui.DragFloat(id, ref temp_f, step, 0, 0, "%.2f")) result = (double)temp_f;
                 break;
             case bool b:
-                if (ImGui.Checkbox(label, ref b)) result = b;
+                if (ImGui.Checkbox(id, ref b)) result = b;
                 break;
             case string s:
-                if (ImGui.InputText(label, ref s, 256)) result = s;
+                if (ImGui.InputText(id, ref s, 256)) result = s;
                 break;
+            case Enum e:
+                Array values = Enum.GetValues(e.GetType());
+                string[] names = Enum.GetNames(e.GetType());
+                int current = Array.IndexOf(values, e);
+                if (ImGui.Combo(id, ref current, names, names.Length)) {
+                    result = values.GetValue(current);
+                }
+                break;
+
             case Guid g:
                 string temp_s = g.ToString();
-                if (ImGui.InputText(label, ref temp_s, 256)) result = temp_s;
+                if (ImGui.InputText(id, ref temp_s, 256)) result = temp_s;
                 break;
             case Vector2 v2:
-                if (ImGui.DragFloat2(label, ref v2, step, 0, 0, "%.2f")) result = v2;
+                if (ImGui.DragFloat2(id, ref v2, step, 0, 0, "%.2f")) result = v2;
                 break;
             case Vector3 v3:
-                if (ImGui.DragFloat3(label, ref v3, step, 0, 0, "%.2f")) result = v3;
+                if (ImGui.DragFloat3(id, ref v3, step, 0, 0, "%.2f")) result = v3;
                 break;
             case Quaternion q:
                 Vector4 temp_v4 = new Vector4(q.X, q.Y, q.Z, q.W);
-                if (ImGui.DragFloat4(label, ref temp_v4, step, 0, 0, "%.2f")) result = new Quaternion(temp_v4.X, temp_v4.Y, temp_v4.Z, temp_v4.W);
+                if (ImGui.DragFloat4(id, ref temp_v4, step, 0, 0, "%.2f")) result = new Quaternion(temp_v4.X, temp_v4.Y, temp_v4.Z, temp_v4.W);
                 break;
+
+            case IDictionary dict:
+                if (ImGui.TreeNodeEx(id, ImGuiTreeNodeFlags.DefaultOpen, label)) {
+                    foreach (object key in dict.Keys) {
+                        object? entryValue = dict[key];
+                        object? drawn = DrawField(key.ToString()!, entryValue, isReadonly, step);
+                        if (drawn is not null) dict[key] = drawn;
+                    }
+                    ImGui.TreePop();
+                }
+                break;
+
             case GameObject go:
                 ImGui.BeginDisabled();
                 temp_s = go.Name;
-                if (ImGui.InputText(label, ref temp_s, 256)) result = temp_s;
+                if (ImGui.InputText(id, ref temp_s, 256)) result = temp_s;
                 ImGui.EndDisabled();
                 break;
             case Transform tr:
                 ImGui.BeginDisabled();
                 temp_s = tr.parent is not null ? tr.parent.Name : "null";
-                Log.log(temp_s);
-                if (ImGui.InputText(label, ref temp_s, 256)) result = temp_s;
+                if (ImGui.InputText(id, ref temp_s, 256)) result = temp_s;
                 ImGui.EndDisabled();
                 break;
+            case Material mat:
+                if (ImGui.TreeNodeEx(id, ImGuiTreeNodeFlags.DefaultOpen, label)) {
+                    DrawObject(mat);
+                    ImGui.TreePop();
+                }
+                break;
+            case Mesh mesh:
+                temp_s = mesh.Name;
+                if (ImGui.InputText(id, ref temp_s, 256)) result = temp_s;
+                break;
+
             case null:
                 ImGui.BeginDisabled();
                 string nullLabel = "null";
-                ImGui.InputText(label, ref nullLabel, 256);
+                ImGui.InputText(id, ref nullLabel, 256);
                 ImGui.EndDisabled();
                 break;
 
-                //default:
-                //    ImGui.TextDisabled($"{label}: {value}");
-                //    break;
+            default:
+                ImGui.TextDisabled($"[fallback] {value}");
+                break;
         }
 
         if (isReadonly) ImGui.EndDisabled();

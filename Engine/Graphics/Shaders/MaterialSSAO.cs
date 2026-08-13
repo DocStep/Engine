@@ -10,7 +10,7 @@ public class MaterialSSAO : Material {
     public float radius = 0.3f;
     public float bias = 0.02f;
     public float strength = 0.6f;
-    public float falloffPower = 5.0f;
+    public float falloffPower = 10.0f;
 
     public const string TexelSize = "uTexelSize";
     public const string Radius = "uRadius";

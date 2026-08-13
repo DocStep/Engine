@@ -11,12 +11,12 @@ public static class ComponentsInpector {
         }
     }
 
-    extension(Engine.Graphics.MeshComponent component) {
+    /*extension(Engine.Graphics.MeshComponent component) {
         public void DrawInspector () {
             Graphics.EditorUI.DrawField("Mesh", component.mesh?.Name, isReadonly: true);
             Graphics.EditorUI.DrawField("Shader", component.material?.shader.Name, isReadonly: true);
         }
-    }
+    }*/
 
     extension(PhysicsComponent component) {
         public void DrawInspector () {

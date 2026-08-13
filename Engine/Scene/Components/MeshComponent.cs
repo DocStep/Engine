@@ -8,14 +8,12 @@ public class MeshComponent : Component, IComponentUpdate, IUpdateAtFreeze {
     [JsonIgnore] public override string Name => nameof(MeshComponent);
 
     [JsonIgnore] public Mesh? mesh = null;
-    [JsonProperty("mesh")] public string? meshPath = null;
-    //[JsonIgnore] public Shader shader = AssetsEngine._sh_Lit;
-    //[JsonProperty("shader")] public string? shaderPath = null;
+    [Hide][JsonProperty("mesh")] public string? meshPath = null;
     [JsonIgnore] public Material? material = AssetsEngine._mat_Lit;
-    [JsonProperty("material")] public string? materialPath = null;
+    [Hide][JsonProperty("material")] public string? materialPath = null;
     //[JsonProperty("pass")] public RenderPass pass = RenderPass.Opaque;
 
-    [JsonIgnore] public RenderInfo renderInfo { get; private set; }
+    [Hide][JsonIgnore] public RenderInfo renderInfo { get; private set; }
 
 
     public void Update () {
@@ -26,7 +24,7 @@ public class MeshComponent : Component, IComponentUpdate, IUpdateAtFreeze {
         Renderer.Instance.AddRenderInfo(CreateRenderInfo);
     }
 
-    [JsonIgnore] public RenderInfo CreateRenderInfo {
+    [Hide][JsonIgnore] public RenderInfo CreateRenderInfo {
         get {
             if (mesh is null) return default;
             if (material is null) return default;

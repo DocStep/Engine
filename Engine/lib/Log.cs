@@ -78,13 +78,13 @@ public class Log : Singleton<Log> {
                 Console.ResetColor();
                 break;
             case LogType.warning:
-                Console.ForegroundColor = System.ConsoleColor.Yellow;
+                Console.ForegroundColor = System.ConsoleColor.DarkGray;
                 break;
             case LogType.error:
                 Console.ForegroundColor = System.ConsoleColor.Red;
                 break;
             case LogType.info:
-                Console.ForegroundColor = System.ConsoleColor.DarkCyan;
+                Console.ForegroundColor = System.ConsoleColor.Cyan;
                 break;
         }
     }

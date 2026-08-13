@@ -25,19 +25,21 @@ public class Material /*: IDisposable*/ {
         vectors3 = new Dictionary<string, Vector3>(material.vectors3);
         ///textures = (Silk.NET.OpenGL.Texture?[])material.textures.Clone();
     }
-    public Shader shader = default!;
-    private readonly Dictionary<string, int> ints = new();
-    private readonly Dictionary<string, float> floats = new();
-    private readonly Dictionary<string, Vector2> vectors2 = new();
-    private readonly Dictionary<string, Vector3> vectors3 = new();
+
+    [Hide] public Shader shader = null!;
+
+    public readonly Dictionary<string, int> ints = new();
+    public readonly Dictionary<string, float> floats = new(); 
+    public readonly Dictionary<string, Vector2> vectors2 = new();
+    public readonly Dictionary<string, Vector3> vectors3 = new();
     ///private readonly Silk.NET.OpenGL.Texture?[] textures = new Silk.NET.OpenGL.Texture?[4];
 
     /// Render State
-    public RenderPass pass = RenderPass.Opaque;
     public RenderFace face = RenderFace.Front;
     public bool opaque = true;
     public bool depthTest = true;
     public bool depthWrite = true;
+    public RenderPass pass = RenderPass.Opaque;
 
 
     public virtual void ApplyCustom () { }
