@@ -148,7 +148,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             ImGui.InputText("Name", ref selectedGO.Name, int.MaxValue);
 
             ImGui.Text("Transform");
-            ImGui.PushID(selectedGO.Transform.GetHashCode());
+            //ImGui.PushID(selectedGO.Transform.GetHashCode());
             selectedGO.Transform.DrawInspector();
             ImGui.PopID();
 
@@ -197,13 +197,11 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             object? value = member switch {
                 FieldInfo f => f.GetValue(target),
                 PropertyInfo p when p.CanRead => p.GetValue(target),
-                _ => null
+                _ => null,
             };
 
-            object? drawn = EditorUI.DrawField(member, value);
-
-            if (drawn is null)
-                continue;
+            object? drawn = DrawField(member, value);
+            if (drawn is null) continue;
 
             switch (member) {
                 case FieldInfo f:
@@ -231,7 +229,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 .OrderBy(x => x.MetadataToken).ToArray();
 
             foreach (MemberInfo member in members) {
-                // Property replaces matching backing field
+                /// Property replaces matching backing field
                 if (member is PropertyInfo prop) {
                     string backingName = char.ToLower(prop.Name[0]) + prop.Name.Substring(1);
                     int backingIndex = result.FindIndex(x => x is FieldInfo f && f.Name == backingName);
@@ -263,6 +261,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         float step = valueStep;
         ChangeStep? changeSpeed = member.GetCustomAttribute<ChangeStep>();
         if (changeSpeed is not null) step = changeSpeed.Step;
+
+
 
         return DrawField(label, value, isReadonly, step);
     }
@@ -308,9 +308,29 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 Vector4 temp_v4 = new Vector4(q.X, q.Y, q.Z, q.W);
                 if (ImGui.DragFloat4(label, ref temp_v4, step, 0, 0, "%.2f")) result = new Quaternion(temp_v4.X, temp_v4.Y, temp_v4.Z, temp_v4.W);
                 break;
-            default:
-                ImGui.TextDisabled($"{label}: {value}");
+            case GameObject go:
+                ImGui.BeginDisabled();
+                temp_s = go.Name;
+                if (ImGui.InputText(label, ref temp_s, 256)) result = temp_s;
+                ImGui.EndDisabled();
                 break;
+            case Transform tr:
+                ImGui.BeginDisabled();
+                temp_s = tr.parent is not null ? tr.parent.Name : "null";
+                Log.log(temp_s);
+                if (ImGui.InputText(label, ref temp_s, 256)) result = temp_s;
+                ImGui.EndDisabled();
+                break;
+            case null:
+                ImGui.BeginDisabled();
+                string nullLabel = "null";
+                ImGui.InputText(label, ref nullLabel, 256);
+                ImGui.EndDisabled();
+                break;
+
+                //default:
+                //    ImGui.TextDisabled($"{label}: {value}");
+                //    break;
         }
 
         if (isReadonly) ImGui.EndDisabled();
@@ -341,7 +361,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             MethodInfo method = best; /// capture per-iteration
             _drawers.Add(componentType, c => method.Invoke(null, new object[] { c }));
 
-            Log.log("EditorUI.ComponentRegister", componentType.Name, "->", method.DeclaringType?.Name);
+            //Log.log("EditorUI.ComponentRegister", componentType.Name, "->", method.DeclaringType?.Name);
         }
     }
 

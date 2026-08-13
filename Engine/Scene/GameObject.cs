@@ -84,6 +84,7 @@ public class GameObject : ISavable {
             default:
                 break;
         }
+        //mesh.material = AssetsEngine._mat_Lit;
         SceneManager.ActiveScene.ObjectAdd(this);
     }
 

@@ -279,9 +279,9 @@ public class Renderer {
         shader.SetMatrix4(Model, mesh_uModel);
         info.material.Apply();
 
-        info.de_Pre?.Invoke();
+        //info.de_Pre?.Invoke();
         info.mesh.Draw(info.primitiveType);
-        info.de_Post?.Invoke();
+        //info.de_Post?.Invoke();
     }
     
 

@@ -23,7 +23,7 @@ public class ComponentManager : Singleton<ComponentManager> {
         Type[] types = Reflection.FindAllSubclasses<Component>();
         for (int t = 0; t < types.Length; t++) {
             components.Add(types[t], new List<Component>());
-            Log.log("ComponentManager.ComponentRegister", types[t]);
+            //Log.log("ComponentManager.ComponentRegister", types[t]);
             //de_RegisterType?.Invoke(types[t]);
         }
 
