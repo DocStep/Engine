@@ -18,12 +18,6 @@ public class GizmoSelected : IDisposable {
 
     public MeshComponent? selectedMeshComp { get; private set; } = null;
     private Mesh? mesh_selectedLast = null;
-    public void UpdateSelectedMesh (MeshComponent? selectedMeshComp) {
-        mesh_selectedLast = selectedMeshComp?.mesh;
-        this.selectedMeshComp = selectedMeshComp;
-        if (this.selectedMeshComp?.mesh?.Data is not null)
-            mesh_outlined = SelectedOutlineNewMesh(this.selectedMeshComp.mesh.Data);
-    }
     private Mesh mesh_outlined = null!;
     public bool isInteracting => selectedPositionMode != SelectedPositionGizmoMode.None
         || selectedPositionOverMode != SelectedPositionGizmoMode.None;
@@ -37,7 +31,7 @@ public class GizmoSelected : IDisposable {
     private const float _squareSize = 0.025f;
     private const float _axisLength = 0.15f;
     private const float _axisRadius = 0.005f;
-    private const float _width = 0.1f;
+    private const float _outlineWidth = 0.2f;
 
     public Vector3 selectedDragPos;
     public Quaternion selectedDragRot;
@@ -345,7 +339,7 @@ public class GizmoSelected : IDisposable {
         void drawQuad (Vector3 pos, Matrix4x4 basis, Vector3 color) {
             Matrix4x4 m4x4_selected = Matrix4x4.CreateScale(quadScale)*basis*Matrix4x4.CreateTranslation(pos);
             _sh_Unlit.SetMatrix4x4(Model, m4x4_selected);
-            _sh_Unlit.SetVector3(Color, color); 
+            _sh_Unlit.SetVector3(Color, color);
             _sh_Unlit.SetFloat(Alpha, 0.5f);
             AssetsEngine._mesh_PlaneQuad.Draw();
         }
@@ -374,6 +368,7 @@ public class GizmoSelected : IDisposable {
     private void DrawOutline () {
         if (selectedMeshComp is null) return;
         if (selectedMeshComp.mesh is null) return;
+        if (mesh_outlined is null) return;
 
         RenderInfo renderInfo = selectedMeshComp.renderInfo;
 
@@ -411,11 +406,14 @@ public class GizmoSelected : IDisposable {
             Matrix4x4.Invert(Renderer.Instance.m4x4_View, out Matrix4x4 invView);
             float dist = Vector3.Distance(invView.Translation, renderInfo.model.Translation);
 
+            //Matrix4x4.Decompose(renderInfo.model, out _, out Quaternion rotation, out Vector3 position);
+            //Matrix4x4 outlineModel = Matrix4x4.CreateFromQuaternion(rotation)*Matrix4x4.CreateTranslation(position);
+
             _sh_Outline.Use();
             _sh_Outline.SetMatrix4x4(View, Renderer.Instance.m4x4_View);
             _sh_Outline.SetMatrix4x4(Projection, Renderer.Instance.m4x4_Projection);
             _sh_Outline.SetMatrix4x4(Model, renderInfo.model);
-            _sh_Outline.SetFloat(NormalOffset, 0.01f*dist*_width);
+            _sh_Outline.SetFloat(NormalOffset, 0.01f*dist*_outlineWidth);
             _sh_Outline.SetVector3(Color, Constants.cyan);
             _sh_Outline.SetFloat(Alpha, 1f);
             mesh_outlined.Draw();
@@ -433,12 +431,24 @@ public class GizmoSelected : IDisposable {
         }
     }
 
-    private Mesh SelectedOutlineNewMesh (MeshData data) {
-        MeshData welded = data.Weld();
-        welded.RecalculateOutlineNormals();
-        return new Mesh(welded);
-    }
+    public void UpdateSelectedMesh (MeshComponent? selectedMeshComp) {
+        if (selectedMeshComp is null || selectedMeshComp.mesh is null || selectedMeshComp.mesh.Data is null) return;
 
+        mesh_selectedLast = selectedMeshComp.mesh;
+        this.selectedMeshComp = selectedMeshComp;
+
+        mesh_outlined?.Dispose();
+
+        MeshData data = selectedMeshComp.mesh.Data.Weld();
+        data.RecalculateOutlineNormals();
+
+        /*Vector3 scale = selectedMeshComp.owner.Transform.Scale;
+        for (int i = 0; i < data.Vertices.Length; i++) {
+            data.Vertices[i].Position *= scale;
+        }*/
+
+        mesh_outlined = new Mesh(data);
+    }
 
     public void Dispose () {
         mesh_selectedLast?.Dispose();

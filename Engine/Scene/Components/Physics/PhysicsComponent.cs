@@ -1,7 +1,6 @@
 ﻿using BepuPhysics;
 using BepuPhysics.Collidables;
 using Newtonsoft.Json;
-using System.Numerics;
 
 namespace Engine;
 
@@ -15,8 +14,8 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
     [JsonIgnore] float mass = 1f;
     [JsonIgnore] float friction = 2f;
     [JsonIgnore] float maximumRecoveryVelocity = 1f;
-    [JsonIgnore] float frequency = 300f;
-    [JsonIgnore] float dampingRation = 10f;
+    [JsonIgnore] float frequency = 30f;
+    [JsonIgnore] float dampingRation = 1f;
     [JsonIgnore] public StaticHandle? StaticHandle { get; private set; }
 
 
@@ -25,14 +24,19 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
     }
 
     public override void OnAdd () {
-        Vector3 scale = owner.Transform.Scale;
-        Box shape = new Box(scale.X, scale.Y, scale.Z);
-        shapeIndex = PhysicsManager.Instance.Simulation.Shapes.Add(shape);
+        if (owner.GetComponent<ColliderComponent>() is not IDynamicCollider collider) {
+            Log.log($"{owner.Name}: PhysicsComponent requires a dynamic-capable ColliderComponent (e.g. BoxColliderComponent).", LogType.warning);
+            return;
+        }
 
+        shapeIndex = collider.AddShape(PhysicsManager.Instance.Simulation, PhysicsManager.Instance.BufferPool);
+        
+        BodyInertia inertia = collider.ComputeInertia(mass);
+        CollidableDescription collidable = new CollidableDescription(shapeIndex, 0.1f);
         BodyDescription description = BodyDescription.CreateDynamic(
             new RigidPose(owner.Transform.Position, owner.Transform.Rotation),
-            shape.ComputeInertia(mass),
-            new CollidableDescription(shapeIndex, 0.1f),
+            inertia,
+            collidable,
             new BodyActivityDescription(0.01f)
         );
 

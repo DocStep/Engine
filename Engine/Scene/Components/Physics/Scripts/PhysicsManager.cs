@@ -15,7 +15,7 @@ public class PhysicsManager : Singleton<PhysicsManager> {
             BufferPool,
             new NarrowPhaseCallbacks(BodyMaterials),
             new PoseIntegratorCallbacks(Gravity),
-            new SolveDescription(velocityIterationCount: 8, substepCount: 5)
+            new SolveDescription(velocityIterationCount: 8, substepCount: 4)
         );
     }
 

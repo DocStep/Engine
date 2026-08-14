@@ -26,6 +26,7 @@ public class Material /*: IDisposable*/ {
         ///textures = (Silk.NET.OpenGL.Texture?[])material.textures.Clone();
     }
 
+    public string Name = nameof(Material);
     [Hide] public Shader shader = null!;
 
     [Raw] public readonly Dictionary<string, int> ints = new();

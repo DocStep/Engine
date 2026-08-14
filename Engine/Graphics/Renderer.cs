@@ -30,23 +30,15 @@ public class Renderer {
         GL.FrontFace(FrontFaceDirection.CW);
         GL.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
 
-        _skybox = new Skybox(_sh_Skybox, _hdr_Skybox) {
-            blurScale = 3f,
-        };
+        _skybox = new Skybox(_sh_Skybox, _hdr_Skybox) { blurScale = 3f, };
 
         //SetTargetSize(Engine.Window.Size.X, Engine.Window.Size.Y);
 
-        PostProcess = new PostProcessStack();
-        
-        TextRenderer = new TextRenderer();
-
         Stats = new RendererStats();
 
-        /// Delegates
-        de_DrawUI += TextRenderer.Draw;
+        TextRenderer = new TextRenderer();
 
-
-        //PostProcess.Effects.Add(new PostProcessPass(_mat_Fullscreen));
+        PostProcess = new PostProcessStack();
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Grayscale));
         PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
@@ -54,6 +46,10 @@ public class Renderer {
         PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
         PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
+
+
+        /// Delegates
+        de_DrawUI += TextRenderer.Draw;
     }
 
     public static Renderer Instance = null!;
