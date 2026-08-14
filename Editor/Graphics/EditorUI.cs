@@ -156,7 +156,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 DrawComponent(selectedGO.Components[c]);
             }
         }
-
+        
         ImGui.End();
     }
     public void DrawComponent (Component component) {

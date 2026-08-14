@@ -47,8 +47,8 @@ public class Skybox : IDisposable {
         texture.Bind(TextureUnit.Texture0);
 
         _shader.Use();
-        _shader.SetMatrix4(Shader.View, Matrix4x4.ToArray(view));
-        _shader.SetMatrix4(Shader.Projection, Matrix4x4.ToArray(projection));
+        _shader.SetMatrix4x4(Shader.View, view);
+        _shader.SetMatrix4x4(Shader.Projection, projection);
         _shader.SetInt(Shader.Texture, 0);
         _shader.SetFloat(BlurScale, blurScale);
 

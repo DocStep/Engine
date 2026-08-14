@@ -123,6 +123,7 @@ public sealed class CameraEditor : Camera {
         Vector3 cameraPosDelta = Vector3.Zero;
         Matrix4x4 cameraRot = GetRotationMatrix();
         position = CameraPos;
+        Engine.Graphics.UI.TextRenderer.AddText($"CameraEditor.position: {position:F2}");
 
         if (!EditorUI.Instance.isSceneUIHovered) {
             focusing();

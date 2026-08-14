@@ -21,6 +21,82 @@ public class MeshData {
         PrimitiveType = data.PrimitiveType;
     }
 
+    /// Builds a grid mesh from a 2D heightmap array, where array[x, z] is the
+    /// vertex height (Y). The mesh spans exactly `scale` units in both X and Z,
+    /// centered on the origin. Normals are computed directly from the heightmap
+    /// via central differences (not from triangle faces) to avoid diagonal
+    /// faceting artifacts on the split quads.
+    public static MeshData CreateFromArray (float[,] array, float scale = 1f) {
+        int width = array.GetLength(0);
+        int depth = array.GetLength(1);
+
+        if (width < 2 || depth < 2)
+            throw new ArgumentException("array must be at least 2x2");
+
+        float spacingX = scale/(width - 1);
+        float spacingZ = scale/(depth - 1);
+
+        float halfWidth = scale*0.5f;
+        float halfDepth = scale*0.5f;
+
+        Vertex[] vertices = new Vertex[width*depth];
+
+        for (int z = 0; z < depth; z++) {
+            for (int x = 0; x < width; x++) {
+                int i = z*width + x;
+
+                float px = x*spacingX - halfWidth;
+                float pz = z*spacingZ - halfDepth;
+                float py = array[x, z];
+
+                /// Central difference at borders falls back to one-sided difference
+                int xL = Math.Max(x - 1, 0);
+                int xR = Math.Min(x + 1, width - 1);
+                int zD = Math.Max(z - 1, 0);
+                int zU = Math.Min(z + 1, depth - 1);
+
+                float dhx = array[xR, z] - array[xL, z];
+                float dhz = array[x, zU] - array[x, zD];
+
+                Vector3 normal = new Vector3(-dhx*spacingZ, 2f*spacingX*spacingZ, -dhz*spacingX);
+                normal = Vector3.Normalize(normal);
+
+                float u = (float)x/(width - 1);
+                float v = (float)z/(depth - 1);
+
+                vertices[i] = new Vertex {
+                    Position = new Vector3(px, py, pz),
+                    Normal = normal,
+                    UV = new Vector2(u, v)
+                };
+            }
+        }
+
+        uint[] indices = new uint[(width - 1)*(depth - 1)*6];
+        int idx = 0;
+
+        for (int z = 0; z < depth - 1; z++) {
+            for (int x = 0; x < width - 1; x++) {
+                uint i0 = (uint)(z*width + x);
+                uint i1 = (uint)(z*width + x + 1);
+                uint i2 = (uint)((z + 1)*width + x);
+                uint i3 = (uint)((z + 1)*width + x + 1);
+
+                indices[idx++] = i0;
+                indices[idx++] = i2;
+                indices[idx++] = i1;
+
+                indices[idx++] = i1;
+                indices[idx++] = i2;
+                indices[idx++] = i3;
+            }
+        }
+
+        /// No RecalculateNormals() call here - normals are already derived from
+        /// the heightmap gradient above, which is smoother than triangle averaging
+        return new MeshData(vertices, indices, Silk.NET.OpenGL.PrimitiveType.Triangles);
+    }
+
 
     /// Recomputes per-vertex normals from triangle faces (area-weighted via
     /// the unnormalized cross product, then normalized once accumulated).

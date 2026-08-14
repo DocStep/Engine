@@ -305,8 +305,8 @@ public class GizmoSelected : IDisposable {
 
         Shader _sh_Unlit = AssetsEngine._sh_Unlit;
         _sh_Unlit.Use();
-        _sh_Unlit.SetMatrix4(View, RendererEditor.Instance.UView);
-        _sh_Unlit.SetMatrix4(Projection, RendererEditor.Instance.UProjection);
+        _sh_Unlit.SetMatrix4x4(View, Renderer.Instance.m4x4_View);
+        _sh_Unlit.SetMatrix4x4(Projection, Renderer.Instance.m4x4_Projection);
         _sh_Unlit.SetVector3(ViewPos, Camera.Current.CameraPos);
 
         DrawOutline();
@@ -331,8 +331,8 @@ public class GizmoSelected : IDisposable {
 
         Shader _sh_Unlit = AssetsEngine._sh_Unlit;
         _sh_Unlit.Use();
-        _sh_Unlit.SetMatrix4(View, RendererEditor.Instance.UView);
-        _sh_Unlit.SetMatrix4(Projection, RendererEditor.Instance.UProjection);
+        _sh_Unlit.SetMatrix4x4(View, Renderer.Instance.m4x4_View);
+        _sh_Unlit.SetMatrix4x4(Projection, Renderer.Instance.m4x4_Projection);
 
         /// Quads
         isColorSelected = selectedPositionMode == SelectedPositionGizmoMode.XY || selectedPositionOverMode == SelectedPositionGizmoMode.XY;
@@ -344,7 +344,7 @@ public class GizmoSelected : IDisposable {
 
         void drawQuad (Vector3 pos, Matrix4x4 basis, Vector3 color) {
             Matrix4x4 m4x4_selected = Matrix4x4.CreateScale(quadScale)*basis*Matrix4x4.CreateTranslation(pos);
-            _sh_Unlit.SetMatrix4(Model, Matrix4x4.ToArray(m4x4_selected));
+            _sh_Unlit.SetMatrix4x4(Model, m4x4_selected);
             _sh_Unlit.SetVector3(Color, color); 
             _sh_Unlit.SetFloat(Alpha, 0.5f);
             AssetsEngine._mesh_PlaneQuad.Draw();
@@ -364,8 +364,7 @@ public class GizmoSelected : IDisposable {
 
         void drawArrow (Vector3 rot, Vector3 color) {
             Matrix4x4 m4x4_selected = _m4x4_selectedScale*Matrix4x4.RotationEuler(rot)*gizmoBasis*Matrix4x4.CreateTranslation(pos3);
-            float[] mesh_uModel = Matrix4x4.ToArray(m4x4_selected);
-            _sh_Unlit.SetMatrix4(Model, mesh_uModel);
+            _sh_Unlit.SetMatrix4x4(Model, m4x4_selected);
             _sh_Unlit.SetVector3(Color, color);
             _sh_Unlit.SetFloat(Alpha, 0.5f);
             Gizmos._mesh_Arrow3D.Draw();
@@ -395,7 +394,7 @@ public class GizmoSelected : IDisposable {
             GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
 
-            RendererEditor.Instance.DrawInfo(renderInfo);
+            RendererEditor.Instance.DrawRenderInfo(renderInfo);
 
 
             /// Pass 2 - outline
@@ -409,16 +408,13 @@ public class GizmoSelected : IDisposable {
             GL.StencilMask(0x00);
             GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
 
-            Matrix4x4.Invert(RendererEditor.Instance.m4x4_View, out Matrix4x4 invView);
-            float dist = Vector3.Distance(invView.Translation, renderInfo.pos);
-
-            Matrix4x4 model = Matrix4x4.CreateScale(renderInfo.scale)
-                *Matrix4x4.CreateFromQuaternion(renderInfo.rot)*Matrix4x4.CreateTranslation(renderInfo.pos);
+            Matrix4x4.Invert(Renderer.Instance.m4x4_View, out Matrix4x4 invView);
+            float dist = Vector3.Distance(invView.Translation, renderInfo.model.Translation);
 
             _sh_Outline.Use();
-            _sh_Outline.SetMatrix4(View, RendererEditor.Instance.UView);
-            _sh_Outline.SetMatrix4(Projection, RendererEditor.Instance.UProjection);
-            _sh_Outline.SetMatrix4(Model, Matrix4x4.ToArray(model));
+            _sh_Outline.SetMatrix4x4(View, Renderer.Instance.m4x4_View);
+            _sh_Outline.SetMatrix4x4(Projection, Renderer.Instance.m4x4_Projection);
+            _sh_Outline.SetMatrix4x4(Model, renderInfo.model);
             _sh_Outline.SetFloat(NormalOffset, 0.01f*dist*_width);
             _sh_Outline.SetVector3(Color, Constants.cyan);
             _sh_Outline.SetFloat(Alpha, 1f);

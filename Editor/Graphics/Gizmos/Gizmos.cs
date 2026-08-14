@@ -134,14 +134,12 @@ public static class Gizmos {
         Vector3 pos = Camera.Current.CameraPos;
         _mat_GizmoGrid.SetVector3(CameraPos, pos);
 
-        RendererEditor.Instance.AddRenderInfo(new RenderInfo() {
-            pos = new Vector3(pos.X - pos.X%(1f/Constants._gridDivisionScale), 0, pos.Z - pos.Z%(1f/Constants._gridDivisionScale)),
+        Renderer.Instance.AddRenderInfo(new RenderInfo() {
+            model = Matrix4x4.CreateTranslation(new Vector3(pos.X - pos.X%(1f/Constants._gridDivisionScale), 
+                0, pos.Z - pos.Z%(1f/Constants._gridDivisionScale))),
             mesh = _mesh_GridWireframe,
             primitiveType = PrimitiveType.Lines,
             material = _mat_GizmoGrid,
-            //depthRangeNear = 0.0001f,
-            //de_Pre = GizmoGridPre,
-            //de_Post = GizmoGridPost,
         });
     }
     static void GizmoGridPre () => GL.DepthRange(0.0001, 1);
@@ -149,29 +147,27 @@ public static class Gizmos {
 
     private static void GizmoAxes () {
         Vector3 pos = Camera.Current.CameraPos;
+        float halfPi = MathF.PI/2f;
+
         _mat_GizmoAxisLine.SetVector3(CameraPos, pos);
 
         /// X Red
-        RenderInfo info = new RenderInfo () {
-            pos = new Vector3(pos.X, 0, 0),
-            rotEuler = new Vector3(0, 90, 0),
-            scale = Constants._gridScale*Vector3.One,
+        RenderInfo info = new RenderInfo() {
+            model = Matrix4x4.CreateScale(Constants._gridScale*Vector3.One)*Matrix4x4.CreateRotationY(halfPi),
             mesh = _mesh_Line,
             primitiveType = PrimitiveType.Lines,
             material = _mat_GizmoAxisLine,
             depthRangeFar = 0.9999f,
         };
-        RendererEditor.Instance.AddRenderInfo(info);
+        Renderer.Instance.AddRenderInfo(info);
 
         /// Y Green
-        info.pos = new Vector3(0, pos.Y, 0);
-        info.rotEuler = new Vector3(-90, 0, 0);
-        RendererEditor.Instance.AddRenderInfo(info);
+        info.model = Matrix4x4.CreateScale(Constants._gridScale*Vector3.One)*Matrix4x4.CreateRotationX(-halfPi);
+        Renderer.Instance.AddRenderInfo(info);
 
         /// Z Blue
-        info.pos = new Vector3(0, 0, pos.Z);
-        info.rotEuler = new Vector3(0, 0, 0);
-        RendererEditor.Instance.AddRenderInfo(info);
+        info.model = Matrix4x4.CreateScale(Constants._gridScale*Vector3.One);
+        Renderer.Instance.AddRenderInfo(info);
     }
     private static void DrawGizmoAxesWidget () {
         const int gizmoSize = 90;
@@ -201,9 +197,9 @@ public static class Gizmos {
             Camera.Current.FOV/180*MathF.PI, aspect, Camera.Current.planeNear, Camera.Current.planeFar);
 
         _sh_GizmoAxis.Use();
-        _sh_GizmoAxis.SetMatrix4(View, Matrix4x4.ToArray(gizmoView));
-        _sh_GizmoAxis.SetMatrix4(Projection, Matrix4x4.ToArray(gizmoProjection));
-        _sh_GizmoAxis.SetMatrix4(Model, Matrix4x4.ToArray(Matrix4x4.CreateScale(0.002f)));
+        _sh_GizmoAxis.SetMatrix4x4(View, gizmoView);
+        _sh_GizmoAxis.SetMatrix4x4(Projection, gizmoProjection);
+        _sh_GizmoAxis.SetMatrix4x4(Model, Matrix4x4.CreateScale(0.002f));
 
         _mesh_AxesWireframe.Draw(PrimitiveType.Lines);
 
@@ -229,9 +225,9 @@ public static class Gizmos {
 
     private static void GizmoSun () {
         if (!Constants.drawGizmosSun) return;
-        RendererEditor.Instance.AddRenderInfo(new RenderInfo() {
-            pos = new Vector3(0f, 5f, 0f),
-            rotEuler = Vector3.DirectionToEuler(Constants.sunLightDir),
+        Renderer.Instance.AddRenderInfo(new RenderInfo() {
+            model = Matrix4x4.CreateScale(Vector3.One)*Matrix4x4.RotationFromDirection(Constants.sunLightDir)
+                *Matrix4x4.CreateTranslation(new Vector3(0f, 5f, 0f)),
             mesh = Constants._drawArrowAsMesh ? _mesh_Arrow3D : _mesh_ArrowWireframe,
             primitiveType = Constants._drawArrowAsMesh ? PrimitiveType.Triangles : PrimitiveType.Lines,
             material = _mat_GizmoSun,

@@ -47,6 +47,11 @@ public class Noise {
     }
 
     /// <summary> [-1, 1] </summary>
+    public virtual float Value (float x, float y) {
+        if (!enable) return 0;
+        return noise.GetNoise(x, y);
+    }
+    /// <summary> [-1, 1] </summary>
     public virtual float Value (Vector2 pos2) {
         if (!enable) return 0;
         return noise.GetNoise(pos2.X, pos2.Y);

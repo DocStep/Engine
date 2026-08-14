@@ -253,7 +253,7 @@ public class FastNoiseLite
 
 
     /// <summary>
-    /// Sets distanceEntities function used in cellular noise calculations
+    /// Sets distance function used in cellular noise calculations
     /// </summary>
     /// <remarks>
     /// Default: Distance
@@ -269,7 +269,7 @@ public class FastNoiseLite
     public void SetCellularReturnType(CellularReturnType cellularReturnType) { mCellularReturnType = cellularReturnType; }
 
     /// <summary>
-    /// Sets the maximum distanceEntities a cellular point can move from it's grid position
+    /// Sets the maximum distance a cellular point can move from it's grid position
     /// </summary>
     /// <remarks>
     /// Default: 1.0
@@ -292,7 +292,7 @@ public class FastNoiseLite
 
 
     /// <summary>
-    /// Sets the maximum warp distanceEntities from original position when using DomainWarp(...)
+    /// Sets the maximum warp distance from original position when using DomainWarp(...)
     /// </summary>
     /// <remarks>
     /// Default: 1.0

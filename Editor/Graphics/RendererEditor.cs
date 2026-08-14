@@ -73,7 +73,7 @@ public class RendererEditor : Renderer {
             RenderInfo info = RenderList[i];
             if (info.material.pass == RenderPass.Opaque || info.material.pass == RenderPass.Transparent)
                 DrawInfoWireframe(info);
-            else DrawInfo(info);
+            else DrawRenderInfo(info);
         }
 
         GL.Enable(EnableCap.CullFace);
@@ -90,7 +90,7 @@ public class RendererEditor : Renderer {
         int count = RenderGizmoList.Count;
         for (int i = 0; i < count; i++) {
             RenderInfo info = RenderGizmoList[i];
-            DrawInfo(info);
+            DrawRenderInfo(info);
             Shader shader = info.material.shader;
             //SetSceneUniformsUnlit(shader);
             //SetSceneUniformsLit(shader);
@@ -119,10 +119,7 @@ public class RendererEditor : Renderer {
 
         SetSceneUniformsUnlit(shader, Camera.Current.CameraPos);
 
-        Matrix4x4 mesh_m4x4 = info.modelOverride ?? Matrix4x4.CreateScale(info.scale)
-            *Matrix4x4.CreateFromQuaternion(info.rot)*Matrix4x4.CreateTranslation(info.pos);
-        float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
-        shader.SetMatrix4(Model, mesh_uModel);
+        shader.SetMatrix4x4(Model, info.model);
         Gizmos._mat_GizmoWireframe.Apply();
 
         info.mesh.Draw(info.primitiveType);
@@ -160,11 +157,11 @@ public class RendererEditor : Renderer {
                 float _z = z/testGridDensity + offsetZ;
                 float y = 0.25f*MathF.Sin(_x + speed*(float)Time.time) * MathF.Cos(_z + speed*(float)Time.time);
                 RenderInfo info = new RenderInfo() {
-                    pos = new Vector3(_x, y, _z),
+                    model = Matrix4x4.CreateTranslation(new Vector3(_x, y, _z)),
                     mesh = _mesh_Sphere,
                     material = mat,
                 };
-                RendererEditor.Instance.AddRenderInfo(info);
+                Renderer.Instance.AddRenderInfo(info);
             }
         }
     }

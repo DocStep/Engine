@@ -82,11 +82,11 @@ public class Renderer {
     /// Debug
     public Matrix4x4 m4x4_View = Matrix4x4.Identity;
     public Matrix4x4 m4x4_Projection = Matrix4x4.Identity;
-    protected static float[] uView = [];
-    public float[] UView => uView;
+    //protected static float[] uView = [];
+    //public float[] UView => uView;
 
-    protected static float[] uProjection = [];
-    public float[] UProjection => uProjection;
+    //protected static float[] uProjection = [];
+    //public float[] UProjection => uProjection;
 
     protected readonly List<RenderInfo> RenderList = new List<RenderInfo>();
     protected readonly List<RenderInfo> RenderGizmoList = new List<RenderInfo>();
@@ -196,8 +196,6 @@ public class Renderer {
         float aspect = width/height;
         m4x4_Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
             Camera.Current.FOV*Mathf.Deg2Rad, aspect, Camera.Current.planeNear, Camera.Current.planeFar);
-        uView = Matrix4x4.ToArray(m4x4_View);
-        uProjection = Matrix4x4.ToArray(m4x4_Projection);
     }
 
     protected virtual void DrawSceneAll () {
@@ -221,12 +219,12 @@ public class Renderer {
         for (int i = 0; i < count; i++) {
             RenderInfo info = RenderList[i];
             //if (info.mesh.Name == "SuzanneHighRes") s++;
-            DrawInfo(info);
+            DrawRenderInfo(info);
         }
         //Log.log("SuzanneHighRes", s);
     }
 
-    public void DrawInfo (RenderInfo info) {
+    public void DrawRenderInfo (RenderInfo info) {
         if (info.mesh is null) return;
         if (info.material is null) return;
 
@@ -273,10 +271,13 @@ public class Renderer {
         SetSceneUniformsLit(shader);
         SetSceneUniformsSkybox(shader, _skybox.texture, _skybox.maxLod);
 
-        Matrix4x4 mesh_m4x4 = info.modelOverride ?? Matrix4x4.CreateScale(info.scale)
-            *Matrix4x4.CreateFromQuaternion(info.rot)*Matrix4x4.CreateTranslation(info.pos);
-        float[] mesh_uModel = Matrix4x4.ToArray(mesh_m4x4);
-        shader.SetMatrix4(Model, mesh_uModel);
+        shader.SetMatrix4x4(Model, info.model);
+
+        if (!Matrix4x4.Invert(info.model, out Matrix4x4 inverseModel)) 
+            inverseModel = Matrix4x4.Identity; /// fallback — model scale is degenerate, fix at the source (clamp scale.y)
+        Matrix4x4 normalMatrix = Matrix4x4.Transpose(inverseModel);
+        shader.SetMatrix4x4(NormalMatrix, normalMatrix);
+
         info.material.Apply();
 
         //info.de_Pre?.Invoke();
@@ -285,10 +286,10 @@ public class Renderer {
     }
     
 
-    public static void SetSceneUniformsUnlit (Shader shader, Vector3 viewPos) {
+    public void SetSceneUniformsUnlit (Shader shader, Vector3 viewPos) {
         shader.Use();
-        shader.SetMatrix4(View, uView);
-        shader.SetMatrix4(Projection, uProjection);
+        shader.SetMatrix4x4(View, m4x4_View);
+        shader.SetMatrix4x4(Projection, m4x4_Projection);
         shader.SetVector3(ViewPos, viewPos);
     }
     public static void SetSceneUniformsLit (Shader shader) {

@@ -40,6 +40,9 @@ public class TextRenderer : IDisposable {
     public static void AddText (string _text) {
         Texts.Add(new (_text));
     }
+    public static void AddText (object obj) {
+        Texts.Add(new(obj?.ToString()));
+    }
 
     private bool _renderF3 = true;
     public bool renderF3 {

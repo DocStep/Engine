@@ -1,4 +1,6 @@
-﻿namespace Editor.Graphics;
+﻿using Engine.Graphics;
+
+namespace Editor.Graphics;
 
 
 public static class ComponentsGizmo {
@@ -6,16 +8,14 @@ public static class ComponentsGizmo {
     extension(BoxColliderComponent comp) {
         public void DrawGizmo () {
             if (comp.drawGizmos) {
-                Engine.Graphics.RenderInfo renderInfo = new Engine.Graphics.RenderInfo() {
-                    pos = comp.Position + comp.owner.Transform.Position,
-                    rot = comp.owner.Transform.Rotation,
-                    scale = comp.Scale*comp.owner.Transform.Scale,
+                RenderInfo renderInfo = new RenderInfo() {
+                    model = comp.owner.Transform.GetWorldMatrix(),
 
                     mesh = Gizmos._mesh_CubeWireframe,
                     material = Gizmos._mat_GizmosGreen,
                     primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
                 };
-                Engine.Graphics.Renderer.Instance.AddRenderInfo(renderInfo);
+                Renderer.Instance.AddRenderInfo(renderInfo);
             }
         }
     }
@@ -23,16 +23,14 @@ public static class ComponentsGizmo {
     extension(CapsuleColliderComponent comp) {
         public void DrawGizmo () {
             if (comp.drawGizmos) {
-                Engine.Graphics.RenderInfo renderInfo = new Engine.Graphics.RenderInfo() {
-                    pos = comp.Position + comp.owner.Transform.Position,
-                    rot = comp.owner.Transform.Rotation,
-                    scale = comp.owner.Transform.Scale,
+                RenderInfo renderInfo = new RenderInfo() {
+                    model = comp.owner.Transform.GetWorldMatrix(),
 
                     mesh = Gizmos._mesh_CapsuleWireframe,
                     material = Gizmos._mat_GizmosGreen,
                     primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
                 };
-                Engine.Graphics.Renderer.Instance.AddRenderInfo(renderInfo);
+                Renderer.Instance.AddRenderInfo(renderInfo);
             }
         }
     }
@@ -40,16 +38,14 @@ public static class ComponentsGizmo {
     extension(PlaneColliderComponent comp) {
         public void DrawGizmo () {
             if (comp.drawGizmos) {
-                Engine.Graphics.RenderInfo renderInfo = new Engine.Graphics.RenderInfo() {
-                    pos = comp.Position + comp.owner.Transform.Position,
-                    rot = comp.owner.Transform.Rotation,
-                    scale = comp.owner.Transform.Scale,
+                RenderInfo renderInfo = new RenderInfo() {
+                    model = comp.owner.Transform.GetWorldMatrix(),
 
                     mesh = Gizmos._mesh_PlaneWireframe,
                     material = Gizmos._mat_GizmosGreen,
                     primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
                 };
-                Engine.Graphics.Renderer.Instance.AddRenderInfo(renderInfo);
+                Renderer.Instance.AddRenderInfo(renderInfo);
             }
         }
     }
@@ -57,16 +53,14 @@ public static class ComponentsGizmo {
     extension(SphereColliderComponent comp) {
         public void DrawGizmo () {
             if (comp.drawGizmos) {
-                Engine.Graphics.RenderInfo renderInfo = new Engine.Graphics.RenderInfo() {
-                    pos = comp.Position + comp.owner.Transform.Position,
-                    rot = comp.owner.Transform.Rotation,
-                    scale = 2f*comp.Radius*comp.owner.Transform.Scale,
+                RenderInfo renderInfo = new RenderInfo() {
+                    model = comp.owner.Transform.GetWorldMatrix(),
 
                     mesh = Gizmos._mesh_SphereWireframe,
                     material = Gizmos._mat_GizmosGreen,
                     primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
                 };
-                Engine.Graphics.Renderer.Instance.AddRenderInfo(renderInfo);
+                Renderer.Instance.AddRenderInfo(renderInfo);
             }
         }
     }

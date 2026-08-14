@@ -30,9 +30,7 @@ public class MeshComponent : Component, IComponentUpdate, IUpdateAtFreeze {
             if (material is null) return default;
 
             RenderInfo renderInfo = new RenderInfo() {
-                pos = owner.Transform.Position,
-                rot = owner.Transform.Rotation,
-                scale = owner.Transform.Scale,
+                model = owner.Transform.GetWorldMatrix(),
 
                 mesh = mesh,
                 material = material,
