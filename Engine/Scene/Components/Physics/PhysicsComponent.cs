@@ -8,22 +8,24 @@ namespace Engine;
 public class PhysicsComponent : Component, IComponentFixedUpdate {
     [JsonIgnore] public override string Name => nameof(PhysicsComponent);
 
-    [JsonIgnore] public BodyHandle Handle { get; private set; }
-    [JsonIgnore] public BodyReference Rigidbody { get; private set; }
-    [JsonIgnore] TypedIndex shapeIndex;
+    [Hide][JsonIgnore] public BodyHandle Handle { get; private set; }
+    [Hide][JsonIgnore] public BodyReference Rigidbody { get; private set; }
+    [Hide][JsonIgnore] TypedIndex shapeIndex;
     [JsonIgnore] float mass = 1f;
-    [JsonIgnore] float friction = 2f;
-    [JsonIgnore] float maximumRecoveryVelocity = 1f;
-    [JsonIgnore] float frequency = 30f;
-    [JsonIgnore] float dampingRation = 1f;
-    [JsonIgnore] public StaticHandle? StaticHandle { get; private set; }
+    [JsonIgnore] float friction = 1f;
+    [Hide][JsonIgnore] float maximumRecoveryVelocity = 1f;
+    [Hide][JsonIgnore] float frequency = 30f;
+    [Hide][JsonIgnore] float dampingRation = 1f;
+    [Hide][JsonIgnore] public StaticHandle? StaticHandle { get; private set; }
+    [Hide][JsonIgnore] public bool isKinematicRequested = false;
+    [Hide][JsonIgnore] public bool IsValid { get; private set; } = false;
 
 
-    public void FixedUpdate () {
+    public void FixedUpdate () { }
 
-    }
 
     public override void OnAdd () {
+        Log.log("PhysicsComponent.OnAdd", LogType.warning);
         if (owner.GetComponent<ColliderComponent>() is not IDynamicCollider collider) {
             Log.log($"{owner.Name}: PhysicsComponent requires a dynamic-capable ColliderComponent (e.g. BoxColliderComponent).", LogType.warning);
             return;
@@ -40,8 +42,26 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
             new BodyActivityDescription(0.01f)
         );
 
+        // If kinematic/static requested, add as a static instead of a dynamic body for stability.
+        if (isKinematicRequested) {
+            // Shapes have already been added via collider.AddShape; reuse shapeIndex.
+            StaticHandle = PhysicsManager.Instance.Simulation.Statics.Add(
+                new StaticDescription(new RigidPose(owner.Transform.Position, owner.Transform.Rotation), 
+                shapeIndex));
+            IsValid = true;
+            return;
+        }
+
         Handle = PhysicsManager.Instance.Simulation.Bodies.Add(description);
         Rigidbody = PhysicsManager.Instance.Simulation.Bodies.GetBodyReference(Handle);
+        IsValid = true;
+
+        // If the body was created as kinematic, ensure velocities/inertia are appropriate.
+        if (isKinematicRequested) {
+            Rigidbody.LocalInertia = new BodyInertia();
+            Rigidbody.Velocity.Linear = Vector3.Zero;
+            Rigidbody.Velocity.Angular = Vector3.Zero;
+        }
 
         PhysicsManager.Instance.BodyMaterials.Allocate(Handle) = new BodyMaterial {
             Friction = friction,
@@ -52,7 +72,13 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
         PhysicsManager.Instance.RegisterRigidbody(this);
     }
     public override void OnRemove () {
-        PhysicsManager.Instance.RemoveRigidbody(this);
+        // If we added a static, remove it; otherwise remove the dynamic body registration.
+        if (StaticHandle.HasValue) {
+            PhysicsManager.Instance.Simulation.Statics.Remove(StaticHandle.Value);
+            StaticHandle = null;
+        } else {
+            PhysicsManager.Instance.RemoveRigidbody(this);
+        }
     }
 
 
@@ -100,13 +126,34 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
         PhysicsManager.Instance.BodyMaterials.Allocate(Handle) = material;
     }
     public void SetKinematic () {
-        Rigidbody.LocalInertia = new BodyInertia();
+        // Mark kinematic so OnAdd can apply it if the body isn't created yet.
+        isKinematicRequested = true;
+        if (!IsValid || StaticHandle.HasValue) {
+            Log.log(IsValid, StaticHandle.HasValue);
+            return;
+        }
+
+        Log.log("Rigidbody", Rigidbody);
+        Log.log("Rigidbody.LocalInertia", Rigidbody.LocalInertia);
+
+        try {
+            Rigidbody.LocalInertia = new BodyInertia();
+            Rigidbody.Velocity.Linear = Vector3.Zero;
+            Rigidbody.Velocity.Angular = Vector3.Zero;
+        } catch {
+            /// If Rigidbody isn't created yet, OnAdd will apply the kinematic state.
+        }
     }
     public void SetDynamic () {
-        Box shape = PhysicsManager.Instance.Simulation.Shapes.GetShape<Box>(shapeIndex.Index);
-        Rigidbody.LocalInertia = shape.ComputeInertia(mass);
-
-        PhysicsManager.Instance.Simulation.Awakener.AwakenBody(Handle);
+        isKinematicRequested = false;
+        if (!IsValid || StaticHandle.HasValue) return;
+        try {
+            Box shape = PhysicsManager.Instance.Simulation.Shapes.GetShape<Box>(shapeIndex.Index);
+            Rigidbody.LocalInertia = shape.ComputeInertia(mass);
+            PhysicsManager.Instance.Simulation.Awakener.AwakenBody(Handle);
+        } catch {
+            /// If body not yet created, inertia will be applied in OnAdd.
+        }
     }
 
 }

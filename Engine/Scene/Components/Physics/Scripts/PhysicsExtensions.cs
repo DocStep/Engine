@@ -6,7 +6,7 @@ using Jitter2.Collision;
 namespace Engine;
 
 
-public static class PhysicsUtils {
+public static class PhysicsExtensions {
 
     extension(Raycast) {
         public static bool RaycastSceneCollider (World world, Ray ray, out RigidBody? hitBody, out Vector3 hitPoint, out Vector3 hitNormal, out float fraction) {

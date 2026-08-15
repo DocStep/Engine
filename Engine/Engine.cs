@@ -48,8 +48,8 @@ public class Engine : IDisposable {
 
         ThreadUtils.Init();
         Log.CreateSingleton();
-        Log.log($"========== Run ==========", LogType.warning);
-        Log.log($"===== Utils Layer =====", LogType.warning);
+        Log.log($"========== Run ==========", LogType.system);
+        Log.log($"===== Utils Layer =====", LogType.system);
         Time.Init();
         //CrashHandlers.Init();
 
@@ -75,7 +75,7 @@ public class Engine : IDisposable {
         Windows.Input = Silk.NET.Input.InputWindowExtensions.CreateInput(Windows.Window);
         WindowInput.Init(Windows.Input);
 
-        Log.log($"===== Systems Layer =====", LogType.warning);
+        Log.log($"===== Systems Layer =====", LogType.system);
 
         object? renderer = Activator.CreateInstance(rendererType);
         if (renderer as Graphics.Renderer is null) throw new Exception("Renderer is null");
@@ -84,13 +84,13 @@ public class Engine : IDisposable {
         ComponentManager.CreateSingleton();
         SceneManager.CreateSingleton();
 
-        Log.log($"===== Hook Layer =====", LogType.warning);
+        Log.log($"===== Hook Layer =====", LogType.system);
 
         de_Init?.Invoke();
         //ReflectionActionScripts.CreateSingleton();
 
         engineState = EngineStates.Ready;
-        Log.log($"========== Init Finish ==========", LogType.warning);
+        Log.log($"========== Init Finish ==========", LogType.system);
 
         Engine.SetFPSMax(144);
     }

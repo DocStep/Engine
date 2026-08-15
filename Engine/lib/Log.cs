@@ -8,6 +8,7 @@ public enum LogType {
     warning,
     error,
     info,
+    system,
 }
 
 
@@ -33,6 +34,7 @@ public class Log : Singleton<Log> {
             
             switch (entry.type) {
                 case LogType.log:
+                case LogType.system:
                     Console.WriteLine(text);
                     break;
                 case LogType.warning:
@@ -78,13 +80,16 @@ public class Log : Singleton<Log> {
                 Console.ResetColor();
                 break;
             case LogType.warning:
-                Console.ForegroundColor = System.ConsoleColor.DarkGray;
+                Console.ForegroundColor = System.ConsoleColor.Yellow;
                 break;
             case LogType.error:
                 Console.ForegroundColor = System.ConsoleColor.Red;
                 break;
             case LogType.info:
                 Console.ForegroundColor = System.ConsoleColor.Cyan;
+                break;
+            case LogType.system:
+                Console.ForegroundColor = System.ConsoleColor.DarkGray;
                 break;
         }
     }

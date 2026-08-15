@@ -20,16 +20,14 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks {
     public bool AllowContactGeneration (int workerIndex, CollidableReference a, CollidableReference b, ref float speculativeMargin) => true;
 
     public bool ConfigureContactManifold<TManifold> (int workerIndex, CollidablePair pair, ref TManifold manifold, out PairMaterialProperties pairMaterial) where TManifold : unmanaged, IContactManifold<TManifold> {
-        var materialA = a_IsBody(pair.A) ? BodyMaterials[pair.A.BodyHandle] : default;
-        var materialB = a_IsBody(pair.B) ? BodyMaterials[pair.B.BodyHandle] : default;
+        var materialA = BodyMaterials[pair.A];
+        var materialB = BodyMaterials[pair.B];
 
-        pairMaterial.FrictionCoefficient = System.MathF.Min(materialA.Friction, materialB.Friction);
-        pairMaterial.MaximumRecoveryVelocity = System.MathF.Max(materialA.MaximumRecoveryVelocity, materialB.MaximumRecoveryVelocity);
+        pairMaterial.FrictionCoefficient = MathF.Min(materialA.Friction, materialB.Friction);
+        pairMaterial.MaximumRecoveryVelocity = MathF.Max(materialA.MaximumRecoveryVelocity, materialB.MaximumRecoveryVelocity);
         pairMaterial.SpringSettings = materialA.SpringSettings;
         return true;
     }
-
-    static bool a_IsBody (CollidableReference c) => c.Mobility != CollidableMobility.Static;
 
     public bool AllowContactGeneration (int workerIndex, CollidablePair pair, int childIndexA, int childIndexB) => true;
     public bool ConfigureContactManifold (int workerIndex, CollidablePair pair, int childIndexA, int childIndexB, ref ConvexContactManifold manifold) => true;

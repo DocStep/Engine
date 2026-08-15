@@ -102,6 +102,7 @@ public class ComponentManager : Singleton<ComponentManager> {
             componentsFixedUpdate.Add(iComponentFixedUpdate);
         }
 
+        //Log.log(component.Name, LogType.warning);
         component.OnAdd();
         //Log.log("ComponentManager.ComponentRegister", component);
     }

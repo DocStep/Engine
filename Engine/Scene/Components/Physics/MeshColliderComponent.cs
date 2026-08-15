@@ -15,6 +15,11 @@ public class MeshColliderComponent : ColliderComponent {
     public Quaternion Rotation => owner.Transform.Rotation;
     public Vector3 Scale => owner.Transform.Scale;
 
+    [JsonIgnore] float friction = 1f;
+    [Hide][JsonIgnore] float maximumRecoveryVelocity = 1f;
+    [Hide][JsonIgnore] float frequency = 30f;
+    [Hide][JsonIgnore] float dampingRation = 1f;
+
     [JsonIgnore] public StaticHandle? StaticHandle { get; private set; }
     [JsonIgnore] public TypedIndex ShapeIndex { get; private set; }
 
@@ -38,10 +43,8 @@ public class MeshColliderComponent : ColliderComponent {
         Simulation simulation = PhysicsManager.Instance.Simulation;
         Graphics.MeshData data = mesh.Data!;
 
-        int triangleCount = data.Indices.Length/3;
-
         BufferPool pool = PhysicsManager.Instance.BufferPool;
-
+        int triangleCount = data.Indices.Length/3;
         pool.Take(triangleCount, out Buffer<Triangle> triangles);
 
         for (int i = 0; i < triangleCount; i++) {
@@ -49,25 +52,28 @@ public class MeshColliderComponent : ColliderComponent {
             uint i1 = data.Indices[i * 3 + 1];
             uint i2 = data.Indices[i * 3 + 2];
 
-            Vector3 a = data.Vertices[i0].Position;
-            Vector3 b = data.Vertices[i1].Position;
-            Vector3 c = data.Vertices[i2].Position;
+            Vector3 a = data.Vertices[i0].Position*Scale;
+            Vector3 b = data.Vertices[i1].Position*Scale;
+            Vector3 c = data.Vertices[i2].Position*Scale;
 
-            a *= Scale;
-            b *= Scale;
-            c *= Scale;
-
-            triangles[i] = new Triangle(a, b, c);
+            triangles[i] = new Triangle(a, c, b); /// swapped b/c — flips winding if source mesh is backwards for Bepu
         }
 
         Mesh physicsMesh = new Mesh(triangles, new Vector3(1f), pool);
 
         ShapeIndex = simulation.Shapes.Add(physicsMesh);
         StaticHandle = simulation.Statics.Add(new StaticDescription(Position, Rotation, ShapeIndex));
+
+        Log.log("MeshColliderComponent.CreateCollider", LogType.warning);
+        PhysicsManager.Instance.BodyMaterials.Allocate(StaticHandle.Value) = new BodyMaterial {
+            Friction = friction,
+            MaximumRecoveryVelocity = maximumRecoveryVelocity,
+            SpringSettings = new BepuPhysics.Constraints.SpringSettings(frequency, dampingRation)
+        };
     }
 
     private void RemoveCollider () {
-        var simulation = PhysicsManager.Instance.Simulation;
+        Simulation simulation = PhysicsManager.Instance.Simulation;
 
         if (StaticHandle.HasValue) {
             simulation.Statics.Remove(StaticHandle.Value);

@@ -9,11 +9,12 @@ public class ScenePhysics : Scene {
     public override void Load () {
         GameObject ground = new GameObject() { Name = "Plane", };
         ground.Transform.Position = new Vector3(0, 0, 0);
-        ground.Transform.RotationEuler = new Vector3(0, 30, 0);
+        //ground.Transform.RotationEuler = new Vector3(180, 0, 0);
         ground.Transform.Scale = new Vector3(10, 1f, 10);
-        ground.AddComponent<Graphics.MeshComponent>().mesh = AssetsEngine._mesh_Cube;
-        ground.AddComponent<BoxColliderComponent>();
-        ground.AddComponent<PhysicsComponent>().SetKinematic();
+        ground.AddComponent<Graphics.MeshComponent>().mesh = AssetsEngine._mesh_PlaneQuad;
+        ground.AddComponent<MeshColliderComponent>().SetMesh(AssetsEngine._mesh_PlaneQuad);
+        //ground.AddComponent<PlaneColliderComponent>();
+        //ground.AddComponent<PhysicsComponent>().SetKinematic();
         /*
                 GameObject cube = new GameObject() { Name = "Cube", };
                 cube.Transform.Position = new Vector3(0, 1, 0);
