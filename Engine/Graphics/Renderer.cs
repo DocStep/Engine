@@ -105,12 +105,12 @@ public class Renderer {
             Log.log($"No {nameof(Camera)} found");
             return;
         }
-
         DrawStart();
 
         de_PreRender?.Invoke();
 
         SetTargetSize();
+
         PostProcess.Resize(Width, Height);
 
         /// Camera Matrix
@@ -139,11 +139,12 @@ public class Renderer {
         PresentToBackbuffer();
 
         de_PostRender?.Invoke();
-
+        
         Stats.Frame++;
-        //Log.log("Renderer", Stats.Frame, Windows.Window.Size, Stats.SceneSize);
+
         DrawEnd();
 
+        //Log.log("Renderer", Stats.Frame, Windows.Window.Size, Stats.SceneSize);
         //Thread.Sleep(500);
     }
     public void RenderReset () {

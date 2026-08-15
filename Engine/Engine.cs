@@ -92,7 +92,7 @@ public class Engine : IDisposable {
         engineState = EngineStates.Ready;
         Log.log($"========== Init Finish ==========", LogType.system);
 
-        Engine.SetFPSMax(144);
+        //Engine.SetFPSMax(144);
     }
 
 

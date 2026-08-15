@@ -83,16 +83,15 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
 
 
     public void SetPosition (Vector3 position) {
-        Rigidbody.Pose.Position = position;
         PhysicsManager.Instance.Simulation.Awakener.AwakenBody(Handle);
+        Rigidbody.Pose.Position = position;
     }
     public void SetRotation (Quaternion rotation) {
-        Rigidbody.Pose.Orientation = rotation;
         PhysicsManager.Instance.Simulation.Awakener.AwakenBody(Handle);
+        Rigidbody.Pose.Orientation = rotation;
     }
     public void SetScale (Vector3 scale) {
         
-
     }
 
     public void UpdateTransform () {

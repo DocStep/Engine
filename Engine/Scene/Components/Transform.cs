@@ -12,8 +12,11 @@ public class Transform : Component {
 
     public Vector3 Position = Vector3.Zero;
     [Hide][JsonIgnore] public Quaternion Rotation = Quaternion.Identity;
-    [Hide] private Vector3 rotationEuler;
-    [DrawName("Rotation")][WrapRotation(0, 360)][ChangeStep(1f)][JsonIgnore]
+    [Hide] public Vector3 rotationEuler;
+    [DrawName("Rotation")]
+    [WrapRotation(0, 360)]
+    [ChangeStep(1f)]
+    [JsonIgnore]
     public Vector3 RotationEuler {
         get => rotationEuler;
         set {
