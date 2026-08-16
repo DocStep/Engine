@@ -30,7 +30,7 @@ public class MeshComponent : Component, IComponentUpdate, IUpdateAtFreeze {
             if (material is null) return default;
 
             RenderInfo renderInfo = new RenderInfo() {
-                model = owner.Transform.GetWorldMatrix(),
+                model = gameObject.Transform.GetWorldMatrix(),
 
                 mesh = mesh,
                 material = material,

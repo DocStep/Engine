@@ -8,7 +8,7 @@ namespace Engine.Graphics;
 public class LightSource : Component {
     public override string Name => nameof(SunLight);
 
-    [Hide] public Vector3 Position => owner.Transform.Position;
+    [Hide] public Vector3 Position => gameObject.Transform.Position;
 
     public Vector3 Color = Constants.sunLightColor;
     public float Intensity = Constants.sunLightIntensity;

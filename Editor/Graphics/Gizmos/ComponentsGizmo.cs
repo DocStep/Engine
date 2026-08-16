@@ -9,7 +9,7 @@ public static class ComponentsGizmo {
         public void DrawGizmo () {
             if (Constants.drawGizmos) {
                 RenderInfo renderInfo = new RenderInfo() {
-                    model = comp.owner.Transform.GetWorldMatrix(),
+                    model = comp.gameObject.Transform.GetWorldMatrix(),
 
                     mesh = Gizmos._mesh_CubeWireframe,
                     material = Gizmos._mat_GizmosGreen,
@@ -24,7 +24,7 @@ public static class ComponentsGizmo {
         public void DrawGizmo () {
             if (Constants.drawGizmos) {
                 RenderInfo renderInfo = new RenderInfo() {
-                    model = comp.owner.Transform.GetWorldMatrix(),
+                    model = comp.gameObject.Transform.GetWorldMatrix(),
 
                     mesh = Gizmos._mesh_CapsuleWireframe,
                     material = Gizmos._mat_GizmosGreen,
@@ -39,7 +39,7 @@ public static class ComponentsGizmo {
         public void DrawGizmo () {
             if (Constants.drawGizmos) {
                 RenderInfo renderInfo = new RenderInfo() {
-                    model = comp.owner.Transform.GetWorldMatrix(),
+                    model = comp.gameObject.Transform.GetWorldMatrix(),
 
                     mesh = Gizmos._mesh_PlaneWireframe,
                     material = Gizmos._mat_GizmosGreen,
@@ -54,7 +54,7 @@ public static class ComponentsGizmo {
         public void DrawGizmo () {
             if (Constants.drawGizmos) {
                 RenderInfo renderInfo = new RenderInfo() {
-                    model = comp.owner.Transform.GetWorldMatrix(),
+                    model = comp.gameObject.Transform.GetWorldMatrix(),
 
                     mesh = Gizmos._mesh_SphereWireframe,
                     material = Gizmos._mat_GizmosGreen,

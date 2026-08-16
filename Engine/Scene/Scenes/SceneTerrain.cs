@@ -24,19 +24,20 @@ public class SceneTerrain : Scene {
         sunMesh1.Enabled = false;
         SunLight sun1 = go_sun1.AddComponent<SunLight>();
         go_sun1.Transform.RotationEuler = new Vector3(60, -30, 0);
-        sun1.Color = new Vector3(1, 1, 0);
+        sun1.Color = new Vector3(0, 1, 0);
         //sun1.Intensity = 1;
 
         GameObject go_sun2 = new GameObject() { Name = "Sun2", };
         go_sun2.Transform.Position = new Vector3(1, 5, 0);
         go_sun2.Transform.Scale = new Vector3(0.2f);
+        go_sun2.Transform.Parent = go_sun1.Transform;
         MeshComponent sunMesh2 = go_sun2.AddComponent<MeshComponent>();
         sunMesh2.mesh = AssetsEngine._mesh_Sphere;
         sunMesh2.material = mat_sun;
         sunMesh2.Enabled = false;
         SunLight sun2 = go_sun2.AddComponent<SunLight>();
         go_sun2.Transform.RotationEuler = new Vector3(30, 30, 0);
-        sun2.Color = new Vector3(0, 1, 1);
+        sun2.Color = new Vector3(0, 0, 1);
         //sun2.Intensity = 1;
 
         GameObject go_terrain = new GameObject() { Name = "Terrain", };
@@ -55,7 +56,7 @@ public class SceneTerrain : Scene {
         }
         terrain_meshComp.mesh = new Mesh(MeshData.CreateFromArray(heightmap, 1f));
         terrain_meshComp.material = new Material(AssetsEngine._mat_Lit) { Name = "Terrain", };
-        terrain_meshComp.material.SetVector3(Shader.Color, Constants.green);
+        terrain_meshComp.material.SetVector3(Shader.Color, Constants.white);
         terrain_meshComp.material.SetFloat(Shader.Smoothness, 0f);
         MeshColliderComponent terrain_meshColliderComp = go_terrain.AddComponent<MeshColliderComponent>();
         terrain_meshColliderComp.SetMesh(terrain_meshComp.mesh);

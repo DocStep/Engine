@@ -10,6 +10,23 @@ public class Transform : Component {
 
     public override string Name => nameof(Transform);
 
+    [Hide][JsonIgnore] private Transform? parent = null;
+    [Hide][JsonIgnore]
+    public Transform? Parent {
+        get => parent;
+        set {
+            if (parent == value) return;
+
+            parent?.Children.Remove(this);
+            if (value is not null && !value.Children.Contains(this)) 
+                value.Children.Add(this);
+            parent = value;
+        }
+    }
+    [Hide] public Guid? parentGuid = null;
+    [Hide][JsonIgnore] public List<Transform> Children = new List<Transform>();
+    [Hide] public List<Guid> childrenGuids = new List<Guid>();
+
     public Vector3 Position = Vector3.Zero;
     [Hide][JsonIgnore] public Quaternion rotation = Quaternion.Identity;
     [Hide][JsonIgnore] public Quaternion Rotation {
@@ -37,19 +54,19 @@ public class Transform : Component {
 
     public void SetPosition (Vector3 position) {
         Position = position;
-        owner.GetComponent<PhysicsComponent>()?.SetPosition(position);
+        gameObject.GetComponent<PhysicsComponent>()?.SetPosition(position);
     }
     public void SetRotation (Quaternion rotation) {
         Rotation = rotation;
-        owner.GetComponent<PhysicsComponent>()?.SetRotation(rotation);
+        gameObject.GetComponent<PhysicsComponent>()?.SetRotation(rotation);
     }
     public void SetScale (Vector3 scale) {
         Scale = scale;
-        owner.GetComponent<PhysicsComponent>()?.SetScale(scale);
+        gameObject.GetComponent<PhysicsComponent>()?.SetScale(scale);
     }
 
     public void Stop () {
-        owner.GetComponent<PhysicsComponent>()?.Stop();
+        gameObject.GetComponent<PhysicsComponent>()?.Stop();
     }
 
 

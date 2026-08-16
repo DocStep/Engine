@@ -94,6 +94,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
 
         DrawSceneView(dockspaceId);
+        DrawHierarchy(dockspaceId);
         DrawInspector(dockspaceId);
         DrawEngineInfo(dockspaceId);
         DrawGLInfo(dockspaceId);
@@ -139,15 +140,56 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.PopStyleVar();
     }
 
+    private void DrawHierarchy (uint dockspaceId) {
+        ImGui.Begin("Hierarchy");
+
+        Scene scene = SceneManager.ActiveScene;
+        ImGui.PushStyleColor(ImGuiCol.Text, EditorUIStyle.AccentColor);
+        ImGui.TextUnformatted(scene.Name);
+        ImGui.PopStyleColor();
+        ImGui.Separator();
+
+        foreach (GameObject go in scene.Objects) {
+            if (go.Transform.Parent is null) DrawHierarchyNode(go);
+        }
+
+        ImGui.End();
+    }
+    private void DrawHierarchyNode (GameObject go) {
+        ImGui.PushID(go.GetHashCode());
+
+        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.SpanAvailWidth;
+
+        if (go.Transform.Children.Count == 0)
+            flags |= ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen;
+
+        GameObject? selectedGO = Gizmos._gizmo_Selected.selectedMeshComp?.gameObject;
+        if (selectedGO == go) flags |= ImGuiTreeNodeFlags.Selected;
+
+        bool open = ImGui.TreeNodeEx(go.Name, flags);
+
+        if (ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen()) {
+            /// set selection the same way the gizmo/inspector already reads it
+            Gizmos._gizmo_Selected.UpdateSelectedGO(go);
+        }
+
+        if (open && 0 < go.Transform.Children.Count) {
+            for (int c = 0; c < go.Transform.Children.Count; c++) DrawHierarchyNode(go.Transform.Children[c].gameObject);
+            ImGui.TreePop();
+        }
+
+        ImGui.PopID();
+    }
     private void DrawInspector (uint dockspaceId) {
         ImGui.Begin("Inspector");
 
-        GameObject? selectedGO = Gizmos._gizmo_Selected.selectedMeshComp?.owner;
+        GameObject? selectedGO = Gizmos._gizmo_Selected.selectedMeshComp?.gameObject;
         if (selectedGO is not null) {
             bool temp_b = selectedGO.Enabled;
             if (ImGui.Checkbox("##" + nameof(selectedGO.Enabled), ref temp_b)) selectedGO.Enabled = temp_b;
             ImGui.SameLine();
             ImGui.InputText(nameof(selectedGO.Name), ref selectedGO.Name, 256);
+            ImGui.Separator();
 
             DrawComponent(selectedGO.Transform);
 
@@ -389,7 +431,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 break;
             case Transform tr:
                 ImGui.BeginDisabled();
-                temp_s = tr.parent is not null ? tr.parent.Name : "null";
+                temp_s = tr.Parent is not null ? tr.Parent.Name : "null";
                 if (ImGui.InputText(id, ref temp_s, 256)) result = temp_s;
                 ImGui.EndDisabled();
                 break;

@@ -14,16 +14,16 @@ public class ReflectionActionScripts : Singleton<ReflectionActionScripts> {
 
             Scripts.Add(script);
             if (script is IActionScript_Start action_start) {
-                de_Actions_Start += Wrap(action_start.OnScriptAction_Start, types[t]);
+                de_Actions_Start += Wrap(action_start.Start_AS, types[t]);
             }
             if (script is IActionScript_FixedUpdate action_fixedUpdate) {
-                de_Actions_FixedUpdate += Wrap(action_fixedUpdate.OnScriptAction_FixedUpdate, types[t]);
+                de_Actions_FixedUpdate += Wrap(action_fixedUpdate.FixedUpdate_AS, types[t]);
             }
             if (script is IActionScript_Update action_update) {
-                de_Actions_Update += Wrap(action_update.OnScriptAction_Update, types[t]);
+                de_Actions_Update += Wrap(action_update.Update_AS, types[t]);
             }
             if (script is IActionScript_Exit action_exit) {
-                de_Actions_Exit += Wrap(action_exit.OnScriptAction_Exit, types[t]);
+                de_Actions_Exit += Wrap(action_exit.Exit_AS, types[t]);
             }
 
             Log.log("[ReflectionActionScripts]", "Registered:", types[t]);

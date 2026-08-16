@@ -22,7 +22,7 @@ public class Camera : Component {
     }
 
 
-    public virtual Vector3 CameraPos => owner.Transform.Position;
+    public virtual Vector3 CameraPos => gameObject.Transform.Position;
     //public Matrix4x4 cameraRot = Matrix4x4.Identity;
     //public Vector2 mousePos_Window = Vector2.Zero;
     public static bool wantWarpPos = false;
@@ -64,8 +64,8 @@ public class Camera : Component {
         return Matrix4x4.Identity;
     }
     public virtual Matrix4x4 GetViewMatrix () {
-        Vector3 pos = owner.Transform.Position;
-        return Matrix4x4.CreateLookAtLeftHanded(pos, pos + owner.Transform.Forward, owner.Transform.Up);
+        Vector3 pos = gameObject.Transform.Position;
+        return Matrix4x4.CreateLookAtLeftHanded(pos, pos + gameObject.Transform.Forward, gameObject.Transform.Up);
     }
 
     public virtual bool GetRayMouse (out Ray ray) {

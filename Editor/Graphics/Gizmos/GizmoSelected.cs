@@ -16,17 +16,17 @@ public class GizmoSelected : IDisposable {
     GL GL = null!;
     Shader _sh_Outline = null!;
 
+    public GameObject? go_selected = null;
     public MeshComponent? selectedMeshComp { get; private set; } = null;
-    private Mesh? mesh_selectedLast = null;
     private Mesh mesh_outlined = null!;
-    public bool isInteracting => selectedPositionMode != SelectedPositionGizmoMode.None
-        || selectedPositionOverMode != SelectedPositionGizmoMode.None;
-
+    private Mesh? mesh_selectedLast = null;
 
     public SelectedGizmoMode selectedGizmoMode = SelectedGizmoMode.Position;
     public SelectedPositionGizmoMode selectedPositionMode;
     public SelectedRotationGizmoMode selectedRotationMode;
     public SelectedScaleGizmoMode selectedScaleMode;
+    public bool isInteracting => selectedPositionMode != SelectedPositionGizmoMode.None
+        || selectedPositionOverMode != SelectedPositionGizmoMode.None;
 
     private const float _squareSize = 0.025f;
     private const float _axisLength = 0.15f;
@@ -60,7 +60,7 @@ public class GizmoSelected : IDisposable {
     public void Update () {
         if (selectedMeshComp is null) return;
 
-        Transform tr_obj = selectedMeshComp.owner.Transform;
+        Transform tr_obj = selectedMeshComp.gameObject.Transform;
         Vector3 camPos = Camera.Main.CameraPos;
         Vector3 _objPos = tr_obj.Position;
         Quaternion _objRot = tr_obj.Rotation;
@@ -207,9 +207,9 @@ public class GizmoSelected : IDisposable {
                                 break;
                         }
                         if (pos is not null) {
-                            selectedMeshComp.owner.Transform.Stop();
-                            selectedMeshComp.owner.Transform.SetPosition(pos.Value + selectedDragMargin);
-                            selectedMeshComp.owner.Transform.SetRotation(selectedDragRot);
+                            selectedMeshComp.gameObject.Transform.Stop();
+                            selectedMeshComp.gameObject.Transform.SetPosition(pos.Value + selectedDragMargin);
+                            selectedMeshComp.gameObject.Transform.SetRotation(selectedDragRot);
                         }
                     }
                 } else if (Inputs.Actions[Inputs.LMB].pressedUp) {
@@ -289,7 +289,7 @@ public class GizmoSelected : IDisposable {
 
 
     public void Draw () {
-        Transform? tr_obj = selectedMeshComp?.owner.Transform;
+        Transform? tr_obj = selectedMeshComp?.gameObject.Transform;
         if (tr_obj is null) return;
 
         GL.Viewport(0, 0, (uint)RendererEditor.Instance.Width, (uint)RendererEditor.Instance.Height);
@@ -310,7 +310,7 @@ public class GizmoSelected : IDisposable {
     private void DrawGizmo () {
         if (selectedMeshComp is null) return;
 
-        Transform tr_obj = selectedMeshComp.owner.Transform;
+        Transform tr_obj = selectedMeshComp.gameObject.Transform;
         Matrix4x4.Invert(Renderer.Instance.m4x4_View, out Matrix4x4 invView);
         Vector3 camPos = invView.Translation;
         Vector3 _objPos = tr_obj.Position;
@@ -346,7 +346,7 @@ public class GizmoSelected : IDisposable {
 
         /// Axes
         Matrix4x4 gizmoBasis = BasisToWorld(gizmoRight, gizmoUp, gizmoForward);
-        Vector3 pos3 = selectedMeshComp.owner.Transform.Position;
+        Vector3 pos3 = selectedMeshComp.gameObject.Transform.Position;
         Matrix4x4 _m4x4_selectedScale = Matrix4x4.CreateScale(_dist*_axisLength);
 
         isColorSelected = selectedPositionMode == SelectedPositionGizmoMode.X || selectedPositionOverMode == SelectedPositionGizmoMode.X;
@@ -431,11 +431,38 @@ public class GizmoSelected : IDisposable {
         }
     }
 
+    public void UpdateSelectedGO (GameObject? go_selected) {
+        this.go_selected = go_selected;
+        if (go_selected is null) {
+            selectedMeshComp = null;
+            return;
+        }
+
+        selectedMeshComp = go_selected.GetComponent<MeshComponent>();
+        if (selectedMeshComp is not null && selectedMeshComp.mesh is not null) {
+            mesh_selectedLast = selectedMeshComp.mesh;
+
+            mesh_outlined?.Dispose();
+
+            if (selectedMeshComp.mesh.Data is not null) {
+                MeshData data = selectedMeshComp.mesh.Data.Weld();
+                data.RecalculateOutlineNormals();
+
+                /*Vector3 scale = selectedMeshComp.owner.Transform.Scale;
+                for (int i = 0; i < data.Vertices.Length; i++) {
+                    data.Vertices[i].Position *= scale;
+                }*/
+
+                mesh_outlined = new Mesh(data);
+            }
+        } 
+    }
     public void UpdateSelectedMesh (MeshComponent? selectedMeshComp) {
         if (selectedMeshComp is null || selectedMeshComp.mesh is null || selectedMeshComp.mesh.Data is null) return;
 
-        mesh_selectedLast = selectedMeshComp.mesh;
+        go_selected = selectedMeshComp.gameObject;
         this.selectedMeshComp = selectedMeshComp;
+        mesh_selectedLast = selectedMeshComp.mesh;
 
         mesh_outlined?.Dispose();
 

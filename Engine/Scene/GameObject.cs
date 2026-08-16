@@ -19,7 +19,7 @@ public enum PrimitiveTypes {
 public class GameObject : ISavable, IDisposable {
     public GameObject() {
         Id = lib.Id;
-        Transform.owner = this;
+        Transform.gameObject = this;
         SceneManager.ActiveScene.ObjectAdd(this);
     }
     /*public GameObject (List<Component> Components) : base() {
@@ -36,7 +36,7 @@ public class GameObject : ISavable, IDisposable {
 
         Id = GetHashCode();
 
-        Transform.owner = this;
+        Transform.gameObject = this;
         Transform.Position = position;
         Transform.Rotation = Mathf.EulerToQuaternion(rotation);
         Transform.Scale = scale;
@@ -126,7 +126,7 @@ public class GameObject : ISavable, IDisposable {
             ComponentManager.Instance.ComponentUnregister(component);
     }
     public void RemoveComponent (Component component) {
-        component.owner = null!;
+        component.gameObject = null!;
         Components.Remove(component);
         ComponentManager.Instance.ComponentUnregister(component);
     }

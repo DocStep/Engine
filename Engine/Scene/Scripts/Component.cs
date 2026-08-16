@@ -13,15 +13,13 @@ public abstract class Component : ISavable {
 
     [Hide] public bool Enabled { get; set; } = true;
 
-    [Hide][JsonIgnore] public GameObject owner = null!;
-    [Hide] public Guid? ownerGuid = null; /// For save
-    [Hide][JsonIgnore] public Transform? parent = null;
-    [Hide] public Guid? parentGuid = null; /// For save
+    [Hide][JsonIgnore] public GameObject gameObject = null!;
+    [Hide] public Guid? ownerGuid = null;
     [Hide][Readonly] public abstract string Name { get; }
 
 
     public virtual void SetParent (GameObject gameObject) {
-        owner = gameObject;
+        this.gameObject = gameObject;
     }
 
     public virtual void OnAdd () { }

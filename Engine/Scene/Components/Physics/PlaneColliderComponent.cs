@@ -9,9 +9,9 @@ namespace Engine;
 public class PlaneColliderComponent : ColliderComponent, IDynamicCollider {
     [JsonIgnore] public override string Name => nameof(PlaneColliderComponent);
 
-    [Hide][JsonIgnore] public Vector3 Position => owner.Transform.Position;
-    [Hide][JsonIgnore] public Quaternion Rotation => owner.Transform.Rotation;
-    [Hide][JsonIgnore] public Vector3 Scale => owner.Transform.Scale;
+    [Hide][JsonIgnore] public Vector3 Position => gameObject.Transform.Position;
+    [Hide][JsonIgnore] public Quaternion Rotation => gameObject.Transform.Rotation;
+    [Hide][JsonIgnore] public Vector3 Scale => gameObject.Transform.Scale;
     [Hide][JsonIgnore] public const float thickness = 0.05f; /// thin slab, not a true zero-thickness plane
 
     [JsonIgnore] public TypedIndex ShapeIndex { get; private set; }

@@ -15,23 +15,23 @@ public class Scene : ISavable {
         Load();
     }*/
 
-    [JsonIgnore] public readonly static string typeName = typeof(Scene).Name;
+    [JsonIgnore] public readonly static string TypeName = typeof(Scene).Name;
 
-
-
-    public virtual void Load () {
-        
-    }
-
-    public string Name = "Scene";
+    public string Name = nameof(Scene);
     protected readonly List<GameObject> objects = new();
     public List<GameObject> Objects => objects;
+
     public void ObjectAdd (GameObject gameObject) {
         objects.Add(gameObject);
     }
     /*public void ObjectRemove (GameObject gameObject) {
         objects.Remove(gameObject);
     }*/
+
+
+    public virtual void Load () {
+
+    }
 
     public void Update () {
 
@@ -55,7 +55,7 @@ public class Scene : ISavable {
 
     public JObj ToJObj () {
         PreSave();
-        return new JObj(typeName, this);
+        return new JObj(TypeName, this);
     }
 
     public void PreSave () {

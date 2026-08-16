@@ -10,8 +10,8 @@ public class BoxColliderComponent : ColliderComponent, IDynamicCollider {
 
     [JsonIgnore] public override string Name => nameof(BoxColliderComponent);
 
-    [Hide][JsonIgnore] public Vector3 Position => owner.Transform.Position;
-    [Hide][JsonIgnore] public Vector3 Scale => owner.Transform.Scale;
+    [Hide][JsonIgnore] public Vector3 Position => gameObject.Transform.Position;
+    [Hide][JsonIgnore] public Vector3 Scale => gameObject.Transform.Scale;
 
     [Hide][JsonIgnore] public TypedIndex ShapeIndex { get; private set; }
 

@@ -205,7 +205,7 @@ public sealed class CameraEditor : Camera {
 
         if (Inputs.Actions[Inputs.CameraFocus].pressedDown) 
             if (Gizmos._gizmo_Selected.selectedMeshComp is not null) 
-                FocusAtPoint(Gizmos._gizmo_Selected.selectedMeshComp.owner.Transform.Position);
+                FocusAtPoint(Gizmos._gizmo_Selected.selectedMeshComp.gameObject.Transform.Position);
 
         /// Zoom
         if (WindowInput.WheelDelta != 0) {

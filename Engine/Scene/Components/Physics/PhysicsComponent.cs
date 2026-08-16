@@ -4,6 +4,13 @@ using Newtonsoft.Json;
 
 namespace Engine;
 
+public enum ForceMode {
+    Force,
+    Acceleration,
+    Impulse,
+    VelocityChange
+}
+
 
 public class PhysicsComponent : Component, IComponentFixedUpdate {
     [JsonIgnore] public override string Name => nameof(PhysicsComponent);
@@ -25,8 +32,8 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
 
 
     public override void OnAdd () {
-        if (owner.GetComponent<ColliderComponent>() is not IDynamicCollider collider) {
-            Log.log($"{owner.Name}: PhysicsComponent requires a dynamic-capable ColliderComponent (e.g. BoxColliderComponent).", LogType.warning);
+        if (gameObject.GetComponent<ColliderComponent>() is not IDynamicCollider collider) {
+            Log.log($"{gameObject.Name}: PhysicsComponent requires a dynamic-capable ColliderComponent (e.g. BoxColliderComponent).", LogType.warning);
             return;
         }
 
@@ -35,7 +42,7 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
         BodyInertia inertia = collider.ComputeInertia(mass);
         CollidableDescription collidable = new CollidableDescription(shapeIndex, 0.1f);
         BodyDescription description = BodyDescription.CreateDynamic(
-            new RigidPose(owner.Transform.Position, owner.Transform.Rotation),
+            new RigidPose(gameObject.Transform.Position, gameObject.Transform.Rotation),
             inertia,
             collidable,
             new BodyActivityDescription(0.01f)
@@ -45,7 +52,7 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
         if (isKinematicRequested) {
             // Shapes have already been added via collider.AddShape; reuse shapeIndex.
             StaticHandle = PhysicsManager.Instance.Simulation.Statics.Add(
-                new StaticDescription(new RigidPose(owner.Transform.Position, owner.Transform.Rotation), 
+                new StaticDescription(new RigidPose(gameObject.Transform.Position, gameObject.Transform.Rotation), 
                 shapeIndex));
             IsValid = true;
             return;
@@ -94,12 +101,12 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
     }
 
     public void UpdateTransform () {
-        owner.Transform.Position = Rigidbody.Pose.Position;
-        owner.Transform.Rotation = Rigidbody.Pose.Orientation;
+        gameObject.Transform.Position = Rigidbody.Pose.Position;
+        gameObject.Transform.Rotation = Rigidbody.Pose.Orientation;
     }
     public void UpdateRigidbody () {
-        Rigidbody.Pose.Position = owner.Transform.Position;
-        Rigidbody.Pose.Orientation = owner.Transform.Rotation;
+        Rigidbody.Pose.Position = gameObject.Transform.Position;
+        Rigidbody.Pose.Orientation = gameObject.Transform.Rotation;
     }
     public void Stop () {
         if (Rigidbody.Kinematic) return;
@@ -151,6 +158,30 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
             PhysicsManager.Instance.Simulation.Awakener.AwakenBody(Handle);
         } catch {
             /// If body not yet created, inertia will be applied in OnAdd.
+        }
+    }
+
+    public void AddForce (Vector3 force, ForceMode mode = ForceMode.Force) {
+        if (!IsValid || StaticHandle.HasValue) return;
+
+        PhysicsManager.Instance.Simulation.Awakener.AwakenBody(Handle);
+        switch (mode) {
+            case ForceMode.Force:
+                /// continuous, mass-dependent -> scale by fixed timestep to get impulse
+                Rigidbody.ApplyLinearImpulse((float)Time.fixedDeltaTime*force);
+                break;
+            case ForceMode.Acceleration:
+                /// continuous, mass-independent -> scale by mass and timestep
+                Rigidbody.ApplyLinearImpulse((float)Time.fixedDeltaTime*mass*force);
+                break;
+            case ForceMode.Impulse:
+                /// instant, mass-dependent
+                Rigidbody.ApplyLinearImpulse(force);
+                break;
+            case ForceMode.VelocityChange:
+                /// instant, mass-independent -> directly modify velocity
+                Rigidbody.Velocity.Linear += force;
+                break;
         }
     }
 

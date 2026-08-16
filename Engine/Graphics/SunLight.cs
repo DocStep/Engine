@@ -8,12 +8,12 @@ namespace Engine.Graphics;
 public class SunLight : LightSource {
     public override string Name => nameof(SunLight);
 
-    [Hide] public Quaternion Rotation => owner.Transform.Rotation;
+    [Hide] public Quaternion Rotation => gameObject.Transform.Rotation;
 
 
     public override void OnAdd () {
         //owner.Transform.Rotation = Mathf.DirectionToQuaternion(Constants.sunLightDir);
-        owner.Transform.RotationEuler = Constants.sunLightEuler;
+        gameObject.Transform.RotationEuler = Constants.sunLightEuler;
         Lighting.RegisterLightSource(this);
     }
     public override void OnRemove () {

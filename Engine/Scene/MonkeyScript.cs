@@ -11,10 +11,10 @@ public class MonkeyScript : Script, IComponentAwake, IComponentUpdate {
 
     public void Awake () {
         Log.log("MonkeyScript.Awake");
-        mat = owner.GetComponent<Graphics.MeshComponent>()?.material;
+        mat = gameObject.GetComponent<Graphics.MeshComponent>()?.material;
     }
     public void Update () {
-        owner.Transform.RotationEuler += (float)Time.deltaTime*dir;
+        gameObject.Transform.RotationEuler += (float)Time.deltaTime*dir;
 
         color = new Vector3()!;
         color.X = Mathf.Remap01(MathF.Sin(3f*(float)Time.time), -1, 1);

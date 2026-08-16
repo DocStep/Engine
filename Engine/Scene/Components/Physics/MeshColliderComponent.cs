@@ -11,9 +11,9 @@ public class MeshColliderComponent : ColliderComponent {
 
     [Hide][JsonIgnore] public Graphics.Mesh? mesh = null;
 
-    public Vector3 Position => owner.Transform.Position;
-    public Quaternion Rotation => owner.Transform.Rotation;
-    public Vector3 Scale => owner.Transform.Scale;
+    public Vector3 Position => gameObject.Transform.Position;
+    public Quaternion Rotation => gameObject.Transform.Rotation;
+    public Vector3 Scale => gameObject.Transform.Scale;
 
     [JsonIgnore] float friction = 1f;
     [Hide][JsonIgnore] float maximumRecoveryVelocity = 1f;
@@ -87,7 +87,7 @@ public class MeshColliderComponent : ColliderComponent {
 
     public void SetMesh (Graphics.Mesh? mesh) {
         this.mesh = mesh;
-        if (owner is not null) CreateCollider();
+        if (gameObject is not null) CreateCollider();
     }
 
     public void SetPosition (Vector3 position) {
