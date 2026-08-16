@@ -1,12 +1,13 @@
-﻿using static Engine.Graphics.Shader;
+﻿using System.Linq;
+using static Engine.Graphics.Shader;
 
 namespace Engine.Graphics;
 
 
 public static class Lighting {
 
-    private static List<LightSource> LightSources = new List<LightSource>();
-    private static List<SunLight> SunLights = new List<SunLight>();
+    public static List<LightSource> LightSources = new List<LightSource>();
+    public static List<SunLight> SunLights = new List<SunLight>();
 
     public static SunLight? MainLight => 0 < SunLights.Count ? SunLights[0] : null;
     public const int MAX_SUN_LIGHTS = 32;
@@ -20,32 +21,32 @@ public static class Lighting {
 
 
     public static void SetSceneUniformsLit (Shader shader) {
-        int count = Math.Min(SunLights.Count, MAX_SUN_LIGHTS);
-        Vector3[] dirs = new Vector3[count];
-        Vector3[] colors = new Vector3[count]; 
-        float[] intensities = new float[count];
+        List<SunLight> enabledLights = SunLights.Where(l => l.Enabled).ToList();
+        int count = Math.Min(enabledLights.Count, MAX_SUN_LIGHTS);
 
-        for (int i = 0; i < count; i++) {
-            //Log.log("SetSceneUniformsLit", i);
-            SunLight light = SunLights[i];
-            dirs[i] = Mathf.QuaternionToDirection(light.Rotation);
-            colors[i] = light.Color;
-            intensities[i] = light.Intensity;
+        if (0 < count) {
+            Vector3[] dirs = new Vector3[count];
+            Vector3[] colors = new Vector3[count];
+            float[] intensities = new float[count];
+
+            for (int i = 0; i < count; i++) {
+                //Log.log("SetSceneUniformsLit", i);
+                SunLight light = enabledLights[i];
+                dirs[i] = Mathf.QuaternionToDirection(light.Rotation);
+                colors[i] = light.Color;
+                intensities[i] = light.Intensity;
+            }
+
+            shader.SetVector3Array(SunLightDir, dirs);
+            shader.SetVector3Array(SunLightColor, colors);
+            shader.SetFloatArray(SunLightIntensity, intensities);
         }
 
-        //Log.log($"{shader.Name} dirs", LogType.warning);
-        //foreach (Vector3 dir in dirs) {
-        //    Log.log(dir);
-        //}
-
         shader.SetInt(SunLightCount, count);
-        shader.SetVector3Array(SunLightDir, dirs);
-        shader.SetVector3Array(SunLightColor, colors);
-        shader.SetFloatArray(SunLightIntensity, intensities);
 
-        shader.SetFloat(Exposure, Camera.Main!.Exposure);
         shader.SetVector3(AmbientColor, Constants.ambientColor);
         shader.SetFloat(AmbientColorIntensity, Constants.ambientColorIntensity);
+        shader.SetFloat(Exposure, Camera.Main!.Exposure);
 
         if (Constants.renderSkyboxReflection)
             shader.SetFloat(ReflectionIntensity, Constants.reflectionIntensity);

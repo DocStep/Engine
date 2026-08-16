@@ -12,7 +12,8 @@ public class SunLight : LightSource {
 
 
     public override void OnAdd () {
-        owner.Transform.Rotation = Mathf.DirectionToQuaternion(Constants.sunLightDir);
+        //owner.Transform.Rotation = Mathf.DirectionToQuaternion(Constants.sunLightDir);
+        owner.Transform.RotationEuler = Constants.sunLightEuler;
         Lighting.RegisterLightSource(this);
     }
     public override void OnRemove () {

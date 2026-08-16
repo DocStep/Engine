@@ -389,7 +389,7 @@ public class GizmoSelected : IDisposable {
             GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
 
-            RendererEditor.Instance.DrawRenderInfo(renderInfo);
+            Renderer.Instance.DrawRenderInfo(renderInfo);
 
 
             /// Pass 2 - outline

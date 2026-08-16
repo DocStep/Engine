@@ -16,21 +16,28 @@ public class SceneTerrain : Scene {
         mat_sun.SetVector3(Shader.Color, Constants.yellow);
 
         GameObject go_sun1 = new GameObject() { Name = "Sun1", };
-        go_sun1.Transform.Position = new Vector3(0, 5, 0);
+        go_sun1.Transform.Position = new Vector3(-1, 5, 0);
         go_sun1.Transform.Scale = new Vector3(0.2f);
         MeshComponent sunMesh1 = go_sun1.AddComponent<MeshComponent>();
         sunMesh1.mesh = AssetsEngine._mesh_Sphere;
         sunMesh1.material = mat_sun;
+        sunMesh1.Enabled = false;
         SunLight sun1 = go_sun1.AddComponent<SunLight>();
+        go_sun1.Transform.RotationEuler = new Vector3(60, -30, 0);
+        sun1.Color = new Vector3(1, 1, 0);
+        //sun1.Intensity = 1;
 
-        //GameObject go_sun2 = new GameObject() { Name = "Sun2", };
-        //go_sun2.Transform.Position = new Vector3(0, 5, 0);
-        //go_sun2.Transform.Scale = new Vector3(0.2f);
-        //MeshComponent sunMesh2 = go_sun2.AddComponent<MeshComponent>();
-        //sunMesh2.mesh = AssetsEngine._mesh_Sphere;
-        //sunMesh2.material = mat_sun;
-        //SunLight sun2 = go_sun2.AddComponent<SunLight>();
-        //go_sun2.Transform.RotationEuler = new Vector3(60, 0, 0);
+        GameObject go_sun2 = new GameObject() { Name = "Sun2", };
+        go_sun2.Transform.Position = new Vector3(1, 5, 0);
+        go_sun2.Transform.Scale = new Vector3(0.2f);
+        MeshComponent sunMesh2 = go_sun2.AddComponent<MeshComponent>();
+        sunMesh2.mesh = AssetsEngine._mesh_Sphere;
+        sunMesh2.material = mat_sun;
+        sunMesh2.Enabled = false;
+        SunLight sun2 = go_sun2.AddComponent<SunLight>();
+        go_sun2.Transform.RotationEuler = new Vector3(30, 30, 0);
+        sun2.Color = new Vector3(0, 1, 1);
+        //sun2.Intensity = 1;
 
         GameObject go_terrain = new GameObject() { Name = "Terrain", };
         go_terrain.Transform.Position = new Vector3(0, 0, 0);

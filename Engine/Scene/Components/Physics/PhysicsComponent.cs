@@ -25,7 +25,6 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
 
 
     public override void OnAdd () {
-        Log.log("PhysicsComponent.OnAdd", LogType.warning);
         if (owner.GetComponent<ColliderComponent>() is not IDynamicCollider collider) {
             Log.log($"{owner.Name}: PhysicsComponent requires a dynamic-capable ColliderComponent (e.g. BoxColliderComponent).", LogType.warning);
             return;

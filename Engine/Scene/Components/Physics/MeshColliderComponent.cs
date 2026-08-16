@@ -48,9 +48,9 @@ public class MeshColliderComponent : ColliderComponent {
         pool.Take(triangleCount, out Buffer<Triangle> triangles);
 
         for (int i = 0; i < triangleCount; i++) {
-            uint i0 = data.Indices[i * 3 + 0];
-            uint i1 = data.Indices[i * 3 + 1];
-            uint i2 = data.Indices[i * 3 + 2];
+            uint i0 = data.Indices[i*3 + 0];
+            uint i1 = data.Indices[i*3 + 1];
+            uint i2 = data.Indices[i*3 + 2];
 
             Vector3 a = data.Vertices[i0].Position*Scale;
             Vector3 b = data.Vertices[i1].Position*Scale;
@@ -64,7 +64,6 @@ public class MeshColliderComponent : ColliderComponent {
         ShapeIndex = simulation.Shapes.Add(physicsMesh);
         StaticHandle = simulation.Statics.Add(new StaticDescription(Position, Rotation, ShapeIndex));
 
-        Log.log("MeshColliderComponent.CreateCollider", LogType.warning);
         PhysicsManager.Instance.BodyMaterials.Allocate(StaticHandle.Value) = new BodyMaterial {
             Friction = friction,
             MaximumRecoveryVelocity = maximumRecoveryVelocity,

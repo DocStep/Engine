@@ -180,7 +180,6 @@ public class Renderer {
                 RenderList.Add(renderInfo);
                 break;
             case RenderPass.Transparent:
-            case RenderPass.Gizmo:
                 RenderGizmoList.Add(renderInfo);
                 break;
             case RenderPass.UI:
@@ -232,7 +231,6 @@ public class Renderer {
                 GL.Disable(EnableCap.Blend);
                 break;
             case RenderPass.Transparent:
-            case RenderPass.Gizmo:
                 GL.Enable(EnableCap.Blend);
                 GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 break;
@@ -277,9 +275,7 @@ public class Renderer {
 
         info.material.Apply();
 
-        //info.de_Pre?.Invoke();
         info.mesh.Draw(info.primitiveType);
-        //info.de_Post?.Invoke();
     }
     
 

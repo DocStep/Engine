@@ -123,9 +123,6 @@ public class RendererEditor : Renderer {
         Gizmos._mat_GizmoWireframe.Apply();
 
         info.mesh.Draw(info.primitiveType);
-
-        if (info.depthRangeNear != 0 || info.depthRangeFar != 1)
-            GL.DepthRange(0, 1);
     }
 
     public void DrawGizmosRaw () {

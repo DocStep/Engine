@@ -28,7 +28,6 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         Inputs.de_UpdateInput += UpdateInput;
 
         Engine.Engine.Instance.de_Update += Update;
-        Renderer.Instance.de_LateUpdate += Gizmos.Update;
 
         Engine.Engine.Instance.de_Render += Draw;
         Renderer.Instance.de_Dispose += Dispose;

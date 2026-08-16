@@ -35,12 +35,11 @@ public static class Constants {
 
     public static bool _drawArrowAsMesh = true;
 
-    public static Vector3 sunLightDir = Vector3.Normalize(new Vector3(0f, -1f, 0.3f));
-    //public static Vector3 sunLightDir = Vector3.Normalize(new Vector3(0.2f, -0.5f, 0.3f));
+    public static Vector3 sunLightEuler = new Vector3(60f, -30f, 0);
     public static Vector3 sunLightColor = new Vector3(1f, 1f, 1f);
     public static Vector3 ambientColor = new Vector3(1f, 0f, 0f);
     public static float ambientColorIntensity = 0.1f;
-    public static float sunLightIntensity = 2f;
+    public static float sunLightIntensity = 3f;
 
     public static bool renderSkybox { get; private set; } = true;
     public static bool renderSkyboxReflection { get; private set; } = true;

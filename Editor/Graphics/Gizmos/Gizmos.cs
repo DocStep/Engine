@@ -81,6 +81,7 @@ public static class Gizmos {
 
         _gizmo_Selected = new GizmoSelected();
 
+        Renderer.Instance.de_LateUpdate += Update;
     }
 
     static GL GL = null!;
@@ -115,59 +116,89 @@ public static class Gizmos {
 
 
     public static void Update () {
-        GizmoGrid();
-        GizmoAxes();
-        GizmoSun();
-
         GLDebug.DrawAll();
 
         //GizmoCameraOrbitCenter();
         _gizmo_Selected.Update();
     }
     public static void Draw () {
+        if (Camera.Main is null) {
+            Log.log($"No {nameof(Camera)} found");
+            return;
+        }
+
         //Renderer.Instance.de_GizmosDraw?.Invoke();
+
+        GizmoGrid();
+        GizmoAxes();
+        GizmoSun();
 
         /// UI Layer — separate camera/viewport
         DrawGizmoAxesWidget();
     }
+    public static void SetUniforms (Shader shader, bool depthTest, bool depthWrite) {
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+        GL.Disable(EnableCap.CullFace);
+
+        if (depthTest) GL.Enable(EnableCap.DepthTest);
+        else GL.Disable(EnableCap.DepthTest);
+
+        GL.DepthMask(depthWrite);
+
+        Renderer.Instance.SetSceneUniformsUnlit(shader, Camera.Main.CameraPos);
+    }
+
     private static void GizmoGrid () {
         Vector3 pos = Camera.Main.CameraPos;
-        _mat_GizmoGrid.SetVector3(CameraPos, pos);
 
-        Renderer.Instance.AddRenderInfo(new RenderInfo() {
-            model = Matrix4x4.CreateTranslation(new Vector3(pos.X - pos.X%(1f/Constants._gridDivisionScale), 
-                0, pos.Z - pos.Z%(1f/Constants._gridDivisionScale))),
-            mesh = _mesh_GridWireframe,
-            primitiveType = PrimitiveType.Lines,
-            material = _mat_GizmoGrid,
-        });
+        Mesh mesh = _mesh_GridWireframe;
+        Material material = _mat_GizmoGrid;
+        Shader shader = material.shader;
+        SetUniforms(shader, depthTest: false, depthWrite: false);
+        material.Apply();
+
+        Matrix4x4 model = Matrix4x4.CreateTranslation(new Vector3(pos.X - pos.X%(1f/Constants._gridDivisionScale),
+            0, pos.Z - pos.Z%(1f/Constants._gridDivisionScale)));
+        shader.SetMatrix4x4(Model, model);
+
+        shader.SetVector3(CameraPos, pos);
+        mesh.Draw(PrimitiveType.Lines);
     }
-    static void GizmoGridPre () => GL.DepthRange(0.0001, 1);
-    static void GizmoGridPost () => GL.DepthRange(0, 1);
+
+    //static void GizmoGridPre () => GL.DepthRange(0.0001, 1);
+    //static void GizmoGridPost () => GL.DepthRange(0, 1);
 
     private static void GizmoAxes () {
         Vector3 pos = Camera.Main.CameraPos;
         float halfPi = MathF.PI/2f;
 
-        _mat_GizmoAxisLine.SetVector3(CameraPos, pos);
+        Mesh mesh = _mesh_Line;
+        Material material = _mat_GizmoAxisLine;
+        Shader shader = material.shader;
+        SetUniforms(shader, depthTest: false, depthWrite: false);
+        material.Apply();
+
+        GL.DepthRange(0, 0.9999f);
+        shader.SetVector3(CameraPos, pos);
 
         /// X Red
-        RenderInfo info = new RenderInfo() {
-            model = Matrix4x4.CreateScale(Constants._gridScale*Vector3.One)*Matrix4x4.CreateRotationY(halfPi),
-            mesh = _mesh_Line,
-            primitiveType = PrimitiveType.Lines,
-            material = _mat_GizmoAxisLine,
-            depthRangeFar = 0.9999f,
-        };
-        Renderer.Instance.AddRenderInfo(info);
+        Matrix4x4 model = Matrix4x4.CreateScale(Constants._gridScale*Vector3.One)*Matrix4x4.CreateRotationY(halfPi);
+        shader.SetMatrix4x4(Model, model);
+        mesh.Draw(PrimitiveType.Lines);
 
         /// Y Green
-        info.model = Matrix4x4.CreateScale(Constants._gridScale*Vector3.One)*Matrix4x4.CreateRotationX(-halfPi);
-        Renderer.Instance.AddRenderInfo(info);
+        model = Matrix4x4.CreateScale(Constants._gridScale*Vector3.One)*Matrix4x4.CreateRotationX(-halfPi);
+        shader.SetMatrix4x4(Model, model);
+        mesh.Draw(PrimitiveType.Lines);
 
         /// Z Blue
-        info.model = Matrix4x4.CreateScale(Constants._gridScale*Vector3.One);
-        Renderer.Instance.AddRenderInfo(info);
+        model = Matrix4x4.CreateScale(Constants._gridScale*Vector3.One);
+        shader.SetMatrix4x4(Model, model);
+        mesh.Draw(PrimitiveType.Lines);
+
+        GL.DepthRange(0, 1);
     }
     private static void DrawGizmoAxesWidget () {
         const int gizmoSize = 90;
@@ -179,14 +210,6 @@ public static class Gizmos {
         int gizmoX = windowWidth - gizmoSize - gizmoMargin;
         int gizmoY = windowHeight - gizmoSize - gizmoMargin;
 
-        GL.Disable(EnableCap.DepthTest);
-        GL.Viewport(gizmoX, gizmoY, (uint)gizmoSize, (uint)gizmoSize);
-
-        GL.Enable(EnableCap.ScissorTest);
-        GL.Scissor(gizmoX, gizmoY, (uint)gizmoSize, (uint)gizmoSize);
-        GL.Clear(ClearBufferMask.DepthBufferBit);
-        GL.Disable(EnableCap.ScissorTest);
-
         Matrix4x4 rotation = Camera.Main.GetRotationMatrix();
         Vector3 forward = Vector3.Transform(Vector3.UnitZ, rotation);
         Vector3 up = Vector3.Transform(Vector3.UnitY, rotation);
@@ -195,6 +218,16 @@ public static class Gizmos {
         float aspect = Windows.Window.Size.X/(float)Windows.Window.Size.Y;
         Matrix4x4 gizmoProjection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
             Camera.Main.FOV/180*MathF.PI, aspect, Camera.Main.planeNear, Camera.Main.planeFar);
+
+
+        GL.Viewport(gizmoX, gizmoY, (uint)gizmoSize, (uint)gizmoSize);
+        GL.Clear(ClearBufferMask.DepthBufferBit);
+
+        GL.Disable(EnableCap.DepthTest);
+
+        GL.Enable(EnableCap.ScissorTest);
+        GL.Scissor(gizmoX, gizmoY, (uint)gizmoSize, (uint)gizmoSize);
+        GL.Disable(EnableCap.ScissorTest);
 
         _sh_GizmoAxis.Use();
         _sh_GizmoAxis.SetMatrix4x4(View, gizmoView);
@@ -224,15 +257,20 @@ public static class Gizmos {
     }*/
 
     private static void GizmoSun () {
-        SunLight? sun = Lighting.MainLight;
-        if (sun is null) return;
-        
-        Renderer.Instance.AddRenderInfo(new RenderInfo() {
-            model = Mathf.QuaternionToMatrix(sun.Rotation)*Matrix4x4.CreateTranslation(sun.Position),
-            mesh = Constants._drawArrowAsMesh ? _mesh_Arrow3D : _mesh_ArrowWireframe,
-            primitiveType = Constants._drawArrowAsMesh ? PrimitiveType.Triangles : PrimitiveType.Lines,
-            material = _mat_GizmoSun,
-        });
+        for (int s = 0; s < Lighting.SunLights.Count; s++) {
+            SunLight sun = Lighting.SunLights[s];
+
+            Mesh mesh = Constants._drawArrowAsMesh ? _mesh_Arrow3D : _mesh_ArrowWireframe;
+            Material material = _mat_GizmoSun;
+            Shader shader = material.shader;
+            SetUniforms(shader, depthTest: false, depthWrite: false);
+            material.Apply();
+
+            Matrix4x4 model = Mathf.QuaternionToMatrix(sun.Rotation)*Matrix4x4.CreateTranslation(sun.Position);
+            shader.SetMatrix4x4(Model, model);
+            shader.SetVector3(Color, sun.Color);
+            mesh.Draw(Constants._drawArrowAsMesh ? PrimitiveType.Triangles : PrimitiveType.Lines);
+        }
     }
 
 
