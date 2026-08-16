@@ -183,7 +183,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     private void DrawInspector (uint dockspaceId) {
         ImGui.Begin("Inspector");
 
-        GameObject? selectedGO = Gizmos._gizmo_Selected.selectedMeshComp?.gameObject;
+        GameObject? selectedGO = Gizmos._gizmo_Selected.go_selected;
         if (selectedGO is not null) {
             bool temp_b = selectedGO.Enabled;
             if (ImGui.Checkbox("##" + nameof(selectedGO.Enabled), ref temp_b)) selectedGO.Enabled = temp_b;

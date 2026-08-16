@@ -18,7 +18,7 @@ public class GizmoSelected : IDisposable {
 
     public GameObject? go_selected = null;
     public MeshComponent? selectedMeshComp { get; private set; } = null;
-    private Mesh mesh_outlined = null!;
+    private Mesh? mesh_outlined = null;
     private Mesh? mesh_selectedLast = null;
 
     public SelectedGizmoMode selectedGizmoMode = SelectedGizmoMode.Position;
@@ -431,49 +431,30 @@ public class GizmoSelected : IDisposable {
         }
     }
 
-    public void UpdateSelectedGO (GameObject? go_selected) {
-        this.go_selected = go_selected;
-        if (go_selected is null) {
-            selectedMeshComp = null;
-            return;
-        }
-
-        selectedMeshComp = go_selected.GetComponent<MeshComponent>();
-        if (selectedMeshComp is not null && selectedMeshComp.mesh is not null) {
-            mesh_selectedLast = selectedMeshComp.mesh;
-
-            mesh_outlined?.Dispose();
-
-            if (selectedMeshComp.mesh.Data is not null) {
-                MeshData data = selectedMeshComp.mesh.Data.Weld();
-                data.RecalculateOutlineNormals();
-
-                /*Vector3 scale = selectedMeshComp.owner.Transform.Scale;
-                for (int i = 0; i < data.Vertices.Length; i++) {
-                    data.Vertices[i].Position *= scale;
-                }*/
-
-                mesh_outlined = new Mesh(data);
-            }
-        } 
+    public void UpdateSelectedGO (GameObject? go) {
+        go_selected = go;
+        UpdateSelectedMesh(go?.GetComponent<MeshComponent>());
     }
-    public void UpdateSelectedMesh (MeshComponent? selectedMeshComp) {
-        if (selectedMeshComp is null || selectedMeshComp.mesh is null || selectedMeshComp.mesh.Data is null) return;
 
-        go_selected = selectedMeshComp.gameObject;
-        this.selectedMeshComp = selectedMeshComp;
-        mesh_selectedLast = selectedMeshComp.mesh;
+    public void UpdateSelectedMesh (MeshComponent? meshComp) {
+        selectedMeshComp = meshComp;
+        if (meshComp is not null) go_selected = meshComp.gameObject;
 
+        Mesh? mesh = meshComp?.mesh;
+        if (mesh == mesh_selectedLast) return; // already built, nothing changed
+
+        mesh_selectedLast = mesh;
+        RebuildOutlineMesh(mesh);
+    }
+
+    private void RebuildOutlineMesh (Mesh? mesh) {
         mesh_outlined?.Dispose();
+        mesh_outlined = null;
 
-        MeshData data = selectedMeshComp.mesh.Data.Weld();
+        if (mesh?.Data is null) return;
+
+        MeshData data = mesh.Data.Weld();
         data.RecalculateOutlineNormals();
-
-        /*Vector3 scale = selectedMeshComp.owner.Transform.Scale;
-        for (int i = 0; i < data.Vertices.Length; i++) {
-            data.Vertices[i].Position *= scale;
-        }*/
-
         mesh_outlined = new Mesh(data);
     }
 

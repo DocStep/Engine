@@ -136,7 +136,7 @@ public static class Gizmos {
         /// UI Layer — separate camera/viewport
         DrawGizmoAxesWidget();
     }
-    public static void SetUniforms (Shader shader, bool depthTest, bool depthWrite) {
+    public static void SetUniforms (Shader shader, bool depthTest = true, bool depthWrite = true) {
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
@@ -156,7 +156,7 @@ public static class Gizmos {
         Mesh mesh = _mesh_GridWireframe;
         Material material = _mat_GizmoGrid;
         Shader shader = material.shader;
-        SetUniforms(shader, depthTest: false, depthWrite: false);
+        SetUniforms(shader, depthTest: true, depthWrite: true);
         material.Apply();
 
         Matrix4x4 model = Matrix4x4.CreateTranslation(new Vector3(pos.X - pos.X%(1f/Constants._gridDivisionScale),
@@ -177,7 +177,7 @@ public static class Gizmos {
         Mesh mesh = _mesh_Line;
         Material material = _mat_GizmoAxisLine;
         Shader shader = material.shader;
-        SetUniforms(shader, depthTest: false, depthWrite: false);
+        SetUniforms(shader, depthTest: true, depthWrite: true);
         material.Apply();
 
         GL.DepthRange(0, 0.9999f);
@@ -263,7 +263,7 @@ public static class Gizmos {
             Mesh mesh = Constants._drawArrowAsMesh ? _mesh_Arrow3D : _mesh_ArrowWireframe;
             Material material = _mat_GizmoSun;
             Shader shader = material.shader;
-            SetUniforms(shader, depthTest: false, depthWrite: false);
+            SetUniforms(shader, depthTest: true, depthWrite: true);
             material.Apply();
 
             Matrix4x4 model = Mathf.QuaternionToMatrix(sun.Rotation)*Matrix4x4.CreateTranslation(sun.Position);

@@ -21,10 +21,10 @@ public class Shader : IDisposable {
         GL.AttachShader(_program, fragment);
         GL.LinkProgram(_program);
         GL.GetProgram(_program, ProgramPropertyARB.ActiveUniforms, out int uniformCount);
-        for (uint i = 0; i < uniformCount; i++) {
-            GL.GetActiveUniform(_program, i, 256, out uint length, out int size, out UniformType type, out string namee);
-            if (namee.Contains("Sun")) Log.log($"uniform {namee}", $"size={size} type={type}");
-        }
+        //for (uint i = 0; i < uniformCount; i++) {
+        //    GL.GetActiveUniform(_program, i, 256, out uint length, out int size, out UniformType type, out string namee);
+        //    if (namee.Contains("Sun")) Log.log($"uniform {namee}", $"size={size} type={type}");
+        //}
 
         GL.GetProgram(_program, ProgramPropertyARB.LinkStatus, out int status);
         Stats.RecordCompile(status);

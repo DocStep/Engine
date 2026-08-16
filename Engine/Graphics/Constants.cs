@@ -35,11 +35,14 @@ public static class Constants {
 
     public static bool _drawArrowAsMesh = true;
 
-    public static Vector3 sunLightEuler = new Vector3(60f, -30f, 0);
-    public static Vector3 sunLightColor = new Vector3(1f, 1f, 1f);
-    public static Vector3 ambientColor = new Vector3(1f, 0f, 0f);
-    public static float ambientColorIntensity = 0.1f;
-    public static float sunLightIntensity = 3f;
+    public static Vector3 Ambient_Color = new Vector3(1f, 0f, 0f);
+    public static float Ambient_Intensity = 0.1f;
+
+    public static Vector3 Light_Color = new Vector3(1f, 1f, 1f);
+    public static float Light_Intensity = 3f;
+
+    public static Vector3 SunLight_Euler = new Vector3(60f, -30f, 0);
+    public static float PointLight_Radius = 5f;
 
     public static bool renderSkybox { get; private set; } = true;
     public static bool renderSkyboxReflection { get; private set; } = true;

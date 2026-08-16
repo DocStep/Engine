@@ -7,6 +7,7 @@ in vec3 vNormal;
 in vec3 vFragPos;
 
 #define MAX_SUN_LIGHTS 32
+#define MAX_POINT_LIGHTS 32
 
 uniform vec3 uColor;
 uniform float uSmoothness;
@@ -16,6 +17,12 @@ uniform int uSunLightCount;
 uniform vec3 uSunLightColor[MAX_SUN_LIGHTS];
 uniform float uSunLightIntensity[MAX_SUN_LIGHTS];
 uniform vec3 uSunLightDir[MAX_SUN_LIGHTS];      // direction light TRAVELS (sun -> scene)
+
+uniform int uPointLightCount;
+uniform vec3 uPointLightPos[MAX_POINT_LIGHTS];
+uniform vec3 uPointLightColor[MAX_POINT_LIGHTS];
+uniform float uPointLightIntensity[MAX_POINT_LIGHTS];
+uniform float uPointLightRange[MAX_POINT_LIGHTS];
 
 uniform vec3 uViewPos;
 
@@ -124,6 +131,31 @@ vec3 ComputeSunLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 albed
     vec3 radiance = uSunLightColor[i] * uSunLightIntensity[i];
     return (kD * albedo / PI + specular) * radiance * NdotL;
 }
+// One point light's contribution — position-based L, windowed inverse-square falloff
+vec3 ComputePointLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 albedo, float metallic)
+{
+    vec3 toLight = uPointLightPos[i] - vFragPos;
+    float dist = length(toLight);
+    vec3 L = toLight / max(dist, 1e-4);
+    vec3 H = normalize(V + L);
+
+    float NDF = DistributionGGX(N, H, roughness);
+    float G = GeometrySmith(N, V, L, roughness);
+    vec3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
+
+    vec3 specular = (NDF * G * F) /
+        (4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 1e-4);
+    vec3 kD = (vec3(1.0) - F) * (1.0 - metallic);
+
+    // Squared-distance falloff windowed to zero at uPointLightRange[i] (Karis-style)
+    float range = max(uPointLightRange[i], 1e-4);
+    float window = clamp(1.0 - pow(dist / range, 4.0), 0.0, 1.0);
+    float falloff = (window * window) / (dist * dist + 1.0);
+
+    float NdotL = max(dot(N, L), 0.0);
+    vec3 radiance = uPointLightColor[i] * uPointLightIntensity[i] * falloff;
+    return (kD * albedo / PI + specular) * radiance * NdotL;
+}
 
 void main()
 {
@@ -141,6 +173,10 @@ void main()
     for (int i = 0; i < uSunLightCount; i++)
     {
         Lo += ComputeSunLight(i, N, V, F0, roughness, albedo, metallic);
+    }
+    for (int i = 0; i < uPointLightCount; i++)
+    {
+        Lo += ComputePointLight(i, N, V, F0, roughness, albedo, metallic);
     }
 
     // IBL ambient — SH diffuse (Fresnel-split, energy-conserving) + prefiltered skybox specular

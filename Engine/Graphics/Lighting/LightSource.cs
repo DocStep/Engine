@@ -5,15 +5,16 @@ using System.Text;
 namespace Engine.Graphics;
 
 
-public class SunLight : LightSource {
+public class LightSource : Component {
     public override string Name => nameof(SunLight);
 
-    [Hide] public Quaternion Rotation => gameObject.Transform.Rotation;
+    [Hide] public Vector3 Position => gameObject.Transform.Position;
+
+    public Vector3 Color = Constants.Light_Color;
+    public float Intensity = Constants.Light_Intensity;
 
 
     public override void OnAdd () {
-        //owner.Transform.Rotation = Mathf.DirectionToQuaternion(Constants.sunLightDir);
-        gameObject.Transform.RotationEuler = Constants.sunLightEuler;
         Lighting.RegisterLightSource(this);
     }
     public override void OnRemove () {

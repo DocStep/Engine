@@ -8,9 +8,17 @@ public static class Lighting {
 
     public static List<LightSource> LightSources = new List<LightSource>();
     public static List<SunLight> SunLights = new List<SunLight>();
+    public static List<PointLight> PointLights = new List<PointLight>();
 
     public static SunLight? MainLight => 0 < SunLights.Count ? SunLights[0] : null;
     public const int MAX_SUN_LIGHTS = 32;
+    public const int MAX_POINT_LIGHTS = 32;
+
+    public const string PointLightPos = "uPointLightPos";
+    public const string PointLightColor = "uPointLightColor";
+    public const string PointLightIntensity = "uPointLightIntensity";
+    public const string PointLightRange = "uPointLightRange";
+    public const string PointLightCount = "uPointLightCount";
 
 
     public static void SetMainSunLight (SunLight sun) {
@@ -41,11 +49,35 @@ public static class Lighting {
             shader.SetVector3Array(SunLightColor, colors);
             shader.SetFloatArray(SunLightIntensity, intensities);
         }
-
         shader.SetInt(SunLightCount, count);
 
-        shader.SetVector3(AmbientColor, Constants.ambientColor);
-        shader.SetFloat(AmbientColorIntensity, Constants.ambientColorIntensity);
+        List<PointLight> enabledPointLights = PointLights.Where(l => l.Enabled).ToList();
+        int pointCount = Math.Min(enabledPointLights.Count, MAX_POINT_LIGHTS);
+
+        if (0 < pointCount) {
+            Vector3[] positions = new Vector3[pointCount];
+            Vector3[] colors = new Vector3[pointCount];
+            float[] intensities = new float[pointCount];
+            float[] ranges = new float[pointCount];
+
+            for (int i = 0; i < pointCount; i++) {
+                PointLight light = enabledPointLights[i];
+                positions[i] = light.Position;
+                colors[i] = light.Color;
+                intensities[i] = light.Intensity;
+                ranges[i] = light.Range;
+            }
+
+            shader.SetVector3Array(PointLightPos, positions);
+            shader.SetVector3Array(PointLightColor, colors);
+            shader.SetFloatArray(PointLightIntensity, intensities);
+            shader.SetFloatArray(PointLightRange, ranges);
+        }
+        shader.SetInt(PointLightCount, pointCount);
+
+        /// General
+        shader.SetVector3(AmbientColor, Constants.Ambient_Color);
+        shader.SetFloat(AmbientColorIntensity, Constants.Ambient_Intensity);
         shader.SetFloat(Exposure, Camera.Main!.Exposure);
 
         if (Constants.renderSkyboxReflection)
@@ -69,6 +101,9 @@ public static class Lighting {
             case SunLight sun:
                 SunLights.Add(sun);
                 break;
+            case PointLight point:
+                PointLights.Add(point);
+                break;
         }
     }
     public static void UnregisterLightSource (LightSource lightSource) {
@@ -76,6 +111,9 @@ public static class Lighting {
         switch (lightSource) {
             case SunLight sun:
                 SunLights.Remove(sun);
+                break;
+            case PointLight point:
+                PointLights.Remove(point);
                 break;
         }
     }

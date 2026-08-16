@@ -43,6 +43,7 @@ public class Transform : Component {
         set {
             rotationEuler = Mathf.WrapVector3(value, 0, 360);
             rotation = Mathf.EulerToQuaternion(rotationEuler);
+            Log.log(RotationEuler);
         }
     }
     public Vector3 Scale = Vector3.One;
