@@ -7,7 +7,8 @@ public static class Mathf {
 
     public const float Rad2Deg = 180f/MathF.PI;
     public const float Deg2Rad = MathF.PI/180f;
-    public const float TAU = 6.2831855f;
+    //public const float TAU = 6.2831855f;
+    public const float TAU = 2*MathF.PI;
 
 
     public static Random random = new Random(25565);
@@ -75,6 +76,9 @@ public static class Mathf {
     public static float easeInOutCubic (float x) => x < 0.5f ? 4f*x*x*x : 1f - MathF.Pow(-2f*x + 2f, 3f)*0.5f;
 
 
+    public static Vector3 QuaternionToDirection (Quaternion q) {
+        return new Vector3(2.0f*(q.X*q.Z + q.W*q.Y), 2.0f*(q.Y*q.Z - q.W*q.X), 1.0f - 2.0f*(q.X*q.X + q.Y*q.Y));
+    }
     public static Vector3 ToEuler (Quaternion q) {
         Matrix4x4 m = Matrix4x4.CreateFromQuaternion(q);
 
@@ -92,10 +96,29 @@ public static class Mathf {
 
         return new Vector3(pitch*Rad2Deg, yaw*Rad2Deg, roll*Rad2Deg);
     }
-    public static Quaternion ToQuaternion (Vector3 euler) {
+    public static Quaternion EulerToQuaternion (Vector3 euler) {
         return Quaternion.CreateFromYawPitchRoll(euler.Y*Deg2Rad, euler.X*Deg2Rad, euler.Z*Deg2Rad);
     }
-    public static Quaternion ToRotationQ (Vector3 direction, Vector3 up = default) {
+    public static Vector3 QuaternionToEuler (Quaternion q) {
+        float x = q.X, y = q.Y, z = q.Z, w = q.W;
+
+        //pitch(x-axis rotation)
+        float sinp = 2f *(w*x - y*z);
+        float pitch = 1f <= MathF.Abs(sinp) ? MathF.CopySign(0.5f*MathF.PI, sinp) : MathF.Asin(sinp);
+
+        //yaw(y-axis rotation)
+        float sinyCosp = 2f*(w*y + x*z);
+        float cosyCosp = 1f - 2f*(x*x + y*y);
+        float yaw = MathF.Atan2(sinyCosp, cosyCosp);
+
+        //roll(z-axis rotation)
+        float sinrCosp = 2f*(w*z + x*y);
+        float cosrCosp = 1f - 2f*(z*z + x*x);
+        float roll = MathF.Atan2(sinrCosp, cosrCosp);
+
+        return new Vector3(pitch*(Rad2Deg), yaw*(Rad2Deg), roll*(Rad2Deg));
+    }
+    public static Quaternion DirectionToQuaternion (Vector3 direction, Vector3 up = default) {
         direction = Vector3.Normalize(direction);
         if (up == default) up = Vector3.UnitY;
 
@@ -116,42 +139,66 @@ public static class Mathf {
     }
 
 
+
+    public static Matrix4x4 QuaternionToMatrix (Quaternion q) {
+        float x = q.X, y = q.Y, z = q.Z, w = q.W;
+
+        float xx = x * x, yy = y * y, zz = z * z;
+        float xy = x * y, xz = x * z, yw = y * w;
+        float yz = y * z, xw = x * w, zw = z * w;
+
+        return new Matrix4x4(
+            1f - 2f *(yy + zz), 2f *(xy + zw), 2f *(xz - yw), 0f,
+            2f *(xy - zw), 1f - 2f *(xx + zz), 2f *(yz + xw), 0f,
+            2f *(xz + yw), 2f *(yz - xw), 1f - 2f *(xx + yy), 0f,
+            0f, 0f, 0f, 1f
+        );
+    }
     public static Matrix4x4 Matrix4x4FromYawPitchRoll (float yaw, float pitch, float roll) {
         return Matrix4x4.CreateRotationZ(roll)*Matrix4x4.CreateRotationX(-pitch)*Matrix4x4.CreateRotationY(-yaw);
     }
 
     /// Converts Euler angles (degrees) to a rotation matrix, Unity order: Y * X * Z
-    public static Matrix4x4 EulerToMatrix (Vector3 eulerDegrees) {
-        float x = eulerDegrees.X * MathF.PI/180f;
-        float y = eulerDegrees.Y * MathF.PI/180f;
-        float z = eulerDegrees.Z * MathF.PI/180f;
+    extension (Vector3 euler) {
+        public Matrix4x4 EulerToMatrix () {
+            float x = euler.X * MathF.PI/180f;
+            float y = euler.Y * MathF.PI/180f;
+            float z = euler.Z * MathF.PI/180f;
 
-        float sx = MathF.Sin(x), cx = MathF.Cos(x);
-        float sy = MathF.Sin(y), cy = MathF.Cos(y);
-        float sz = MathF.Sin(z), cz = MathF.Cos(z);
+            float sx = MathF.Sin(x), cx = MathF.Cos(x);
+            float sy = MathF.Sin(y), cy = MathF.Cos(y);
+            float sz = MathF.Sin(z), cz = MathF.Cos(z);
 
-        /// Row-vector rotation matrices (LH), each transforms v' = v*M
-        var rx = new Matrix4x4(
-            1, 0, 0, 0,
-            0, cx, sx, 0,
-            0, -sx, cx, 0,
-            0, 0, 0, 1);
+            /// Row-vector rotation matrices (LH), each transforms v' = v*M
+            var rx = new Matrix4x4(
+                1, 0, 0, 0,
+                0, cx, sx, 0,
+                0, -sx, cx, 0,
+                0, 0, 0, 1);
 
-        var ry = new Matrix4x4(
-            cy, 0, -sy, 0,
-            0, 1, 0, 0,
-            sy, 0, cy, 0,
-            0, 0, 0, 1);
+            var ry = new Matrix4x4(
+                cy, 0, -sy, 0,
+                0, 1, 0, 0,
+                sy, 0, cy, 0,
+                0, 0, 0, 1);
 
-        var rz = new Matrix4x4(
-            cz, sz, 0, 0,
-            -sz, cz, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1);
+            var rz = new Matrix4x4(
+                cz, sz, 0, 0,
+                -sz, cz, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1);
 
-        /// Combined: yaw * pitch * roll, applied in that order to a row vector
-        return rz * rx * ry;
+            /// Combined: yaw * pitch * roll, applied in that order to a row vector
+            return rz * rx * ry;
+        }
     }
+    /*extension(Matrix4x4) {
+        public static Matrix4x4 EulerToMatrix1 (Vector3 euler) {
+            euler *= Mathf.Deg2Rad;
+            Quaternion q = Quaternion.CreateFromYawPitchRoll(euler.Y, euler.X, euler.Z);
+            return Matrix4x4.CreateFromQuaternion(q);
+        }
+    }*/
 
 
     /// Wraps an angle to [-pi, pi].
@@ -212,25 +259,18 @@ public static class Mathf {
         }
     }
     extension(Matrix4x4) {
-        public static Matrix4x4 RotationEuler (float x, float y, float z) {
+        public static Matrix4x4 EulerToRotationQ (float x, float y, float z) {
             Quaternion q = Quaternion.CreateFromYawPitchRoll(y*Mathf.Deg2Rad, x*Mathf.Deg2Rad, z*Mathf.Deg2Rad);
             return Matrix4x4.CreateFromQuaternion(q);
         }
     }
     extension(Matrix4x4) {
-        public static Matrix4x4 RotationEuler (Vector3 euler) {
-            euler *= Mathf.Deg2Rad;
-            Quaternion q = Quaternion.CreateFromYawPitchRoll(euler.Y, euler.X, euler.Z);
-            return Matrix4x4.CreateFromQuaternion(q);
-        }
-    }
-    extension(Matrix4x4) {
-        public static Matrix4x4 RotationFromDirection (Vector3 direction, Vector3 up = default) {
+        public static Matrix4x4 DirectionToRotationM (Vector3 direction, Vector3 up = default) {
             if (up == default) up = Vector3.UnitY;
             direction = Vector3.Normalize(direction);
 
-            if (MathF.Abs(Vector3.Dot(direction, up)) > 0.999f) {
-                up = MathF.Abs(direction.Y) > 0.999f ? Vector3.UnitX : Vector3.UnitY;
+            if (0.999f < MathF.Abs(Vector3.Dot(direction, up))) {
+                up = 0.999f < MathF.Abs(direction.Y) ? Vector3.UnitX : Vector3.UnitY;
             }
 
             Vector3 right = Vector3.Normalize(Vector3.Cross(up, direction));

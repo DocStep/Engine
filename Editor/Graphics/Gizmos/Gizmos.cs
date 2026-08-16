@@ -224,10 +224,11 @@ public static class Gizmos {
     }*/
 
     private static void GizmoSun () {
-        if (!Constants.drawGizmosSun) return;
+        SunLight? sun = Lighting.MainLight;
+        if (sun is null) return;
+        
         Renderer.Instance.AddRenderInfo(new RenderInfo() {
-            model = Matrix4x4.CreateScale(Vector3.One)*Matrix4x4.RotationFromDirection(Constants.sunLightDir)
-                *Matrix4x4.CreateTranslation(new Vector3(0f, 5f, 0f)),
+            model = Mathf.QuaternionToMatrix(sun.Rotation)*Matrix4x4.CreateTranslation(sun.Position),
             mesh = Constants._drawArrowAsMesh ? _mesh_Arrow3D : _mesh_ArrowWireframe,
             primitiveType = Constants._drawArrowAsMesh ? PrimitiveType.Triangles : PrimitiveType.Lines,
             material = _mat_GizmoSun,

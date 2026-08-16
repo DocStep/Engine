@@ -5,7 +5,7 @@ namespace Engine;
 
 public abstract class ColliderComponent : Component, IComponentUpdate {
 
-    [JsonIgnore] public bool drawGizmos = true;
+    
     //public bool isStatic = false;
 
 

@@ -7,7 +7,7 @@ public static class ComponentsGizmo {
 
     extension(BoxColliderComponent comp) {
         public void DrawGizmo () {
-            if (comp.drawGizmos) {
+            if (Constants.drawGizmos) {
                 RenderInfo renderInfo = new RenderInfo() {
                     model = comp.owner.Transform.GetWorldMatrix(),
 
@@ -22,7 +22,7 @@ public static class ComponentsGizmo {
 
     extension(CapsuleColliderComponent comp) {
         public void DrawGizmo () {
-            if (comp.drawGizmos) {
+            if (Constants.drawGizmos) {
                 RenderInfo renderInfo = new RenderInfo() {
                     model = comp.owner.Transform.GetWorldMatrix(),
 
@@ -37,7 +37,7 @@ public static class ComponentsGizmo {
 
     extension(PlaneColliderComponent comp) {
         public void DrawGizmo () {
-            if (comp.drawGizmos) {
+            if (Constants.drawGizmos) {
                 RenderInfo renderInfo = new RenderInfo() {
                     model = comp.owner.Transform.GetWorldMatrix(),
 
@@ -52,7 +52,7 @@ public static class ComponentsGizmo {
 
     extension(SphereColliderComponent comp) {
         public void DrawGizmo () {
-            if (comp.drawGizmos) {
+            if (Constants.drawGizmos) {
                 RenderInfo renderInfo = new RenderInfo() {
                     model = comp.owner.Transform.GetWorldMatrix(),
 

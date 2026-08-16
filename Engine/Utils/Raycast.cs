@@ -70,8 +70,8 @@ public static class Raycast {
         float t = Vector3.Dot(planePoint - origin, planeNormal)/denominator;
         return 0 <= t ? t : null;
     }
-    public static Vector3? IntersectPlaneEuler (Ray ray, Vector3 planePoint, Vector3 planeEulerDeg) {
-        Matrix4x4 rot = Matrix4x4.RotationEuler(planeEulerDeg);
+    public static Vector3? IntersectPlaneEuler (Ray ray, Vector3 planePoint, Vector3 planeEuler) {
+        Matrix4x4 rot = planeEuler.EulerToMatrix();
         Vector3 planeNormal = Vector3.Normalize(Vector3.TransformNormal(Vector3.UnitZ, rot));
 
         float denominator = Vector3.Dot(ray.Direction, planeNormal);

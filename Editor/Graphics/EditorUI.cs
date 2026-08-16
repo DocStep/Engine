@@ -297,7 +297,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     /// Core widget drawer, callable directly without reflection.
     /// Must be called while a 2-column ImGui table is open (see DrawObject).
     public static object? DrawField (string label, object? value, bool isReadonly = false, 
-        float step = valueStep, bool isRaw = false) {
+        float step = valueStep, bool isRaw = false, bool inTable = true) {
         object? result = null;
 
         if (isReadonly) ImGui.BeginDisabled(true);
@@ -305,7 +305,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         bool isRawCollection = isRaw && value is IDictionary;
 
         string id = label;
-        if (drawInverted && !isRawCollection) {
+        if (drawInverted && inTable && !isRawCollection) {
             ImGui.TableNextRow();
             ImGui.TableSetColumnIndex(0);
             ImGui.AlignTextToFramePadding();

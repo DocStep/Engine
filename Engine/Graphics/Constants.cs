@@ -35,7 +35,8 @@ public static class Constants {
 
     public static bool _drawArrowAsMesh = true;
 
-    public static Vector3 sunLightDir = Vector3.Normalize(new Vector3(-0.3f, -1f, 0.4f));
+    public static Vector3 sunLightDir = Vector3.Normalize(new Vector3(0f, -1f, 0.3f));
+    //public static Vector3 sunLightDir = Vector3.Normalize(new Vector3(0.2f, -0.5f, 0.3f));
     public static Vector3 sunLightColor = new Vector3(1f, 1f, 1f);
     public static Vector3 ambientColor = new Vector3(0.5f, 0.5f, 0.6f);
     public static float ambientColorIntensity = 0.1f;
@@ -50,7 +51,6 @@ public static class Constants {
     public static int materialsGridDensity = 1;
 
     public static bool drawGizmos = true;
-    public static bool drawGizmosSun = true;
 
     public static DrawMode drawMode = DrawMode.Normal;
 

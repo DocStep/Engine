@@ -357,7 +357,7 @@ public class GizmoSelected : IDisposable {
         drawArrow(Vector3.Zero, isColorSelected ? Constants.blueLight : Constants.blue);
 
         void drawArrow (Vector3 rot, Vector3 color) {
-            Matrix4x4 m4x4_selected = _m4x4_selectedScale*Matrix4x4.RotationEuler(rot)*gizmoBasis*Matrix4x4.CreateTranslation(pos3);
+            Matrix4x4 m4x4_selected = _m4x4_selectedScale*rot.EulerToMatrix()*gizmoBasis*Matrix4x4.CreateTranslation(pos3);
             _sh_Unlit.SetMatrix4x4(Model, m4x4_selected);
             _sh_Unlit.SetVector3(Color, color);
             _sh_Unlit.SetFloat(Alpha, 0.5f);

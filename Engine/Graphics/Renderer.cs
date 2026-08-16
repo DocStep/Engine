@@ -290,14 +290,7 @@ public class Renderer {
         shader.SetVector3(ViewPos, viewPos);
     }
     public static void SetSceneUniformsLit (Shader shader) {
-        shader.SetVector3(SunLightDir, Constants.sunLightDir);
-        shader.SetVector3(SunLightColor, Constants.sunLightColor);
-        shader.SetFloat(SunLightIntensity, Constants.sunLightIntensity);
-        shader.SetVector3(AmbientColor, Constants.ambientColor);
-        shader.SetFloat(AmbientColorIntensity, Constants.ambientColorIntensity);
-
-        if (Constants.renderSkyboxReflection)
-            shader.SetFloat(ReflectionIntensity, Constants.reflectionIntensity);
+        Lighting.SetSceneUniformsLit(shader);
     }
     public static void SetSceneUniformsSkybox (Shader shader, HdrTexture? texture, float maxLod) {
         if (!Constants.renderSkyboxReflection) return;

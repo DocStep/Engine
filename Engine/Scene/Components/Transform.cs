@@ -11,17 +11,21 @@ public class Transform : Component {
     public override string Name => nameof(Transform);
 
     public Vector3 Position = Vector3.Zero;
-    [Hide][JsonIgnore] public Quaternion Rotation = Quaternion.Identity;
+    [Hide][JsonIgnore] public Quaternion rotation = Quaternion.Identity;
+    [Hide][JsonIgnore] public Quaternion Rotation {
+        get => rotation;
+        set {
+            rotation = value;
+            rotationEuler = Mathf.QuaternionToEuler(rotation);
+        }
+    }
     [Hide] public Vector3 rotationEuler;
-    [DrawName("Rotation")]
-    [WrapRotation(0, 360)]
-    [ChangeStep(1f)]
-    [JsonIgnore]
+    [JsonIgnore][DrawName("Rotation")][WrapRotation(0, 360)][ChangeStep(1f)]
     public Vector3 RotationEuler {
         get => rotationEuler;
         set {
             rotationEuler = Mathf.WrapVector3(value, 0, 360);
-            Rotation = Mathf.ToQuaternion(rotationEuler);
+            rotation = Mathf.EulerToQuaternion(rotationEuler);
         }
     }
     public Vector3 Scale = Vector3.One;

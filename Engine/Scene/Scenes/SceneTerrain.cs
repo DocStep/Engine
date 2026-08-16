@@ -6,15 +6,26 @@ namespace Engine;
 public class SceneTerrain : Scene {
 
     public override void Load () {
-        GameObject cam = new GameObject() { Name = "Camera", };
-        cam.Transform.Position = new Vector3(-2, 3, -10);
-        Camera camera = cam.AddComponent<Camera>();
+        GameObject go_camera = new GameObject() { Name = "Camera", };
+        go_camera.Transform.Position = new Vector3(-2, 3, -10);
+        Camera camera = go_camera.AddComponent<Camera>();
 
+        GameObject go_sun = new GameObject() { Name = "Sun", };
+        go_sun.Transform.Position = new Vector3(0, 5, 0);
+        go_sun.Transform.Scale = new Vector3(0.2f);
+        MeshComponent sunMesh = go_sun.AddComponent<MeshComponent>();
+        sunMesh.mesh = AssetsEngine._mesh_Sphere;
+        Material mat_sun = new Material(AssetsEngine._mat_Unlit);
+        mat_sun.pass = RenderPass.Transparent;
+        mat_sun.SetFloat(Shader.Alpha, 0.5f);
+        mat_sun.SetVector3(Shader.Color, Constants.yellow);
+        sunMesh.material = mat_sun;
+        SunLight sun = go_sun.AddComponent<SunLight>();
 
-        GameObject terrain = new GameObject() { Name = "Terrain", };
-        terrain.Transform.Position = new Vector3(0, 0, 0);
-        terrain.Transform.Scale = new Vector3(10, 1f, 10);
-        MeshComponent terrain_meshComp = terrain.AddComponent<MeshComponent>();
+        GameObject go_terrain = new GameObject() { Name = "Terrain", };
+        go_terrain.Transform.Position = new Vector3(0, 0, 0);
+        go_terrain.Transform.Scale = new Vector3(10, 1f, 10);
+        MeshComponent terrain_meshComp = go_terrain.AddComponent<MeshComponent>();
         Noise nosie = new Noise(0.2f);
         int count = 5;
         float[,] heightmap = new float[count, count];
@@ -29,7 +40,7 @@ public class SceneTerrain : Scene {
         terrain_meshComp.material = new Material(AssetsEngine._mat_Lit) { Name = "Terrain", };
         terrain_meshComp.material.SetVector3(Shader.Color, Constants.green);
         terrain_meshComp.material.SetFloat(Shader.Smoothness, 0f);
-        MeshColliderComponent terrain_meshColliderComp = terrain.AddComponent<MeshColliderComponent>();
+        MeshColliderComponent terrain_meshColliderComp = go_terrain.AddComponent<MeshColliderComponent>();
         terrain_meshColliderComp.SetMesh(terrain_meshComp.mesh);
 
 

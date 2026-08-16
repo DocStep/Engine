@@ -13,7 +13,7 @@ public class BoxColliderComponent : ColliderComponent, IDynamicCollider {
     [Hide][JsonIgnore] public Vector3 Position => owner.Transform.Position;
     [Hide][JsonIgnore] public Vector3 Scale => owner.Transform.Scale;
 
-    [JsonIgnore] public TypedIndex ShapeIndex { get; private set; }
+    [Hide][JsonIgnore] public TypedIndex ShapeIndex { get; private set; }
 
 
     public override void Update () { }
