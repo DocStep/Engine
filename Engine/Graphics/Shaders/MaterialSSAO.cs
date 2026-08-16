@@ -30,8 +30,8 @@ public class MaterialSSAO : Material {
         shader.SetFloat(Radius, radius);
         shader.SetFloat(Bias, bias);
         shader.SetFloat(Strength, strength);
-        shader.SetFloat(Near, Camera.Current.planeNear);
-        shader.SetFloat(Far, Camera.Current.planeFar);
+        shader.SetFloat(Near, Camera.Main.planeNear);
+        shader.SetFloat(Far, Camera.Main.planeFar);
         shader.SetFloat(FalloffPower, falloffPower);
     }
 

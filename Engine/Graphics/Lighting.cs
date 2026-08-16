@@ -9,17 +9,41 @@ public static class Lighting {
     private static List<SunLight> SunLights = new List<SunLight>();
 
     public static SunLight? MainLight => 0 < SunLights.Count ? SunLights[0] : null;
+    public const int MAX_SUN_LIGHTS = 32;
+
+
+    public static void SetMainSunLight (SunLight sun) {
+        //if (!LightSources.Contains(sun)) return;
+        LightSources.Remove(sun);
+        LightSources.Insert(0, sun);
+    }
 
 
     public static void SetSceneUniformsLit (Shader shader) {
-        SunLight? light = MainLight;
-        if (light is not null) {
-            Vector3 dir = Mathf.QuaternionToDirection(light.Rotation);
-            shader.SetVector3(SunLightDir, dir);
-            shader.SetVector3(SunLightColor, light.Color);
-            shader.SetFloat(SunLightIntensity, light.Intensity);
+        int count = Math.Min(SunLights.Count, MAX_SUN_LIGHTS);
+        Vector3[] dirs = new Vector3[count];
+        Vector3[] colors = new Vector3[count]; 
+        float[] intensities = new float[count];
+
+        for (int i = 0; i < count; i++) {
+            //Log.log("SetSceneUniformsLit", i);
+            SunLight light = SunLights[i];
+            dirs[i] = Mathf.QuaternionToDirection(light.Rotation);
+            colors[i] = light.Color;
+            intensities[i] = light.Intensity;
         }
 
+        //Log.log($"{shader.Name} dirs", LogType.warning);
+        //foreach (Vector3 dir in dirs) {
+        //    Log.log(dir);
+        //}
+
+        shader.SetInt(SunLightCount, count);
+        shader.SetVector3Array(SunLightDir, dirs);
+        shader.SetVector3Array(SunLightColor, colors);
+        shader.SetFloatArray(SunLightIntensity, intensities);
+
+        shader.SetFloat(Exposure, Camera.Main!.Exposure);
         shader.SetVector3(AmbientColor, Constants.ambientColor);
         shader.SetFloat(AmbientColorIntensity, Constants.ambientColorIntensity);
 
@@ -27,6 +51,16 @@ public static class Lighting {
             shader.SetFloat(ReflectionIntensity, Constants.reflectionIntensity);
     }
 
+    public static void SetSHAmbient (Shader shader, in SHAmbientProbe probe) {
+        shader.SetVector4("uSHAr", probe.SHAr);
+        shader.SetVector4("uSHAg", probe.SHAg);
+        shader.SetVector4("uSHAb", probe.SHAb);
+        shader.SetVector4("uSHBr", probe.SHBr);
+        shader.SetVector4("uSHBg", probe.SHBg);
+        shader.SetVector4("uSHBb", probe.SHBb);
+        shader.SetVector4("uSHC", probe.SHC);
+        shader.SetFloat("uAmbientIntensity", probe.Intensity);
+    }
 
     public static void RegisterLightSource (LightSource lightSource) {
         LightSources.Add(lightSource);

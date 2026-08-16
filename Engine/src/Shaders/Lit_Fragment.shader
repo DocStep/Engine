@@ -6,9 +6,13 @@ in vec3 vFragPos;
 uniform vec3 uColor;
 uniform float uSmoothness;
 uniform float uMetallic;
-uniform vec3 uSunLightColor;
-uniform float uSunLightIntensity;
-uniform vec3 uSunLightDir;
+
+#define MAX_SUN_LIGHTS 32
+uniform int uSunLightCount;
+uniform vec3 uSunLightColor[MAX_SUN_LIGHTS];
+uniform float uSunLightIntensity[MAX_SUN_LIGHTS];
+uniform vec3 uSunLightDir[MAX_SUN_LIGHTS];
+
 uniform vec3 uViewPos;
 
 uniform vec3 uAmbientColor;
@@ -21,7 +25,6 @@ const float PI = 3.14159265;
 const float uExposure = 1.0;
 
 out vec4 FragColor;
-
 
 float D_GGX (float NdH, float a2) {
     float d = NdH*NdH*(a2 - 1.0) + 1.0;
@@ -50,40 +53,50 @@ vec2 DirToEquirectUV (vec3 dir) {
     return vec2(u, v);
 }
 
-void main () {
-    vec3 N = normalize(vNormal);
-    vec3 L = normalize(-uSunLightDir);
-    vec3 V = normalize(uViewPos - vFragPos);
+/// One directional light's contribution, given precomputed view-dependent terms
+vec3 ComputeSunLight (int i, vec3 N, vec3 V, float NdV, vec3 F0, float rough, float a2, float smoothness) {
+    vec3 L = normalize(-uSunLightDir[i]);
     vec3 H = normalize(L + V);
-    vec3 R = reflect(-V, N);
 
     float NdL = max(dot(N, L), 0.0);
-    float NdV = max(dot(N, V), 1e-4);
     float NdH = max(dot(N, H), 0.0);
     float HdV = max(dot(H, V), 0.0);
+
+    vec3 F = F_Schlick(HdV, F0);
+    float D = D_GGX(NdH, a2);
+    float G = G_Smith(NdV, NdL, rough);
+    vec3 spec = (D*G*F)/(4.0*NdV*NdL + 1e-4);
+    vec3 kD = (1.0 - F)*(1.0 - uMetallic);
+
+    return (kD*uColor/PI + spec)*uSunLightColor[i]*uSunLightIntensity[i]*NdL;
+}
+
+void main () {
+    vec3 N = normalize(vNormal);
+    vec3 V = normalize(uViewPos - vFragPos);
+    vec3 R = reflect(-V, N);
+
+    float NdV = max(dot(N, V), 1e-4);
 
     float smoothness = clamp(uSmoothness, 0.0, 1.0);
     float rough = max(1.0 - smoothness, 0.04);
     float a = rough*rough;
-
     float a2 = max(a*a, 1e-3);
 
     vec3 F0 = mix(vec3(0.04), uColor, uMetallic);
 
-    /// Direct light
-    vec3 Fdirect = F_Schlick(HdV, F0);
-    float D = D_GGX(NdH, a2);
-    float G = G_Smith(NdV, NdL, rough);
-    vec3 spec = (D*G*Fdirect)/(4.0*NdV*NdL + 1e-4);
-    vec3 kD = (1.0 - Fdirect)*(1.0 - uMetallic);
-    vec3 Lo = (kD*uColor/PI + spec)*uSunLightColor*uSunLightIntensity*NdL;
+    /// Direct light — sum over all suns
+    vec3 Lo = vec3(0.0);
+    for (int i = 0; i < uSunLightCount; i++) {
+        Lo += ComputeSunLight(i, N, V, NdV, F0, rough, a2, smoothness);
+    }
 
     /// --- Ambient diffuse ---
     vec3 Fambient = F_SchlickSmoothness(NdV, F0, smoothness);
     vec3 kDambient = (1.0 - Fambient)*(1.0 - uMetallic);
     vec3 diffuseAmbient = kDambient*uAmbientColorIntensity*uAmbientColor*uColor;
 
-    /// Ambient specular (IBL), exposure applied BEFORE tonemap, with occlusion
+    /// Ambient specular (IBL)
     float lod = rough*uMaxReflectionLod;
     vec2 envUV = DirToEquirectUV(R);
     vec3 envSpec = textureLod(uSkybox, envUV, lod).rgb*uExposure;
@@ -94,7 +107,7 @@ void main () {
     vec3 ambient = diffuseAmbient + specularAmbient;
     vec3 color = ambient + Lo;
 
-    /// Tonemaping
+    /// Tonemapping
     color = color/(color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));
 

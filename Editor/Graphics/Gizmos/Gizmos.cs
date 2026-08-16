@@ -12,7 +12,7 @@ public static class Gizmos {
         //Renderer.Instance.de_GizmosDraw += DrawGizmos;
         GL = RendererEditor.GL;
 
-        _sh_Outline = new Shader(Assets.LoadText("src/Shaders/Outline_Vertex.shader"), Assets.LoadText("src/Shaders/Outline_Fragment.shader"), "Outline");
+        _sh_Outline = new Shader(Assets.LoadText("src/Shaders/Outline_Vertex.shader"), Assets.LoadText("src/Shaders/Outline_Fragment.shader"), "Outline", isLit: false);
         _sh_Outline.SetVector3(Color, Constants.cyan);
         
         //_sh_DepthClear = new Graphics.Shader(Assets.LoadText("src/Shaders/DepthClear_Vertex.shader"), Assets.LoadText("src/Shaders/DepthClear_Fragment.shader"), "DepthClear");
@@ -31,7 +31,7 @@ public static class Gizmos {
         _mat_GizmoWireframe.face = RenderFace.Both;
         _mat_GizmoWireframe.depthWrite = false;
 
-        _sh_GizmoGrid = new Shader(Assets.LoadText("src/Shaders/Grid_Vertex.shader"), Assets.LoadText("src/Shaders/Grid_Fragment.shader"), "Grid");
+        _sh_GizmoGrid = new Shader(Assets.LoadText("src/Shaders/Grid_Vertex.shader"), Assets.LoadText("src/Shaders/Grid_Fragment.shader"), "Grid", isLit: false);
         _mat_GizmoGrid = new Material(_sh_GizmoGrid);
         _mat_GizmoGrid.SetVector3(Color, Constants.lightGray);
         _mat_GizmoGrid.SetFloat(Alpha, 0.2f);
@@ -41,7 +41,7 @@ public static class Gizmos {
         _mat_GizmoGrid.face = RenderFace.Both;
         _mat_GizmoGrid.depthWrite = false;
 
-        _sh_GizmoAxisLine = new Shader(Assets.LoadText("src/Shaders/AxisLine_Vertex.shader"), Assets.LoadText("src/Shaders/AxisLine_Fragment.shader"), "AxisLine");
+        _sh_GizmoAxisLine = new Shader(Assets.LoadText("src/Shaders/AxisLine_Vertex.shader"), Assets.LoadText("src/Shaders/AxisLine_Fragment.shader"), "AxisLine", isLit: false);
         _mat_GizmoAxisLine = new Material(_sh_GizmoAxisLine);
         _mat_GizmoAxisLine.SetFloat(Alpha, 0.5f);
         _mat_GizmoAxisLine.SetFloat(Radius, 100f);
@@ -50,7 +50,7 @@ public static class Gizmos {
         _mat_GizmoAxisLine.face = RenderFace.Both;
         _mat_GizmoAxisLine.depthWrite = false;
 
-        _sh_GizmoAxis = new Shader(Assets.LoadText("src/Shaders/Axis_Vertex.shader"), Assets.LoadText("src/Shaders/Axis_Fragment.shader"), "Axis");
+        _sh_GizmoAxis = new Shader(Assets.LoadText("src/Shaders/Axis_Vertex.shader"), Assets.LoadText("src/Shaders/Axis_Fragment.shader"), "Axis", isLit: false);
         _mat_GizmoAxis = new Material(_sh_GizmoAxis);
         _mat_GizmoAxis.SetFloat(Alpha, 0.5f);
         _mat_GizmoAxis.SetFloat(Radius, 100f);
@@ -131,7 +131,7 @@ public static class Gizmos {
         DrawGizmoAxesWidget();
     }
     private static void GizmoGrid () {
-        Vector3 pos = Camera.Current.CameraPos;
+        Vector3 pos = Camera.Main.CameraPos;
         _mat_GizmoGrid.SetVector3(CameraPos, pos);
 
         Renderer.Instance.AddRenderInfo(new RenderInfo() {
@@ -146,7 +146,7 @@ public static class Gizmos {
     static void GizmoGridPost () => GL.DepthRange(0, 1);
 
     private static void GizmoAxes () {
-        Vector3 pos = Camera.Current.CameraPos;
+        Vector3 pos = Camera.Main.CameraPos;
         float halfPi = MathF.PI/2f;
 
         _mat_GizmoAxisLine.SetVector3(CameraPos, pos);
@@ -187,14 +187,14 @@ public static class Gizmos {
         GL.Clear(ClearBufferMask.DepthBufferBit);
         GL.Disable(EnableCap.ScissorTest);
 
-        Matrix4x4 rotation = Camera.Current.GetRotationMatrix();
+        Matrix4x4 rotation = Camera.Main.GetRotationMatrix();
         Vector3 forward = Vector3.Transform(Vector3.UnitZ, rotation);
         Vector3 up = Vector3.Transform(Vector3.UnitY, rotation);
         Vector3 gizmoCamPos = -forward*5f;
         Matrix4x4 gizmoView = Matrix4x4.CreateLookAtLeftHanded(gizmoCamPos, Vector3.Zero, up);
         float aspect = Windows.Window.Size.X/(float)Windows.Window.Size.Y;
         Matrix4x4 gizmoProjection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
-            Camera.Current.FOV/180*MathF.PI, aspect, Camera.Current.planeNear, Camera.Current.planeFar);
+            Camera.Main.FOV/180*MathF.PI, aspect, Camera.Main.planeNear, Camera.Main.planeFar);
 
         _sh_GizmoAxis.Use();
         _sh_GizmoAxis.SetMatrix4x4(View, gizmoView);

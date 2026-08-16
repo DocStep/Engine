@@ -11,8 +11,8 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         //Shader.StatsReset();
 
         //_sh_Lit = new Shader(Assets.LoadText("src/Shaders/Lit_Vertex.shader"), Assets.LoadText("src/Shaders/Lit_Fragment.shader"), "Lit");
-        _sh_Lit = new Shader(Assets.LoadText("src/Shaders/Lit_Vertex.shader"), Assets.LoadText("src/Shaders/LitAlt_Fragment.shader"), "Lit");
-        _sh_Unlit = new Shader(Assets.LoadText("src/Shaders/Unlit_Vertex.shader"), Assets.LoadText("src/Shaders/Unlit_Fragment.shader"), "Unlit");
+        _sh_Lit = new Shader(Assets.LoadText("src/Shaders/Lit_Vertex.shader"), Assets.LoadText("src/Shaders/LitAlt_Fragment.shader"), "Lit", isLit: true);
+        _sh_Unlit = new Shader(Assets.LoadText("src/Shaders/Unlit_Vertex.shader"), Assets.LoadText("src/Shaders/Unlit_Fragment.shader"), "Unlit", isLit: false);
         
         _mat_Lit = new Material(_sh_Lit);
         _mat_Lit.SetVector3(Color, Constants.white);
@@ -22,7 +22,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mat_Unlit = new Material(_sh_Unlit);
         _mat_Unlit.SetVector3(Color, Constants.gray);
 
-        _sh_Skybox = new Shader(Assets.LoadText("src/Shaders/Skybox_Vertex.shader"), Assets.LoadText("src/Shaders/Skybox_Fragment.shader"), "Skybox");
+        _sh_Skybox = new Shader(Assets.LoadText("src/Shaders/Skybox_Vertex.shader"), Assets.LoadText("src/Shaders/Skybox_Fragment.shader"), "Skybox", isLit: false);
         _hdr_Skybox = new HdrTexture("src/hdr/autumn_field_puresky_4k.hdr");
         //_hdr_Skybox = new HdrTexture("src/hdr/rogland_clear_night_4k.hdr");
         //_hdr_Skybox = new HdrTexture("src/hdr/grasslands_sunset_4k.hdr");

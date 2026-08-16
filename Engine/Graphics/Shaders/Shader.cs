@@ -4,11 +4,14 @@ namespace Engine.Graphics;
 
 
 public class Shader : IDisposable {
-    public Shader (string vertexSource, string fragmentSource, string name = "unnamed") {
+    public Shader (string vertexSource, string fragmentSource, string name = "unnamed", bool isLit = true) {
         GL = Renderer.GL;
         Name = name;
+        this.isLit = isLit;
+
         _vertexSource = vertexSource;
         _fragmentSource = fragmentSource;
+
 
         uint vertex = CompileShader(ShaderType.VertexShader, vertexSource);
         uint fragment = CompileShader(ShaderType.FragmentShader, fragmentSource);
@@ -17,6 +20,11 @@ public class Shader : IDisposable {
         GL.AttachShader(_program, vertex);
         GL.AttachShader(_program, fragment);
         GL.LinkProgram(_program);
+        GL.GetProgram(_program, ProgramPropertyARB.ActiveUniforms, out int uniformCount);
+        for (uint i = 0; i < uniformCount; i++) {
+            GL.GetActiveUniform(_program, i, 256, out uint length, out int size, out UniformType type, out string namee);
+            if (namee.Contains("Sun")) Log.log($"uniform {namee}", $"size={size} type={type}");
+        }
 
         GL.GetProgram(_program, ProgramPropertyARB.LinkStatus, out int status);
         Stats.RecordCompile(status);
@@ -55,6 +63,7 @@ public class Shader : IDisposable {
     public readonly string Name = "Unnamed";
     private readonly string _vertexSource;
     private readonly string _fragmentSource;
+    public bool isLit;
 
     public static RendererGLStats Stats = default;
     /*public static void StatsReset () {
@@ -72,9 +81,13 @@ public class Shader : IDisposable {
     public const string Scene = "uSceneColor";
     public const string Depth = "uDepth";
 
+    public const string SunLightCount = "uSunLightCount";
     public const string SunLightDir = "uSunLightDir";
     public const string SunLightColor = "uSunLightColor";
     public const string SunLightIntensity = "uSunLightIntensity";
+
+
+    public const string Exposure = "uExposure";
     public const string AmbientColor = "uAmbientColor";
     public const string AmbientColorIntensity = "uAmbientColorIntensity";
     public const string ReflectionIntensity = "uReflectionIntensity";
@@ -104,33 +117,83 @@ public class Shader : IDisposable {
     public void SetInt (string name, int value) {
         int location = GL.GetUniformLocation(_program, name);
         GL.Uniform1(location, value);
+
+        //var err = GL.GetError();
+        //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetInt)} {err}", LogType.warning);
     }
     public void SetFloat (string name, float value) {
         int location = GL.GetUniformLocation(_program, name);
         GL.Uniform1(location, value);
+
+        //var err = GL.GetError();
+        //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetFloat)} {err}", LogType.warning);
+    }
+    public void SetFloatArray (string name, float[] values) {
+        int location = GL.GetUniformLocation(_program, name);
+        GL.Uniform1(location, (uint)values.Length, values);
+
+        //var err = GL.GetError();
+        //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetFloatArray)} {err}", LogType.warning);
     }
 
     public void SetVector2 (string name, float x, float y) {
         int location = GL.GetUniformLocation(_program, name);
         GL.Uniform2(location, x, y);
+
+        //var err = GL.GetError();
+        //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetVector2)} {err}", LogType.warning);
     }
     public void SetVector2 (string name, Vector2 vec2) {
         int location = GL.GetUniformLocation(_program, name);
         GL.Uniform2(location, vec2.X, vec2.Y);
+
+        //var err = GL.GetError();
+        //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetVector2)} {err}", LogType.warning);
     }
 
     public void SetVector3 (string name, float x, float y, float z) {
         int location = GL.GetUniformLocation(_program, name);
         GL.Uniform3(location, x, y, z);
+
+        //var err = GL.GetError();
+        //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetVector3)} {err}", LogType.warning);
     }
     public void SetVector3 (string name, Vector3 vec3) {
         int location = GL.GetUniformLocation(_program, name);
         GL.Uniform3(location, vec3.X, vec3.Y, vec3.Z);
+
+        //var err = GL.GetError();
+        //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetVector3)} {err}", LogType.warning);
+    }
+    public void SetVector3Array (string name, Vector3[] values) {
+        int location = GL.GetUniformLocation(_program, name);
+        GL.Uniform3(location, (uint)values.Length, ref values[0].X);
+
+        //var err = GL.GetError();
+        //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetVector3Array)} {err}", LogType.warning);
+    }
+
+    public void SetVector4 (string name, float x, float y, float z, float w) {
+        int location = GL.GetUniformLocation(_program, name);
+        GL.Uniform4(location, x, y, z, w);
+
+        //var err = GL.GetError();
+        //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetVector4)} {err}", LogType.warning);
+    }
+    public void SetVector4 (string name, Vector4 vec4) {
+        int location = GL.GetUniformLocation(_program, name);
+        GL.Uniform4(location, vec4.X, vec4.Y, vec4.Z, vec4.W);
+
+        //var err = GL.GetError();
+        //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetVector4)} {err}", LogType.warning);
     }
 
     public void SetBool (string name, bool value) {
         int location = GL.GetUniformLocation(_program, name);
         GL.Uniform1(location, value ? 1 : 0);
+
+        //var err = GL.GetError();
+        //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetBool)} {err}", LogType.warning);
     }
 
     /*public void SetMatrix4 (string name, float[] matrix) {
@@ -140,6 +203,8 @@ public class Shader : IDisposable {
                 GL.UniformMatrix4(location, 1, false, ptr);
             }
         }
+        //var err = GL.GetError();
+        //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetMatrix4)} {err}", LogType.warning);
     }*/
     public void SetMatrix4x4 (string name, Matrix4x4 matrix) {
         int location = GL.GetUniformLocation(_program, name);
@@ -151,17 +216,19 @@ public class Shader : IDisposable {
         unsafe {
             GL.UniformMatrix4(location, 1, false, (float*)&matrix);
         }
+
+        //var err = GL.GetError();
+        //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetMatrix4x4)} {err}", LogType.warning);
     }
 
-    private void SetTexture (string name, TextureUnit unit) {
+    public void SetTexture (string name, TextureUnit unit) {
         GL.ActiveTexture(unit);
         GL.BindTexture(TextureTarget.Texture2D, 0);
+
+        //var err = GL.GetError();
+        //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetTexture)} {err}", LogType.warning);
     }
 
-    public void SetVec3Array (string name, Vector3[] values) {
-        int location = GL.GetUniformLocation(_program, name);
-        GL.Uniform3(location, (uint)values.Length, ref values[0].X);
-    }
 
 
     public void Dispose () {

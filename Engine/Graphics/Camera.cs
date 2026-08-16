@@ -15,7 +15,7 @@ public class Camera : Component {
     public override string Name { get; } = nameof(Camera);
 
     public static List<Camera> Cameras { get; private set; } = new List<Camera>();
-    public static Camera? Current {
+    public static Camera? Main {
         get {
             return 0 < Cameras.Count ? Cameras[0] : null;
         }
@@ -30,6 +30,7 @@ public class Camera : Component {
     public float FOV = 60;
     public float planeNear = 0.1f;
     public float planeFar = 1000f;
+    public float Exposure = 1f;
     private float _priority = 0f;
     public float priority {
         get => _priority;

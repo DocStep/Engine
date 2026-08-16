@@ -117,7 +117,7 @@ public class RendererEditor : Renderer {
 
         Shader shader = Gizmos._mat_GizmoWireframe.shader;
 
-        SetSceneUniformsUnlit(shader, Camera.Current.CameraPos);
+        SetSceneUniformsUnlit(shader, Camera.Main.CameraPos);
 
         shader.SetMatrix4x4(Model, info.model);
         Gizmos._mat_GizmoWireframe.Apply();

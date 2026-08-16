@@ -61,7 +61,7 @@ public class GizmoSelected : IDisposable {
         if (selectedMeshComp is null) return;
 
         Transform tr_obj = selectedMeshComp.owner.Transform;
-        Vector3 camPos = Camera.Current.CameraPos;
+        Vector3 camPos = Camera.Main.CameraPos;
         Vector3 _objPos = tr_obj.Position;
         Quaternion _objRot = tr_obj.Rotation;
         float _dist = Vector3.Distance(camPos, _objPos);
@@ -71,7 +71,7 @@ public class GizmoSelected : IDisposable {
             selectedGizmoWorldSpace = !selectedGizmoWorldSpace;
         }
 
-        bool rayTrue = Camera.Current.GetRayMouse(out Ray ray);
+        bool rayTrue = Camera.Main.GetRayMouse(out Ray ray);
 
         switch (selectedGizmoMode) {
             case SelectedGizmoMode.Position:
@@ -301,7 +301,7 @@ public class GizmoSelected : IDisposable {
         _sh_Unlit.Use();
         _sh_Unlit.SetMatrix4x4(View, Renderer.Instance.m4x4_View);
         _sh_Unlit.SetMatrix4x4(Projection, Renderer.Instance.m4x4_Projection);
-        _sh_Unlit.SetVector3(ViewPos, Camera.Current.CameraPos);
+        _sh_Unlit.SetVector3(ViewPos, Camera.Main.CameraPos);
 
         DrawOutline();
         DrawGizmo();

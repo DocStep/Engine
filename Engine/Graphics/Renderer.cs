@@ -101,7 +101,7 @@ public class Renderer {
 
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
-        if (Camera.Current is null) {
+        if (Camera.Main is null) {
             Log.log($"No {nameof(Camera)} found");
             return;
         }
@@ -114,7 +114,7 @@ public class Renderer {
         PostProcess.Resize(Width, Height);
 
         /// Camera Matrix
-        m4x4_View = Camera.Current.GetViewMatrix();
+        m4x4_View = Camera.Main.GetViewMatrix();
         UpdateProjection(Width, Height);
 
         PostProcess.BeginScene();
@@ -192,7 +192,7 @@ public class Renderer {
     protected void UpdateProjection (float width, float height) {
         float aspect = width/height;
         m4x4_Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
-            Camera.Current.FOV*Mathf.Deg2Rad, aspect, Camera.Current.planeNear, Camera.Current.planeFar);
+            Camera.Main.FOV*Mathf.Deg2Rad, aspect, Camera.Main.planeNear, Camera.Main.planeFar);
     }
 
     protected virtual void DrawSceneAll () {
@@ -264,7 +264,7 @@ public class Renderer {
         //if (info.depthRangeNear != 0 || info.depthRangeFar != 1)
         //    GL.DepthRange(info.depthRangeNear, info.depthRangeFar);
 
-        SetSceneUniformsUnlit(shader, Camera.Current.CameraPos);
+        SetSceneUniformsUnlit(shader, Camera.Main.CameraPos);
         SetSceneUniformsLit(shader);
         SetSceneUniformsSkybox(shader, _skybox.texture, _skybox.maxLod);
 
@@ -290,6 +290,7 @@ public class Renderer {
         shader.SetVector3(ViewPos, viewPos);
     }
     public static void SetSceneUniformsLit (Shader shader) {
+        if (!shader.isLit) return;
         Lighting.SetSceneUniformsLit(shader);
     }
     public static void SetSceneUniformsSkybox (Shader shader, HdrTexture? texture, float maxLod) {
