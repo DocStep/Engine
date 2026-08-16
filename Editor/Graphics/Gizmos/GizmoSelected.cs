@@ -17,7 +17,7 @@ public class GizmoSelected : IDisposable {
     Shader _sh_Outline = null!;
 
     public GameObject? go_selected = null;
-    public MeshComponent? selectedMeshComp { get; private set; } = null;
+    //public MeshComponent? selectedMeshComp { get; private set; } = null;
     private Mesh? mesh_outlined = null;
     private Mesh? mesh_selectedLast = null;
 
@@ -58,10 +58,11 @@ public class GizmoSelected : IDisposable {
 
 
     public void Update () {
-        if (selectedMeshComp is null) return;
+        if (go_selected is null) return;
 
-        Transform tr_obj = selectedMeshComp.gameObject.Transform;
-        Vector3 camPos = Camera.Main.CameraPos;
+        Transform tr_obj = go_selected.Transform;
+        Matrix4x4.Invert(Renderer.Instance.m4x4_View, out Matrix4x4 invView);
+        Vector3 camPos = invView.Translation;
         Vector3 _objPos = tr_obj.Position;
         Quaternion _objRot = tr_obj.Rotation;
         float _dist = Vector3.Distance(camPos, _objPos);
@@ -207,9 +208,9 @@ public class GizmoSelected : IDisposable {
                                 break;
                         }
                         if (pos is not null) {
-                            selectedMeshComp.gameObject.Transform.Stop();
-                            selectedMeshComp.gameObject.Transform.SetPosition(pos.Value + selectedDragMargin);
-                            selectedMeshComp.gameObject.Transform.SetRotation(selectedDragRot);
+                            go_selected.Transform.Stop();
+                            go_selected.Transform.SetPosition(pos.Value + selectedDragMargin);
+                            go_selected.Transform.SetRotation(selectedDragRot);
                         }
                     }
                 } else if (Inputs.Actions[Inputs.LMB].pressedUp) {
@@ -289,13 +290,13 @@ public class GizmoSelected : IDisposable {
 
 
     public void Draw () {
-        Transform? tr_obj = selectedMeshComp?.gameObject.Transform;
+        Transform? tr_obj = go_selected?.Transform;
         if (tr_obj is null) return;
 
         GL.Viewport(0, 0, (uint)RendererEditor.Instance.Width, (uint)RendererEditor.Instance.Height);
 
-        RendererEditor.GL.Disable(EnableCap.DepthTest);
-        RendererEditor.GL.Disable(EnableCap.CullFace);
+        Renderer.GL.Disable(EnableCap.DepthTest);
+        Renderer.GL.Disable(EnableCap.CullFace);
 
         Shader _sh_Unlit = AssetsEngine._sh_Unlit;
         _sh_Unlit.Use();
@@ -308,9 +309,9 @@ public class GizmoSelected : IDisposable {
     }
 
     private void DrawGizmo () {
-        if (selectedMeshComp is null) return;
+        if (go_selected is null) return;
 
-        Transform tr_obj = selectedMeshComp.gameObject.Transform;
+        Transform tr_obj = go_selected.Transform;
         Matrix4x4.Invert(Renderer.Instance.m4x4_View, out Matrix4x4 invView);
         Vector3 camPos = invView.Translation;
         Vector3 _objPos = tr_obj.Position;
@@ -346,7 +347,7 @@ public class GizmoSelected : IDisposable {
 
         /// Axes
         Matrix4x4 gizmoBasis = BasisToWorld(gizmoRight, gizmoUp, gizmoForward);
-        Vector3 pos3 = selectedMeshComp.gameObject.Transform.Position;
+        Vector3 pos3 = go_selected.Transform.Position;
         Matrix4x4 _m4x4_selectedScale = Matrix4x4.CreateScale(_dist*_axisLength);
 
         isColorSelected = selectedPositionMode == SelectedPositionGizmoMode.X || selectedPositionOverMode == SelectedPositionGizmoMode.X;
@@ -366,11 +367,13 @@ public class GizmoSelected : IDisposable {
     }
 
     private void DrawOutline () {
-        if (selectedMeshComp is null) return;
-        if (selectedMeshComp.mesh is null) return;
+        if (go_selected is null) return;
+        MeshComponent? meshComp = go_selected.GetComponent<MeshComponent>();
+        if (meshComp is null) return;
+        if (meshComp.mesh is null) return;
         if (mesh_outlined is null) return;
 
-        RenderInfo renderInfo = selectedMeshComp.renderInfo;
+        RenderInfo renderInfo = meshComp.renderInfo;
 
         try {
             GL.Enable(EnableCap.StencilTest);
@@ -431,13 +434,12 @@ public class GizmoSelected : IDisposable {
         }
     }
 
-    public void UpdateSelectedGO (GameObject? go) {
+    public void UpdateSelected (GameObject? go) {
         go_selected = go;
-        UpdateSelectedMesh(go?.GetComponent<MeshComponent>());
-    }
+        if (go is null) return;
 
-    public void UpdateSelectedMesh (MeshComponent? meshComp) {
-        selectedMeshComp = meshComp;
+        MeshComponent? meshComp = go.GetComponent<MeshComponent>();
+
         if (meshComp is not null) go_selected = meshComp.gameObject;
 
         Mesh? mesh = meshComp?.mesh;

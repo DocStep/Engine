@@ -204,8 +204,8 @@ public sealed class CameraEditor : Camera {
 
 
         if (Inputs.Actions[Inputs.CameraFocus].pressedDown) 
-            if (Gizmos._gizmo_Selected.selectedMeshComp is not null) 
-                FocusAtPoint(Gizmos._gizmo_Selected.selectedMeshComp.gameObject.Transform.Position);
+            if (Gizmos._gizmo_Selected.go_selected is not null) 
+                FocusAtPoint(Gizmos._gizmo_Selected.go_selected.Transform.Position);
 
         /// Zoom
         if (WindowInput.WheelDelta != 0) {
@@ -223,9 +223,9 @@ public sealed class CameraEditor : Camera {
                     && !Gizmos._gizmo_Selected.isInteracting) {
                     Raycast.RaycastSceneMesh(SceneManager.ActiveScene, ray, out MeshComponent? hitMeshComp, out Vector3 hitPos, out Vector3 hitNormal);
                     if (hitMeshComp is not null) {
-                        Gizmos._gizmo_Selected.UpdateSelectedMesh(hitMeshComp);
+                        Gizmos._gizmo_Selected.UpdateSelected(hitMeshComp.gameObject);
                     } else {
-                        Gizmos._gizmo_Selected.UpdateSelectedMesh(null);
+                        Gizmos._gizmo_Selected.UpdateSelected(null);
                     }
                 }
             }

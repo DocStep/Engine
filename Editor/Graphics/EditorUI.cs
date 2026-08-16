@@ -163,14 +163,14 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         if (go.Transform.Children.Count == 0)
             flags |= ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen;
 
-        GameObject? selectedGO = Gizmos._gizmo_Selected.selectedMeshComp?.gameObject;
-        if (selectedGO == go) flags |= ImGuiTreeNodeFlags.Selected;
+        GameObject? go_selected = Gizmos._gizmo_Selected.go_selected;
+        if (go_selected == go) flags |= ImGuiTreeNodeFlags.Selected;
 
         bool open = ImGui.TreeNodeEx(go.Name, flags);
 
         if (ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen()) {
             /// set selection the same way the gizmo/inspector already reads it
-            Gizmos._gizmo_Selected.UpdateSelectedGO(go);
+            Gizmos._gizmo_Selected.UpdateSelected(go);
         }
 
         if (open && 0 < go.Transform.Children.Count) {

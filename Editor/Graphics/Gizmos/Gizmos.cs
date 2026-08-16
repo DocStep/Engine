@@ -180,7 +180,7 @@ public static class Gizmos {
         SetUniforms(shader, depthTest: true, depthWrite: true);
         material.Apply();
 
-        GL.DepthRange(0, 0.9999f);
+        GL.DepthRange(0, 0.99999f);
         shader.SetVector3(CameraPos, pos);
 
         /// X Red
