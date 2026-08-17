@@ -99,10 +99,7 @@ public class Transform : Component {
         get {
             if (Parent is null) return LocalPosition;
 
-            return Vector3.Transform(
-                LocalPosition,
-                Parent.WorldMatrix
-            );
+            return Vector3.Transform(LocalPosition, Parent.WorldMatrix);
         }
         set {
             if (Parent is null) {
@@ -126,7 +123,6 @@ public class Transform : Component {
         set {
             Quaternion local = Parent is null ? Quaternion.Normalize(value)
                 : Quaternion.Normalize(value*Quaternion.Inverse(Parent.Rotation));
-
             localRotation = local;
             localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
 
@@ -142,10 +138,9 @@ public class Transform : Component {
 
             Vector3 parentScale = Parent.Scale;
             return new Vector3(
-                LocalScale.X * parentScale.X,
-                LocalScale.Y * parentScale.Y,
-                LocalScale.Z * parentScale.Z
-            );
+                LocalScale.X*parentScale.X, 
+                LocalScale.Y*parentScale.Y, 
+                LocalScale.Z*parentScale.Z);
         }
         set {
             if (Parent is null) {
@@ -154,7 +149,6 @@ public class Transform : Component {
             }
 
             Vector3 parentScale = Parent.Scale;
-
             LocalScale = new Vector3(
                 parentScale.X != 0f ? value.X / parentScale.X : 0f,
                 parentScale.Y != 0f ? value.Y / parentScale.Y : 0f,
@@ -164,9 +158,9 @@ public class Transform : Component {
     }
 
 
-    // ============================================================
-    // MATRICES
-    // ============================================================
+    /// ============================================================
+    /// MATRICES
+    /// ============================================================
 
     [Hide]
     [JsonIgnore]
@@ -181,30 +175,15 @@ public class Transform : Component {
         Parent is null ? LocalMatrix : LocalMatrix * Parent.WorldMatrix;
 
 
-    // ============================================================
-    // PHYSICS
-    // ============================================================
-
-    /*private void UpdatePhysics () {
-        PhysicsComponent? physics =
-            gameObject.GetComponent<PhysicsComponent>();
-
-        if (physics is null)
-            return;
-
-        physics.SetPosition(Position);
-        gameObject.GetComponent<PhysicsComponent>().SetRotation(Rotation);
-    }*/
+    /// ============================================================
+    /// PHYSICS
+    /// ============================================================
 
     public void SetRotationFromPhysics (Quaternion rotation) {
         Quaternion local = Parent is null ? Quaternion.Normalize(rotation) 
             : Quaternion.Normalize(rotation*Quaternion.Inverse(Parent.Rotation));
-
         localRotation = local;
-        localRotationEuler = QuaternionToEuler(
-            localRotation,
-            localRotationEuler
-        );
+        localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
     }
 
     public void SetPositionFromPhysics (Vector3 position) {
@@ -213,15 +192,8 @@ public class Transform : Component {
             return;
         }
 
-        Matrix4x4.Invert(
-            Parent.WorldMatrix,
-            out Matrix4x4 inverse
-        );
-
-        localPosition = Vector3.Transform(
-            position,
-            inverse
-        );
+        Matrix4x4.Invert(Parent.WorldMatrix, out Matrix4x4 inverse);
+        localPosition = Vector3.Transform(position, inverse);
     }
 
 
@@ -230,9 +202,9 @@ public class Transform : Component {
     /// ============================================================
     
     private static Quaternion EulerToQuaternion (Vector3 euler) {
-        float x = 0.5f*DegreesToRadians(euler.X);
-        float y = 0.5f*DegreesToRadians(euler.Y);
-        float z = 0.5f*DegreesToRadians(euler.Z);
+        float x = 0.5f*euler.X*Mathf.Deg2Rad;
+        float y = 0.5f*euler.Y*Mathf.Deg2Rad;
+        float z = 0.5f*euler.Z*Mathf.Deg2Rad;
 
         float sx = MathF.Sin(x);
         float cx = MathF.Cos(x);
@@ -245,33 +217,31 @@ public class Transform : Component {
 
         return Quaternion.Normalize(
             new Quaternion(
-                sx * cy * cz - cx * sy * sz,
-                cx * sy * cz + sx * cy * sz,
-                cx * cy * sz - sx * sy * cz,
-                cx * cy * cz + sx * sy * sz
+                sx*cy*cz - cx*sy*sz,
+                cx*sy*cz + sx*cy*sz,
+                cx*cy*sz - sx*sy*cz,
+                cx*cy*cz + sx*sy*sz
             )
         );
     }
     private static Vector3 QuaternionToEuler (Quaternion q, Vector3 previous) {
         q = Quaternion.Normalize(q);
 
-        float sinX = 2f * (q.W * q.X + q.Y * q.Z);
-        float cosX = 1f - 2f * (q.X * q.X + q.Y * q.Y);
+        float sinX = 2f*(q.W*q.X + q.Y*q.Z);
+        float cosX = 1f - 2f*(q.X*q.X + q.Y*q.Y);
 
-        float sinY = 2f * (q.W * q.Y - q.Z * q.X);
+        float sinY = 2f*(q.W*q.Y - q.Z*q.X);
         sinY = Math.Clamp(sinY, -1, 1);
 
-        float sinZ = 2f * (q.W * q.Z + q.X * q.Y);
-        float cosZ = 1f - 2f * (q.Y * q.Y + q.Z * q.Z);
+        float sinZ = 2f*(q.W*q.Z + q.X*q.Y);
+        float cosZ = 1f - 2f*(q.Y*q.Y + q.Z*q.Z);
 
         float x = MathF.Atan2(sinX, cosX);
         float y = MathF.Asin(sinY);
         float z = MathF.Atan2(sinZ, cosZ);
 
-        Vector3 a = new(RadiansToDegrees(x), RadiansToDegrees(y), RadiansToDegrees(z));
-
-        // The second valid Euler solution.
-        Vector3 b = new(a.X + 180, 180 - a.Y, a.Z + 180);
+        Vector3 a = new Vector3(x*Mathf.Rad2Deg, y*Mathf.Rad2Deg, z*Mathf.Rad2Deg);
+        Vector3 b = new Vector3(a.X + 180, 180 - a.Y, a.Z + 180); /// The second valid Euler solution.
 
         a = WrapVector3(a, 0, 360);
         b = WrapVector3(b, 0, 360);
@@ -282,7 +252,7 @@ public class Transform : Component {
         float x = ShortestAngle(a.X, b.X);
         float y = ShortestAngle(a.Y, b.Y);
         float z = ShortestAngle(a.Z, b.Z);
-        return x * x + y * y + z * z;
+        return x*x + y*y + z*z;
     }
     private static float ShortestAngle (float a, float b) {
         float d = (a - b) % 360;
@@ -292,14 +262,6 @@ public class Transform : Component {
     }
 
 
-    private static float DegreesToRadians (float degrees) {
-        return degrees*Mathf.Deg2Rad;
-    }
-
-    private static float RadiansToDegrees (float radians) {
-        return radians*Mathf.Rad2Deg;
-    }
-
     private static Vector3 WrapVector3 (Vector3 value, float min, float max) {
         return new Vector3(
             Wrap(value.X, min, max),
@@ -308,18 +270,10 @@ public class Transform : Component {
         );
     }
 
-    private static float Wrap (
-        float value,
-        float min,
-        float max
-    ) {
+    private static float Wrap (float value, float min, float max) {
         float range = max - min;
-
         value = (value - min) % range;
-
-        if (value < 0f)
-            value += range;
-
+        if (value < 0f) value += range;
         return value + min;
     }
 
