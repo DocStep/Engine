@@ -75,16 +75,24 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
             SpringSettings = new BepuPhysics.Constraints.SpringSettings(frequency, dampingRation)
         };
 
+
+        gameObject.Transform.de_RotationChanged += SetRotation;
+        gameObject.Transform.de_PositionChanged += SetPosition;
+        gameObject.Transform.de_ScaleChanged += SetScale;
+
         PhysicsManager.Instance.RegisterRigidbody(this);
     }
     public override void OnRemove () {
-        // If we added a static, remove it; otherwise remove the dynamic body registration.
         if (StaticHandle.HasValue) {
             PhysicsManager.Instance.Simulation.Statics.Remove(StaticHandle.Value);
             StaticHandle = null;
         } else {
             PhysicsManager.Instance.RemoveRigidbody(this);
         }
+
+        gameObject.Transform.de_RotationChanged -= SetRotation;
+        gameObject.Transform.de_PositionChanged -= SetPosition;
+        gameObject.Transform.de_ScaleChanged -= SetScale;
     }
 
 
@@ -101,8 +109,8 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
     }
 
     public void UpdateTransform () {
-        gameObject.Transform.SetPositionFromPhysics(Rigidbody.Pose.Position);
-        gameObject.Transform.SetRotationFromPhysics(Rigidbody.Pose.Orientation);
+        gameObject.Transform.SetPosition_Silent(Rigidbody.Pose.Position);
+        gameObject.Transform.SetRotation_Silent(Rigidbody.Pose.Orientation);
     }
     public void UpdateRigidbody () {
         Rigidbody.Pose.Position = gameObject.Transform.Position;

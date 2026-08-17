@@ -10,6 +10,10 @@ public class Transform : Component {
 
     public override string Name => nameof(Transform);
 
+    [Hide][JsonIgnore] public Action<Vector3>? de_PositionChanged = null;
+    [Hide][JsonIgnore] public Action<Quaternion>? de_RotationChanged = null;
+    [Hide][JsonIgnore] public Action<Vector3>? de_ScaleChanged = null;
+
     [Hide][JsonIgnore] private Vector3 localPosition = Vector3.Zero;
     [Hide][JsonIgnore] private Quaternion localRotation = Quaternion.Identity;
     [Hide][JsonIgnore] private Vector3 localRotationEuler = Vector3.Zero;
@@ -53,7 +57,7 @@ public class Transform : Component {
         set {
             localPosition = value;
 
-            gameObject.GetComponent<PhysicsComponent>()?.SetPosition(Position);
+            de_PositionChanged?.Invoke(Position);
         }
     }
 
@@ -66,7 +70,7 @@ public class Transform : Component {
             localRotationEuler = WrapVector3(value, 0f, 360f);
             localRotation = EulerToQuaternion(localRotationEuler);
 
-            gameObject.GetComponent<PhysicsComponent>()?.SetRotation(Rotation);
+            de_RotationChanged?.Invoke(Rotation);
         }
     }
 
@@ -78,7 +82,7 @@ public class Transform : Component {
             localRotation = Quaternion.Normalize(value);
             localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
 
-            gameObject.GetComponent<PhysicsComponent>()?.SetRotation(Rotation);
+            de_RotationChanged?.Invoke(Rotation);
         }
     }
 
@@ -102,13 +106,9 @@ public class Transform : Component {
             return Vector3.Transform(LocalPosition, Parent.WorldMatrix);
         }
         set {
-            if (Parent is null) {
-                LocalPosition = value;
-                return;
-            }
+            SetPosition_Silent(value);
 
-            Matrix4x4.Invert(Parent.WorldMatrix, out Matrix4x4 inverse);
-            LocalPosition = Vector3.Transform(value, inverse);
+            de_PositionChanged?.Invoke(Position);
         }
     }
 
@@ -118,15 +118,12 @@ public class Transform : Component {
         get {
             if (Parent is null) return localRotation;
 
-            return Quaternion.Normalize(localRotation * Parent.Rotation);
+            return Quaternion.Normalize(localRotation*Parent.Rotation);
         }
         set {
-            Quaternion local = Parent is null ? Quaternion.Normalize(value)
-                : Quaternion.Normalize(value*Quaternion.Inverse(Parent.Rotation));
-            localRotation = local;
-            localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
+            SetRotation_Silent(value);
 
-            gameObject.GetComponent<PhysicsComponent>()?.SetRotation(Rotation);
+            de_RotationChanged?.Invoke(Rotation);
         }
     }
 
@@ -176,25 +173,25 @@ public class Transform : Component {
 
 
     /// ============================================================
-    /// PHYSICS
+    /// SYNC
     /// ============================================================
 
-    public void SetRotationFromPhysics (Quaternion rotation) {
-        Quaternion local = Parent is null ? Quaternion.Normalize(rotation) 
-            : Quaternion.Normalize(rotation*Quaternion.Inverse(Parent.Rotation));
-        localRotation = local;
-        localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
-    }
-
-    public void SetPositionFromPhysics (Vector3 position) {
+    public void SetPosition_Silent (Vector3 position) {
         if (Parent is null) {
-            localPosition = position;
+            LocalPosition = position;
             return;
         }
 
         Matrix4x4.Invert(Parent.WorldMatrix, out Matrix4x4 inverse);
-        localPosition = Vector3.Transform(position, inverse);
+        LocalPosition = Vector3.Transform(position, inverse);
     }
+    public void SetRotation_Silent (Quaternion rotation) {
+        Quaternion local = Parent is null ? Quaternion.Normalize(rotation)
+                : Quaternion.Normalize(rotation*Quaternion.Inverse(Parent.Rotation));
+        localRotation = local;
+        localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
+    }
+
 
 
     /// ============================================================
@@ -288,7 +285,7 @@ public class Transform : Component {
         gameObject.GetComponent<PhysicsComponent>()?.SetPosition(position);
     }
     public void SetRotation (Quaternion rotation) {
-        Rotation = rotation;
+        SetRotation_Silent(rotation);
         gameObject.GetComponent<PhysicsComponent>()?.SetRotation(rotation);
     }
     public void SetScale (Vector3 scale) {
