@@ -9,7 +9,7 @@ namespace Editor.Graphics;
 
 public class GizmoSelected : IDisposable {
     public GizmoSelected () {
-        GL = RendererEditor.GL;
+        GL = Renderer.GL;
         _sh_Outline = Gizmos._sh_Outline;
     }
 
@@ -57,7 +57,7 @@ public class GizmoSelected : IDisposable {
     public const string NormalOffset = "uNormalOffset";
 
 
-    public void Update () {
+    public void Draw () {
         if (go_selected is null) return;
 
         Transform tr_obj = go_selected.Transform;
@@ -276,23 +276,8 @@ public class GizmoSelected : IDisposable {
             if (MathF.Abs(a) <= halfExtent && MathF.Abs(b) <= halfExtent) return hit;
             else return null;
         }
-    }
 
-
-    public static Matrix4x4 BasisToWorld (Vector3 localX, Vector3 localY, Vector3 localZ) {
-        return new Matrix4x4(
-            localX.X, localX.Y, localX.Z, 0,
-            localY.X, localY.Y, localY.Z, 0,
-            localZ.X, localZ.Y, localZ.Z, 0,
-            0, 0, 0, 1
-        );
-    }
-
-
-    public void Draw () {
-        Transform? tr_obj = go_selected?.Transform;
-        if (tr_obj is null) return;
-
+        /// Draw
         GL.Viewport(0, 0, (uint)RendererEditor.Instance.Width, (uint)RendererEditor.Instance.Height);
 
         Renderer.GL.Disable(EnableCap.DepthTest);
@@ -315,7 +300,7 @@ public class GizmoSelected : IDisposable {
         Matrix4x4.Invert(Renderer.Instance.m4x4_View, out Matrix4x4 invView);
         Vector3 camPos = invView.Translation;
         Vector3 _objPos = tr_obj.Position;
-        Vector3 _objRot = tr_obj.RotationEuler;
+        Vector3 _objRot = tr_obj.LocalRotation;
         float _dist = Vector3.Distance(camPos, _objPos);
         bool isColorSelected;
 
@@ -434,6 +419,17 @@ public class GizmoSelected : IDisposable {
         }
     }
 
+
+    public static Matrix4x4 BasisToWorld (Vector3 localX, Vector3 localY, Vector3 localZ) {
+        return new Matrix4x4(
+            localX.X, localX.Y, localX.Z, 0,
+            localY.X, localY.Y, localY.Z, 0,
+            localZ.X, localZ.Y, localZ.Z, 0,
+            0, 0, 0, 1
+        );
+    }
+
+
     public void UpdateSelected (GameObject? go) {
         go_selected = go;
         if (go is null) return;
@@ -459,6 +455,7 @@ public class GizmoSelected : IDisposable {
         data.RecalculateOutlineNormals();
         mesh_outlined = new Mesh(data);
     }
+
 
     public void Dispose () {
         mesh_selectedLast?.Dispose();

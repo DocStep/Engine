@@ -21,7 +21,7 @@ public class SceneMaterials : Scene {
         x = 0;
         GameObject reflectionSuzanneHightRes = new GameObject() { Name = "Reflection SuzanneHighRes", };
         reflectionSuzanneHightRes.Transform.Position = new Vector3(x, 0, 0);
-        reflectionSuzanneHightRes.Transform.RotationEuler = new Vector3(0, 180, 0);
+        reflectionSuzanneHightRes.Transform.LocalRotation = new Vector3(0, 180, 0);
         mesh = reflectionSuzanneHightRes.AddComponent<MeshComponent>();
         mesh.mesh = AssetsEngine._mesh_SuzanneHighRes;
         mesh.material = AssetsEngine._mat_MaterialPreview;
@@ -31,7 +31,7 @@ public class SceneMaterials : Scene {
 
         GameObject reflectionSuzanne = new GameObject() { Name = "Reflection Suzanne", };
         reflectionSuzanne.Transform.Position = new Vector3(x, 0, 4);
-        reflectionSuzanne.Transform.RotationEuler = new Vector3(0, 180, 0);
+        reflectionSuzanne.Transform.LocalRotation = new Vector3(0, 180, 0);
         mesh = reflectionSuzanne.AddComponent<MeshComponent>();
         mesh.mesh = AssetsEngine._mesh_Suzanne;
         mesh.material = AssetsEngine._mat_MaterialPreview;
@@ -97,7 +97,7 @@ public class SceneMaterials : Scene {
 
         GameObject reflectionSphere = new GameObject() { Name = "Reflection Sphere", };
         reflectionSphere.Transform.Position = new Vector3(0, 0, -8);
-        reflectionSphere.Transform.Scale = 2*Vector3.One;
+        reflectionSphere.Transform.LocalScale = 2*Vector3.One;
         mesh = reflectionSphere.AddComponent<MeshComponent>();
         mesh.mesh = AssetsEngine._mesh_Sphere;
         mesh.material = AssetsEngine._mat_MaterialPreview;

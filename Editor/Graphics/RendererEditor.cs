@@ -19,9 +19,9 @@ public class RendererEditor : Renderer {
     public RendererEditor() : base() {
         //Engine.Engine.Instance.de_Update_Engine += EngineUpdate;
 
-        de_LateUpdate += DrawMaterialsGrid;
+        Engine.Engine.Instance.de_AfterUpdate += DrawMaterialsGrid;
         de_DrawPostScene += DrawGizmos;
-        de_DrawAfterPostProcess += DrawGizmosRaw;
+        de_DrawAfterPostProcess += Gizmos.Draw;
     }
 
 
@@ -123,14 +123,6 @@ public class RendererEditor : Renderer {
         Gizmos._mat_GizmoWireframe.Apply();
 
         info.mesh.Draw(info.primitiveType);
-    }
-
-    public void DrawGizmosRaw () {
-        GL.Enable(EnableCap.Blend);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-
-        Gizmos.Draw();
-        Gizmos._gizmo_Selected.Draw();
     }
 
 

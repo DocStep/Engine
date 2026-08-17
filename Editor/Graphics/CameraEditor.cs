@@ -13,7 +13,7 @@ public sealed class CameraEditor : Camera {
         Instance = this;
         SetTransformDefault();
 
-        Renderer.Instance.de_LateUpdate += Update;
+        Engine.Engine.Instance.de_AfterUpdate += Update;
 
         priority = -10;
     }

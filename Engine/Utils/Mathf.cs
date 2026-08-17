@@ -100,23 +100,23 @@ public static class Mathf {
         return Quaternion.CreateFromYawPitchRoll(euler.Y*Deg2Rad, euler.X*Deg2Rad, euler.Z*Deg2Rad);
     }
     public static Vector3 QuaternionToEuler (Quaternion q) {
-        float x = q.X, y = q.Y, z = q.Z, w = q.W;
+        float sinr = 2f * (q.W * q.X + q.Y * q.Z);
+        float cosr = 1f - 2f * (q.X * q.X + q.Y * q.Y);
+        float x = MathF.Atan2(sinr, cosr);
 
-        //pitch(x-axis rotation)
-        float sinp = 2f *(w*x - y*z);
-        float pitch = 1f <= MathF.Abs(sinp) ? MathF.CopySign(0.5f*MathF.PI, sinp) : MathF.Asin(sinp);
+        float sinp = 2f * (q.W * q.Y - q.Z * q.X);
+        sinp = Math.Clamp(sinp, -1f, 1f);
+        float y = MathF.Asin(sinp);
 
-        //yaw(y-axis rotation)
-        float sinyCosp = 2f*(w*y + x*z);
-        float cosyCosp = 1f - 2f*(x*x + y*y);
-        float yaw = MathF.Atan2(sinyCosp, cosyCosp);
+        float siny = 2f * (q.W * q.Z + q.X * q.Y);
+        float cosy = 1f - 2f * (q.Y * q.Y + q.Z * q.Z);
+        float z = MathF.Atan2(siny, cosy);
 
-        //roll(z-axis rotation)
-        float sinrCosp = 2f*(w*z + x*y);
-        float cosrCosp = 1f - 2f*(z*z + x*x);
-        float roll = MathF.Atan2(sinrCosp, cosrCosp);
-
-        return new Vector3(pitch*(Rad2Deg), yaw*(Rad2Deg), roll*(Rad2Deg));
+        return new Vector3(
+            x * Rad2Deg,
+            y * Rad2Deg,
+            z * Rad2Deg
+        );
     }
     public static Quaternion DirectionToQuaternion (Vector3 direction, Vector3 up = default) {
         direction = Vector3.Normalize(direction);
@@ -139,6 +139,13 @@ public static class Mathf {
     }
 
 
+    extension (Matrix4x4 matrix) {
+        public Quaternion GetRotation () {
+            Matrix4x4.Decompose(matrix, out _, out Quaternion rotation, out _);
+            return rotation;
+        }
+    }
+    
 
     public static Matrix4x4 QuaternionToMatrix (Quaternion q) {
         float x = q.X, y = q.Y, z = q.Z, w = q.W;
@@ -210,10 +217,14 @@ public static class Mathf {
     }
 
 
+    //public static float Wrap (float value, float min, float max) {
+    //    float range = max - min;
+    //    return ((value - min)%range + range)%range + min;
+    //}
     public static float Wrap (float value, float min, float max) {
-        float range = max - min;
-        return ((value - min)%range + range)%range + min;
-    }
+    float range = max - min;
+    return value - range * MathF.Floor((value - min) / range);
+}
     public static Vector2 WrapVector2 (Vector2 v, float min, float max) {
         return new Vector2(Wrap(v.X, min, max), Wrap(v.Y, min, max));
     }

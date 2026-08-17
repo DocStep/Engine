@@ -39,7 +39,7 @@ public class GameObject : ISavable, IDisposable {
         Transform.gameObject = this;
         Transform.Position = position;
         Transform.Rotation = Mathf.EulerToQuaternion(rotation);
-        Transform.Scale = scale;
+        Transform.LocalScale = scale;
         
         MeshComponent mesh = AddComponent<MeshComponent>();
         switch (primitive) {

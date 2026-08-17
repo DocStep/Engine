@@ -101,8 +101,8 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
     }
 
     public void UpdateTransform () {
-        gameObject.Transform.Position = Rigidbody.Pose.Position;
-        gameObject.Transform.Rotation = Rigidbody.Pose.Orientation;
+        gameObject.Transform.SetPositionFromPhysics(Rigidbody.Pose.Position);
+        gameObject.Transform.SetRotationFromPhysics(Rigidbody.Pose.Orientation);
     }
     public void UpdateRigidbody () {
         Rigidbody.Pose.Position = gameObject.Transform.Position;

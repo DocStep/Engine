@@ -26,10 +26,12 @@ public class Engine : IDisposable {
     //public Action? de_FixedUpdate_Engine = null;
     public static string savesFolder = "Data";
 
-    public Action? de_Update = null;
-    public Action? de_FixedUpdate = null;
     public Action? de_StateReset = null;
+    public Action? de_Update = null;
+    public Action? de_AfterUpdate = null;
+    public Action? de_FixedUpdate = null;
     public Action? de_Render = null;
+    public Action? de_LateUpdate = null;
 
     /// Debug
     public EngineStates engineState = EngineStates.Loading;
@@ -119,8 +121,9 @@ public class Engine : IDisposable {
             f3log();
 
             de_Render?.Invoke();
-
             LogFrameEnd();
+
+            de_LateUpdate?.Invoke();
 
             /// Counters
             Time.time += Time.deltaTime;
@@ -140,6 +143,8 @@ public class Engine : IDisposable {
 
         de_Update?.Invoke();
         ReflectionActionScripts.Instance?.de_Actions_Update?.Invoke();
+
+        de_AfterUpdate?.Invoke();
 
         Stats.LatencyUpdate = (float)sw_LatencyUpdate.Elapsed.TotalMilliseconds;
     }

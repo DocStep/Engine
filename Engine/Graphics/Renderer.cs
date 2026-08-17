@@ -21,7 +21,7 @@ public class Renderer {
         
         Instance = this;
 
-        Engine.Instance.de_Render += RenderScene;
+        Engine.Instance.de_Render += Render;
         Windows.Window.FramebufferResize += OnFrameBufferResize;
         Windows.Window.Closing += Dispose;
 
@@ -54,7 +54,7 @@ public class Renderer {
 
     public static Renderer Instance = null!;
 
-    public Action? de_LateUpdate = null;
+    //public Action? de_LateUpdate = null;
 
     public Action? de_PreRender = null;
     public Action? de_DrawPostScene = null;
@@ -96,9 +96,7 @@ public class Renderer {
 
 
 
-    public void RenderScene () {
-        de_LateUpdate?.Invoke(); 
-
+    public void Render () {
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
         if (Camera.Main is null) {
@@ -123,7 +121,7 @@ public class Renderer {
 
         DrawSceneAll();
 
-        SceneManager.ActiveScene?.DrawRaw();
+        //SceneManager.ActiveScene?.DrawRaw();
 
         PostProcess.Run();
 

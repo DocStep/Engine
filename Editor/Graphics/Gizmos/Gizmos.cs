@@ -80,8 +80,6 @@ public static class Gizmos {
         _mesh_ArrowWireframe = new Mesh(Arrow.GenerateWireframe(length: 1f, shaftWidth: 0.01f, headLength: 0.2f, headWidth: 0.1f));
 
         _gizmo_Selected = new GizmoSelected();
-
-        Renderer.Instance.de_LateUpdate += Update;
     }
 
     static GL GL = null!;
@@ -115,19 +113,21 @@ public static class Gizmos {
     private static float cameraOrbitCenterRadius = 0.5f;
 
 
-    public static void Update () {
-        GLDebug.DrawAll();
-
-        //GizmoCameraOrbitCenter();
-        _gizmo_Selected.Update();
-    }
     public static void Draw () {
         if (Camera.Main is null) {
             Log.log($"No {nameof(Camera)} found");
             return;
         }
 
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
         //Renderer.Instance.de_GizmosDraw?.Invoke();
+
+        GLDebug.DrawAll();
+
+        //GizmoCameraOrbitCenter();
+        _gizmo_Selected.Draw();
 
         GizmoGrid();
         GizmoAxes();
