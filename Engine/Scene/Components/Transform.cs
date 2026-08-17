@@ -118,11 +118,10 @@ public class Transform : Component {
         get {
             if (Parent is null) return localRotation;
 
-            return Quaternion.Normalize(localRotation*Parent.Rotation);
+            return Quaternion.Normalize(Parent.Rotation*localRotation);
         }
         set {
             SetRotation_Silent(value);
-
             de_RotationChanged?.Invoke(Rotation);
         }
     }
