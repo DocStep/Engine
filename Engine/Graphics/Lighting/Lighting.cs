@@ -14,12 +14,6 @@ public static class Lighting {
     public const int MAX_SUN_LIGHTS = 32;
     public const int MAX_POINT_LIGHTS = 32;
 
-    public const string PointLightPos = "uPointLightPos";
-    public const string PointLightColor = "uPointLightColor";
-    public const string PointLightIntensity = "uPointLightIntensity";
-    public const string PointLightRange = "uPointLightRange";
-    public const string PointLightCount = "uPointLightCount";
-
 
     public static void SetMainSunLight (SunLight sun) {
         //if (!LightSources.Contains(sun)) return;
@@ -31,7 +25,6 @@ public static class Lighting {
     public static void SetSceneUniformsLit (Shader shader) {
         List<SunLight> enabledLights = SunLights.Where(l => l.Enabled).ToList();
         int count = Math.Min(enabledLights.Count, MAX_SUN_LIGHTS);
-
         if (0 < count) {
             Vector3[] dirs = new Vector3[count];
             Vector3[] colors = new Vector3[count];
@@ -53,7 +46,6 @@ public static class Lighting {
 
         List<PointLight> enabledPointLights = PointLights.Where(l => l.Enabled).ToList();
         int pointCount = Math.Min(enabledPointLights.Count, MAX_POINT_LIGHTS);
-
         if (0 < pointCount) {
             Vector3[] positions = new Vector3[pointCount];
             Vector3[] colors = new Vector3[pointCount];
@@ -68,9 +60,9 @@ public static class Lighting {
                 ranges[i] = light.Range;
             }
 
-            shader.SetVector3Array(PointLightPos, positions);
             shader.SetVector3Array(PointLightColor, colors);
             shader.SetFloatArray(PointLightIntensity, intensities);
+            shader.SetVector3Array(PointLightPos, positions);
             shader.SetFloatArray(PointLightRange, ranges);
         }
         shader.SetInt(PointLightCount, pointCount);

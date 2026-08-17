@@ -86,6 +86,11 @@ public class Shader : IDisposable {
     public const string SunLightColor = "uSunLightColor";
     public const string SunLightIntensity = "uSunLightIntensity";
 
+    public const string PointLightCount = "uPointLightCount";
+    public const string PointLightColor = "uPointLightColor";
+    public const string PointLightIntensity = "uPointLightIntensity";
+    public const string PointLightPos = "uPointLightPos";
+    public const string PointLightRange = "uPointLightRange";
 
     public const string Exposure = "uExposure";
     public const string AmbientColor = "uAmbientColor";
