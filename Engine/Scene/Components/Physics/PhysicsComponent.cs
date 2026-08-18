@@ -79,6 +79,7 @@ public class PhysicsComponent : Component, IComponentFixedUpdate {
         gameObject.Transform.de_RotationChanged += SetRotation;
         gameObject.Transform.de_PositionChanged += SetPosition;
         gameObject.Transform.de_ScaleChanged += SetScale;
+        gameObject.Transform.de_Stop += Stop;
 
         PhysicsManager.Instance.RegisterRigidbody(this);
     }

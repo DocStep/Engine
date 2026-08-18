@@ -13,13 +13,17 @@ public class Transform : Component {
     [Hide][JsonIgnore] public Action<Vector3>? de_PositionChanged = null;
     [Hide][JsonIgnore] public Action<Quaternion>? de_RotationChanged = null;
     [Hide][JsonIgnore] public Action<Vector3>? de_ScaleChanged = null;
+    [Hide][JsonIgnore] public Action? de_Stop = null;
 
     [Hide][JsonIgnore] private Vector3 localPosition = Vector3.Zero;
     [Hide][JsonIgnore] private Quaternion localRotation = Quaternion.Identity;
     [Hide][JsonIgnore] private Vector3 localRotationEuler = Vector3.Zero;
     [Hide][JsonIgnore] private Vector3 localScale = Vector3.One;
 
-    [Hide][JsonIgnore] public Transform? Parent {
+    [Hide][JsonIgnore] private Vector3 rotationEuler = Vector3.Zero;
+
+    [Hide][JsonIgnore]
+    public Transform? Parent {
         get => parent;
         set {
             if (parent == value) return;
@@ -33,17 +37,18 @@ public class Transform : Component {
             if (parent is not null && !parent.Children.Contains(this))
                 parent.Children.Add(this);
 
-            Position = worldPosition;
-            Rotation = worldRotation;
+            SetPosition_Silent(worldPosition);
+            SetRotation_Silent(worldRotation);
+
+            de_PositionChanged?.Invoke(Position);
+            de_RotationChanged?.Invoke(Rotation);
         }
     }
 
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     private Transform? parent = null;
 
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     public List<Transform> Children { get; } = new();
 
 
@@ -55,32 +60,55 @@ public class Transform : Component {
     public Vector3 LocalPosition {
         get => localPosition;
         set {
+            if (localPosition == value) return;
+
             localPosition = value;
 
             de_PositionChanged?.Invoke(Position);
         }
     }
 
-    [JsonIgnore]
-    [WrapRotation(0, 360)]
-    [ChangeStep(1f)]
+    [JsonIgnore][WrapRotation(0, 360)][ChangeStep(1f)]
     public Vector3 LocalRotation {
-        get => localRotationEuler;
+        get {
+            localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
+            return localRotationEuler;
+        }
         set {
-            localRotationEuler = WrapVector3(value, 0f, 360f);
-            localRotation = EulerToQuaternion(localRotationEuler);
+            value = WrapVector3(value, 0f, 360f);
+
+            Vector3 oldEuler = localRotationEuler;
+
+            float dx = ShortestAngle(oldEuler.X, value.X);
+            float dy = ShortestAngle(oldEuler.Y, value.Y);
+            float dz = ShortestAngle(oldEuler.Z, value.Z);
+
+            if (MathF.Abs(dx) < 0.000001f &&
+                MathF.Abs(dy) < 0.000001f &&
+                MathF.Abs(dz) < 0.000001f)
+                return;
+
+            if (0.000001f <= MathF.Abs(dx))
+                RotateLocalX_Silent(dx);
+
+            if (0.000001f <= MathF.Abs(dy))
+                RotateLocalY_Silent(dy);
+
+            if (0.000001f <=MathF.Abs(dz))
+                RotateLocalZ_Silent(dz);
+
+            localRotationEuler = QuaternionToEuler(localRotation, value);
+            rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
 
             de_RotationChanged?.Invoke(Rotation);
         }
     }
 
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     public Quaternion LocalQuaternion {
         get => localRotation;
         set {
-            localRotation = Quaternion.Normalize(value);
-            localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
+            SetLocalRotation_Silent(value);
 
             de_RotationChanged?.Invoke(Rotation);
         }
@@ -89,7 +117,13 @@ public class Transform : Component {
     [JsonIgnore]
     public Vector3 LocalScale {
         get => localScale;
-        set => localScale = value;
+        set {
+            if (localScale == value) return;
+
+            localScale = value;
+
+            de_ScaleChanged?.Invoke(Scale);
+        }
     }
 
 
@@ -97,8 +131,7 @@ public class Transform : Component {
     /// WORLD
     /// ============================================================
 
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     public Vector3 Position {
         get {
             if (Parent is null) return LocalPosition;
@@ -112,16 +145,33 @@ public class Transform : Component {
         }
     }
 
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     public Quaternion Rotation {
         get {
             if (Parent is null) return localRotation;
 
-            return Quaternion.Normalize(Parent.Rotation*localRotation);
+            return Quaternion.Normalize(localRotation*Parent.Rotation);
         }
         set {
             SetRotation_Silent(value);
+
+            de_RotationChanged?.Invoke(Rotation);
+        }
+    }
+
+    [Hide][JsonIgnore][WrapRotation(0, 360)][ChangeStep(1f)]
+    public Vector3 RotationEuler {
+        get {
+            rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
+            return rotationEuler;
+        }
+        set {
+            value = WrapVector3(value, 0f, 360f);
+
+            SetRotation_Silent(EulerToQuaternion(value));
+
+            rotationEuler = QuaternionToEuler(Rotation, value);
+
             de_RotationChanged?.Invoke(Rotation);
         }
     }
@@ -134,8 +184,8 @@ public class Transform : Component {
 
             Vector3 parentScale = Parent.Scale;
             return new Vector3(
-                LocalScale.X*parentScale.X, 
-                LocalScale.Y*parentScale.Y, 
+                LocalScale.X*parentScale.X,
+                LocalScale.Y*parentScale.Y,
                 LocalScale.Z*parentScale.Z);
         }
         set {
@@ -146,114 +196,183 @@ public class Transform : Component {
 
             Vector3 parentScale = Parent.Scale;
             LocalScale = new Vector3(
-                parentScale.X != 0f ? value.X / parentScale.X : 0f,
-                parentScale.Y != 0f ? value.Y / parentScale.Y : 0f,
-                parentScale.Z != 0f ? value.Z / parentScale.Z : 0f
+                parentScale.X != 0f ? value.X/parentScale.X : 0f,
+                parentScale.Y != 0f ? value.Y/parentScale.Y : 0f,
+                parentScale.Z != 0f ? value.Z/parentScale.Z : 0f
             );
         }
     }
 
 
-    /// ============================================================
-    /// MATRICES
-    /// ============================================================
-
+    /// Matrices
     [Hide]
     [JsonIgnore]
     public Matrix4x4 LocalMatrix =>
         Matrix4x4.CreateScale(LocalScale)*
         Matrix4x4.CreateFromQuaternion(localRotation)*
         Matrix4x4.CreateTranslation(LocalPosition);
-
     [Hide]
     [JsonIgnore]
     public Matrix4x4 WorldMatrix =>
-        Parent is null ? LocalMatrix : LocalMatrix * Parent.WorldMatrix;
+        Parent is null ? LocalMatrix : LocalMatrix*Parent.WorldMatrix;
 
 
-    /// ============================================================
-    /// SYNC
-    /// ============================================================
-
+    /// Sync
     public void SetPosition_Silent (Vector3 position) {
         if (Parent is null) {
-            LocalPosition = position;
+            localPosition = position;
             return;
         }
 
-        Matrix4x4.Invert(Parent.WorldMatrix, out Matrix4x4 inverse);
-        LocalPosition = Vector3.Transform(position, inverse);
+        if (!Matrix4x4.Invert(Parent.WorldMatrix, out Matrix4x4 inverse)) {
+            localPosition = position;
+            return;
+        }
+
+        localPosition = Vector3.Transform(position, inverse);
     }
+    public void SetLocalRotation_Silent (Quaternion rotation) {
+        localRotation = NormalizeSafe(rotation);
+        localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
+        rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
+    }
+
     public void SetRotation_Silent (Quaternion rotation) {
-        Quaternion local = Parent is null ? Quaternion.Normalize(rotation)
-                : Quaternion.Normalize(rotation*Quaternion.Inverse(Parent.Rotation));
+        rotation = NormalizeSafe(rotation);
+        Quaternion local = Parent is null ? rotation
+            : Quaternion.Normalize(rotation*Quaternion.Inverse(Parent.Rotation));
+
         localRotation = local;
         localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
+        rotationEuler = QuaternionToEuler(rotation, rotationEuler);
+    }
+
+    private static Quaternion NormalizeSafe (Quaternion rotation) {
+        float lengthSquared =
+            rotation.X*rotation.X +
+            rotation.Y*rotation.Y +
+            rotation.Z*rotation.Z +
+            rotation.W*rotation.W;
+
+        if (lengthSquared < 0.0000001f)
+            return Quaternion.Identity;
+
+        return Quaternion.Normalize(rotation);
     }
 
 
+    /// Rotation
 
-    /// ============================================================
-    /// QUATERNION <-> EULER
-    /// ============================================================
-    
+    public void RotateLocalX (float degrees) {
+        RotateLocalX_Silent(degrees);
+        de_RotationChanged?.Invoke(Rotation);
+    }
+
+    public void RotateLocalY (float degrees) {
+        RotateLocalY_Silent(degrees);
+        de_RotationChanged?.Invoke(Rotation);
+    }
+
+    public void RotateLocalZ (float degrees) {
+        RotateLocalZ_Silent(degrees);
+        de_RotationChanged?.Invoke(Rotation);
+    }
+
+    private void RotateLocalX_Silent (float degrees) {
+        Quaternion delta = Quaternion.CreateFromAxisAngle(Vector3.UnitX, degrees*Mathf.Deg2Rad);
+        localRotation = Quaternion.Normalize(localRotation*delta);
+        localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
+        rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
+    }
+
+    private void RotateLocalY_Silent (float degrees) {
+        Quaternion delta = Quaternion.CreateFromAxisAngle(Vector3.UnitY, degrees*Mathf.Deg2Rad);
+        localRotation = Quaternion.Normalize(localRotation*delta);
+        localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
+        rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
+    }
+
+    private void RotateLocalZ_Silent (float degrees) {
+        Quaternion delta = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, degrees*Mathf.Deg2Rad);
+        localRotation = Quaternion.Normalize(localRotation*delta);
+        localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
+        rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
+    }
+
+    public void RotateWorldX (float degrees) {
+        RotateWorld(Vector3.UnitX, degrees);
+    }
+
+    public void RotateWorldY (float degrees) {
+        RotateWorld(Vector3.UnitY, degrees);
+    }
+
+    public void RotateWorldZ (float degrees) {
+        RotateWorld(Vector3.UnitZ, degrees);
+    }
+
+    public void RotateWorld (Vector3 axis, float degrees) {
+        float lengthSquared = axis.X*axis.X + axis.Y*axis.Y + axis.Z*axis.Z;
+        if (lengthSquared < 0.0000001f) return;
+
+        axis = Vector3.Normalize(axis);
+        Quaternion delta = Quaternion.CreateFromAxisAngle(axis, degrees*Mathf.Deg2Rad);
+        SetRotation_Silent(delta*Rotation);
+
+        de_RotationChanged?.Invoke(Rotation);
+    }
+
+
+    /// Quaternion <-> Euler
+
     private static Quaternion EulerToQuaternion (Vector3 euler) {
-        float x = 0.5f*euler.X*Mathf.Deg2Rad;
-        float y = 0.5f*euler.Y*Mathf.Deg2Rad;
-        float z = 0.5f*euler.Z*Mathf.Deg2Rad;
+        float x = euler.X*Mathf.Deg2Rad;
+        float y = euler.Y*Mathf.Deg2Rad;
+        float z = euler.Z*Mathf.Deg2Rad;
 
-        float sx = MathF.Sin(x);
-        float cx = MathF.Cos(x);
+        Quaternion qx = Quaternion.CreateFromAxisAngle(Vector3.UnitX, x);
+        Quaternion qy = Quaternion.CreateFromAxisAngle(Vector3.UnitY, y);
+        Quaternion qz = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, z);
 
-        float sy = MathF.Sin(y);
-        float cy = MathF.Cos(y);
-
-        float sz = MathF.Sin(z);
-        float cz = MathF.Cos(z);
-
-        return Quaternion.Normalize(
-            new Quaternion(
-                sx*cy*cz - cx*sy*sz,
-                cx*sy*cz + sx*cy*sz,
-                cx*cy*sz - sx*sy*cz,
-                cx*cy*cz + sx*sy*sz
-            )
-        );
+        return Quaternion.Normalize(qz*qy*qx);
     }
+
     private static Vector3 QuaternionToEuler (Quaternion q, Vector3 previous) {
-        q = Quaternion.Normalize(q);
+        q = NormalizeSafe(q);
 
-        float sinX = 2f*(q.W*q.X + q.Y*q.Z);
-        float cosX = 1f - 2f*(q.X*q.X + q.Y*q.Y);
+        float m11 = 1f - 2f*(q.Y*q.Y + q.Z*q.Z);
+        float m12 = 2f*(q.X*q.Y - q.Z*q.W);
+        float m13 = 2f*(q.X*q.Z + q.Y*q.W);
+        float m23 = 2f*(q.Y*q.Z - q.X*q.W);
+        float m33 = 1f - 2f*(q.X*q.X + q.Y*q.Y);
 
-        float sinY = 2f*(q.W*q.Y - q.Z*q.X);
-        sinY = Math.Clamp(sinY, -1, 1);
+        float x;
+        float y = MathF.Asin(Math.Clamp(m13, -1, 1));
+        float z;
+        float cosY = MathF.Cos(y);
 
-        float sinZ = 2f*(q.W*q.Z + q.X*q.Y);
-        float cosZ = 1f - 2f*(q.Y*q.Y + q.Z*q.Z);
+        if (0.000001f < MathF.Abs(cosY)) {
+            x = MathF.Atan2(-m23, m33);
+            z = MathF.Atan2(-m12, m11);
+        } else {
+            z = previous.Z*Mathf.Deg2Rad;
+            if (0 < y) {
+                x = MathF.Atan2(2f*(q.X*q.W + q.Y*q.Z), 1f - 2f*(q.X*q.X + q.Z*q.Z));
+            } else {
+                x = MathF.Atan2(-2f*(q.X*q.W + q.Y*q.Z), 1f - 2f*(q.X*q.X + q.Z*q.Z));
+            }
+        }
+        Vector3 result = new Vector3(x*Mathf.Rad2Deg, y*Mathf.Rad2Deg, z*Mathf.Rad2Deg);
 
-        float x = MathF.Atan2(sinX, cosX);
-        float y = MathF.Asin(sinY);
-        float z = MathF.Atan2(sinZ, cosZ);
-
-        Vector3 a = new Vector3(x*Mathf.Rad2Deg, y*Mathf.Rad2Deg, z*Mathf.Rad2Deg);
-        Vector3 b = new Vector3(a.X + 180, 180 - a.Y, a.Z + 180); /// The second valid Euler solution.
-
-        a = WrapVector3(a, 0, 360);
-        b = WrapVector3(b, 0, 360);
-
-        return DistanceSquared(a, previous) <= DistanceSquared(b, previous) ? a : b;
+        return WrapVector3(result, 0, 360);
     }
-    private static float DistanceSquared (Vector3 a, Vector3 b) {
-        float x = ShortestAngle(a.X, b.X);
-        float y = ShortestAngle(a.Y, b.Y);
-        float z = ShortestAngle(a.Z, b.Z);
-        return x*x + y*y + z*z;
-    }
+
     private static float ShortestAngle (float a, float b) {
-        float d = (a - b) % 360;
+        float d = (b - a)%360;
+
         if (180 < d) d -= 360;
         if (d < -180) d += 360;
+
         return d;
     }
 
@@ -268,6 +387,8 @@ public class Transform : Component {
 
     private static float Wrap (float value, float min, float max) {
         float range = max - min;
+        if (range <= 0) return min;
+
         value = (value - min) % range;
         if (value < 0f) value += range;
         return value + min;
@@ -279,23 +400,21 @@ public class Transform : Component {
     [Hide][JsonIgnore] public Vector3 Forward => Vector3.Transform(Vector3.UnitZ, Rotation);
 
 
-    public void SetPosition (Vector3 position) {
-        Position = position;
-        gameObject.GetComponent<PhysicsComponent>()?.SetPosition(position);
-    }
-    public void SetRotation (Quaternion rotation) {
-        SetRotation_Silent(rotation);
-        gameObject.GetComponent<PhysicsComponent>()?.SetRotation(rotation);
-    }
-    public void SetScale (Vector3 scale) {
-        LocalScale = scale;
-        gameObject.GetComponent<PhysicsComponent>()?.SetScale(scale);
-    }
+    //public void SetPosition (Vector3 position) {
+    //    Position = position;
+    //}
+
+    //public void SetRotation (Quaternion rotation) {
+    //    Rotation = rotation;
+    //}
+
+    //public void SetScale (Vector3 scale) {
+    //    LocalScale = scale;
+    //}
 
     public void Stop () {
-        gameObject.GetComponent<PhysicsComponent>()?.Stop();
+        de_Stop?.Invoke();
     }
-
 
 
     public Matrix4x4 GetWorldMatrix () {

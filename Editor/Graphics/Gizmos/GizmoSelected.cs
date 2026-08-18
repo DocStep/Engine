@@ -209,8 +209,8 @@ public class GizmoSelected : IDisposable {
                         }
                         if (pos is not null) {
                             go_selected.Transform.Stop();
-                            go_selected.Transform.SetPosition(pos.Value + selectedDragMargin);
-                            go_selected.Transform.SetRotation(selectedDragRot);
+                            go_selected.Transform.Position = pos.Value + selectedDragMargin;
+                            go_selected.Transform.Rotation = selectedDragRot;
                         }
                     }
                 } else if (Inputs.Actions[Inputs.LMB].pressedUp) {
