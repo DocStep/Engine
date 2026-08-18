@@ -150,7 +150,7 @@ public class Transform : Component {
         get {
             if (Parent is null) return localRotation;
 
-            return Quaternion.Normalize(localRotation*Parent.Rotation);
+            return Quaternion.Normalize(Parent.Rotation*localRotation);
         }
         set {
             SetRotation_Silent(value);
@@ -240,7 +240,7 @@ public class Transform : Component {
     public void SetRotation_Silent (Quaternion rotation) {
         rotation = NormalizeSafe(rotation);
         Quaternion local = Parent is null ? rotation
-            : Quaternion.Normalize(rotation*Quaternion.Inverse(Parent.Rotation));
+            : Quaternion.Normalize(Quaternion.Inverse(Parent.Rotation)*rotation);
 
         localRotation = local;
         localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
@@ -334,7 +334,7 @@ public class Transform : Component {
         Quaternion qy = Quaternion.CreateFromAxisAngle(Vector3.UnitY, y);
         Quaternion qz = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, z);
 
-        return Quaternion.Normalize(qz*qy*qx);
+        return Quaternion.Normalize(qx*qy*qz);
     }
 
     private static Vector3 QuaternionToEuler (Quaternion q, Vector3 previous) {
