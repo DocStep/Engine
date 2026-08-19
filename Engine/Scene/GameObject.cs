@@ -90,13 +90,13 @@ public class GameObject : ISavable, IDisposable {
 
     [JsonIgnore] public readonly static string typeName = typeof(GameObject).Name;
 
-    public string Name = GameObject.GameObjectName;
+    public string Name = TypeName;
     public readonly long Id = 0;
     public bool Enabled = true;
     public readonly Transform Transform = new Transform();
     public readonly List<Component> Components = new List<Component>();
 
-    [JsonIgnore] public const string GameObjectName = "GameObject";
+    [JsonIgnore] public const string TypeName = nameof(GameObject);
 
 
     public T? GetComponent<T> () where T : Component {

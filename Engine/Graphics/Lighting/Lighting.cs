@@ -6,13 +6,14 @@ namespace Engine.Graphics;
 
 public static class Lighting {
 
-    public static List<LightSource> LightSources = new List<LightSource>();
-    public static List<SunLight> SunLights = new List<SunLight>();
-    public static List<PointLight> PointLights = new List<PointLight>();
+    [Hide] public static List<LightSource> LightSources = new List<LightSource>();
+    [Hide] public static List<SunLight> SunLights = new List<SunLight>();
+    [Hide] public static List<PointLight> PointLights = new List<PointLight>();
 
-    public static SunLight? MainLight => 0 < SunLights.Count ? SunLights[0] : null;
-    public const int MAX_SUN_LIGHTS = 32;
-    public const int MAX_POINT_LIGHTS = 32;
+    [Hide] public static SunLight? MainLight => 0 < SunLights.Count ? SunLights[0] : null;
+
+    [Range(0, int.MaxValue)] public static int MAX_SUN_LIGHTS = 32;
+    [Range(0, int.MaxValue)] public static int MAX_POINT_LIGHTS = 32;
 
 
     public static void SetMainSunLight (SunLight sun) {

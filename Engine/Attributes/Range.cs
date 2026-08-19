@@ -6,14 +6,12 @@ namespace Engine;
 
 
 //[AttributeUsage(AttributeTargets.Field|AttributeTargets.Property)]
-public class WrapFloat (float min, float max) : Attribute {
+public class Range (float min, float max) : Attribute {
     public float Min = min;
     public float Max = max;
 
     public float Update (float value) {
-        value = value % 360;
-        if (value < 0f) value += 360;
-        return value;
+        return Mathf.Clamp(value, Min, Max);
     }
 
 }

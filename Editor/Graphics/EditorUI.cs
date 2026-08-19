@@ -96,6 +96,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         DrawSceneView(dockspaceId);
         DrawHierarchy(dockspaceId);
         DrawInspector(dockspaceId);
+        DrawLighting(dockspaceId);
         DrawEngineInfo(dockspaceId);
         DrawGLInfo(dockspaceId);
         //ImGui.ShowMetricsWindow();
@@ -200,6 +201,13 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         
         ImGui.End();
     }
+    private void DrawLighting (uint dockspaceId) {
+        ImGui.Begin("Lighting");
+
+        DrawObject(typeof(Lighting));
+
+        ImGui.End();
+    }
     public void DrawComponent (Component component) {
         ImGui.PushID(component.GetHashCode());
         bool enabled = component.Enabled;
@@ -265,15 +273,49 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         ImGui.PopID();
     }
-    private static void DrawMember (object target, MemberInfo member) {
+    public static void DrawObject (Type staticType, bool useCollumns = true) {
+        ImGui.PushID(staticType.GetHashCode());
+
+        if (useCollumns) {
+            if (ImGui.BeginTable("##" + "InspectorTable", 2, ImGuiTableFlags.Resizable | ImGuiTableFlags.NoSavedSettings)) {
+                ImGui.TableSetupColumn("Label", ImGuiTableColumnFlags.WidthStretch, 0.4f);
+                ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch);
+
+                foreach (MemberInfo member in GetStaticMembersInOrder(staticType))
+                    DrawMember(null, member);
+
+                ImGui.EndTable();
+            }
+        } else {
+            foreach (MemberInfo member in GetStaticMembersInOrder(staticType))
+                DrawMember(null, member);
+        }
+
+        ImGui.PopID();
+    }
+    public static IEnumerable<MemberInfo> GetStaticMembersInOrder (Type type) {
+        return type.GetMembers(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+            .Where(x => x.MemberType == MemberTypes.Field || x.MemberType == MemberTypes.Property)
+            .OrderBy(x => x.MetadataToken);
+    }
+
+
+
+    private static void DrawMember (object? target, MemberInfo member) {
         object? value = member switch {
             FieldInfo f => f.GetValue(target),
             PropertyInfo p when p.CanRead => p.GetValue(target),
             _ => null,
         };
 
+        bool isWritable = member switch {
+            FieldInfo f => !f.IsLiteral && !f.IsInitOnly,
+            PropertyInfo p => p.CanWrite,
+            _ => false,
+        };
+
         object? drawn = DrawField(member, value);
-        if (drawn is null) return;
+        if (drawn is null || !isWritable) return;
 
         switch (member) {
             case FieldInfo f: f.SetValue(target, drawn); break;
@@ -316,35 +358,48 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     }
 
     public static object? DrawField (MemberInfo member, object? value) {
-        if (member.GetCustomAttribute<Hide>() is not null) return null;
+        return DrawField(member.Name, value, member: member);
+    }
 
-        string label = Utils.NameCapital(member.Name);
-
-        DrawName? drawName = member.GetCustomAttribute<DrawName>();
-        if (drawName is not null) label = drawName.Name;
-
-        bool isReadonly = member.GetCustomAttribute<Readonly>() is not null;
-
-        float step = valueStep;
-        ChangeStep? changeSpeed = member.GetCustomAttribute<ChangeStep>();
-        if (changeSpeed is not null) step = changeSpeed.Step;
-
-        bool isRaw = false;
-        if (member.GetCustomAttribute<Raw>() is not null) isRaw = true;
-
-        return DrawField(label, value, isReadonly: isReadonly, step: step, isRaw: isRaw);
+    /// basic call site - no MemberInfo, just an attribute list
+    public static object? DrawField (string label, object? value, IEnumerable<Attribute> attributes,
+        bool isReadonly = false, float step = valueStep, bool isRaw = false, bool inTable = true) {
+        return DrawFieldCore(label, value, attributes, isReadonly, step, isRaw, inTable);
     }
 
     /// Core widget drawer, callable directly without reflection.
     /// Must be called while a 2-column ImGui table is open (see DrawObject).
-    public static object? DrawField (string label, object? value, bool isReadonly = false, 
-        float step = valueStep, bool isRaw = false, bool inTable = true) {
-        object? result = null;
+    public static object? DrawField (string label, object? value, bool isReadonly = false,
+        float step = valueStep, bool isRaw = false, bool inTable = true, MemberInfo? member = null) {
+        IEnumerable<Attribute>? attributes = member?.GetCustomAttributes();
+        if (member is not null) label = Utils.NameCapital(member.Name);
+
+        return DrawFieldCore(label, value, attributes, isReadonly, step, isRaw, inTable);
+    }
+
+    static object? DrawFieldCore (string label, object? value, IEnumerable<Attribute>? attributes,
+        bool isReadonly, float step, bool isRaw, bool inTable) {
+        if (attributes is not null) {
+            Attribute[] attrs = attributes as Attribute[] ?? attributes.ToArray();
+
+            if (attrs.OfType<Hide>().Any()) return null;
+
+            DrawName? drawName = attrs.OfType<DrawName>().FirstOrDefault();
+            if (drawName is not null) label = drawName.Name;
+
+            isReadonly = attrs.OfType<Readonly>().Any();
+
+            step = valueStep;
+            ChangeStep? changeSpeed = attrs.OfType<ChangeStep>().FirstOrDefault();
+            if (changeSpeed is not null) step = changeSpeed.Step;
+
+            isRaw = attrs.OfType<Raw>().Any();
+        }
+
 
         if (isReadonly) ImGui.BeginDisabled(true);
 
         bool isRawCollection = isRaw && value is IDictionary;
-
         string id = label;
         if (drawInverted && inTable && !isRawCollection) {
             ImGui.TableNextRow();
@@ -356,6 +411,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             id = "##" + label;
         }
 
+        object? result = null;
         switch (value) {
             case int i:
                 if (ImGui.DragInt(id, ref i)) result = i;
