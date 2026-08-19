@@ -53,6 +53,10 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     public const bool drawInverted = true;
     public const float valueStep = 0.01f;
 
+    /// inspector row layout — Unity-style margin instead of an ImGui table
+    private const float labelRatio = 0.4f;
+    private const float minLabelWidth = 90f;
+
 
     private Vector2 sceneAvail = new Vector2(1280, 720);
     public Vector2 SceneAvail => sceneAvail;
@@ -112,7 +116,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         _docked = true;
     }
-    
+
     private void DrawSceneView (uint dockspaceId) {
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         ImGui.Begin("Scene");
@@ -123,7 +127,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         _sceneRectMin = ImGui.GetItemRectMin();
         _sceneRectMax = ImGui.GetItemRectMax();
         isSceneUIHovered = ImGui.IsItemHovered();
-            
+
         if (!Inputs.isMouseVisible) {
             Vector2 mousePos_Scene = WindowInput.Mouse!.Position - ImGui.GetItemRectMin();
             float deltaX = MathF.Floor(mousePos_Scene.X/sceneAvail.X)*sceneAvail.X;
@@ -199,7 +203,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 DrawComponent(selectedGO.Components[c]);
             }
         }
-        
+
         ImGui.End();
     }
     private void DrawRendering (uint dockspaceId) {
@@ -251,59 +255,27 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     }
 
 
-    public static void DrawObject (object target, bool useCollumns = true) {
+    
+    public static void DrawObject (object target) {
         ImGui.PushID(target.GetHashCode());
 
         bool isCollection = target is IList or IDictionary
             && target is not (Vector2 or Vector3 or Vector4 or Quaternion);
 
         if (isCollection) {
-            if (useCollumns) {
-                if (ImGui.BeginTable("##InspectorTable", 2, ImGuiTableFlags.Resizable | ImGuiTableFlags.NoSavedSettings)) {
-                    ImGui.TableSetupColumn("Label", ImGuiTableColumnFlags.WidthStretch, 0.4f);
-                    ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch);
-                    DrawLabel("Items", target, inTable: true);
-                    ImGui.EndTable();
-                }
-            } else {
-                DrawLabel("Items", target, inTable: false);
-            }
+            DrawLabel("Items", target);
         } else {
-            if (useCollumns) {
-                if (ImGui.BeginTable("##InspectorTable", 2, ImGuiTableFlags.Resizable | ImGuiTableFlags.NoSavedSettings)) {
-                    ImGui.TableSetupColumn("Label", ImGuiTableColumnFlags.WidthStretch, 0.4f);
-                    ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch);
-
-                    foreach (MemberInfo member in GetMembersInOrder(target.GetType()))
-                        DrawMember(target, member);
-
-                    ImGui.EndTable();
-                }
-            } else {
-                foreach (MemberInfo member in GetMembersInOrder(target.GetType()))
-                    DrawMember(target, member);
-            }
+            foreach (MemberInfo member in GetMembersInOrder(target.GetType()))
+                DrawMember(target, member);
         }
 
         ImGui.PopID();
     }
-    public static void DrawObject (Type staticType, bool useCollumns = true) {
+    public static void DrawObject (Type staticType) {
         ImGui.PushID(staticType.GetHashCode());
 
-        if (useCollumns) {
-            if (ImGui.BeginTable("##" + "InspectorTable", 2, ImGuiTableFlags.Resizable | ImGuiTableFlags.NoSavedSettings)) {
-                ImGui.TableSetupColumn("Label", ImGuiTableColumnFlags.WidthStretch, 0.4f);
-                ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch);
-
-                foreach (MemberInfo member in GetStaticMembersInOrder(staticType))
-                    DrawMember((object?)null, member);
-
-                ImGui.EndTable();
-            }
-        } else {
-            foreach (MemberInfo member in GetStaticMembersInOrder(staticType))
-                DrawMember((object?)null, member);
-        }
+        foreach (MemberInfo member in GetStaticMembersInOrder(staticType))
+            DrawMember((object?)null, member);
 
         ImGui.PopID();
     }
@@ -347,7 +319,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         }
 
         foreach (Type t in types) {
-            MemberInfo[] members = t.GetMembers(BindingFlags.Public | BindingFlags.NonPublic | 
+            MemberInfo[] members = t.GetMembers(BindingFlags.Public | BindingFlags.NonPublic |
                 BindingFlags.Instance | BindingFlags.DeclaredOnly)
                 .Where(x => x.MemberType == MemberTypes.Field
                     || (x is PropertyInfo p && x.MemberType == MemberTypes.Property && p.GetIndexParameters().Length == 0))
@@ -375,16 +347,10 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     }
 
     public static object? DrawMember (MemberInfo member, object? value) {
-        return DrawLabel(member.Name, value, inTable: true, member?.GetCustomAttributes());
+        return DrawLabel(member.Name, value, member?.GetCustomAttributes());
     }
 
-    /// Must be called while a 2-column ImGui table is open (see DrawObject).
     public static object? DrawLabel (string label, object? value, IEnumerable<Attribute>? attributes = null) {
-        return DrawLabel(label, value, false, attributes);
-    }
-
-    /// Must be called while a 2-column ImGui table is open (see DrawObject).
-    static object? DrawLabel (string label, object? value, bool inTable, IEnumerable<Attribute>? attributes = null) {
         label = Utils.NameCapital(label);
         bool isReadonly = false;
         float step = valueStep;
@@ -408,14 +374,18 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         if (isReadonly) ImGui.BeginDisabled(true);
 
-        bool isRawCollection = isRaw && value is IDictionary;
+        /// collections/nested objects draw their own header (TreeNodeEx) or flatten inline (raw),
+        /// so only plain leaf values get the label+control row treatment
+        bool isCollection = value is (IList or IDictionary) && value is not (Vector2 or Vector3 or Vector4 or Quaternion);
+        bool isNestedObject = value is Material or PostProcessPass;
+        bool isRow = drawInverted && !isCollection && !isNestedObject;
+
         string id = label;
-        if (drawInverted && inTable && !isRawCollection) {
-            ImGui.TableNextRow();
-            ImGui.TableSetColumnIndex(0);
+        if (isRow) {
+            float labelWidth = MathF.Max(ImGui.GetContentRegionAvail().X*labelRatio, minLabelWidth);
             ImGui.AlignTextToFramePadding();
-            ImGui.Text(label);
-            ImGui.TableSetColumnIndex(1);
+            ImGui.TextUnformatted(label);
+            ImGui.SameLine(labelWidth);
             ImGui.SetNextItemWidth(-1);
             id = "##" + label;
         }
@@ -520,7 +490,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 break;
             case Material mat:
                 if (ImGui.TreeNodeEx(id, ImGuiTreeNodeFlags.DefaultOpen, label)) {
-                    DrawObject(mat, useCollumns: false);
+                    DrawObject(mat);
                     ImGui.TreePop();
                 }
                 break;
@@ -530,7 +500,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 break;
             case PostProcessPass ppp:
                 if (ImGui.TreeNodeEx(id, ImGuiTreeNodeFlags.DefaultOpen, label)) {
-                    DrawObject(ppp, useCollumns: false);
+                    DrawObject(ppp);
                     ImGui.TreePop();
                 }
                 break;
@@ -605,7 +575,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             Inputs.isMouseOverScene = false;
             return;
         }
-        if (Inputs.MousePos_Scene.X < 0 || Inputs.MousePos_Scene.Y < 0 || 
+        if (Inputs.MousePos_Scene.X < 0 || Inputs.MousePos_Scene.Y < 0 ||
             sceneAvail.X < Inputs.MousePos_Scene.X || sceneAvail.Y < Inputs.MousePos_Scene.Y) {
             Inputs.isMouseOverScene = false;
         }
@@ -618,7 +588,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
         io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
     }
-    
+
     /// <> <?>
     public /*unsafe*/ void SetFont (byte[] fontData) {
         ImGuiIOPtr io = ImGui.GetIO();
