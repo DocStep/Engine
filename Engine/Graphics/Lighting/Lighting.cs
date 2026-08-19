@@ -12,8 +12,8 @@ public static class Lighting {
 
     [Hide] public static SunLight? MainLight => 0 < SunLights.Count ? SunLights[0] : null;
 
-    [Range(0, int.MaxValue)] public static int MAX_SUN_LIGHTS = 32;
-    [Range(0, int.MaxValue)] public static int MAX_POINT_LIGHTS = 32;
+    [Range(0, int.MaxValue)] public static int SunLights_Max = 32;
+    [Range(0, int.MaxValue)] public static int PoinyLights_Max = 32;
 
 
     public static void SetMainSunLight (SunLight sun) {
@@ -25,7 +25,7 @@ public static class Lighting {
 
     public static void SetSceneUniformsLit (Shader shader) {
         List<SunLight> enabledLights = SunLights.Where(l => l.Enabled).ToList();
-        int count = Math.Min(enabledLights.Count, MAX_SUN_LIGHTS);
+        int count = Math.Min(enabledLights.Count, SunLights_Max);
         if (0 < count) {
             Vector3[] dirs = new Vector3[count];
             Vector3[] colors = new Vector3[count];
@@ -46,7 +46,7 @@ public static class Lighting {
         shader.SetInt(SunLightCount, count);
 
         List<PointLight> enabledPointLights = PointLights.Where(l => l.Enabled).ToList();
-        int pointCount = Math.Min(enabledPointLights.Count, MAX_POINT_LIGHTS);
+        int pointCount = Math.Min(enabledPointLights.Count, PoinyLights_Max);
         if (0 < pointCount) {
             Vector3[] positions = new Vector3[pointCount];
             Vector3[] colors = new Vector3[pointCount];

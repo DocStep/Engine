@@ -15,13 +15,13 @@ public static class ComponentsInpector {
         public void DrawInspector () {
             ((Component)component).DrawInspector();
 
-            Graphics.EditorUI.DrawField("Mode", component.Rigidbody.Kinematic ? "Kinematic" : "Dynamic", isReadonly: true, inTable: false);
-            Graphics.EditorUI.DrawField("Velocity", component.Rigidbody.Velocity.Linear, isReadonly: true, inTable: false);
-            Graphics.EditorUI.DrawField("Angular Velocity", component.Rigidbody.Velocity.Angular, isReadonly: true, inTable: false);
+            Graphics.EditorUI.DrawLabel("Mode", component.Rigidbody.Kinematic ? "Kinematic" : "Dynamic");
+            Graphics.EditorUI.DrawLabel("Velocity", component.Rigidbody.Velocity.Linear);
+            Graphics.EditorUI.DrawLabel("Angular Velocity", component.Rigidbody.Velocity.Angular);
 
             BepuPhysics.BodyInertia inertia = component.Rigidbody.LocalInertia;
             Vector3 invInertia = new Vector3(inertia.InverseInertiaTensor.XX, inertia.InverseInertiaTensor.YY, inertia.InverseInertiaTensor.ZZ);
-            Graphics.EditorUI.DrawField("InvInertia", invInertia, isReadonly: true, inTable: false);
+            Graphics.EditorUI.DrawLabel("InvInertia", invInertia);
         }
     }
 

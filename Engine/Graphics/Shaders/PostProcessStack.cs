@@ -17,7 +17,7 @@ public class PostProcessStack : IDisposable {
     public static uint QuadVAO;
 
     public bool Enabled = true;
-    public List<PostProcessPass> Effects = new();
+    public List<PostProcessPass> Effects = new List<PostProcessPass>();
 
     int _width, _height;
 
@@ -136,6 +136,8 @@ public class PostProcessStack : IDisposable {
 
             for (int i = 0; i < Effects.Count; i++) {
                 bool isLast = i == Effects.Count - 1;
+                if (!Effects[i].Enabled) continue;
+
                 uint targetFbo = isLast ? finalTargetFbo : _pingFbo[pingIndex];
                 Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, targetFbo);
                 SetDrawBuffer(targetFbo);

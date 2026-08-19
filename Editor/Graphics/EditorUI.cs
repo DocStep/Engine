@@ -10,6 +10,7 @@ using Engine;
 using Engine.Graphics;
 using Engine.Input;
 using Editor;
+using System.Runtime.CompilerServices;
 
 namespace Editor.Graphics;
 
@@ -96,7 +97,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         DrawSceneView(dockspaceId);
         DrawHierarchy(dockspaceId);
         DrawInspector(dockspaceId);
-        DrawLighting(dockspaceId);
+        DrawRendering(dockspaceId);
         DrawEngineInfo(dockspaceId);
         DrawGLInfo(dockspaceId);
         //ImGui.ShowMetricsWindow();
@@ -201,10 +202,12 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         
         ImGui.End();
     }
-    private void DrawLighting (uint dockspaceId) {
-        ImGui.Begin("Lighting");
+    private void DrawRendering (uint dockspaceId) {
+        ImGui.Begin("Rendering");
 
         DrawObject(typeof(Lighting));
+        ImGui.Separator();
+        DrawObject(Renderer.Instance.PostProcess.Effects);
 
         ImGui.End();
     }
@@ -240,7 +243,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.BeginDisabled();
 
         DrawObject(Renderer.Instance.Stats);
-        ImGui.NewLine();
+        ImGui.Separator();
         DrawObject(Engine.Graphics.Shader.Stats);
 
         ImGui.EndDisabled();
@@ -251,7 +254,21 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     public static void DrawObject (object target, bool useCollumns = true) {
         ImGui.PushID(target.GetHashCode());
 
-        if (drawInverted) {
+        bool isCollection = target is IList or IDictionary
+            && target is not (Vector2 or Vector3 or Vector4 or Quaternion);
+
+        if (isCollection) {
+            if (useCollumns) {
+                if (ImGui.BeginTable("##InspectorTable", 2, ImGuiTableFlags.Resizable | ImGuiTableFlags.NoSavedSettings)) {
+                    ImGui.TableSetupColumn("Label", ImGuiTableColumnFlags.WidthStretch, 0.4f);
+                    ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch);
+                    DrawLabel("Items", target, inTable: true);
+                    ImGui.EndTable();
+                }
+            } else {
+                DrawLabel("Items", target, inTable: false);
+            }
+        } else {
             if (useCollumns) {
                 if (ImGui.BeginTable("##InspectorTable", 2, ImGuiTableFlags.Resizable | ImGuiTableFlags.NoSavedSettings)) {
                     ImGui.TableSetupColumn("Label", ImGuiTableColumnFlags.WidthStretch, 0.4f);
@@ -266,9 +283,6 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 foreach (MemberInfo member in GetMembersInOrder(target.GetType()))
                     DrawMember(target, member);
             }
-        } else {
-            foreach (MemberInfo member in GetMembersInOrder(target.GetType()))
-                DrawMember(target, member);
         }
 
         ImGui.PopID();
@@ -282,19 +296,19 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 ImGui.TableSetupColumn("Value", ImGuiTableColumnFlags.WidthStretch);
 
                 foreach (MemberInfo member in GetStaticMembersInOrder(staticType))
-                    DrawMember(null, member);
+                    DrawMember((object?)null, member);
 
                 ImGui.EndTable();
             }
         } else {
             foreach (MemberInfo member in GetStaticMembersInOrder(staticType))
-                DrawMember(null, member);
+                DrawMember((object?)null, member);
         }
 
         ImGui.PopID();
     }
     public static IEnumerable<MemberInfo> GetStaticMembersInOrder (Type type) {
-        return type.GetMembers(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+        return type.GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.DeclaredOnly)
             .Where(x => x.MemberType == MemberTypes.Field || x.MemberType == MemberTypes.Property)
             .OrderBy(x => x.MetadataToken);
     }
@@ -314,7 +328,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             _ => false,
         };
 
-        object? drawn = DrawField(member, value);
+        object? drawn = DrawMember(member, value);
         if (drawn is null || !isWritable) return;
 
         switch (member) {
@@ -333,8 +347,11 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         }
 
         foreach (Type t in types) {
-            MemberInfo[] members = t.GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-                .Where(x => x.MemberType == MemberTypes.Field || x.MemberType == MemberTypes.Property)
+            MemberInfo[] members = t.GetMembers(BindingFlags.Public | BindingFlags.NonPublic | 
+                BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                .Where(x => x.MemberType == MemberTypes.Field
+                    || (x is PropertyInfo p && x.MemberType == MemberTypes.Property && p.GetIndexParameters().Length == 0))
+                .Where(x => !x.IsDefined(typeof(CompilerGeneratedAttribute), false))
                 .OrderBy(x => x.MetadataToken).ToArray();
 
             foreach (MemberInfo member in members) {
@@ -357,28 +374,22 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         return result;
     }
 
-    public static object? DrawField (MemberInfo member, object? value) {
-        return DrawField(member.Name, value, member: member);
+    public static object? DrawMember (MemberInfo member, object? value) {
+        return DrawLabel(member.Name, value, inTable: true, member?.GetCustomAttributes());
     }
 
-    /// basic call site - no MemberInfo, just an attribute list
-    public static object? DrawField (string label, object? value, IEnumerable<Attribute> attributes,
-        bool isReadonly = false, float step = valueStep, bool isRaw = false, bool inTable = true) {
-        return DrawFieldCore(label, value, attributes, isReadonly, step, isRaw, inTable);
-    }
-
-    /// Core widget drawer, callable directly without reflection.
     /// Must be called while a 2-column ImGui table is open (see DrawObject).
-    public static object? DrawField (string label, object? value, bool isReadonly = false,
-        float step = valueStep, bool isRaw = false, bool inTable = true, MemberInfo? member = null) {
-        IEnumerable<Attribute>? attributes = member?.GetCustomAttributes();
-        if (member is not null) label = Utils.NameCapital(member.Name);
-
-        return DrawFieldCore(label, value, attributes, isReadonly, step, isRaw, inTable);
+    public static object? DrawLabel (string label, object? value, IEnumerable<Attribute>? attributes = null) {
+        return DrawLabel(label, value, false, attributes);
     }
 
-    static object? DrawFieldCore (string label, object? value, IEnumerable<Attribute>? attributes,
-        bool isReadonly, float step, bool isRaw, bool inTable) {
+    /// Must be called while a 2-column ImGui table is open (see DrawObject).
+    static object? DrawLabel (string label, object? value, bool inTable, IEnumerable<Attribute>? attributes = null) {
+        label = Utils.NameCapital(label);
+        bool isReadonly = false;
+        float step = valueStep;
+        bool isRaw = false;
+
         if (attributes is not null) {
             Attribute[] attrs = attributes as Attribute[] ?? attributes.ToArray();
 
@@ -389,13 +400,11 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
             isReadonly = attrs.OfType<Readonly>().Any();
 
-            step = valueStep;
             ChangeStep? changeSpeed = attrs.OfType<ChangeStep>().FirstOrDefault();
             if (changeSpeed is not null) step = changeSpeed.Step;
 
             isRaw = attrs.OfType<Raw>().Any();
         }
-
 
         if (isReadonly) ImGui.BeginDisabled(true);
 
@@ -454,18 +463,36 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 if (ImGui.DragFloat4(id, ref temp_v4, step, 0, 0, "%.2f"))
                     result = new Quaternion(temp_v4.X, temp_v4.Y, temp_v4.Z, temp_v4.W);
                 break;
+            case IList list when value is not (Vector2 or Vector3 or Vector4 or Quaternion):
+                if (isRaw) {
+                    for (int i = 0; i < list.Count; i++) {
+                        object? entryValue = list[i];
+                        object? drawn = DrawLabel(i.ToString(), entryValue, attributes);
+                        if (drawn is not null) list[i] = drawn;
+                    }
+                } else {
+                    if (ImGui.TreeNodeEx(id, ImGuiTreeNodeFlags.DefaultOpen, label)) {
+                        for (int i = 0; i < list.Count; i++) {
+                            object? entryValue = list[i];
+                            object? drawn = DrawLabel(i.ToString(), entryValue, attributes);
+                            if (drawn is not null) list[i] = drawn;
+                        }
+                        ImGui.TreePop();
+                    }
+                }
+                break;
             case IDictionary dict:
                 if (isRaw) {
                     foreach (object key in dict.Keys) {
                         object? entryValue = dict[key];
-                        object? drawn = DrawField(key.ToString()!, entryValue, isReadonly: isReadonly, step: step, isRaw: isRaw);
+                        object? drawn = DrawLabel(key.ToString()!, entryValue, attributes);
                         if (drawn is not null) dict[key] = drawn;
                     }
                 } else {
                     if (ImGui.TreeNodeEx(id, ImGuiTreeNodeFlags.DefaultOpen, label)) {
                         foreach (object key in dict.Keys) {
                             object? entryValue = dict[key];
-                            object? drawn = DrawField(key.ToString()!, entryValue, isReadonly: isReadonly, step: step, isRaw: isRaw);
+                            object? drawn = DrawLabel(key.ToString()!, entryValue, attributes);
                             if (drawn is not null) dict[key] = drawn;
                         }
                         ImGui.TreePop();
@@ -476,7 +503,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             case object o when o.GetType().IsGenericType && o.GetType().GetGenericTypeDefinition() == typeof(KeyValuePair<,>):
                 object kvpKey = o.GetType().GetProperty("Key")!.GetValue(o)!;
                 object? kvpVal = o.GetType().GetProperty("Value")!.GetValue(o);
-                result = DrawField(kvpKey.ToString()!, kvpVal, isReadonly: isReadonly, step: step, isRaw: isRaw);
+                result = DrawLabel(kvpKey.ToString()!, kvpVal, attributes);
                 break;
 
             case GameObject go:
@@ -501,6 +528,13 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 temp_s = mesh.Name;
                 if (ImGui.InputText(id, ref temp_s, 256)) result = temp_s;
                 break;
+            case PostProcessPass ppp:
+                if (ImGui.TreeNodeEx(id, ImGuiTreeNodeFlags.DefaultOpen, label)) {
+                    DrawObject(ppp, useCollumns: false);
+                    ImGui.TreePop();
+                }
+                break;
+
             case null:
                 ImGui.BeginDisabled();
                 string nullLabel = "null";

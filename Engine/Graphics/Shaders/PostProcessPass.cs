@@ -8,6 +8,7 @@ public class PostProcessPass {
         this.material = material;
     }
 
+    public bool Enabled = true;
     protected readonly Material material;
 
 
