@@ -22,7 +22,8 @@ public class Transform : Component {
 
     [Hide][JsonIgnore] private Vector3 rotationEuler = Vector3.Zero;
 
-    [Hide][JsonIgnore]
+    [Hide]
+    [JsonIgnore]
     public Transform? Parent {
         get => parent;
         set {
@@ -45,10 +46,12 @@ public class Transform : Component {
         }
     }
 
-    [Hide][JsonIgnore]
+    [Hide]
+    [JsonIgnore]
     private Transform? parent = null;
 
-    [Hide][JsonIgnore]
+    [Hide]
+    [JsonIgnore]
     public List<Transform> Children { get; } = new();
 
 
@@ -68,8 +71,14 @@ public class Transform : Component {
         }
     }
 
-    [JsonIgnore][WrapRotation(0, 360)][ChangeStep(1f)]
-    public Vector3 LocalRotation {
+    /// Euler order: Y (yaw, outer) * X (pitch, middle) * Z (roll/twist, inner).
+    /// This keeps X/Y purely defining a pointing direction with zero incidental
+    /// roll when Z = 0 — unlike X*Y*Z composition, which couples X and Y into
+    /// visible twist about the resulting forward axis.
+    [JsonIgnore]
+    [WrapRotation(0, 360)]
+    [ChangeStep(1f)]
+    public Vector3 LocalEuler {
         get {
             localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
             return localRotationEuler;
@@ -77,25 +86,7 @@ public class Transform : Component {
         set {
             value = WrapVector3(value, 0f, 360f);
 
-            Vector3 oldEuler = localRotationEuler;
-
-            float dx = ShortestAngle(oldEuler.X, value.X);
-            float dy = ShortestAngle(oldEuler.Y, value.Y);
-            float dz = ShortestAngle(oldEuler.Z, value.Z);
-
-            if (MathF.Abs(dx) < 0.000001f &&
-                MathF.Abs(dy) < 0.000001f &&
-                MathF.Abs(dz) < 0.000001f)
-                return;
-
-            if (0.000001f <= MathF.Abs(dx))
-                RotateLocalX_Silent(dx);
-
-            if (0.000001f <= MathF.Abs(dy))
-                RotateLocalY_Silent(dy);
-
-            if (0.000001f <=MathF.Abs(dz))
-                RotateLocalZ_Silent(dz);
+            SetLocalRotation_Silent(EulerToQuaternion(value));
 
             localRotationEuler = QuaternionToEuler(localRotation, value);
             rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
@@ -104,7 +95,8 @@ public class Transform : Component {
         }
     }
 
-    [Hide][JsonIgnore]
+    [Hide]
+    [JsonIgnore]
     public Quaternion LocalQuaternion {
         get => localRotation;
         set {
@@ -131,7 +123,8 @@ public class Transform : Component {
     /// WORLD
     /// ============================================================
 
-    [Hide][JsonIgnore]
+    [Hide]
+    [JsonIgnore]
     public Vector3 Position {
         get {
             if (Parent is null) return LocalPosition;
@@ -145,7 +138,8 @@ public class Transform : Component {
         }
     }
 
-    [Hide][JsonIgnore]
+    [Hide]
+    [JsonIgnore]
     public Quaternion Rotation {
         get {
             if (Parent is null) return localRotation;
@@ -159,7 +153,10 @@ public class Transform : Component {
         }
     }
 
-    [Hide][JsonIgnore][WrapRotation(0, 360)][ChangeStep(1f)]
+    [Hide]
+    [JsonIgnore]
+    [WrapRotation(0, 360)]
+    [ChangeStep(1f)]
     public Vector3 RotationEuler {
         get {
             rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
@@ -323,45 +320,115 @@ public class Transform : Component {
     }
 
 
+    /// ============================================================
+    /// LOOK ROTATION (twist-free direction-based rotation)
+    /// ============================================================
+
+    public void SetForward (Vector3 forward, Vector3? worldUp = null) {
+        Quaternion rotation = LookRotation(forward, worldUp ?? Vector3.UnitY);
+        Rotation = rotation;
+    }
+
+    public void SetLocalForward (Vector3 forward, Vector3? worldUp = null) {
+        Quaternion rotation = LookRotation(forward, worldUp ?? Vector3.UnitY);
+        LocalQuaternion = rotation;
+    }
+
+    public static Quaternion LookRotation (Vector3 forward, Vector3 worldUp) {
+        float lengthSquared = forward.X*forward.X + forward.Y*forward.Y + forward.Z*forward.Z;
+        if (lengthSquared < 0.0000001f) return Quaternion.Identity;
+
+        forward = Vector3.Normalize(forward);
+
+        /// guard against forward parallel to worldUp
+        if (0.9999f < MathF.Abs(Vector3.Dot(forward, worldUp)))
+            worldUp = MathF.Abs(forward.Y) < 0.9999f ? Vector3.UnitY : Vector3.UnitZ;
+
+        Vector3 right = Vector3.Normalize(Vector3.Cross(worldUp, forward));
+        Vector3 up = Vector3.Cross(forward, right);
+
+        Matrix4x4 basis = new Matrix4x4(
+            right.X, right.Y, right.Z, 0f,
+            up.X, up.Y, up.Z, 0f,
+            forward.X, forward.Y, forward.Z, 0f,
+            0f, 0f, 0f, 1f
+        );
+
+        return Quaternion.Normalize(Quaternion.CreateFromRotationMatrix(basis));
+    }
+
+
+    /// ============================================================
+    /// SWING-TWIST DECOMPOSITION (debug / analysis)
+    /// ============================================================
+
+    public static void SwingTwist (Quaternion rotation, Vector3 twistAxis, out Quaternion swing, out Quaternion twist) {
+        twistAxis = Vector3.Normalize(twistAxis);
+
+        Vector3 rotationAxis = new Vector3(rotation.X, rotation.Y, rotation.Z);
+        float dot = Vector3.Dot(rotationAxis, twistAxis);
+
+        Vector3 projection = twistAxis*dot;
+        twist = Quaternion.Normalize(new Quaternion(projection.X, projection.Y, projection.Z, rotation.W));
+
+        if (twist.X*twist.X + twist.Y*twist.Y + twist.Z*twist.Z + twist.W*twist.W < 0.0000001f)
+            twist = Quaternion.Identity;
+
+        swing = rotation*Quaternion.Inverse(twist);
+    }
+
+    public static float TwistAngleDegrees (Quaternion rotation, Vector3 twistAxis) {
+        SwingTwist(rotation, twistAxis, out _, out Quaternion twist);
+        float angle = 2f*MathF.Acos(Math.Clamp(twist.W, -1f, 1f));
+        if (180f < angle*Mathf.Rad2Deg) angle -= 2f*MathF.PI;
+        return angle*Mathf.Rad2Deg;
+    }
+
+
     /// Quaternion <-> Euler
+    /// Composition order: Ry(yaw) * Rx(pitch) * Rz(roll). Y is applied outermost
+    /// so it never twists the object about its own forward axis; X only pitches
+    /// within the plane already set by Y; Z is a pure, isolated roll.
 
     private static Quaternion EulerToQuaternion (Vector3 euler) {
-        float x = euler.X*Mathf.Deg2Rad;
-        float y = euler.Y*Mathf.Deg2Rad;
-        float z = euler.Z*Mathf.Deg2Rad;
+        float pitch = euler.X*Mathf.Deg2Rad;
+        float yaw = euler.Y*Mathf.Deg2Rad;
+        float roll = euler.Z*Mathf.Deg2Rad;
 
-        Quaternion qx = Quaternion.CreateFromAxisAngle(Vector3.UnitX, x);
-        Quaternion qy = Quaternion.CreateFromAxisAngle(Vector3.UnitY, y);
-        Quaternion qz = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, z);
+        Quaternion qYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, yaw);
+        Quaternion qPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, pitch);
+        Quaternion qRoll = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, roll);
 
-        return Quaternion.Normalize(qx*qy*qz);
+        return Quaternion.Normalize(qYaw*qPitch*qRoll);
     }
 
     private static Vector3 QuaternionToEuler (Quaternion q, Vector3 previous) {
         q = NormalizeSafe(q);
 
-        float m11 = 1f - 2f*(q.Y*q.Y + q.Z*q.Z);
-        float m12 = 2f*(q.X*q.Y - q.Z*q.W);
-        float m13 = 2f*(q.X*q.Z + q.Y*q.W);
-        float m23 = 2f*(q.Y*q.Z - q.X*q.W);
-        float m33 = 1f - 2f*(q.X*q.X + q.Y*q.Y);
+        float sinPitch = 2f*(q.X*q.W - q.Y*q.Z);
+        sinPitch = Math.Clamp(sinPitch, -1f, 1f);
 
-        float x;
-        float y = MathF.Asin(Math.Clamp(m13, -1, 1));
-        float z;
-        float cosY = MathF.Cos(y);
+        float x; /// pitch
+        float y; /// yaw
+        float z; /// roll
 
-        if (0.000001f < MathF.Abs(cosY)) {
-            x = MathF.Atan2(-m23, m33);
-            z = MathF.Atan2(-m12, m11);
+        if (MathF.Abs(sinPitch) < 0.9999f) {
+            x = MathF.Asin(sinPitch);
+            y = MathF.Atan2(2f*(q.X*q.Z + q.Y*q.W), 1f - 2f*(q.X*q.X + q.Y*q.Y));
+            z = MathF.Atan2(2f*(q.X*q.Y + q.Z*q.W), 1f - 2f*(q.X*q.X + q.Z*q.Z));
         } else {
+            /// gimbal lock (pitch ~ ±90): yaw/roll couple, hold roll steady
+            x = MathF.Asin(sinPitch);
             z = previous.Z*Mathf.Deg2Rad;
-            if (0 < y) {
-                x = MathF.Atan2(2f*(q.X*q.W + q.Y*q.Z), 1f - 2f*(q.X*q.X + q.Z*q.Z));
-            } else {
-                x = MathF.Atan2(-2f*(q.X*q.W + q.Y*q.Z), 1f - 2f*(q.X*q.X + q.Z*q.Z));
-            }
+
+            float m00 = 1f - 2f*(q.Y*q.Y + q.Z*q.Z);
+            float m01 = 2f*(q.X*q.Y - q.Z*q.W);
+
+            y = 0f < sinPitch
+                ? MathF.Atan2(m01, m00) + z
+                : MathF.Atan2(-m01, m00) - z;
         }
+
         Vector3 result = new Vector3(x*Mathf.Rad2Deg, y*Mathf.Rad2Deg, z*Mathf.Rad2Deg);
 
         return WrapVector3(result, 0, 360);

@@ -14,7 +14,7 @@ public class MonkeyScript : Script, IComponentAwake, IComponentUpdate {
         mat = gameObject.GetComponent<Graphics.MeshComponent>()?.material;
     }
     public void Update () {
-        gameObject.Transform.LocalRotation += (float)Time.deltaTime*dir;
+        gameObject.Transform.LocalEuler += (float)Time.deltaTime*dir;
 
         color = new Vector3()!;
         color.X = Mathf.Remap01(MathF.Sin(3f*(float)Time.time), -1, 1);

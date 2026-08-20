@@ -33,7 +33,7 @@ public class ScenePhysics : Scene {
 
         cube = new GameObject() { Name = "cube", };
         cube.Transform.Position = new Vector3(0, 15, 0);
-        cube.Transform.LocalRotation = new Vector3(30, 0, 0);
+        cube.Transform.LocalEuler = new Vector3(30, 0, 0);
         cube.AddComponent<Graphics.MeshComponent>().mesh = AssetsEngine._mesh_Cube;
         cube.AddComponent<BoxColliderComponent>();
         cube.AddComponent<PhysicsComponent>().SetDynamic();

@@ -41,21 +41,21 @@ public class SceneTerrain : Scene {
 
         GameObject go_sun1 = new GameObject() { Name = "Sun1", };
         go_sun1.Transform.Parent = go_lightSources.Transform;
-        go_sun1.Transform.Position = new Vector3(-1, 5, 0);
-        go_sun1.Transform.LocalRotation = new Vector3(60, -30, 0);
+        go_sun1.Transform.LocalPosition = new Vector3(0, 5, 0);
+        go_sun1.Transform.LocalEuler = new Vector3(60, -30, 0);
         SunLight sun1 = go_sun1.AddComponent<SunLight>();
         sun1.Color = new Vector3(0, 1, 0);
 
         GameObject go_sun2 = new GameObject() { Name = "Sun2", };
         go_sun2.Transform.Parent = go_lightSources.Transform;
-        go_sun2.Transform.Position = new Vector3(1, 5, 0);
-        go_sun2.Transform.LocalRotation = new Vector3(30, 30, 0);
+        go_sun2.Transform.LocalPosition = new Vector3(0, 5, 0);
+        go_sun2.Transform.LocalEuler = new Vector3(30, 30, 0);
         SunLight sun2 = go_sun2.AddComponent<SunLight>();
         sun2.Color = new Vector3(0, 0, 1);
 
         GameObject go_pointLight = new GameObject() { Name = "Point Light", };
         go_pointLight.Transform.Parent = go_lightSources.Transform;
-        go_pointLight.Transform.Position = new Vector3(-1, 2, -1);
+        go_pointLight.Transform.LocalPosition = new Vector3(-1, 2, -1);
         PointLight pointLight = go_pointLight.AddComponent<PointLight>();
         pointLight.Color = new Vector3(1, 0, 0);
 

@@ -300,7 +300,7 @@ public class GizmoSelected : IDisposable {
         Matrix4x4.Invert(Renderer.Instance.m4x4_View, out Matrix4x4 invView);
         Vector3 camPos = invView.Translation;
         Vector3 _objPos = tr_obj.Position;
-        Vector3 _objRot = tr_obj.LocalRotation;
+        Vector3 _objRot = tr_obj.LocalEuler;
         float _dist = Vector3.Distance(camPos, _objPos);
         bool isColorSelected;
 
