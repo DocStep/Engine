@@ -50,7 +50,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     private bool _dockBuilt = false;
     private bool _isClosing = false;
 
-    public const bool drawInverted = true;
+    public const bool drawInverted = false;
     public const float valueStep = 0.01f;
 
     /// inspector row layout — Unity-style margin instead of an ImGui table
@@ -211,7 +211,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         DrawObject(typeof(Lighting));
         ImGui.Separator();
-        DrawObject(Renderer.Instance.PostProcess.Effects);
+        DrawObject(Renderer.Instance.PostProcess.Effects, [new DrawName(nameof(Renderer.Instance.PostProcess.Effects))]);
 
         ImGui.End();
     }
@@ -256,14 +256,14 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
 
     
-    public static void DrawObject (object target) {
+    public static void DrawObject (object target, IEnumerable<Attribute>? attributes = null) {
         ImGui.PushID(target.GetHashCode());
 
         bool isCollection = target is IList or IDictionary
             && target is not (Vector2 or Vector3 or Vector4 or Quaternion);
 
         if (isCollection) {
-            DrawLabel("Items", target);
+            DrawLabel(target.GetType().FullName, target, attributes);
         } else {
             foreach (MemberInfo member in GetMembersInOrder(target.GetType()))
                 DrawMember(target, member);
@@ -351,7 +351,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     }
 
     public static object? DrawLabel (string label, object? value, IEnumerable<Attribute>? attributes = null) {
-        label = Utils.NameCapital(label);
+        label = Utils.NameCapital((string)label);
         bool isReadonly = false;
         float step = valueStep;
         bool isRaw = false;
@@ -374,77 +374,63 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         if (isReadonly) ImGui.BeginDisabled(true);
 
-        /// collections/nested objects draw their own header (TreeNodeEx) or flatten inline (raw),
-        /// so only plain leaf values get the label+control row treatment
-        bool isCollection = value is (IList or IDictionary) && value is not (Vector2 or Vector3 or Vector4 or Quaternion);
-        bool isNestedObject = value is Material or PostProcessPass;
-        bool isRow = drawInverted && !isCollection && !isNestedObject;
-
-        string id = label;
-        if (isRow) {
-            float labelWidth = MathF.Max(ImGui.GetContentRegionAvail().X*labelRatio, minLabelWidth);
-            ImGui.AlignTextToFramePadding();
-            ImGui.TextUnformatted(label);
-            ImGui.SameLine(labelWidth);
-            ImGui.SetNextItemWidth(-1);
-            id = "##" + label;
-        }
-
         object? result = null;
         switch (value) {
             case int i:
-                if (ImGui.DragInt(id, ref i)) result = i;
+                if (ImGui.DragInt(label, ref i)) result = i;
                 break;
             case long l:
                 int temp_i = (int)l;
-                if (ImGui.DragInt(id, ref temp_i)) result = (long)temp_i;
+                if (ImGui.DragInt(label, ref temp_i)) result = (long)temp_i;
                 break;
             case float f:
-                if (ImGui.DragFloat(id, ref f, step, 0, 0, "%.2f")) result = f;
+                if (ImGui.DragFloat(label, ref f, step, 0, 0, "%.2f")) result = f;
                 break;
             case double d:
                 float temp_f = (float)d;
-                if (ImGui.DragFloat(id, ref temp_f, step, 0, 0, "%.2f")) result = (double)temp_f;
+                if (ImGui.DragFloat(label, ref temp_f, step, 0, 0, "%.2f")) result = (double)temp_f;
                 break;
             case bool b:
-                if (ImGui.Checkbox(id, ref b)) result = b;
+                if (ImGui.Checkbox(label, ref b)) result = b;
                 break;
             case string s:
-                if (ImGui.InputText(id, ref s, 256)) result = s;
+                if (ImGui.InputText(label, ref s, 256)) result = s;
                 break;
             case Enum e:
                 Array values = Enum.GetValues(e.GetType());
                 string[] names = Enum.GetNames(e.GetType());
                 int current = Array.IndexOf(values, e);
-                if (ImGui.Combo(id, ref current, names, names.Length)) result = values.GetValue(current);
+                if (ImGui.Combo(label, ref current, names, names.Length)) result = values.GetValue(current);
                 break;
             case Guid g:
                 string temp_s = g.ToString();
-                if (ImGui.InputText(id, ref temp_s, 256)) result = temp_s;
+                if (ImGui.InputText(label, ref temp_s, 256)) result = temp_s;
                 break;
             case Vector2 v2:
-                if (ImGui.DragFloat2(id, ref v2, step, 0, 0, "%.2f")) result = v2;
+                if (ImGui.DragFloat2(label, ref v2, step, 0, 0, "%.2f")) result = v2;
                 break;
             case Vector3 v3:
-                if (ImGui.DragFloat3(id, ref v3, step, 0, 0, "%.2f")) result = v3;
+                if (ImGui.DragFloat3(label, ref v3, step, 0, 0, "%.2f")) result = v3;
                 break;
             case Quaternion q:
                 Vector4 temp_v4 = new Vector4(q.X, q.Y, q.Z, q.W);
-                if (ImGui.DragFloat4(id, ref temp_v4, step, 0, 0, "%.2f"))
+                if (ImGui.DragFloat4(label, ref temp_v4, step, 0, 0, "%.2f"))
                     result = new Quaternion(temp_v4.X, temp_v4.Y, temp_v4.Z, temp_v4.W);
                 break;
             case IList list when value is not (Vector2 or Vector3 or Vector4 or Quaternion):
+                attributes = attributes?.Where(x => x.GetType() != typeof(DrawName));
                 if (isRaw) {
-                    for (int i = 0; i < list.Count; i++) {
+                    int count = list.Count;
+                    for (int i = 0; i < count; i++) {
                         object? entryValue = list[i];
-                        object? drawn = DrawLabel(i.ToString(), entryValue, attributes);
+                        object? drawn = DrawLabel($"{entryValue?.GetType().Name}[{i}]", entryValue, attributes);
                         if (drawn is not null) list[i] = drawn;
                     }
                 } else {
-                    if (ImGui.TreeNodeEx(id, ImGuiTreeNodeFlags.DefaultOpen, label)) {
+                    if (ImGui.TreeNodeEx(label, ImGuiTreeNodeFlags.DefaultOpen, label)) {
                         for (int i = 0; i < list.Count; i++) {
                             object? entryValue = list[i];
-                            object? drawn = DrawLabel(i.ToString(), entryValue, attributes);
+                            object? drawn = DrawLabel($"{entryValue?.GetType().Name}[{i}]", entryValue, attributes);
                             if (drawn is not null) list[i] = drawn;
                         }
                         ImGui.TreePop();
@@ -452,6 +438,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 }
                 break;
             case IDictionary dict:
+                attributes = attributes?.Where(x => x.GetType() != typeof(DrawName));
                 if (isRaw) {
                     foreach (object key in dict.Keys) {
                         object? entryValue = dict[key];
@@ -459,7 +446,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                         if (drawn is not null) dict[key] = drawn;
                     }
                 } else {
-                    if (ImGui.TreeNodeEx(id, ImGuiTreeNodeFlags.DefaultOpen, label)) {
+                    if (ImGui.TreeNodeEx(label, ImGuiTreeNodeFlags.DefaultOpen, label)) {
                         foreach (object key in dict.Keys) {
                             object? entryValue = dict[key];
                             object? drawn = DrawLabel(key.ToString()!, entryValue, attributes);
@@ -479,27 +466,27 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             case GameObject go:
                 ImGui.BeginDisabled();
                 temp_s = go.Name;
-                if (ImGui.InputText(id, ref temp_s, 256)) result = temp_s;
+                if (ImGui.InputText(label, ref temp_s, 256)) result = temp_s;
                 ImGui.EndDisabled();
                 break;
             case Transform tr:
                 ImGui.BeginDisabled();
                 temp_s = tr.Parent is not null ? tr.Parent.Name : "null";
-                if (ImGui.InputText(id, ref temp_s, 256)) result = temp_s;
+                if (ImGui.InputText(label, ref temp_s, 256)) result = temp_s;
                 ImGui.EndDisabled();
                 break;
             case Material mat:
-                if (ImGui.TreeNodeEx(id, ImGuiTreeNodeFlags.DefaultOpen, label)) {
+                if (ImGui.TreeNodeEx(label, ImGuiTreeNodeFlags.DefaultOpen, label)) {
                     DrawObject(mat);
                     ImGui.TreePop();
                 }
                 break;
             case Mesh mesh:
                 temp_s = mesh.Name;
-                if (ImGui.InputText(id, ref temp_s, 256)) result = temp_s;
+                if (ImGui.InputText(label, ref temp_s, 256)) result = temp_s;
                 break;
             case PostProcessPass ppp:
-                if (ImGui.TreeNodeEx(id, ImGuiTreeNodeFlags.DefaultOpen, label)) {
+                if (ImGui.TreeNodeEx(label, ImGuiTreeNodeFlags.DefaultOpen, label)) {
                     DrawObject(ppp);
                     ImGui.TreePop();
                 }
@@ -508,7 +495,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             case null:
                 ImGui.BeginDisabled();
                 string nullLabel = "null";
-                ImGui.InputText(id, ref nullLabel, 256);
+                ImGui.InputText(label, ref nullLabel, 256);
                 ImGui.EndDisabled();
                 break;
             default:
