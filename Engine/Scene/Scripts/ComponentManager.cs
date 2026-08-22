@@ -33,6 +33,8 @@ public class ComponentManager : Singleton<ComponentManager> {
         }
 
         //RegisterAll();
+
+        Renderer.Instance.de_DrawUI += DrawRaw;
     }
 
     public void Update () {

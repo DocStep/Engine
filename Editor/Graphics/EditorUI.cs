@@ -560,14 +560,14 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
     /// Mouse position remapped into Scene FBO pixel space, or null if outside the panel
     public void UpdateInput () {
-        Inputs.MousePos_Scene = Inputs.MousePos - _sceneRectMin;
+        Inputs.MousePos = Inputs.MousePos_Window - _sceneRectMin;
 
         if (!isSceneUIHovered) {
             Inputs.isMouseOverScene = false;
             return;
         }
-        if (Inputs.MousePos_Scene.X < 0 || Inputs.MousePos_Scene.Y < 0 ||
-            sceneAvail.X < Inputs.MousePos_Scene.X || sceneAvail.Y < Inputs.MousePos_Scene.Y) {
+        if (Inputs.MousePos.X < 0 || Inputs.MousePos.Y < 0 ||
+            sceneAvail.X < Inputs.MousePos.X || sceneAvail.Y < Inputs.MousePos.Y) {
             Inputs.isMouseOverScene = false;
         }
 

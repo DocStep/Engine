@@ -9,7 +9,7 @@ public static class Inputs {
 
     public static Vector2 WASD = Vector2.Zero;
     public static Vector2 MousePos = Vector2.Zero;
-    public static Vector2 MousePos_Scene = Vector2.Zero;
+    public static Vector2 MousePos_Window = Vector2.Zero;
     public static Vector2 MouseDelta = Vector2.Zero;
     public static float Wheel = 0;
     public static bool isMouseOver { get; set; } = false;
@@ -330,14 +330,14 @@ public static class Inputs {
         WASD.Y = (Actions[MoveForward].pressed ? 1 : 0) + (Actions[MoveBack].pressed ? -1 : 0);
 
         /// Mouse
-        MousePos = WindowInput.MousePos;
-        MousePos_Scene = MousePos;
+        MousePos_Window = WindowInput.MousePos;
+        MousePos = MousePos_Window;
         MouseDelta = WindowInput.MouseDelta;
 
         /// Wheel
         Wheel = WindowInput.WheelDelta;
 
-        isMouseOver = 0 <= MousePos.X && MousePos.X < Windows.Window.Size.X && 0 <= MousePos.Y && MousePos.Y < Windows.Window.Size.Y;
+        isMouseOver = 0 <= MousePos_Window.X && MousePos_Window.X < Windows.Window.Size.X && 0 <= MousePos_Window.Y && MousePos_Window.Y < Windows.Window.Size.Y;
         isMouseOverScene = isMouseOver;
 
         de_UpdateInput?.Invoke();

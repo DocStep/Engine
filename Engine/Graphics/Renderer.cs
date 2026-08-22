@@ -133,7 +133,7 @@ public class Renderer {
 
         /// UI Stage
         de_DrawUI?.Invoke();
-        ComponentManager.Instance.DrawRaw();
+        //ComponentManager.Instance.DrawRaw();
 
         PresentToBackbuffer();
 

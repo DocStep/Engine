@@ -189,8 +189,8 @@ public class Engine : IDisposable {
         Graphics.UI.TextRenderer.AddText($"ms: {Time.deltaTime*1000:F3}");
         Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.Instance.componentsCount}");
         Graphics.UI.TextRenderer.AddText($"SceneSize: {Graphics.Renderer.Instance.Stats.SceneSize}");
-        Graphics.UI.TextRenderer.AddText($"MousePos_Window: {Inputs.MousePos}");
-        Graphics.UI.TextRenderer.AddText($"MousePos_Scene: {Inputs.MousePos_Scene}");
+        Graphics.UI.TextRenderer.AddText($"MousePos_Window: {Inputs.MousePos_Window}");
+        Graphics.UI.TextRenderer.AddText($"MousePos_Scene: {Inputs.MousePos}");
         Graphics.UI.TextRenderer.AddText($"isMouseOver: {Inputs.isMouseOver}");
         Graphics.UI.TextRenderer.AddText($"isMouseOverScene: {Inputs.isMouseOverScene}");
     }

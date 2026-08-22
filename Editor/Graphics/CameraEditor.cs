@@ -174,12 +174,12 @@ public sealed class CameraEditor : Camera {
             Inputs.MouseHide();
         } else if (Inputs.Actions[CameraDrag].pressedDown && !mouseBlocked) {
             /// Middle Mouse: drag to pan, clean click (no drag) to focus
-            cameraDragStartX = Inputs.MousePos.X;
-            cameraDragStartY = Inputs.MousePos.Y;
+            cameraDragStartX = Inputs.MousePos_Window.X;
+            cameraDragStartY = Inputs.MousePos_Window.Y;
             isCameraDragging = false;
         } else if (Inputs.Actions[CameraDrag].pressed && !mouseBlocked) {
-            float totalDx = Inputs.MousePos.X - cameraDragStartX;
-            float totalDy = Inputs.MousePos.Y - cameraDragStartY;
+            float totalDx = Inputs.MousePos_Window.X - cameraDragStartX;
+            float totalDy = Inputs.MousePos_Window.Y - cameraDragStartY;
             if (_clickDragThresholdPixels*_clickDragThresholdPixels < totalDx*totalDx + totalDy*totalDy) {
                 isCameraDragging = true;
                 isFocusing = false;
@@ -193,7 +193,7 @@ public sealed class CameraEditor : Camera {
             Inputs.MouseHide();
         } else if (Inputs.Actions[CameraDrag].pressedUp && !mouseBlocked) {
             if (!isCameraDragging) {
-                TryFocusOnPoint(Inputs.MousePos.X, Inputs.MousePos.Y, Windows.Window.Size.X, Windows.Window.Size.Y);
+                TryFocusOnPoint(Inputs.MousePos_Window.X, Inputs.MousePos_Window.Y, Windows.Window.Size.X, Windows.Window.Size.Y);
             }
         } else {
             forward = Vector3.Transform(Vector3.UnitZ, cameraRot); /// was -UnitZ
@@ -335,7 +335,7 @@ public sealed class CameraEditor : Camera {
         }
 
         Vector2 sceneSize = EditorUI.Instance.SceneAvail;
-        ray = Raycast.ScreenPointToRay(Inputs.MousePos_Scene.X, Inputs.MousePos_Scene.Y, (int)sceneSize.X, (int)sceneSize.Y, 
+        ray = Raycast.ScreenPointToRay(Inputs.MousePos.X, Inputs.MousePos.Y, (int)sceneSize.X, (int)sceneSize.Y, 
             RendererEditor.Instance.m4x4_View, RendererEditor.Instance.m4x4_Projection);
 
         //Engine.Graphics.UI.TextRenderer.AddText($"MousePos_Scene: {Inputs.MousePos_Scene.X}, {Inputs.MousePos_Scene.Y}");

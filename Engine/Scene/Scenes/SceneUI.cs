@@ -17,6 +17,15 @@ public class SceneUI : Scene {
         image.Load("src/Images/RGBA_Test.png");
         image.Size = new Vector2(64, 64);
 
+        GameObject go_button = new GameObject() { Name = "PlayButton" };
+        go_button.Transform.LocalPosition = new Vector3(20, 20, 0);
+        image = go_button.AddComponent<Image>();
+        image.Load("src/Images/RGBA_Test.png");
+        image.Size = new Vector2(120, 40);
+        Button button = go_button.AddComponent<Button>();
+        button.de_Clicked += () => Log.log("clicked");
+        go_ui.Transform.Children.Add(go_button.Transform);
+
     }
     
 }

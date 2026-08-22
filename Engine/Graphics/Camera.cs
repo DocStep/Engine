@@ -69,8 +69,8 @@ public class Camera : Component {
     }
 
     public virtual bool GetRayMouse (out Ray ray) {
-        Vector2 sceneSize = Input.Inputs.MousePos;
-        Vector2 mousePos = Input.Inputs.MousePos;
+        Vector2 sceneSize = Input.Inputs.MousePos_Window;
+        Vector2 mousePos = Input.Inputs.MousePos_Window;
         ray = Raycast.ScreenPointToRay(mousePos.X, mousePos.Y, (int)sceneSize.X, (int)sceneSize.Y,
             Renderer.Instance.m4x4_View, Renderer.Instance.m4x4_Projection);
         return true;

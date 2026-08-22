@@ -1,4 +1,5 @@
-﻿using Silk.NET.OpenGL;
+﻿//using Engine.Graphics;
+using Silk.NET.OpenGL;
 using StbImageSharp;
 using Newtonsoft.Json;
 
@@ -18,14 +19,9 @@ public class Image : Component {
     [Hide][JsonIgnore] private uint _vao, _vbo;
     [Hide][JsonIgnore] private bool _loaded = false;
 
-    struct Vertex {
-        public Vector2 Pos;
-        public Vector2 UV;
-    }
-
     public override void OnAdd () {
         SetupBuffers();
-        if (Path.Length > 0) Load(Path);
+        if (0 < Path.Length) Load(Path);
     }
 
     public void Load (string relativePath) {
@@ -73,14 +69,14 @@ public class Image : Component {
         float x1 = x0 + Size.X;
         float y1 = y0 + Size.Y;
 
-        Vertex[] vertices = new Vertex[6] {
-            new Vertex { Pos = new Vector2(x0, y0), UV = new Vector2(0f, 0f) },
-            new Vertex { Pos = new Vector2(x1, y0), UV = new Vector2(1f, 0f) },
-            new Vertex { Pos = new Vector2(x1, y1), UV = new Vector2(1f, 1f) },
+        Vertex2D[] vertices = new Vertex2D[6] {
+            new Vertex2D { Position = new Vector2(x0, y0), UV = new Vector2(0f, 0f) },
+            new Vertex2D { Position = new Vector2(x1, y0), UV = new Vector2(1f, 0f) },
+            new Vertex2D { Position = new Vector2(x1, y1), UV = new Vector2(1f, 1f) },
 
-            new Vertex { Pos = new Vector2(x0, y0), UV = new Vector2(0f, 0f) },
-            new Vertex { Pos = new Vector2(x1, y1), UV = new Vector2(1f, 1f) },
-            new Vertex { Pos = new Vector2(x0, y1), UV = new Vector2(0f, 1f) },
+            new Vertex2D { Position = new Vector2(x0, y0), UV = new Vector2(0f, 0f) },
+            new Vertex2D { Position = new Vector2(x1, y1), UV = new Vector2(1f, 1f) },
+            new Vertex2D { Position = new Vector2(x0, y1), UV = new Vector2(0f, 1f) },
         };
 
         Material material = AssetsEngine._mat_UI;
@@ -95,8 +91,8 @@ public class Image : Component {
         GL.BindVertexArray(_vao);
         GL.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
 
-        fixed (Vertex* ptr = vertices) {
-            GL.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(vertices.Length*sizeof(Vertex)), ptr, BufferUsageARB.StreamDraw);
+        fixed (Vertex2D* ptr = vertices) {
+            GL.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(vertices.Length*sizeof(Vertex2D)), ptr, BufferUsageARB.StreamDraw);
         }
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
