@@ -18,6 +18,7 @@ public class ComponentManager : Singleton<ComponentManager> {
     private readonly List<IComponentUpdate> componentsUpdate = new List<IComponentUpdate>();
     private readonly List<IComponentUpdate> componentsUpdateAtFreeze = new List<IComponentUpdate>();
     private readonly List<IComponentFixedUpdate> componentsFixedUpdate = new List<IComponentFixedUpdate>();
+    private readonly List<IComponentDrawRaw> componentsDrawRaw = new List<IComponentDrawRaw>();
 
     public List<IComponentUpdate> ComponentsUpdate => componentsUpdate;
 
@@ -61,6 +62,15 @@ public class ComponentManager : Singleton<ComponentManager> {
             componentsUpdate[c].Update();
         }
     }
+    public void DrawRaw () {
+        int count;
+
+        count = componentsDrawRaw.Count;
+        for (int c = 0; c < count; c++) {
+            if (componentsDrawRaw[c].Enabled) 
+                componentsDrawRaw[c].DrawRaw();
+        }
+    }
     /*public void UpdateAtFreeze () {
         Log.log("UpdateAtFreeze", componentsUpdateAtFreeze.Count);
         for (int c = 0; c < componentsUpdateAtFreeze.Count; c++) {
@@ -97,6 +107,9 @@ public class ComponentManager : Singleton<ComponentManager> {
             if (component is IUpdateAtFreeze iRenderComponent) {
                 componentsUpdateAtFreeze.Add(iComponentUpdate);
             }
+        }
+        if (component is IComponentDrawRaw iComponentDrawRaw) {
+            componentsDrawRaw.Add(iComponentDrawRaw);
         }
         if (component is IComponentFixedUpdate iComponentFixedUpdate) {
             componentsFixedUpdate.Add(iComponentFixedUpdate);

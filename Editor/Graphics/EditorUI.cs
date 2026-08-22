@@ -414,6 +414,9 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             case Vector3 v3:
                 if (ImGui.DragFloat3(label, ref v3, step, 0, 0, "%.2f")) result = v3;
                 break;
+            case Vector4 v4:
+                if (ImGui.DragFloat4(label, ref v4, step, 0, 0, "%.2f")) result = v4;
+                break;
             case Quaternion q:
                 Vector4 temp_v4 = new Vector4(q.X, q.Y, q.Z, q.W);
                 if (ImGui.DragFloat4(label, ref temp_v4, step, 0, 0, "%.2f"))
