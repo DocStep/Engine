@@ -3,7 +3,7 @@
 namespace Engine;
 
 
-public abstract class ColliderComponent : Component, IComponentUpdate {
+public abstract class ColliderComponent : Component, IUpdate {
 
     
     //public bool isStatic = false;

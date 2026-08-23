@@ -21,10 +21,12 @@ public class Image : Component {
     public override void OnAdd () {
         _sharedQuad ??= new Mesh(Plane.GenerateQuadUI());
         _material = new MaterialUI(AssetsEngine._sh_UI);
-        if (Path.Length > 0) Load(Path);
+        if (0 < Path.Length) Load(Path);
+    }
+    public override void OnRemove () {
+        if (_textureId != 0) Renderer.GL.DeleteTexture(_textureId);
     }
 
-    
     public void Load (string path) {
         Path = path;
         GL GL = Renderer.GL;
@@ -49,7 +51,7 @@ public class Image : Component {
         _loaded = true;
     }
 
-    internal void Submit () {
+    public void Submit () {
         if (!_loaded || _sharedQuad is null) return;
 
         Vector3 pos = gameObject.Transform.Position;
@@ -63,9 +65,5 @@ public class Image : Component {
         });
     }
 
-    public override void OnRemove () {
-        if (_textureId != 0) Renderer.GL.DeleteTexture(_textureId);
-        /// _sharedQuad is intentionally not disposed here — it's shared, owned by the class not the instance
-    }
 
 }

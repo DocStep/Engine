@@ -2,7 +2,7 @@
 
 namespace Engine.Graphics.UI;
 
-public class Canvas : Component, IComponentUpdate {
+public class Canvas : Component, IUpdate {
 
     public override string Name => nameof(Canvas);
 

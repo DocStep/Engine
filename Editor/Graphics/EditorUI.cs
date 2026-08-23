@@ -211,7 +211,10 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         DrawObject(typeof(Lighting));
         ImGui.Separator();
-        DrawObject(Renderer.Instance.PostProcess.Effects, [new DrawName(nameof(Renderer.Instance.PostProcess.Effects))]);
+        //ImGui.LabelText("##Post-Process", "Post-Process");
+        //DrawLabel(nameof(Renderer.Instance.PostProcess.Enabled), Renderer.Instance.PostProcess.Enabled);
+        //DrawObject(Renderer.Instance.PostProcess.Effects, [new DrawName(nameof(Renderer.Instance.PostProcess.Effects))]);
+        DrawObject(Renderer.Instance.PostProcess, [new DrawName(nameof(Renderer.Instance.PostProcess.Effects))]);
 
         ImGui.End();
     }
@@ -263,7 +266,9 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             && target is not (Vector2 or Vector3 or Vector4 or Quaternion);
 
         if (isCollection) {
-            DrawLabel(target.GetType().FullName, target, attributes);
+            string? type = target.GetType().FullName;
+            if (type is not null) 
+                DrawLabel(type, target, attributes);
         } else {
             foreach (MemberInfo member in GetMembersInOrder(target.GetType()))
                 DrawMember(target, member);
@@ -313,7 +318,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         List<MemberInfo> result = new();
         List<Type> types = new();
 
-        while (type != null && type != typeof(object)) {
+        while (type is not null && type != typeof(object)) {
             types.Insert(0, type);
             type = type.BaseType;
         }

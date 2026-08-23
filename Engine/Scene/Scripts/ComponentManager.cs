@@ -11,16 +11,16 @@ public class ComponentManager : Singleton<ComponentManager> {
     public int componentsCount => components.Count;
     public Dictionary<Type, List<Component>> Components => components;
 
-    private readonly List<IComponentAwake> componentsAwake = new List<IComponentAwake>();
-    private readonly List<IComponentAwake> _componentsAwake = new List<IComponentAwake>();
-    private readonly List<IComponentStart> componentsStart = new List<IComponentStart>();
-    private readonly List<IComponentStart> _componentsStart = new List<IComponentStart>();
-    private readonly List<IComponentUpdate> componentsUpdate = new List<IComponentUpdate>();
-    private readonly List<IComponentUpdate> componentsUpdateAtFreeze = new List<IComponentUpdate>();
-    private readonly List<IComponentFixedUpdate> componentsFixedUpdate = new List<IComponentFixedUpdate>();
-    private readonly List<IComponentDrawRaw> componentsDrawRaw = new List<IComponentDrawRaw>();
+    private readonly List<IAwake> componentsAwake = new List<IAwake>();
+    private readonly List<IAwake> _componentsAwake = new List<IAwake>();
+    private readonly List<IStart> componentsStart = new List<IStart>();
+    private readonly List<IStart> _componentsStart = new List<IStart>();
+    private readonly List<IUpdate> componentsUpdate = new List<IUpdate>();
+    private readonly List<IUpdate> componentsUpdateAtFreeze = new List<IUpdate>();
+    private readonly List<IFixedUpdate> componentsFixedUpdate = new List<IFixedUpdate>();
+    private readonly List<IDrawRaw> componentsDrawRaw = new List<IDrawRaw>();
 
-    public List<IComponentUpdate> ComponentsUpdate => componentsUpdate;
+    public List<IUpdate> ComponentsUpdate => componentsUpdate;
 
 
 
@@ -97,23 +97,23 @@ public class ComponentManager : Singleton<ComponentManager> {
             throw new Exception(message);
         }
 
-        if (component is IComponentAwake iComponentAwake) {
+        if (component is IAwake iComponentAwake) {
             componentsAwake.Add(iComponentAwake);
         }
-        if (component is IComponentStart iComponentStart) {
+        if (component is IStart iComponentStart) {
             componentsStart.Add(iComponentStart);
         }
-        if (component is IComponentUpdate iComponentUpdate) {
+        if (component is IUpdate iComponentUpdate) {
             componentsUpdate.Add(iComponentUpdate);
 
             if (component is IUpdateAtFreeze iRenderComponent) {
                 componentsUpdateAtFreeze.Add(iComponentUpdate);
             }
         }
-        if (component is IComponentDrawRaw iComponentDrawRaw) {
+        if (component is IDrawRaw iComponentDrawRaw) {
             componentsDrawRaw.Add(iComponentDrawRaw);
         }
-        if (component is IComponentFixedUpdate iComponentFixedUpdate) {
+        if (component is IFixedUpdate iComponentFixedUpdate) {
             componentsFixedUpdate.Add(iComponentFixedUpdate);
         }
 
@@ -132,17 +132,17 @@ public class ComponentManager : Singleton<ComponentManager> {
             throw new Exception(message);
         }
 
-        if (component is IComponentStart iComponentStart) {
+        if (component is IStart iComponentStart) {
             componentsStart.Remove(iComponentStart);
         }
-        if (component is IComponentUpdate iComponentUpdate) {
+        if (component is IUpdate iComponentUpdate) {
             componentsUpdate.Remove(iComponentUpdate);
 
             if (component is IUpdateAtFreeze iRenderComponent) {
                 componentsUpdateAtFreeze.Remove(iComponentUpdate);
             }
         }
-        if (component is IComponentFixedUpdate iComponentFixedUpdate) {
+        if (component is IFixedUpdate iComponentFixedUpdate) {
             componentsFixedUpdate.Remove(iComponentFixedUpdate);
         }
         

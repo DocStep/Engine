@@ -1,9 +1,9 @@
 ﻿namespace Engine;
 
 
-public interface IComponentUpdate {
+public interface IStart {
 
-    void Update();
+    void Start();
     public bool Enabled { get; set; }
 
 }

@@ -1,7 +1,7 @@
 ﻿namespace Engine;
 
 
-public class MonkeyScript : Script, IComponentAwake, IComponentUpdate {
+public class MonkeyScript : Script, IAwake, IUpdate {
 
     [ChangeStep(1f)] public Vector3 dir = new Vector3(0, 90, 0);
 

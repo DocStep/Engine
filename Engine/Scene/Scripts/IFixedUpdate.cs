@@ -1,9 +1,9 @@
 ﻿namespace Engine;
 
 
-public interface IComponentAwake {
+public interface IFixedUpdate {
 
-    void Awake();
+    void FixedUpdate ();
     public bool Enabled { get; set; }
 
 }

@@ -12,7 +12,7 @@ public enum ForceMode {
 }
 
 
-public class PhysicsComponent : Component, IComponentFixedUpdate {
+public class PhysicsComponent : Component, IFixedUpdate {
     [JsonIgnore] public override string Name => nameof(PhysicsComponent);
 
     [Hide][JsonIgnore] public BodyHandle Handle { get; private set; }

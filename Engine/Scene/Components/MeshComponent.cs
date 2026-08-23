@@ -3,7 +3,7 @@
 namespace Engine.Graphics;
 
 
-public class MeshComponent : Component, IComponentUpdate, IUpdateAtFreeze {
+public class MeshComponent : Component, IUpdate, IUpdateAtFreeze {
 
     [JsonIgnore] public override string Name => nameof(MeshComponent);
 

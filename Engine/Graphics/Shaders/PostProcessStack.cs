@@ -14,22 +14,22 @@ public class PostProcessStack : IDisposable {
         Resize(Renderer.Instance.Width, Renderer.Instance.Height);
     }
 
-    public static uint QuadVAO;
+    [Hide] public static uint QuadVAO;
 
     public bool Enabled = true;
     public List<PostProcessPass> Effects = new List<PostProcessPass>();
 
-    int _width, _height;
+    [Hide] int _width, _height;
 
     /// Final Result
-    uint _sceneFbo, _sceneColor, _sceneDepth, _pingDepth0, _pingDepth1;
-    uint[] _pingFbo = new uint[2];
-    uint[] _pingColor = new uint[2];
+    [Hide] uint _sceneFbo, _sceneColor, _sceneDepth, _pingDepth0, _pingDepth1;
+    [Hide] uint[] _pingFbo = new uint[2];
+    [Hide] uint[] _pingColor = new uint[2];
 
-    uint _outputFbo, _outputColor, _outputDepth;
+    [Hide] uint _outputFbo, _outputColor, _outputDepth;
 
-    public uint SceneColorTexture => _sceneColor;
-    public uint OutputTexture => _outputColor;
+    [Hide] public uint SceneColorTexture => _sceneColor;
+    [Hide] public uint OutputTexture => _outputColor;
 
 
     public void Update () {
@@ -130,15 +130,26 @@ public class PostProcessStack : IDisposable {
     public void Run (uint finalTargetFbo) {
         Renderer.GL.Disable(EnableCap.DepthTest);
 
-        if (Enabled && 0 < Effects.Count) {
+        int lastEnabledIndex = -1;
+        if (Enabled) {
+            for (int i = Effects.Count-1; 0 <= i; i--) {
+                if (Effects[i].Enabled) {
+                    lastEnabledIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (0 <= lastEnabledIndex) {
             uint currentInput = _sceneColor;
             int pingIndex = 0;
 
-            for (int i = 0; i < Effects.Count; i++) {
-                bool isLast = i == Effects.Count - 1;
+            for (int i = 0; i <= lastEnabledIndex; i++) {
                 if (!Effects[i].Enabled) continue;
 
+                bool isLast = i == lastEnabledIndex;
                 uint targetFbo = isLast ? finalTargetFbo : _pingFbo[pingIndex];
+
                 Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, targetFbo);
                 SetDrawBuffer(targetFbo);
                 PrepareFullscreenPass();
@@ -150,8 +161,6 @@ public class PostProcessStack : IDisposable {
                     pingIndex = 1 - pingIndex;
                 }
             }
-
-            CopySceneDepth(finalTargetFbo);
         } else {
             CopySceneColor(finalTargetFbo);
             CopySceneDepth(finalTargetFbo);

@@ -1,9 +1,9 @@
 ﻿namespace Engine;
 
 
-public interface IComponentStart {
+public interface IAwake {
 
-    void Start();
+    void Awake();
     public bool Enabled { get; set; }
 
 }

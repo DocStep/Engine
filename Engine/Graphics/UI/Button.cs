@@ -3,11 +3,9 @@ using Silk.NET.OpenGL;
 
 namespace Engine.Graphics.UI;
 
-public class Button : Component {
+public class Button : Component, IUpdate {
 
     public override string Name => nameof(Button);
-
-    [Hide][JsonIgnore] private GL GL => Renderer.GL;
 
     [Hide][JsonIgnore] public Action? de_Clicked = null;
 
@@ -19,11 +17,12 @@ public class Button : Component {
     [Hide][JsonIgnore] private bool _pressed = false;
     [Hide][JsonIgnore] private Image? _image;
 
+
     public override void OnAdd () {
         _image = gameObject.GetComponent<Image>();
     }
 
-    internal void UpdateInput () {
+    public void Update () {
         if (_image is null) return;
 
         Vector2 mouse = Input.Inputs.MousePos;
