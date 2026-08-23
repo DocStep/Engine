@@ -108,28 +108,29 @@ public class Engine : IDisposable {
             if (engineState == EngineStates.Ready) engineState = EngineStates.Paused;
             else if (engineState == EngineStates.Paused) engineState = EngineStates.Ready;
         }
+
+        // Always advance time — unscaledDeltaTime keeps ticking even when paused
+        Time.isPaused = engineState == EngineStates.Paused;
+        Time.Update(dt);
+
         if (engineState == EngineStates.Ready) {
-            Time.deltaTime = dt;
-            Time.accumulator += dt;
+            Time.accumulator += Time.deltaTime;
 
             Update();
             while (Time.fixedDeltaTime <= Time.accumulator) {
                 FixedUpdate();
                 Time.accumulator -= Time.fixedDeltaTime;
             }
-
-            f3log();
-
-            de_Render?.Invoke();
-            LogFrameEnd();
-
-            de_LateUpdate?.Invoke();
-
-            /// Counters
-            Time.time += Time.deltaTime;
         } else {
             //ComponentManager.Instance.UpdateAtFreeze();
         }
+
+        F3_Log();
+
+        de_Render?.Invoke();
+        LogFrameEnd();
+
+        de_LateUpdate?.Invoke();
     }
     void LogFrameEnd () {
         Stats.LatencyFull = (float)sw_LatencyUpdate.Elapsed.TotalMilliseconds;
@@ -182,7 +183,7 @@ public class Engine : IDisposable {
     }
 
 
-    void f3log () {
+    void F3_Log () {
         Graphics.UI.TextRenderer.AddText($"Time: {Time.time:F2}");
         Graphics.UI.TextRenderer.AddText($"FPS: {Time.FPS}");
         Graphics.UI.TextRenderer.AddText($"ms: {Time.deltaTime*1000:F3}");

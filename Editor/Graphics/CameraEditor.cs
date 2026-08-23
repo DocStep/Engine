@@ -248,7 +248,7 @@ public sealed class CameraEditor : Camera {
                 Vector3 camDelta = focusTargetCameraPos - CameraPos;
                 Vector3 orbitDelta = focusTargetOrbitCenterPos - cameraOrbitCenterPos;
 
-                float _t = MathF.Min(1f, _focusGlideSpeed*(float)Time.deltaTime);
+                float _t = MathF.Min(1f, _focusGlideSpeed*(float)Time.unscaledDeltaTime);
                 cameraPos += camDelta*_t;
                 cameraOrbitCenterPos += orbitDelta*_t;
 
@@ -264,7 +264,7 @@ public sealed class CameraEditor : Camera {
                 Vector3 moveDirection = Vector3.Normalize(cameraPosDelta);
 
                 bool continuousMovement = moveDirection != Vector3.Zero;
-                moveHoldTime = continuousMovement ? moveHoldTime + (float)Time.deltaTime : 0f;
+                moveHoldTime = continuousMovement ? moveHoldTime + (float)Time.unscaledDeltaTime : 0f;
 
                 float rampT = Mathf.Clamp(moveHoldTime / _moveRampUpTime, 0f, 1f);
                 float speedFactor = Mathf.Lerp(_moveStartSpeedFactor, 1f, rampT);
@@ -275,7 +275,7 @@ public sealed class CameraEditor : Camera {
                     speedFactor = Mathf.Lerp(1f, _moveOvershootSpeedFactor, overshootT);
                 }
 
-                cameraPosDelta = moveDirection*baseSpeed*speedFactor*(float)Time.deltaTime;
+                cameraPosDelta = moveDirection*baseSpeed*speedFactor*(float)Time.unscaledDeltaTime;
                 isFocusing = false;
             } else {
                 moveHoldTime = 0f;

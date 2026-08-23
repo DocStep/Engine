@@ -71,10 +71,7 @@ public class Transform : Component {
         }
     }
 
-    /// Euler order: Y (yaw, outer) * X (pitch, middle) * Z (roll/twist, inner).
-    /// This keeps X/Y purely defining a pointing direction with zero incidental
-    /// roll when Z = 0 — unlike X*Y*Z composition, which couples X and Y into
-    /// visible twist about the resulting forward axis.
+    /// <summary> Use <see cref="RotateLocal"/> for continuous rotation </summary>
     [JsonIgnore]
     [WrapRotation(0, 360)]
     [ChangeStep(1f)]
@@ -93,6 +90,18 @@ public class Transform : Component {
 
             de_RotationChanged?.Invoke(Rotation);
         }
+    }
+    public void RotateLocal (Vector3 degrees) {
+        Quaternion delta =
+            Quaternion.CreateFromAxisAngle(Vector3.UnitX, degrees.X*Mathf.Deg2Rad)*
+            Quaternion.CreateFromAxisAngle(Vector3.UnitY, degrees.Y*Mathf.Deg2Rad)*
+            Quaternion.CreateFromAxisAngle(Vector3.UnitZ, degrees.Z*Mathf.Deg2Rad);
+
+        localRotation = Quaternion.Normalize(localRotation*delta);
+        localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
+        rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
+
+        de_RotationChanged?.Invoke(Rotation);
     }
 
     [Hide]
