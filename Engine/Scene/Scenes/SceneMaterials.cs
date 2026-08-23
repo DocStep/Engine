@@ -17,6 +17,11 @@ public class SceneMaterials : Scene {
         Camera camera = cam.AddComponent<Camera>();
         //camera.priority = 0;
 
+        GameObject go_sun1 = new GameObject() { Name = "Sun", };
+        go_sun1.Transform.LocalPosition = new Vector3(0, 5, 0);
+        go_sun1.Transform.LocalEuler = new Vector3(60, -30, 0);
+        SunLight sun1 = go_sun1.AddComponent<SunLight>();
+
         /// Reflection
         x = 0;
         GameObject reflectionSuzanneHightRes = new GameObject() { Name = "Reflection SuzanneHighRes", };

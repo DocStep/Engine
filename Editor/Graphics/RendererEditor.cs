@@ -20,7 +20,7 @@ public class RendererEditor : Renderer {
         //Engine.Engine.Instance.de_Update_Engine += EngineUpdate;
 
         Engine.Engine.Instance.de_AfterUpdate += DrawMaterialsGrid;
-        de_DrawPostScene += DrawGizmos;
+        //de_DrawPostScene += DrawGizmos;
         de_DrawAfterPostProcess += Gizmos.Draw;
     }
 
@@ -79,7 +79,7 @@ public class RendererEditor : Renderer {
         GL.Enable(EnableCap.CullFace);
         GL.PolygonMode(TriangleFace.FrontAndBack, GLEnum.Fill);
     }
-    protected void DrawGizmos () {
+    /*protected void DrawGizmos () {
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
@@ -109,7 +109,7 @@ public class RendererEditor : Renderer {
 
         GL.Enable(EnableCap.CullFace);
         GL.PolygonMode(TriangleFace.FrontAndBack, GLEnum.Fill);
-    }
+    }*/
 
 
     protected void DrawInfoWireframe (RenderInfo info) {
@@ -117,6 +117,7 @@ public class RendererEditor : Renderer {
 
         Shader shader = Gizmos._mat_GizmoWireframe.shader;
 
+        shader.Use();
         SetSceneUniformsUnlit(shader, Camera.Main.CameraPos);
 
         shader.SetMatrix4x4(Model, info.model);

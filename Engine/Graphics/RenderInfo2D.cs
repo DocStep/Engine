@@ -1,7 +1,7 @@
 ﻿namespace Engine.Graphics;
 
 
-public struct RenderInfo () {
+public struct RenderInfo2D () {
 
     public string name = string.Empty;
 

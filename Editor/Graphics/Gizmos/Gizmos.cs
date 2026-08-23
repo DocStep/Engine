@@ -147,6 +147,7 @@ public static class Gizmos {
 
         GL.DepthMask(depthWrite);
 
+
         Renderer.Instance.SetSceneUniformsUnlit(shader, Camera.Main.CameraPos);
     }
 
@@ -156,6 +157,7 @@ public static class Gizmos {
         Mesh mesh = _mesh_GridWireframe;
         Material material = _mat_GizmoGrid;
         Shader shader = material.shader;
+        shader.Use();
         SetUniforms(shader, depthTest: true, depthWrite: true);
         material.Apply();
 
@@ -177,6 +179,7 @@ public static class Gizmos {
         Mesh mesh = _mesh_Line;
         Material material = _mat_GizmoAxisLine;
         Shader shader = material.shader;
+        shader.Use();
         SetUniforms(shader, depthTest: true, depthWrite: true);
         material.Apply();
 
@@ -263,6 +266,7 @@ public static class Gizmos {
             Mesh mesh = Constants._drawArrowAsMesh ? _mesh_Arrow3D : _mesh_ArrowWireframe;
             Material material = _mat_GizmoSun;
             Shader shader = material.shader;
+            shader.Use();
             SetUniforms(shader, depthTest: true, depthWrite: true);
             material.Apply();
 

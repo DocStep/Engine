@@ -1,33 +1,35 @@
-﻿//using Engine.Graphics;
-using Silk.NET.OpenGL;
-using StbImageSharp;
+﻿using Silk.NET.OpenGL;
 using Newtonsoft.Json;
 
 namespace Engine.Graphics.UI;
+
 
 public class Image : Component {
 
     public override string Name => nameof(Image);
 
-    [Hide][JsonIgnore] private GL GL => Renderer.GL;
-
     [Hide] public string Path { get; set; } = "";
-    public Vector2 Size { get; set; } = new Vector2(100, 100);
+    [ChangeStep(1)] public Vector2 Size { get; set; } = new Vector2(100, 100);
     public Vector4 Tint { get; set; } = new Vector4(1f, 1f, 1f, 1f);
 
-    [Hide][JsonIgnore] private uint _textureId;
-    [Hide][JsonIgnore] private uint _vao, _vbo;
+    [Hide][JsonIgnore] private static Mesh? _sharedQuad = null;
+    [JsonIgnore] private MaterialUI _material = null!;
+    [Hide][JsonIgnore] public uint _textureId;
     [Hide][JsonIgnore] private bool _loaded = false;
 
+
     public override void OnAdd () {
-        SetupBuffers();
-        if (0 < Path.Length) Load(Path);
+        _sharedQuad ??= new Mesh(Plane.GenerateQuadUI());
+        _material = new MaterialUI(AssetsEngine._sh_UI);
+        if (Path.Length > 0) Load(Path);
     }
 
-    public void Load (string relativePath) {
-        Path = System.IO.Path.Combine(AppContext.BaseDirectory, relativePath);
+    
+    public void Load (string path) {
+        Path = path;
+        GL GL = Renderer.GL;
 
-        ImageResult image = ImageResult.FromMemory(File.ReadAllBytes(Path), ColorComponents.RedGreenBlueAlpha);
+        StbImageSharp.ImageResult image = StbImageSharp.ImageResult.FromMemory(File.ReadAllBytes(path), StbImageSharp.ColorComponents.RedGreenBlueAlpha);
 
         if (_textureId == 0) _textureId = GL.GenTexture();
         GL.BindTexture(TextureTarget.Texture2D, _textureId);
@@ -43,66 +45,27 @@ public class Image : Component {
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
 
+        _material.textureId = _textureId;
         _loaded = true;
     }
 
-    private unsafe void SetupBuffers () {
-        _vao = GL.GenVertexArray();
-        _vbo = GL.GenBuffer();
+    internal void Submit () {
+        if (!_loaded || _sharedQuad is null) return;
 
-        GL.BindVertexArray(_vao);
-        GL.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
+        Vector3 pos = gameObject.Transform.Position;
+        _material.SetVector4("uTint", Tint);
 
-        uint stride = (uint)(4*sizeof(float));
-        GL.EnableVertexAttribArray(0);
-        GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, stride, (void*)0);
-        GL.EnableVertexAttribArray(1);
-        GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, stride, (void*)(2*sizeof(float)));
-    }
-
-    internal unsafe void Draw (Matrix4x4 projection) {
-        if (!_loaded) return;
-
-        Vector3 position = gameObject.Transform.Position;
-        float x0 = position.X;
-        float y0 = position.Y;
-        float x1 = x0 + Size.X;
-        float y1 = y0 + Size.Y;
-
-        Vertex2D[] vertices = new Vertex2D[6] {
-            new Vertex2D { Position = new Vector2(x0, y0), UV = new Vector2(0f, 0f) },
-            new Vertex2D { Position = new Vector2(x1, y0), UV = new Vector2(1f, 0f) },
-            new Vertex2D { Position = new Vector2(x1, y1), UV = new Vector2(1f, 1f) },
-
-            new Vertex2D { Position = new Vector2(x0, y0), UV = new Vector2(0f, 0f) },
-            new Vertex2D { Position = new Vector2(x1, y1), UV = new Vector2(1f, 1f) },
-            new Vertex2D { Position = new Vector2(x0, y1), UV = new Vector2(0f, 1f) },
-        };
-
-        Material material = AssetsEngine._mat_UI;
-        material.shader.Use();
-        material.shader.SetMatrix4x4(Shader.Projection, projection);
-        material.shader.SetVector4("uTint", Tint);
-        material.Apply();
-
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, _textureId);
-
-        GL.BindVertexArray(_vao);
-        GL.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
-
-        fixed (Vertex2D* ptr = vertices) {
-            GL.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(vertices.Length*sizeof(Vertex2D)), ptr, BufferUsageARB.StreamDraw);
-        }
-
-        GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
-        Renderer.Instance.Stats.DrawCallsUI++;
+        Renderer.Instance.AddRenderInfo(new RenderInfo {
+            name = "UIImage",
+            model = Matrix4x4.CreateScale(Size.X, Size.Y, 1f)*Matrix4x4.CreateTranslation(pos),
+            mesh = _sharedQuad,
+            material = _material,
+        });
     }
 
     public override void OnRemove () {
-        if (_vao != 0) GL.DeleteVertexArray(_vao);
-        if (_vbo != 0) GL.DeleteBuffer(_vbo);
-        if (_textureId != 0) GL.DeleteTexture(_textureId);
+        if (_textureId != 0) Renderer.GL.DeleteTexture(_textureId);
+        /// _sharedQuad is intentionally not disposed here — it's shared, owned by the class not the instance
     }
 
 }

@@ -13,7 +13,7 @@ public static class Inputs {
     public static Vector2 MouseDelta = Vector2.Zero;
     public static float Wheel = 0;
     public static bool isMouseOver { get; set; } = false;
-    public static bool isMouseOverScene { get; set; } = false;
+    public static bool isMouseOver_Window { get; set; } = false;
 
 
     public static Dictionary<Keys, string> KeysNameOverride = new Dictionary<Keys, string>() {
@@ -337,8 +337,8 @@ public static class Inputs {
         /// Wheel
         Wheel = WindowInput.WheelDelta;
 
-        isMouseOver = 0 <= MousePos_Window.X && MousePos_Window.X < Windows.Window.Size.X && 0 <= MousePos_Window.Y && MousePos_Window.Y < Windows.Window.Size.Y;
-        isMouseOverScene = isMouseOver;
+        isMouseOver_Window = 0 <= MousePos_Window.X && MousePos_Window.X < Windows.Window.Size.X && 0 <= MousePos_Window.Y && MousePos_Window.Y < Windows.Window.Size.Y;
+        isMouseOver = isMouseOver_Window;
 
         de_UpdateInput?.Invoke();
 

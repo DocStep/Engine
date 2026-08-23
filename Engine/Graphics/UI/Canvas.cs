@@ -1,43 +1,26 @@
-﻿using Silk.NET.OpenGL;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace Engine.Graphics.UI;
 
-public class Canvas : Component, IComponentDrawRaw {
+public class Canvas : Component, IComponentUpdate {
 
     public override string Name => nameof(Canvas);
 
-    [Hide][JsonIgnore] private GL GL => Renderer.GL;
-    
-    [Hide][JsonIgnore] public Matrix4x4 m4x4_View = Matrix4x4.Identity;
-    [Hide][JsonIgnore] public Matrix4x4 m4x4_Projection = Matrix4x4.Identity;
+    //[Hide][JsonIgnore] public Matrix4x4 m4x4_View = Matrix4x4.Identity;
+    //[Hide][JsonIgnore] public Matrix4x4 m4x4_Projection = Matrix4x4.Identity;
 
 
-    public void DrawRaw () {
-        m4x4_Projection = Matrix4x4.CreateOrthographicOffCenter(0, Renderer.Instance.Width, Renderer.Instance.Height, 0, -1f, 1f);
 
-        GL.Disable(EnableCap.DepthTest);
-        GL.Enable(EnableCap.Blend);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-        GL.Disable(EnableCap.CullFace);
-
-        DrawSelfAndChildren(gameObject.Transform);
-
-        GL.Enable(EnableCap.DepthTest);
+    public void Update () {
+        CollectChildren(gameObject.Transform);
     }
+    private void CollectChildren (Transform t) {
+        if (!t.Enabled) return;
 
-    private void DrawSelfAndChildren (Transform tr) {
-        if (!tr.Enabled) return;
+        t.gameObject.GetComponent<Image>()?.Submit();
 
-        Button? button = tr.gameObject.GetComponent<Button>();
-        button?.UpdateInput();
-
-        Image? image = tr.gameObject.GetComponent<Image>();
-        if (image is not null && image.Enabled)
-            image.Draw(m4x4_Projection);
-
-        foreach (Transform child in tr.Children)
-            DrawSelfAndChildren(child);
+        foreach (Transform child in t.Children)
+            CollectChildren(child);
     }
 
 
@@ -46,8 +29,10 @@ public class Canvas : Component, IComponentDrawRaw {
     }
 
     private GameObject? PickChildren (Transform t, Vector2 mousePos) {
+
         /// reverse order: last-drawn (topmost) children get priority
-        for (int i = t.Children.Count - 1; i >= 0; i--) {
+        int count = t.Children.Count;
+        for (int i = count-1; 0 <= i; i--) {
             Transform child = t.Children[i];
             if (!child.Enabled) continue;
 

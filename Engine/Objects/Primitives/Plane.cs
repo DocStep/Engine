@@ -3,6 +3,32 @@
 
 public static class Plane {
 
+    public static MeshData GenerateQuad () {
+        Vertex[] vertices = new Vertex[4] {
+            new Vertex { Position = new Vector3(0, 0, 0), Normal = Vector3.UnitY, UV = new Vector2(0, 0) }, // top-left
+            new Vertex { Position = new Vector3(1, 0, 0), Normal = Vector3.UnitY, UV = new Vector2(1, 0) }, // top-right
+            new Vertex { Position = new Vector3(1, 0, 1), Normal = Vector3.UnitY, UV = new Vector2(1, 1) }, // bottom-right
+            new Vertex { Position = new Vector3(0, 0, 1), Normal = Vector3.UnitY, UV = new Vector2(0, 1) }, // bottom-left
+        };
+
+        uint[] indices = new uint[6] { 0, 1, 2, 0, 2, 3 };
+
+        return new MeshData(vertices, indices, Silk.NET.OpenGL.PrimitiveType.Triangles);
+    }
+
+    public static MeshData GenerateQuadUI () {
+        Vertex[] vertices = new Vertex[4] {
+            new Vertex { Position = new Vector3(0, 0, 0), Normal = Vector3.UnitZ, UV = new Vector2(0, 0) }, // top-left
+            new Vertex { Position = new Vector3(1, 0, 0), Normal = Vector3.UnitZ, UV = new Vector2(1, 0) }, // top-right
+            new Vertex { Position = new Vector3(1, 1, 0), Normal = Vector3.UnitZ, UV = new Vector2(1, 1) }, // bottom-right
+            new Vertex { Position = new Vector3(0, 1, 0), Normal = Vector3.UnitZ, UV = new Vector2(0, 1) }, // bottom-left
+        };
+
+        uint[] indices = new uint[6] { 0, 1, 2, 0, 2, 3 };
+
+        return new MeshData(vertices, indices, Silk.NET.OpenGL.PrimitiveType.Triangles);
+    }
+
     public static MeshData Generate (float size = 1f, int divisions = 10) {
         int cells = divisions;
         int verticesPerSide = cells+1;

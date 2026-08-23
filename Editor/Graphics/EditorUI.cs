@@ -381,6 +381,9 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             case int i:
                 if (ImGui.DragInt(label, ref i)) result = i;
                 break;
+            case uint ui:
+                if (DragUInt(label, ref ui)) result = ui;
+                break;
             case long l:
                 int temp_i = (int)l;
                 if (ImGui.DragInt(label, ref temp_i)) result = (long)temp_i;
@@ -511,6 +514,12 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         return result;
     }
+    private static unsafe bool DragUInt (string label, ref uint value, float speed = 1f, uint min = 0, uint max = 0) {
+        fixed (uint* p = &value) {
+            return ImGui.DragScalar(label, ImGuiDataType.U32, (IntPtr)p, speed,
+                (IntPtr)(&min), (IntPtr)(&max));
+        }
+    }
 
 
     private void RegisterTypes () {
@@ -563,15 +572,15 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         Inputs.MousePos = Inputs.MousePos_Window - _sceneRectMin;
 
         if (!isSceneUIHovered) {
-            Inputs.isMouseOverScene = false;
+            Inputs.isMouseOver = false;
             return;
         }
         if (Inputs.MousePos.X < 0 || Inputs.MousePos.Y < 0 ||
             sceneAvail.X < Inputs.MousePos.X || sceneAvail.Y < Inputs.MousePos.Y) {
-            Inputs.isMouseOverScene = false;
+            Inputs.isMouseOver = false;
         }
 
-        Inputs.isMouseOverScene = true;
+        Inputs.isMouseOver = true;
     }
 
     public void SetDock () {

@@ -329,7 +329,7 @@ public sealed class CameraEditor : Camera {
 
     public override bool GetRayMouse (out Ray ray) {
         //EditorUI.Instance.InputUpdate();
-        if (!Inputs.isMouseOverScene) {
+        if (!Inputs.isMouseOver) {
             ray = default;
             return false;
         }

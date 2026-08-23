@@ -108,6 +108,7 @@ public class Shader : IDisposable {
     public const string Alpha = "uAlpha";
     public const string Radius = "uRadius";
     public const string Fade = "uFade";
+    public const string Tint = "uTint";
 
 
 

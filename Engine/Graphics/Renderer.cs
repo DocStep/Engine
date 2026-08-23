@@ -2,7 +2,6 @@
 using Engine.Graphics.UI;
 using static Engine.Graphics.Shader;
 using static Engine.AssetsEngine;
-using System.Threading;
 
 namespace Engine.Graphics;
 
@@ -78,6 +77,7 @@ public class Renderer {
     /// Debug
     public Matrix4x4 m4x4_View = Matrix4x4.Identity;
     public Matrix4x4 m4x4_Projection = Matrix4x4.Identity;
+    public Matrix4x4 m4x4_ProjectionUI = Matrix4x4.Identity;
     //protected static float[] uView = [];
     //public float[] UView => uView;
 
@@ -85,8 +85,6 @@ public class Renderer {
     //public float[] UProjection => uProjection;
 
     protected readonly List<RenderInfo> RenderList = new List<RenderInfo>();
-    protected readonly List<RenderInfo> RenderGizmoList = new List<RenderInfo>();
-    protected readonly List<RenderInfo> RenderUIList = new List<RenderInfo>();
 
     public RendererStats Stats = new RendererStats();
     public int Width => (int)Stats.SceneSize.X;
@@ -162,8 +160,6 @@ public class Renderer {
         Stats.Latency = (float)sw_Latency.Elapsed.TotalMilliseconds;
 
         RenderList.Clear();
-        RenderGizmoList.Clear();
-        RenderUIList.Clear();
     }
     public virtual void SetTargetSize () {
         Stats.SceneSize = new Vector2(Windows.Window.Size.X, Windows.Window.Size.Y);
@@ -173,24 +169,14 @@ public class Renderer {
     }
 
     public void AddRenderInfo (RenderInfo renderInfo) {
-        //Log.log("AddRenderInfo\n", new System.Diagnostics.StackTrace());
-        switch (renderInfo.material.pass) {
-            case RenderPass.Opaque:
-                RenderList.Add(renderInfo);
-                break;
-            case RenderPass.Transparent:
-                RenderGizmoList.Add(renderInfo);
-                break;
-            case RenderPass.UI:
-                RenderUIList.Add(renderInfo);
-                break;
-        }
+        RenderList.Add(renderInfo);
     }
 
     protected void UpdateProjection (float width, float height) {
         float aspect = width/height;
         m4x4_Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
             Camera.Main.FOV*Mathf.Deg2Rad, aspect, Camera.Main.planeNear, Camera.Main.planeFar);
+        m4x4_ProjectionUI = Matrix4x4.CreateOrthographicOffCenter(0, Width, Height, 0, -1f, 1f);
     }
 
     protected virtual void DrawSceneAll () {
@@ -223,22 +209,19 @@ public class Renderer {
         if (info.mesh is null) return;
         if (info.material is null) return;
 
-        Shader shader = info.material.shader;
-
+        /// Pass
         switch (info.material.pass) {
             case RenderPass.Opaque:
                 GL.Disable(EnableCap.Blend);
                 break;
             case RenderPass.Transparent:
-                GL.Enable(EnableCap.Blend);
-                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-                break;
             case RenderPass.UI:
                 GL.Enable(EnableCap.Blend);
                 GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 break;
         }
 
+        /// CullFace
         switch (info.material.face) {
             case RenderFace.Front:
                 GL.Enable(EnableCap.CullFace);
@@ -253,17 +236,26 @@ public class Renderer {
                 break;
         }
 
+        /// Depth
         if (info.material.depthTest) GL.Enable(EnableCap.DepthTest);
         else GL.Disable(EnableCap.DepthTest);
-
         GL.DepthMask(info.material.depthWrite);
 
-        //if (info.depthRangeNear != 0 || info.depthRangeFar != 1)
-        //    GL.DepthRange(info.depthRangeNear, info.depthRangeFar);
+        Shader shader = info.material.shader;
+        shader.Use();
 
-        SetSceneUniformsUnlit(shader, Camera.Main.CameraPos);
-        SetSceneUniformsLit(shader);
-        SetSceneUniformsSkybox(shader, _skybox.texture, _skybox.maxLod);
+        /// Uniforms
+        switch (info.material.pass) {
+            case RenderPass.Opaque:
+            case RenderPass.Transparent:
+                SetSceneUniformsUnlit(shader, Camera.Main.CameraPos);
+                SetSceneUniformsLit(shader);
+                SetSceneUniformsSkybox(shader, _skybox.texture, _skybox.maxLod);
+                break;
+            case RenderPass.UI:
+                shader.SetMatrix4x4(Projection, m4x4_ProjectionUI);
+                break;
+        }
 
         shader.SetMatrix4x4(Model, info.model);
 
@@ -279,7 +271,6 @@ public class Renderer {
     
 
     public void SetSceneUniformsUnlit (Shader shader, Vector3 viewPos) {
-        shader.Use();
         shader.SetMatrix4x4(View, m4x4_View);
         shader.SetMatrix4x4(Projection, m4x4_Projection);
         shader.SetVector3(ViewPos, viewPos);
