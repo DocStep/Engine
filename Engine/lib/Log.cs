@@ -12,22 +12,32 @@ public enum LogType {
 }
 
 
-public class Log : Singleton<Log> {
+public static class Log {
 
-    protected override void Init () {
+    public static void Init () {
         Engine.Instance.de_Update += Update;
 
     }
 
 
-    private readonly ConcurrentQueue<LogEntry> Queue = new ConcurrentQueue<LogEntry>();
+    [Hide] private static readonly ConcurrentQueue<LogEntry> Queue = new ConcurrentQueue<LogEntry>();
+    [Raw] public static readonly ConcurrentQueue<LogEntry> List = new ConcurrentQueue<LogEntry>();
 
-    string timestamp (string timestamp) => $" (t: {timestamp})";
-    public const string logSymbol = ">";
-    public const string logSymbolSpace = "> ";
-    
+    [Hide] public const string logSymbol = ">";
+    [Hide] public const string logSymbolSpace = "> ";
 
-    void Update () {
+    [Hide] private static readonly string[] ParseIgnore = {
+        "System.",
+        "UnityEngine.Debug",
+         nameof(Log),
+         nameof(log),
+         typeof(Singleton<>).Name,
+    };
+
+    private static string timestamp (string timestamp) => $" (t: {timestamp})";
+
+
+    private static void Update () {
         while (Queue.TryDequeue(out LogEntry entry)) {
             //string log = entry.text + entry.timestamp + Environment.NewLine + Environment.NewLine +
             string text = entry.text;
@@ -55,12 +65,13 @@ public class Log : Singleton<Log> {
 
 
     public static void log (string text, LogType type = LogType.log) {
+        LogEntry log = new LogEntry(text, type);
+        List.Enqueue(log);
         if (ThreadUtils.isMainThread) {
             ConsoleColor(type);
             Console.WriteLine(logSymbolSpace + text);
         } else {
-            LogEntry log = new LogEntry(text, type);
-            Instance.Queue.Enqueue(log);
+            Queue.Enqueue(log);
         }
     }
     public static void log (object? obj) {
@@ -95,14 +106,6 @@ public class Log : Singleton<Log> {
     }
 
 
-    static readonly string[] Ignore = {
-        "System.",
-        "UnityEngine.Debug",
-         nameof(Log),
-         nameof(log),
-         typeof(Singleton<>).Name,
-    };
-
     public static string Parse (string raw) {
         if (string.IsNullOrEmpty(raw))
             return string.Empty;
@@ -120,8 +123,8 @@ public class Log : Singleton<Log> {
 
             /// ignore system noise
             bool skip = false;
-            for (int j = 0; j < Ignore.Length; j++) {
-                if (line.StartsWith(Ignore[j])) {
+            for (int j = 0; j < ParseIgnore.Length; j++) {
+                if (line.StartsWith(ParseIgnore[j])) {
                     skip = true;
                     break;
                 }
@@ -203,8 +206,8 @@ public class Log : Singleton<Log> {
 
             /// skip noise
             bool skip = false;
-            for (int j = 0; j < Ignore.Length; j++) {
-                if (line.StartsWith(Ignore[j])) {
+            for (int j = 0; j < ParseIgnore.Length; j++) {
+                if (line.StartsWith(ParseIgnore[j])) {
                     skip = true;
                     break;
                 }
@@ -236,21 +239,6 @@ public class Log : Singleton<Log> {
         }
 
         return sb.ToString();
-    }
-
-
-    struct LogEntry {
-        public LogEntry (string text, LogType type) {
-            this.text = text;
-            stackTrace = new StackTrace(1);
-            timestamp = Time.getCurrentTimeLog;
-            this.type = type;
-        }
-
-        public string text;
-        public StackTrace stackTrace;
-        public string timestamp;
-        public LogType type;
     }
 
 }

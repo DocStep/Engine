@@ -7,10 +7,9 @@ using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
 using ImGuiNET;
 using Engine;
+using Editor;
 using Engine.Graphics;
 using Engine.Input;
-using Editor;
-using System.Runtime.CompilerServices;
 
 namespace Editor.Graphics;
 
@@ -74,7 +73,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     public void Update () {
         if (_isClosing) return;
 
-        ImGUI.Update((float)Time.deltaTime);
+        ImGUI.Update((float)Time.unscaledDeltaTime);
 
         bool wantCapture = ImGui.GetIO().WantCaptureMouse || ImGui.IsAnyItemActive();
         isUIClick = wantCapture && !isSceneUIHovered;
@@ -101,7 +100,12 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         DrawSceneView(dockspaceId);
         DrawHierarchy(dockspaceId);
         DrawInspector(dockspaceId);
+
+        DrawGeneral(dockspaceId);
+        DrawTime(dockspaceId);
         DrawRendering(dockspaceId);
+
+        DrawLog(dockspaceId);
         DrawEngineInfo(dockspaceId);
         DrawGLInfo(dockspaceId);
         //ImGui.ShowMetricsWindow();
@@ -206,15 +210,26 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         ImGui.End();
     }
+    private void DrawGeneral (uint dockspaceId) {
+        ImGui.Begin("General");
+
+        //DrawVar(nameof(Time.timeScale), ref Time.timeScale);
+
+        ImGui.End();
+    }
+    private void DrawTime (uint dockspaceId) {
+        ImGui.Begin("Time");
+
+        DrawObject(typeof(Time));
+
+        ImGui.End();
+    }
     private void DrawRendering (uint dockspaceId) {
         ImGui.Begin("Rendering");
 
         DrawObject(typeof(Lighting));
         ImGui.Separator();
-        //ImGui.LabelText("##Post-Process", "Post-Process");
-        //DrawLabel(nameof(Renderer.Instance.PostProcess.Enabled), Renderer.Instance.PostProcess.Enabled);
-        //DrawObject(Renderer.Instance.PostProcess.Effects, [new DrawName(nameof(Renderer.Instance.PostProcess.Effects))]);
-        DrawObject(Renderer.Instance.PostProcess, [new DrawName(nameof(Renderer.Instance.PostProcess.Effects))]);
+        DrawObject(Renderer.Instance.PostProcess, [new InspectorName(nameof(Renderer.Instance.PostProcess.Effects))]);
 
         ImGui.End();
     }
@@ -235,6 +250,15 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.PopID();
     }
 
+    private void DrawLog (uint dockspaceId) {
+        ImGui.Begin("Log");
+        ImGui.BeginDisabled();
+
+        DrawObject(typeof(Log));
+
+        ImGui.EndDisabled();
+        ImGui.End();
+    }
     private void DrawEngineInfo (uint dockspaceId) {
         ImGui.Begin("Engine Info");
         ImGui.BeginDisabled();
@@ -244,7 +268,6 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.EndDisabled();
         ImGui.End();
     }
-
     private void DrawGLInfo (uint dockspaceId) {
         ImGui.Begin("Renderer Info");
         ImGui.BeginDisabled();
@@ -305,7 +328,10 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             _ => false,
         };
 
-        object? drawn = DrawMember(member, value);
+        IEnumerable<Attribute> attrs = member.GetCustomAttributes();
+        //if (!isWritable) attrs = attrs.Append(new Readonly());
+
+        object? drawn = DrawMember(member, value, attrs);
         if (drawn is null || !isWritable) return;
 
         switch (member) {
@@ -328,7 +354,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 BindingFlags.Instance | BindingFlags.DeclaredOnly)
                 .Where(x => x.MemberType == MemberTypes.Field
                     || (x is PropertyInfo p && x.MemberType == MemberTypes.Property && p.GetIndexParameters().Length == 0))
-                .Where(x => !x.IsDefined(typeof(CompilerGeneratedAttribute), false))
+                .Where(x => !x.IsDefined(typeof(System.Runtime.CompilerServices.CompilerGeneratedAttribute), false))
                 .OrderBy(x => x.MetadataToken).ToArray();
 
             foreach (MemberInfo member in members) {
@@ -341,12 +367,16 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         return result;
     }
 
-    public static object? DrawMember (MemberInfo member, object? value) {
-        return DrawLabel(member.Name, value, member?.GetCustomAttributes());
+    public static object? DrawMember (MemberInfo member, object? value, IEnumerable<Attribute>? attributes = null) {
+        return DrawLabel(member.Name, value, attributes);
     }
 
+    public static void DrawVar<T> (string label, ref T value, IEnumerable<Attribute>? attributes = null) {
+        object? result = DrawLabel(label, value, attributes);
+        if (result is not null) value = (T)result;
+    }
     public static object? DrawLabel (string label, object? value, IEnumerable<Attribute>? attributes = null) {
-        label = Utils.NameCapital((string)label);
+        //label = Utils.NameCapital(label);
         bool isReadonly = false;
         float step = valueStep;
         bool isRaw = false;
@@ -356,7 +386,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
             if (attrs.OfType<Hide>().Any()) return null;
 
-            DrawName? drawName = attrs.OfType<DrawName>().FirstOrDefault();
+            InspectorName? drawName = attrs.OfType<InspectorName>().FirstOrDefault();
             if (drawName is not null) label = drawName.Name;
 
             isReadonly = attrs.OfType<Readonly>().Any();
@@ -369,8 +399,10 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         if (isReadonly) ImGui.BeginDisabled(true);
 
-        bool isCollection = value is (IList or IDictionary) && value is not (Vector2 or Vector3 or Vector4 or Quaternion);
-        bool isNestedObject = value is Material or PostProcessPass;
+        bool isCollection = (value is IList or IDictionary || (value?.GetType().IsGenericType == true &&
+            value.GetType().GetGenericTypeDefinition() == typeof(System.Collections.Concurrent.ConcurrentQueue<>)))
+            && value is not (Vector2 or Vector3 or Vector4 or Quaternion);
+        bool isNestedObject = value is GameObject or Component or Material or PostProcessPass or LogEntry;
         bool isRow = drawInverted && !isCollection && !isNestedObject;
         if (isRow) {
             float labelWidth = MathF.Max(ImGui.GetContentRegionAvail().X*labelRatio, minLabelWidth);
@@ -398,7 +430,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 break;
             case double d:
                 float temp_f = (float)d;
-                if (ImGui.DragFloat(label, ref temp_f, step, 0, 0, "%.2f")) result = (double)temp_f;
+                if (ImGui.DragFloat(label, ref temp_f, step, 0, 0, "%.4f")) result = (double)temp_f;
                 break;
             case bool b:
                 if (ImGui.Checkbox(label, ref b)) result = b;
@@ -431,7 +463,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                     result = new Quaternion(temp_v4.X, temp_v4.Y, temp_v4.Z, temp_v4.W);
                 break;
             case IList list when value is not (Vector2 or Vector3 or Vector4 or Quaternion):
-                attributes = attributes?.Where(x => x.GetType() != typeof(DrawName));
+                attributes = attributes?.Where(x => x.GetType() != typeof(InspectorName));
                 if (isRaw) {
                     for (int i = 0; i < list.Count; i++) {
                         object? entryValue = list[i];
@@ -450,7 +482,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 }
                 break;
             case IDictionary dict:
-                attributes = attributes?.Where(x => x.GetType() != typeof(DrawName));
+                attributes = attributes?.Where(x => x.GetType() != typeof(InspectorName));
                 if (isRaw) {
                     foreach (object key in dict.Keys) {
                         object? entryValue = dict[key];
@@ -467,6 +499,25 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                         ImGui.TreePop();
                     }
                 }
+                break;
+            case object o when o.GetType().IsGenericType && o.GetType().GetGenericTypeDefinition() == typeof(System.Collections.Concurrent.ConcurrentQueue<>):
+                attributes = attributes?.Where(x => x.GetType() != typeof(InspectorName));
+                IEnumerable queueEnumerable = (IEnumerable)o;
+                object[] entries = queueEnumerable.Cast<object>().ToArray();
+                ImGui.BeginDisabled(true);
+                if (isRaw) {
+                    for (int i = 0; i < entries.Length; i++) {
+                        DrawLabel($"##{entries[i]?.GetType().Name}[{i}]", entries[i], attributes);
+                    }
+                } else {
+                    if (ImGui.TreeNodeEx(label, ImGuiTreeNodeFlags.DefaultOpen, label)) {
+                        for (int i = 0; i < entries.Length; i++) {
+                            DrawLabel($"##{entries[i]?.GetType().Name}[{i}]", entries[i], attributes);
+                        }
+                        ImGui.TreePop();
+                    }
+                }
+                ImGui.EndDisabled();
                 break;
 
             case object o when o.GetType().IsGenericType && o.GetType().GetGenericTypeDefinition() == typeof(KeyValuePair<,>):
@@ -502,6 +553,11 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                     DrawObject(ppp);
                     ImGui.TreePop();
                 }
+                break;
+            case LogEntry log:
+                ImGui.BeginDisabled();
+                if (ImGui.InputText(label, ref log.text, 256)) result = log.text;
+                ImGui.EndDisabled();
                 break;
 
             case null:

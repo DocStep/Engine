@@ -131,14 +131,7 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.Disable(EnableCap.DepthTest);
 
         int lastEnabledIndex = -1;
-        if (Enabled) {
-            for (int i = Effects.Count-1; 0 <= i; i--) {
-                if (Effects[i].Enabled) {
-                    lastEnabledIndex = i;
-                    break;
-                }
-            }
-        }
+        if (Enabled) lastEnabledIndex = Effects.Count-1;
 
         if (0 <= lastEnabledIndex) {
             uint currentInput = _sceneColor;
@@ -161,6 +154,8 @@ public class PostProcessStack : IDisposable {
                     pingIndex = 1 - pingIndex;
                 }
             }
+
+            CopySceneDepth(finalTargetFbo);
         } else {
             CopySceneColor(finalTargetFbo);
             CopySceneDepth(finalTargetFbo);

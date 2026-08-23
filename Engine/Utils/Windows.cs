@@ -24,7 +24,7 @@ public static class Windows {
     }
 
     public static Silk.NET.Windowing.WindowOptions options = Silk.NET.Windowing.WindowOptions.Default with {
-        Size = new Silk.NET.Maths.Vector2D<int>(1280, 720),
+        Size = new Silk.NET.Maths.Vector2D<int>(1600, 900),
         Title = "Engine",
         VSync = false,
         WindowBorder = Silk.NET.Windowing.WindowBorder.Resizable,

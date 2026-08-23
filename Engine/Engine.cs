@@ -49,7 +49,7 @@ public class Engine : IDisposable {
         ArgsUtils.Init();
 
         ThreadUtils.Init();
-        Log.CreateSingleton();
+        Log.Init();
         Log.log($"========== Run ==========", LogType.system);
         Log.log($"===== Utils Layer =====", LogType.system);
         Time.Init();
@@ -108,8 +108,7 @@ public class Engine : IDisposable {
             if (engineState == EngineStates.Ready) engineState = EngineStates.Paused;
             else if (engineState == EngineStates.Paused) engineState = EngineStates.Ready;
         }
-
-        // Always advance time — unscaledDeltaTime keeps ticking even when paused
+        
         Time.isPaused = engineState == EngineStates.Paused;
         Time.Update(dt);
 
@@ -118,6 +117,7 @@ public class Engine : IDisposable {
 
             Update();
             while (Time.fixedDeltaTime <= Time.accumulator) {
+                Time.FixedUpdateStep();
                 FixedUpdate();
                 Time.accumulator -= Time.fixedDeltaTime;
             }
