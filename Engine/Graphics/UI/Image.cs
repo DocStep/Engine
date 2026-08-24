@@ -1,5 +1,5 @@
-﻿using Silk.NET.OpenGL;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using Silk.NET.OpenGL;
 
 namespace Engine.Graphics.UI;
 
@@ -9,8 +9,15 @@ public class Image : Component {
     public override string Name => nameof(Image);
 
     [Hide] public string Path { get; set; } = "";
-    [ChangeStep(1)] public Vector2 Size { get; set; } = new Vector2(100, 100);
     public Vector4 Tint { get; set; } = new Vector4(1f, 1f, 1f, 1f);
+    [Hide][JsonIgnore]
+    public Vector2 Size {
+        get => rect.Size;
+        set => rect.Size = value;
+    }
+
+    [Hide][JsonIgnore] private RectTransform rect = null!;
+    [Hide][JsonIgnore] public RectTransform Rect => rect;
 
     [Hide][JsonIgnore] private static Mesh? _sharedQuad = null;
     [JsonIgnore] private MaterialUI _material = null!;
@@ -19,6 +26,7 @@ public class Image : Component {
 
 
     public override void OnAdd () {
+        rect = gameObject.GetComponent<RectTransform>() ?? gameObject.AddComponent<RectTransform>();
         _sharedQuad ??= new Mesh(Plane.GenerateQuadUI());
         _material = new MaterialUI(AssetsEngine._sh_UI);
         if (0 < Path.Length) Load(Path);
@@ -54,16 +62,15 @@ public class Image : Component {
     public void Submit () {
         if (!_loaded || _sharedQuad is null) return;
 
-        Vector3 pos = gameObject.Transform.Position;
+        Vector2 origin = rect.Min; /// Min already accounts for pivot
         _material.SetVector4("uTint", Tint);
 
         Renderer.Instance.AddRenderInfo(new RenderInfo {
             name = "UIImage",
-            model = Matrix4x4.CreateScale(Size.X, Size.Y, 1f)*Matrix4x4.CreateTranslation(pos),
+            model = Matrix4x4.CreateScale(rect.Size.X, rect.Size.Y, 1f)*Matrix4x4.CreateTranslation(new Vector3(origin.X, origin.Y, 0f)),
             mesh = _sharedQuad,
             material = _material,
         });
     }
-
 
 }

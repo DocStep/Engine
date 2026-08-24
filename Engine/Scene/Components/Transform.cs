@@ -27,7 +27,7 @@ public class Transform : Component {
     public Transform? Parent {
         get => parent;
         set {
-            if (parent == value) return;
+            if (parent == value || value == this) return;
 
             Vector3 worldPosition = Position;
             Quaternion worldRotation = Rotation;

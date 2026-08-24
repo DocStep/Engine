@@ -11,21 +11,27 @@ public class SceneUI : Scene {
         go_camera.Transform.Position = new Vector3(-2, 3, -10);
         Camera camera = go_camera.AddComponent<Camera>();
 
-        GameObject go_ui = new GameObject() { Name = "UI", };
-        go_ui.AddComponent<Canvas>();
-        Image image = go_ui.AddComponent<Image>();
+        GameObject go_canvas = new GameObject() { Name = "Canvas", };
+        go_canvas.AddComponent<Canvas>();
+        Image image;
+
+        GameObject go_image = new GameObject() { Name = "UI", };
+        go_image.Transform.Parent = go_canvas.Transform;
+        image = go_image.AddComponent<Image>();
         image.Load("src/Images/RGBA_Test.png");
-        image.Size = new Vector2(64, 64);
+        image.Rect.Pivot = new Vector2(0, 0);
+        image.Rect.Anchor = new Vector2(0, 0);
 
         GameObject go_button = new GameObject() { Name = "PlayButton" };
-        go_button.Transform.LocalPosition = new Vector3(20, 20, 0);
+        go_button.Transform.Parent = go_canvas.Transform;
+        //go_button.Transform.LocalPosition = new Vector3(20, 20, 0);
         image = go_button.AddComponent<Image>();
         image.Load("src/Images/RGBA_Test.png");
-        image.Size = new Vector2(120, 40);
+        image.Rect.Pivot = new Vector2(0, 0);
+        image.Rect.Anchor = new Vector2(0, 0);
+        image.Rect.AnchoredPosition = new Vector2(100, 0);
         Button button = go_button.AddComponent<Button>();
         button.de_Clicked += () => Log.log("clicked");
-        go_ui.Transform.Children.Add(go_button.Transform);
-
     }
     
 }

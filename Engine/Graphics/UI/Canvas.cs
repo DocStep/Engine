@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace Engine.Graphics.UI;
 
@@ -6,13 +7,24 @@ public class Canvas : Component, IUpdate {
 
     public override string Name => nameof(Canvas);
 
-    //[Hide][JsonIgnore] public Matrix4x4 m4x4_View = Matrix4x4.Identity;
-    //[Hide][JsonIgnore] public Matrix4x4 m4x4_Projection = Matrix4x4.Identity;
+    [Hide][JsonIgnore] private RectTransform rect = null!;
+    [Hide][JsonIgnore] public RectTransform Rect => rect;
 
 
+    public override void OnAdd () {
+        rect = gameObject.GetComponent<RectTransform>() ?? gameObject.AddComponent<RectTransform>();
+        rect.Pivot = new Vector2(0f, 0f);
+        rect.Anchor = new Vector2(0f, 0f);
+        rect.AnchoredPosition = Vector2.Zero;
+        SyncScreenSize();
+    }
 
     public void Update () {
+        SyncScreenSize();
         CollectChildren(gameObject.Transform);
+    }
+    private void SyncScreenSize () {
+        rect.Size = new Vector2(Renderer.Instance.Width, Renderer.Instance.Height);
     }
     private void CollectChildren (Transform t) {
         if (!t.Enabled) return;
@@ -24,33 +36,31 @@ public class Canvas : Component, IUpdate {
     }
 
 
-    public GameObject? Pick (Vector2 mousePos) {
-        return PickChildren(gameObject.Transform, mousePos);
+    public GameObject? Pick (Vector2 mousePos, RaycastLayer mask = RaycastLayer.All) {
+        List<(GameObject go, int priority, int order)> hits = new();
+        int order = 0;
+        CollectHits(gameObject.Transform, mousePos, mask, hits, ref order);
+
+        if (hits.Count == 0) return null;
+
+        /// highest priority wins; ties broken by draw order (topmost/last-drawn)
+        hits.Sort((a, b) => {
+            int cmp = b.priority.CompareTo(a.priority);
+            return cmp != 0 ? cmp : b.order.CompareTo(a.order);
+        });
+
+        return hits[0].go;
     }
 
-    private GameObject? PickChildren (Transform t, Vector2 mousePos) {
+    private void CollectHits (Transform t, Vector2 mousePos, RaycastLayer mask, List<(GameObject, int, int)> hits, ref int order) {
+        if (!t.Enabled) return;
 
-        /// reverse order: last-drawn (topmost) children get priority
-        int count = t.Children.Count;
-        for (int i = count-1; 0 <= i; i--) {
-            Transform child = t.Children[i];
-            if (!child.Enabled) continue;
+        RectTransform? rect = t.gameObject.GetComponent<RectTransform>();
+        if (rect is not null && rect.Enabled && rect.RaycastTarget && (rect.Layer & mask) != 0 && rect.Contains(mousePos))
+            hits.Add((t.gameObject, rect.RaycastPriority, order++));
 
-            GameObject? hit = PickChildren(child, mousePos);
-            if (hit is not null) return hit;
-
-            Image? image = child.gameObject.GetComponent<Image>();
-            if (image is null || !image.Enabled) continue;
-
-            Vector3 pos = child.Position;
-            bool inside =
-                pos.X <= mousePos.X && mousePos.X <= pos.X + image.Size.X &&
-                pos.Y <= mousePos.Y && mousePos.Y <= pos.Y + image.Size.Y;
-
-            if (inside) return child.gameObject;
-        }
-
-        return null;
+        foreach (Transform child in t.Children)
+            CollectHits(child, mousePos, mask, hits, ref order);
     }
 
 }

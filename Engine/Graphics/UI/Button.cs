@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
-using Silk.NET.OpenGL;
 
 namespace Engine.Graphics.UI;
+
 
 public class Button : Component, IUpdate {
 
@@ -15,38 +15,33 @@ public class Button : Component, IUpdate {
 
     [Hide][JsonIgnore] private bool _hovered = false;
     [Hide][JsonIgnore] private bool _pressed = false;
+    [Hide][JsonIgnore] private RectTransform _rect = null!;
     [Hide][JsonIgnore] private Image? _image;
 
 
     public override void OnAdd () {
+        _rect = gameObject.GetComponent<RectTransform>() ?? gameObject.AddComponent<RectTransform>();
         _image = gameObject.GetComponent<Image>();
     }
 
     public void Update () {
-        if (_image is null) return;
-
         Vector2 mouse = Input.Inputs.MousePos;
-        Vector3 pos = gameObject.Transform.Position;
-
-        bool posInside =
-            pos.X <= mouse.X && mouse.X <= pos.X + _image.Size.X &&
-            pos.Y <= mouse.Y && mouse.Y <= pos.Y + _image.Size.Y;
-
-        _hovered = posInside;
+        _hovered = _rect.RaycastTarget && _rect.Contains(mouse);
 
         bool down = Input.Inputs.Actions[Input.Inputs.LMB].pressedDown;
         bool up = Input.Inputs.Actions[Input.Inputs.LMB].pressedUp;
 
-        if (posInside && down) _pressed = true;
+        if (_hovered && down) _pressed = true;
 
         if (_pressed && up) {
             _pressed = false;
-            if (posInside) de_Clicked?.Invoke();
+            if (_hovered) de_Clicked?.Invoke();
         }
 
-        if (!posInside && up) _pressed = false;
+        if (!_hovered && up) _pressed = false;
 
-        _image.Tint = _pressed ? TintPressed : _hovered ? TintHover : TintNormal;
+        if (_image is not null)
+            _image.Tint = _pressed ? TintPressed : _hovered ? TintHover : TintNormal;
     }
 
 }
