@@ -25,11 +25,15 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         ImGui.LoadIniSettingsFromDisk(ImGui.GetIO().IniFilename);
 
+        EditorTabs.RegisterTabs();
+        EditorTabs.LoadTabs();
+
         Inputs.de_UpdateInput += UpdateInput;
 
         Engine.Engine.Instance.de_Update += Update;
-
         Engine.Engine.Instance.de_Render += Draw;
+        Engine.Engine.Instance.de_Closing += EditorTabs.Closing;
+
         Renderer.Instance.de_Dispose += Dispose;
 
         new CameraEditor();
@@ -55,14 +59,23 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     /// inspector row layout — Unity-style margin instead of an ImGui table
     private const float labelRatio = 0.4f;
     private const float minLabelWidth = 90f;
+    private const float toolbarHeight = 20f;
 
 
     private Vector2 sceneAvail = new Vector2(1280, 720);
     public Vector2 SceneAvail => sceneAvail;
 
-    private Vector2 _sceneRectMin;
-    private Vector2 _sceneRectMax;
+    public Vector2 _sceneRectMin { get; private set; }
+    public Vector2 _sceneRectMax { get; private set; }
+    public void UpdateSceneRect (Vector2 min, Vector2 max) {
+        _sceneRectMin = min;
+        _sceneRectMin = max;
+    }
+
     public bool isSceneUIHovered { get; private set; }
+    public void UpdateUIHovered (bool isHovered) {
+        isSceneUIHovered = isHovered;
+    }
     public bool isMouseHooked () {
         Vector2 availSize = ImGui.GetContentRegionAvail();
         Vector2 elementPos = ImGui.GetCursorScreenPos();
@@ -90,24 +103,15 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         Renderer.GL.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
         Renderer.GL.Clear((uint)ClearBufferMask.ColorBufferBit);
 
-        ImGuiViewportPtr viewport = ImGui.GetMainViewport();
-        //uint dockspaceId = ImGui.DockSpaceOverViewport(0, viewport, ImGuiDockNodeFlags.PassthruCentralNode);
+        DrawToolbar();
+
         uint dockspaceId = ImGui.GetID("MainDockspace");
-        ImGui.DockSpaceOverViewport(dockspaceId, viewport, ImGuiDockNodeFlags.PassthruCentralNode);
+        DrawDockHost(dockspaceId);
 
         ImGui.SetNextWindowDockID(dockspaceId, ImGuiCond.FirstUseEver);
 
-        DrawSceneView(dockspaceId);
-        DrawHierarchy(dockspaceId);
-        DrawInspector(dockspaceId);
+        EditorTabs.Draw(dockspaceId);
 
-        DrawGeneral(dockspaceId);
-        DrawTime(dockspaceId);
-        DrawRendering(dockspaceId);
-
-        DrawLog(dockspaceId);
-        DrawEngineInfo(dockspaceId);
-        DrawGLInfo(dockspaceId);
         //ImGui.ShowMetricsWindow();
 
         ImGUI.Render();
@@ -121,119 +125,86 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         _docked = true;
     }
 
-    private void DrawSceneView (uint dockspaceId) {
+
+    private void DrawToolbar () {
+        ImGuiViewportPtr viewport = ImGui.GetMainViewport();
+
+        ImGui.SetNextWindowPos(viewport.Pos);
+        ImGui.SetNextWindowSize(new Vector2(viewport.Size.X, toolbarHeight));
+        ImGui.SetNextWindowSizeConstraints(
+            new Vector2(viewport.Size.X, toolbarHeight),
+            new Vector2(viewport.Size.X, toolbarHeight)
+        );
+        ImGui.SetNextWindowViewport(viewport.ID);
+
+        ImGuiWindowFlags flags =
+            ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize |
+            ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoSavedSettings |
+            ImGuiWindowFlags.NoBringToFrontOnFocus;
+        flags |= ImGuiWindowFlags.AlwaysAutoResize;
+
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(4, 0));
+        //ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(4, 0));
+        //ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f);
+
+        ImGui.Begin("##" + "Toolbar", flags);
+
+        //float textHeight = ImGui.GetTextLineHeight();
+        //float y = (toolbarHeight - textHeight) * 0.5f;
+        //ImGui.SetCursorPosY(ImGui.GetCursorPosY() + y);
+        //ImGui.Text("Engine");
+        //ImGui.SameLine();
+
+        //if (ImGui.Button("Save")) { }
+        //ImGui.SameLine();
+        if (ImGui.Button("Tabs")) {
+            ImGui.OpenPopup("##" + "TabsContext");
+        }
+
+        EditorTabs.ContextDrawTab();
+
+        //ImGui.SameLine();
+        //ImGui.Separator();
+        //ImGui.SameLine();
+
+        //string playName = "Play";
+        //float buttonWidth = ImGui.CalcTextSize(playName).X + ImGui.GetStyle().FramePadding.X * 2;
+        //ImGui.SetCursorPosX((ImGui.GetWindowWidth() - buttonWidth) * 0.5f);
+        //if (ImGui.Button(playName)) { }
+
+        ImGui.End();
+        ImGui.PopStyleVar(2);
+    }
+
+    private void DrawDockHost (uint dockspaceId) {
+        ImGuiViewportPtr viewport = ImGui.GetMainViewport();
+        Vector2 hostPos = viewport.Pos + new Vector2(0, toolbarHeight);
+        Vector2 hostSize = viewport.Size - new Vector2(0, toolbarHeight);
+
+        ImGui.SetNextWindowPos(hostPos);
+        ImGui.SetNextWindowSize(hostSize);
+        ImGui.SetNextWindowViewport(viewport.ID);
+
+        ImGuiWindowFlags hostFlags =
+            ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize |
+            ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.NoNavFocus |
+            ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoDocking;
+
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0f);
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
-        ImGui.Begin("Scene");
 
-        EditorUI.Instance.UpdateAvail();
-        ImGui.Image((IntPtr)Renderer.Instance.PostProcess.OutputTexture, sceneAvail, new Vector2(0, 1), new Vector2(1, 0));
+        ImGui.Begin("##" + "DockHost", hostFlags);
+        ImGui.PopStyleVar(3);
 
-        _sceneRectMin = ImGui.GetItemRectMin();
-        _sceneRectMax = ImGui.GetItemRectMax();
-        isSceneUIHovered = ImGui.IsItemHovered();
-
-        if (!Inputs.isMouseVisible) {
-            Vector2 mousePos_Scene = WindowInput.Mouse!.Position - ImGui.GetItemRectMin();
-            float deltaX = MathF.Floor(mousePos_Scene.X/sceneAvail.X)*sceneAvail.X;
-            float deltaY = MathF.Floor(mousePos_Scene.Y/sceneAvail.Y)*sceneAvail.Y;
-            Vector2 delta = new Vector2(deltaX, deltaY);
-            if (0 < delta.LengthSquared()) {
-                WindowInput.TeleportMouseDelta(-delta);
-                //Log.log(sceneAvail, mousePos_Scene, isSceneUIHovered, delta);
-            }
-        }
-
-        //Log.log("sceneAvail", sceneAvail, "mousePos_Scene", mousePos_Scene, "isUIHovered", isSceneUIHovered);
-        //Log.log("mousePos_Scene", mousePos_Scene);
-
-        ImGui.End();
-        ImGui.PopStyleVar();
-    }
-
-    private void DrawHierarchy (uint dockspaceId) {
-        ImGui.Begin("Hierarchy");
-
-        Scene scene = SceneManager.ActiveScene;
-        ImGui.PushStyleColor(ImGuiCol.Text, EditorUIStyle.AccentColor);
-        ImGui.TextUnformatted(scene.Name);
-        ImGui.PopStyleColor();
-        ImGui.Separator();
-
-        foreach (GameObject go in scene.Objects) {
-            if (go.Transform.Parent is null) DrawHierarchyNode(go);
-        }
+        ImGui.DockSpace(dockspaceId, Vector2.Zero, ImGuiDockNodeFlags.PassthruCentralNode);
 
         ImGui.End();
     }
-    private void DrawHierarchyNode (GameObject go) {
-        ImGui.PushID(go.GetHashCode());
 
-        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.SpanAvailWidth;
 
-        if (go.Transform.Children.Count == 0)
-            flags |= ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen;
-
-        GameObject? go_selected = Gizmos._gizmo_Selected.go_selected;
-        if (go_selected == go) flags |= ImGuiTreeNodeFlags.Selected;
-
-        bool open = ImGui.TreeNodeEx(go.Name, flags);
-
-        if (ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen()) {
-            /// set selection the same way the gizmo/inspector already reads it
-            Gizmos._gizmo_Selected.UpdateSelected(go);
-        }
-
-        if (open && 0 < go.Transform.Children.Count) {
-            for (int c = 0; c < go.Transform.Children.Count; c++) DrawHierarchyNode(go.Transform.Children[c].gameObject);
-            ImGui.TreePop();
-        }
-
-        ImGui.PopID();
-    }
-    private void DrawInspector (uint dockspaceId) {
-        ImGui.Begin("Inspector");
-
-        GameObject? selectedGO = Gizmos._gizmo_Selected.go_selected;
-        if (selectedGO is not null) {
-            bool temp_b = selectedGO.Enabled;
-            if (ImGui.Checkbox("##" + nameof(selectedGO.Enabled), ref temp_b)) selectedGO.Enabled = temp_b;
-            ImGui.SameLine();
-            ImGui.InputText(nameof(selectedGO.Name), ref selectedGO.Name, 256);
-            ImGui.Separator();
-
-            DrawComponent(selectedGO.Transform);
-
-            for (int c = 0; c < selectedGO.Components.Count; c++) {
-                DrawComponent(selectedGO.Components[c]);
-            }
-        }
-
-        ImGui.End();
-    }
-    private void DrawGeneral (uint dockspaceId) {
-        ImGui.Begin("General");
-
-        //DrawVar(nameof(Time.timeScale), ref Time.timeScale);
-
-        ImGui.End();
-    }
-    private void DrawTime (uint dockspaceId) {
-        ImGui.Begin("Time");
-
-        DrawObject(typeof(Time));
-
-        ImGui.End();
-    }
-    private void DrawRendering (uint dockspaceId) {
-        ImGui.Begin("Rendering");
-
-        DrawObject(typeof(Lighting));
-        ImGui.Separator();
-        DrawObject(Renderer.Instance.PostProcess, [new InspectorName(nameof(Renderer.Instance.PostProcess.Effects))]);
-
-        ImGui.End();
-    }
-    public void DrawComponent (Component component) {
+    
+    public static void DrawComponent (Component component) {
         ImGui.PushID(component.GetHashCode());
         bool enabled = component.Enabled;
         if (ImGui.Checkbox("##" + nameof(component.Enabled), ref enabled)) {
@@ -250,35 +221,6 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.PopID();
     }
 
-    private void DrawLog (uint dockspaceId) {
-        ImGui.Begin("Log");
-        ImGui.BeginDisabled();
-
-        DrawObject(typeof(Log));
-
-        ImGui.EndDisabled();
-        ImGui.End();
-    }
-    private void DrawEngineInfo (uint dockspaceId) {
-        ImGui.Begin("Engine Info");
-        ImGui.BeginDisabled();
-
-        DrawObject(Engine.Engine.Instance.Stats);
-
-        ImGui.EndDisabled();
-        ImGui.End();
-    }
-    private void DrawGLInfo (uint dockspaceId) {
-        ImGui.Begin("Renderer Info");
-        ImGui.BeginDisabled();
-
-        DrawObject(Renderer.Instance.Stats);
-        ImGui.Separator();
-        DrawObject(Engine.Graphics.Shader.Stats);
-
-        ImGui.EndDisabled();
-        ImGui.End();
-    }
 
 
     
@@ -619,8 +561,9 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     }
 
 
-    public void UpdateAvail () {
+    public Vector2 UpdateAvail () {
         if (_docked) sceneAvail = getSceneAvail();
+        return sceneAvail;
     }
     public Vector2 getSceneAvail () {
         Vector2 avail = ImGui.GetContentRegionAvail();

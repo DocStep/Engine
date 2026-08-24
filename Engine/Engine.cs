@@ -33,6 +33,8 @@ public class Engine : IDisposable {
     public Action? de_Render = null;
     public Action? de_LateUpdate = null;
 
+    public Action? de_Closing = null;
+
     /// Debug
     public EngineStates engineState = EngineStates.Loading;
     public bool debug = false;
@@ -203,6 +205,8 @@ public class Engine : IDisposable {
     }*/
 
     private void OnClosing () {
+        de_Closing?.Invoke();
+
         Console.ResetColor();
     }
 
