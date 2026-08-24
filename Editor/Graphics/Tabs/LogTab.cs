@@ -13,6 +13,8 @@ public class LogTab : IEditorTab {
         ImGui.Begin(Name);
         ImGui.BeginDisabled();
 
+        EditorUI.DrawTabContext(this);
+
         EditorUI.DrawObject(typeof(Log));
 
         ImGui.EndDisabled();

@@ -12,6 +12,8 @@ public class TimeTab : IEditorTab {
     public void Draw () {
         ImGui.Begin(Name);
 
+        EditorUI.DrawTabContext(this);
+
         EditorUI.DrawObject(typeof(Time));
 
         ImGui.End();

@@ -13,6 +13,8 @@ public class EngineInfoTab : IEditorTab {
         ImGui.Begin(Name);
         ImGui.BeginDisabled();
 
+        EditorUI.DrawTabContext(this);
+
         EditorUI.DrawObject(Engine.Engine.Instance.Stats);
 
         ImGui.EndDisabled();

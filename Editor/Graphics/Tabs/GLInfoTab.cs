@@ -13,6 +13,8 @@ public class GLInfoTab : IEditorTab {
         ImGui.Begin(Name);
         ImGui.BeginDisabled();
 
+        EditorUI.DrawTabContext(this);
+
         EditorUI.DrawObject(Engine.Graphics.Renderer.Instance.Stats);
         ImGui.Separator();
         EditorUI.DrawObject(Engine.Graphics.Shader.Stats);

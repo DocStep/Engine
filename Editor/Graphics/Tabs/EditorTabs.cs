@@ -62,7 +62,6 @@ public static class EditorTabs {
                 IEditorTab tab = tabKV.Value;
                 tab.Draw();
             }
-                
         }
     }
 

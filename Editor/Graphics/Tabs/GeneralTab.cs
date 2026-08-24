@@ -12,6 +12,8 @@ public class GeneralTab : IEditorTab {
     public void Draw () {
         ImGui.Begin(Name);
 
+        EditorUI.DrawTabContext(this);
+
         //DrawVar(nameof(Time.timeScale), ref Time.timeScale);
 
         ImGui.End();

@@ -149,16 +149,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         ImGui.Begin("##" + "Toolbar", flags);
 
-        //float textHeight = ImGui.GetTextLineHeight();
-        //float y = (toolbarHeight - textHeight) * 0.5f;
-        //ImGui.SetCursorPosY(ImGui.GetCursorPosY() + y);
-        //ImGui.Text("Engine");
-        //ImGui.SameLine();
-
-        //if (ImGui.Button("Save")) { }
-        //ImGui.SameLine();
         if (ImGui.Button("Tabs")) {
-            ImGui.OpenPopup("##" + "TabsContext");
+            ImGui.OpenPopup("##" + "Tabs" + "Context");
         }
 
         EditorTabs.ContextDrawTab();
@@ -202,7 +194,14 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.End();
     }
 
+    public static void DrawTabContext (IEditorTab tab) {
+        if (ImGui.BeginPopupContextItem("##" + Name + "TabContext")) {
+            if (ImGui.MenuItem("Close"))
+                tab.isActive = false;
 
+            ImGui.EndPopup();
+        }
+    }
     
     public static void DrawComponent (Component component) {
         ImGui.PushID(component.GetHashCode());

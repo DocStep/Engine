@@ -13,6 +13,8 @@ public class SceneTab : IEditorTab {
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         ImGui.Begin(Name);
 
+        EditorUI.DrawTabContext(this);
+
         Vector2 sceneAvail = EditorUI.Instance.UpdateAvail();
         ImGui.Image((IntPtr)Engine.Graphics.Renderer.Instance.PostProcess.OutputTexture, sceneAvail, new Vector2(0, 1), new Vector2(1, 0));
 

@@ -12,6 +12,8 @@ public class RenderingTab : IEditorTab {
     public void Draw () {
         ImGui.Begin(Name);
 
+        EditorUI.DrawTabContext(this);
+
         EditorUI.DrawObject(typeof(Engine.Graphics.Lighting));
         ImGui.Separator();
         EditorUI.DrawObject(Engine.Graphics.Renderer.Instance.PostProcess, 

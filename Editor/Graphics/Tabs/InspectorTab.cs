@@ -12,12 +12,7 @@ public class InspectorTab : IEditorTab {
     public void Draw () {
         ImGui.Begin(Name);
 
-        if (ImGui.BeginPopupContextItem("##" + Name + "TabContext")) {
-            if (ImGui.MenuItem("Close"))
-                isActive = false;
-
-            ImGui.EndPopup();
-        }
+        EditorUI.DrawTabContext(this);
 
         GameObject? selectedGO = Gizmos._gizmo_Selected.go_selected;
         if (selectedGO is not null) {
