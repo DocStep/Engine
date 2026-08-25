@@ -34,7 +34,7 @@ public static class Gizmos {
         _sh_GizmoGrid = new Shader(Assets.LoadText("src/Shaders/Grid_Vertex.shader"), Assets.LoadText("src/Shaders/Grid_Fragment.shader"), "Grid", isLit: false);
         _mat_GizmoGrid = new Material(_sh_GizmoGrid);
         _mat_GizmoGrid.SetVector3(Color, Constants.lightGray);
-        _mat_GizmoGrid.SetFloat(Alpha, 0.2f);
+        _mat_GizmoGrid.SetFloat(Alpha, 0.5f);
         _mat_GizmoGrid.SetFloat(Radius, 100f);
         _mat_GizmoGrid.SetFloat(Fade, 10f);
         _mat_GizmoGrid.pass = RenderPass.Transparent;
