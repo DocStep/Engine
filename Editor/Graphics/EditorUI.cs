@@ -69,7 +69,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     public Vector2 _sceneRectMax { get; private set; }
     public void UpdateSceneRect (Vector2 min, Vector2 max) {
         _sceneRectMin = min;
-        _sceneRectMin = max;
+        _sceneRectMax = max;
     }
 
     public bool isSceneUIHovered { get; private set; }

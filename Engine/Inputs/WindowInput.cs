@@ -69,29 +69,25 @@ public static class WindowInput {
 
         //WheelDelta = 0f;
         if (mouse is not null) {
-            foreach (Silk.NET.Input.MouseButton btn in System.Enum.GetValues<Silk.NET.Input.MouseButton>()) {
+            foreach (Silk.NET.Input.MouseButton btn in Enum.GetValues<Silk.NET.Input.MouseButton>()) {
                 Keys mapped = InputKeyMap.FromMouseButton(btn);
                 if (mapped == Keys.None) continue;
                 if (mouse.IsButtonPressed(btn)) current.Add(mapped);
             }
 
+            MousePos = mouse!.Position;
+            if (firstMouseSample) {
+                lastMousePos = MousePos;
+                firstMouseSample = false;
+            }
+            MouseDelta = new Vector2(MousePos.X - lastMousePos.X, MousePos.Y - lastMousePos.Y);
+            lastMousePos = MousePos;
+
             if (0 < wheelDelta) current.Add(Keys.WheelUp);
             if (wheelDelta < 0) current.Add(Keys.WheelDown);
             WheelDelta = wheelDelta;
-
-            PollMousePosition();
         }
         wheelDelta = 0f;
-    }
-
-    static void PollMousePosition () {
-        MousePos = mouse!.Position;
-        if (firstMouseSample) {
-            lastMousePos = MousePos;
-            firstMouseSample = false;
-        }
-        MouseDelta = new Vector2(MousePos.X - lastMousePos.X, MousePos.Y - lastMousePos.Y);
-        lastMousePos = MousePos;
     }
 
     public static bool GetKeyDown (Keys k) => current.Contains(k) && !previous.Contains(k);
