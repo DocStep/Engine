@@ -2,7 +2,7 @@
 
 namespace Engine.Graphics.UI;
 
-public class RectTransform : Component {
+public class RectTransform : Transform {
 
     public override string Name => nameof(RectTransform);
 
@@ -41,7 +41,7 @@ public class RectTransform : Component {
     private RectTransform? FindParentRect () {
         Transform? p = gameObject.Transform.Parent;
         while (p is not null) {
-            RectTransform? r = p.gameObject.GetComponent<RectTransform>();
+            RectTransform? r = p as RectTransform ?? p.gameObject.GetComponent<RectTransform>();
             if (r is not null) return r;
             p = p.Parent;
         }

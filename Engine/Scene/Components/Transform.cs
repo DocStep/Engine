@@ -76,16 +76,13 @@ public class Transform : Component {
     [WrapRotation(0, 360)]
     [ChangeStep(1f)]
     public Vector3 LocalEuler {
-        get {
-            localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
-            return localRotationEuler;
-        }
+        get => localRotationEuler;
         set {
             value = WrapVector3(value, 0f, 360f);
 
             SetLocalRotation_Silent(EulerToQuaternion(value));
 
-            localRotationEuler = QuaternionToEuler(localRotation, value);
+            localRotationEuler = value;
             rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
 
             de_RotationChanged?.Invoke(Rotation);
@@ -98,7 +95,7 @@ public class Transform : Component {
             Quaternion.CreateFromAxisAngle(Vector3.UnitZ, degrees.Z*Mathf.Deg2Rad);
 
         localRotation = Quaternion.Normalize(localRotation*delta);
-        localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
+        localRotationEuler = WrapVector3(localRotationEuler + degrees, 0f, 360f);
         rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
 
         de_RotationChanged?.Invoke(Rotation);
@@ -167,16 +164,13 @@ public class Transform : Component {
     [WrapRotation(0, 360)]
     [ChangeStep(1f)]
     public Vector3 RotationEuler {
-        get {
-            rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
-            return rotationEuler;
-        }
+        get => rotationEuler;
         set {
             value = WrapVector3(value, 0f, 360f);
 
             SetRotation_Silent(EulerToQuaternion(value));
 
-            rotationEuler = QuaternionToEuler(Rotation, value);
+            rotationEuler = value;
 
             de_RotationChanged?.Invoke(Rotation);
         }
@@ -253,6 +247,29 @@ public class Transform : Component {
         rotationEuler = QuaternionToEuler(rotation, rotationEuler);
     }
 
+    public void CopyFrom (Transform source) {
+        localPosition = source.localPosition;
+        localRotation = source.localRotation;
+        localRotationEuler = source.localRotationEuler;
+        localScale = source.localScale;
+        rotationEuler = source.rotationEuler;
+
+        parent = source.parent;
+        if (parent is not null) {
+            int childIndex = parent.Children.IndexOf(source);
+            if (0 <= childIndex) parent.Children[childIndex] = this;
+            else if (!parent.Children.Contains(this)) parent.Children.Add(this);
+        }
+
+        Children.Clear();
+        Children.AddRange(source.Children);
+        foreach (Transform child in Children)
+            child.parent = this;
+
+        source.Children.Clear();
+        source.parent = null;
+    }
+
     private static Quaternion NormalizeSafe (Quaternion rotation) {
         float lengthSquared =
             rotation.X*rotation.X +
@@ -287,21 +304,21 @@ public class Transform : Component {
     private void RotateLocalX_Silent (float degrees) {
         Quaternion delta = Quaternion.CreateFromAxisAngle(Vector3.UnitX, degrees*Mathf.Deg2Rad);
         localRotation = Quaternion.Normalize(localRotation*delta);
-        localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
+        localRotationEuler.X = Wrap(localRotationEuler.X + degrees, 0f, 360f);
         rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
     }
 
     private void RotateLocalY_Silent (float degrees) {
         Quaternion delta = Quaternion.CreateFromAxisAngle(Vector3.UnitY, degrees*Mathf.Deg2Rad);
         localRotation = Quaternion.Normalize(localRotation*delta);
-        localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
+        localRotationEuler.Y = Wrap(localRotationEuler.Y + degrees, 0f, 360f);
         rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
     }
 
     private void RotateLocalZ_Silent (float degrees) {
         Quaternion delta = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, degrees*Mathf.Deg2Rad);
         localRotation = Quaternion.Normalize(localRotation*delta);
-        localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
+        localRotationEuler.Z = Wrap(localRotationEuler.Z + degrees, 0f, 360f);
         rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
     }
 

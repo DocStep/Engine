@@ -19,7 +19,7 @@ public enum PrimitiveTypes {
 public class GameObject : ISavable, IDisposable {
     public GameObject() {
         Id = lib.Id;
-        Transform.gameObject = this;
+        SetTransform(new Transform());
         SceneManager.ActiveScene.ObjectAdd(this);
     }
     /*public GameObject (List<Component> Components) : base() {
@@ -36,7 +36,7 @@ public class GameObject : ISavable, IDisposable {
 
         Id = GetHashCode();
 
-        Transform.gameObject = this;
+        SetTransform(new Transform());
         Transform.Position = position;
         Transform.Rotation = Mathf.EulerToQuaternion(rotation);
         Transform.LocalScale = scale;
@@ -93,13 +93,15 @@ public class GameObject : ISavable, IDisposable {
     public string Name = TypeName;
     public readonly long Id = 0;
     public bool Enabled = true;
-    public readonly Transform Transform = new Transform();
+    public Transform Transform { get; private set; } = null!;
     public readonly List<Component> Components = new List<Component>();
 
     [JsonIgnore] public const string TypeName = nameof(GameObject);
 
 
     public T? GetComponent<T> () where T : Component {
+        if (Transform is T transform) return transform;
+
         foreach (Component component in Components) {
             if (component is T match) return match;
         }
@@ -108,6 +110,11 @@ public class GameObject : ISavable, IDisposable {
     }
     public T AddComponent<T> () where T : Component, new() {
         T component = new T();
+        if (component is Transform transform) {
+            SetTransform(transform);
+            return component;
+        }
+
         Components.Add(component);
         component.SetParent(this);
         ComponentManager.Instance.ComponentRegister(component);
@@ -126,6 +133,8 @@ public class GameObject : ISavable, IDisposable {
             ComponentManager.Instance.ComponentUnregister(component);
     }
     public void RemoveComponent (Component component) {
+        if (component == Transform) return;
+
         component.gameObject = null!;
         Components.Remove(component);
         ComponentManager.Instance.ComponentUnregister(component);
@@ -149,6 +158,16 @@ public class GameObject : ISavable, IDisposable {
 
     public void Dispose () {
         
+    }
+
+    private void SetTransform (Transform transform) {
+        Transform? previous = Transform;
+        Transform = transform;
+        Transform.SetParent(this);
+
+        if (previous is null) return;
+
+        Transform.CopyFrom(previous);
     }
 
 }
