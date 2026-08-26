@@ -7,7 +7,7 @@ namespace Engine.Graphics;
 /// face view matrices, and the unit cube used to rasterize each face. Used
 /// by the equirect->cubemap conversion, irradiance convolution, and
 /// specular prefilter passes — they differ only in shader and resolution.
-public static class CubemapCapture {
+public static class Cubemap {
     private static readonly Matrix4x4[] CaptureViews = {
         Matrix4x4.CreateLookAt(Vector3.Zero, new Vector3( 1, 0, 0), new Vector3(0, -1, 0)),
         Matrix4x4.CreateLookAt(Vector3.Zero, new Vector3(-1, 0, 0), new Vector3(0, -1, 0)),

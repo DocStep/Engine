@@ -26,6 +26,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mat_UI = new Graphics.UI.MaterialUI(_sh_UI) { Name = "UI", };
 
         _sh_Skybox = new Shader(Assets.LoadText("src/Shaders/Skybox_Vertex.shader"), Assets.LoadText("src/Shaders/Skybox_Fragment.shader"), "Skybox", isLit: false);
+        _mat_Skybox = new MaterialSkybox(_sh_Skybox);
         _hdr_Skybox = new HdrTexture("src/hdr/autumn_field_puresky_4k.hdr");
         //_hdr_Skybox = new HdrTexture("src/hdr/rogland_clear_night_4k.hdr");
         //_hdr_Skybox = new HdrTexture("src/hdr/grasslands_sunset_4k.hdr");
@@ -120,6 +121,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Graphics.UI.MaterialUI _mat_UI = null!;
 
     public readonly static Shader _sh_Skybox = null!;
+    public readonly static Material _mat_Skybox = null!;
     public readonly static HdrTexture? _hdr_Skybox = null;
     
     public readonly static Mesh _mesh_Cube = null!;

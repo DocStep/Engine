@@ -3,7 +3,7 @@
 
 public class MonkeyScript : Script, IAwake, IUpdate {
 
-    [ChangeStep(1f)] public Vector3 dir = new Vector3(90, 90, 0);
+    [ChangeStep(1f)] public Vector3 dir = new Vector3(0, 90, 0);
 
     Graphics.Material? mat;
     public Vector3 color;

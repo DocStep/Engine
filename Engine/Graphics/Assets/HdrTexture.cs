@@ -5,44 +5,43 @@ namespace Engine.Graphics;
 
 public class HdrTexture : IDisposable {
     public HdrTexture (string path) {
-        GL = Renderer.GL;
+        GL gl = Renderer.GL;
         HdrLoader.Load(path, out float[] data, out Width, out Height);
 
-        Handle = GL.GenTexture();
-        GL.BindTexture(TextureTarget.Texture2D, Handle);
+        Handle = gl.GenTexture();
+        gl.BindTexture(TextureTarget.Texture2D, Handle);
 
         unsafe {
             fixed (float* d = data) {
-                GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgb32f, (uint)Width, (uint)Height, 
-                    0, PixelFormat.Rgb, PixelType.Float, d);
+                gl.TexImage2D(TextureTarget.Texture2D, level: 0, InternalFormat.Rgb32f, (uint)Width, (uint)Height,
+                    border:  0, PixelFormat.Rgb, PixelType.Float, d);
             }
         }
 
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.LinearMipmapLinear);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.LinearMipmapLinear);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
 
-        GL.GenerateMipmap(TextureTarget.Texture2D);
+        gl.GenerateMipmap(TextureTarget.Texture2D);
 
-        GL.BindTexture(TextureTarget.Texture2D, 0);
+        gl.BindTexture(TextureTarget.Texture2D, 0);
     }
 
 
-    private readonly GL GL;
     public readonly uint Handle;
     public readonly int Width;
     public readonly int Height;
 
 
     public void Bind (TextureUnit unit = TextureUnit.Texture0) {
-        GL.ActiveTexture(unit);
-        GL.BindTexture(TextureTarget.Texture2D, Handle);
+        Renderer.GL.ActiveTexture(unit);
+        Renderer.GL.BindTexture(TextureTarget.Texture2D, Handle);
     }
 
 
     public void Dispose () {
-        GL.DeleteTexture(Handle);
+        Renderer.GL.DeleteTexture(Handle);
     }
 
 }

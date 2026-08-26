@@ -29,7 +29,7 @@ public class Renderer {
         GL.FrontFace(FrontFaceDirection.CW);
         GL.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
 
-        _skybox = new Skybox(_sh_Skybox, _hdr_Skybox) { blurScale = 3f, };
+        Skybox = new Skybox(_hdr_Skybox);
 
         //SetTargetSize(Engine.Window.Size.X, Engine.Window.Size.Y);
 
@@ -65,24 +65,17 @@ public class Renderer {
     protected readonly GL _GL = Windows.Window.CreateOpenGL();
     public static GL GL => Instance._GL;
 
-    public readonly TextRenderer TextRenderer = null!;
-
     public Action? de_Dispose = null;
 
-    public readonly Skybox _skybox = null!;
-
+    public readonly Skybox Skybox = null!;
     public readonly PostProcessStack PostProcess = null!;
+    public readonly TextRenderer TextRenderer = null!;
 
 
     /// Debug
     public Matrix4x4 m4x4_View = Matrix4x4.Identity;
     public Matrix4x4 m4x4_Projection = Matrix4x4.Identity;
     public Matrix4x4 m4x4_ProjectionUI = Matrix4x4.Identity;
-    //protected static float[] uView = [];
-    //public float[] UView => uView;
-
-    //protected static float[] uProjection = [];
-    //public float[] UProjection => uProjection;
 
     protected readonly List<RenderInfo> RenderList = new List<RenderInfo>();
 
@@ -115,7 +108,7 @@ public class Renderer {
 
         PostProcess.BeginScene();
 
-        _skybox?.Draw(m4x4_View, m4x4_Projection);
+        Skybox?.Draw();
 
         DrawSceneAll();
 
@@ -250,7 +243,7 @@ public class Renderer {
             case RenderPass.Transparent:
                 SetSceneUniformsUnlit(shader, Camera.Main.CameraPos);
                 SetSceneUniformsLit(shader);
-                SetSceneUniformsSkybox(shader, _skybox.texture, _skybox.maxLod);
+                SetSceneUniformsSkybox(shader, Skybox.texture, Skybox.maxLod);
                 break;
             case RenderPass.UI:
                 shader.SetMatrix4x4(Projection, m4x4_ProjectionUI);
@@ -309,7 +302,7 @@ public class Renderer {
     protected virtual void Dispose () {
         TextRenderer.Dispose();
 
-        _skybox.Dispose();
+        Skybox.Dispose();
         PostProcess.Dispose();
 
         de_Dispose?.Invoke();

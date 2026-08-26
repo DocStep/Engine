@@ -2,7 +2,7 @@
 
 
 public interface IAsset : IDisposable {
-    public string Name { get; }
+    string Name { get; }
 }
 
 /// Asset type that knows how to load itself from a path
