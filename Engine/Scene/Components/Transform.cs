@@ -71,7 +71,7 @@ public class Transform : Component {
         }
     }
 
-    /// <summary> Use <see cref="RotateLocal"/> for continuous rotation </summary>
+    /// <summary> Use <see cref="RotateLocalEuler"/> for continuous rotation </summary>
     [JsonIgnore]
     [WrapRotation(0, 360)]
     [ChangeStep(1f)]
@@ -80,22 +80,25 @@ public class Transform : Component {
         set {
             value = WrapVector3(value, 0f, 360f);
 
-            SetLocalRotation_Silent(EulerToQuaternion(value));
-
             localRotationEuler = value;
+            localRotation = EulerToQuaternion(value);
             rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
 
             de_RotationChanged?.Invoke(Rotation);
         }
     }
-    public void RotateLocal (Vector3 degrees) {
+    public void RotateLocalEuler (Vector3 degrees) {
         Quaternion delta =
             Quaternion.CreateFromAxisAngle(Vector3.UnitX, degrees.X*Mathf.Deg2Rad)*
             Quaternion.CreateFromAxisAngle(Vector3.UnitY, degrees.Y*Mathf.Deg2Rad)*
             Quaternion.CreateFromAxisAngle(Vector3.UnitZ, degrees.Z*Mathf.Deg2Rad);
 
+        RotateLocal(delta);
+    }
+
+    public void RotateLocal (Quaternion delta) {
         localRotation = Quaternion.Normalize(localRotation*delta);
-        localRotationEuler = WrapVector3(localRotationEuler + degrees, 0f, 360f);
+        localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
         rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
 
         de_RotationChanged?.Invoke(Rotation);
@@ -304,21 +307,19 @@ public class Transform : Component {
     private void RotateLocalX_Silent (float degrees) {
         Quaternion delta = Quaternion.CreateFromAxisAngle(Vector3.UnitX, degrees*Mathf.Deg2Rad);
         localRotation = Quaternion.Normalize(localRotation*delta);
-        localRotationEuler.X = Wrap(localRotationEuler.X + degrees, 0f, 360f);
+        localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
         rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
     }
-
     private void RotateLocalY_Silent (float degrees) {
         Quaternion delta = Quaternion.CreateFromAxisAngle(Vector3.UnitY, degrees*Mathf.Deg2Rad);
         localRotation = Quaternion.Normalize(localRotation*delta);
-        localRotationEuler.Y = Wrap(localRotationEuler.Y + degrees, 0f, 360f);
+        localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
         rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
     }
-
     private void RotateLocalZ_Silent (float degrees) {
         Quaternion delta = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, degrees*Mathf.Deg2Rad);
         localRotation = Quaternion.Normalize(localRotation*delta);
-        localRotationEuler.Z = Wrap(localRotationEuler.Z + degrees, 0f, 360f);
+        localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
         rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
     }
 
@@ -431,28 +432,27 @@ public class Transform : Component {
     private static Vector3 QuaternionToEuler (Quaternion q, Vector3 previous) {
         q = NormalizeSafe(q);
 
-        float sinPitch = 2f*(q.X*q.W - q.Y*q.Z);
-        sinPitch = Math.Clamp(sinPitch, -1f, 1f);
+        float sinYaw = 2f*(q.W*q.Y - q.Z*q.X);
+        sinYaw = Math.Clamp(sinYaw, -1f, 1f);
 
-        float x; /// pitch
-        float y; /// yaw
-        float z; /// roll
+        float x;
+        float y;
+        float z;
 
-        if (MathF.Abs(sinPitch) < 0.9999f) {
-            x = MathF.Asin(sinPitch);
-            y = MathF.Atan2(2f*(q.X*q.Z + q.Y*q.W), 1f - 2f*(q.X*q.X + q.Y*q.Y));
-            z = MathF.Atan2(2f*(q.X*q.Y + q.Z*q.W), 1f - 2f*(q.X*q.X + q.Z*q.Z));
+        if (MathF.Abs(sinYaw) < 0.9999f) {
+            y = MathF.Asin(sinYaw);
+            x = MathF.Atan2(2f*(q.W*q.X + q.Y*q.Z), 1f - 2f*(q.X*q.X + q.Y*q.Y));
+            z = MathF.Atan2(2f*(q.W*q.Z + q.X*q.Y), 1f - 2f*(q.Y*q.Y + q.Z*q.Z));
         } else {
-            /// gimbal lock (pitch ~ ±90): yaw/roll couple, hold roll steady
-            x = MathF.Asin(sinPitch);
+            y = MathF.Asin(sinYaw);
             z = previous.Z*Mathf.Deg2Rad;
 
             float m00 = 1f - 2f*(q.Y*q.Y + q.Z*q.Z);
-            float m01 = 2f*(q.X*q.Y - q.Z*q.W);
+            float m10 = 2f*(q.X*q.Y + q.Z*q.W);
 
-            y = 0f < sinPitch
-                ? MathF.Atan2(m01, m00) + z
-                : MathF.Atan2(-m01, m00) - z;
+            x = sinYaw > 0f
+                ? MathF.Atan2(m10, m00) - z
+                : MathF.Atan2(-m10, m00) + z;
         }
 
         Vector3 result = new Vector3(x*Mathf.Rad2Deg, y*Mathf.Rad2Deg, z*Mathf.Rad2Deg);

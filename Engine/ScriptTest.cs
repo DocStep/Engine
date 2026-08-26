@@ -8,7 +8,7 @@ public class ScriptTest : IActionScript_Update {
         GameObject? Suzanne = SceneManager.ActiveScene.Find("Reflection Suzanne");
         if (Suzanne is null) return;
 
-        Suzanne.Transform.RotateLocal((float)Time.deltaTime*new Vector3(90, 0, 0));
+        Suzanne.Transform.RotateLocalEuler((float)Time.deltaTime*new Vector3(90, 0, 0));
     }
 
 }

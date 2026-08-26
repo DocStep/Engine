@@ -1,9 +1,15 @@
-﻿using ImGuiNET;
+using ImGuiNET;
+using System.Reflection;
 
 namespace Editor;
 
 
 public static class ComponentsInpector {
+
+    private static Transform? _eulerDragTransform = null;
+    private static Vector3 _eulerDragValue = Vector3.Zero;
+    private static readonly Dictionary<Transform, (Quaternion rotation, Vector3 euler)> _eulerDisplayCache = new();
+
 
     extension(Component component) {
         public void DrawInspector () {
@@ -19,13 +25,16 @@ public static class ComponentsInpector {
 
             Vector3 localEuler = transform.LocalEuler;
             Vector3 draggedEuler = localEuler;
-            if (ImGui.DragFloat3(nameof(transform.LocalEuler), ref draggedEuler, 1f, 0f, 0f, "%.2f")) {
+
+            string label = nameof(transform.LocalEuler);
+            Graphics.EditorUI.InvertedOrder(ref label);
+            if (ImGui.DragFloat3(label, ref draggedEuler, 1f, 0f, 0f, "%.2f")) {
                 Vector3 delta = new Vector3(
                     ShortestAngle(localEuler.X, draggedEuler.X),
                     ShortestAngle(localEuler.Y, draggedEuler.Y),
                     ShortestAngle(localEuler.Z, draggedEuler.Z)
                 );
-                transform.RotateLocal(delta);
+                transform.RotateLocalEuler(delta);
             }
 
             Vector3 localScale = transform.LocalScale;
@@ -57,5 +66,25 @@ public static class ComponentsInpector {
         return delta;
     }
 
+    private static Vector3 GetDisplayEuler (Transform transform) {
+        Quaternion rotation = transform.LocalQuaternion;
+
+        if (_eulerDragTransform == transform)
+            return _eulerDragValue;
+
+        if (_eulerDisplayCache.TryGetValue(transform, out (Quaternion rotation, Vector3 euler) cached)
+            && Quaternion.Dot(cached.rotation, rotation) > 0.99999f)
+            return cached.euler;
+
+        Vector3 euler = transform.LocalEuler;
+        _eulerDisplayCache[transform] = (rotation, euler);
+        return euler;
+    }
+
+    private static IEnumerable<Attribute> GetPropertyAttributes<T> (string propertyName) {
+        return typeof(T)
+            .GetProperty(propertyName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetCustomAttributes();
+    }
 
 }

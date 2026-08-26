@@ -3,7 +3,7 @@
 
 public class MonkeyScript : Script, IAwake, IUpdate {
 
-    [ChangeStep(1f)] public Vector3 dir = new Vector3(0, 90, 0);
+    [ChangeStep(1f)] public Vector3 dir = new Vector3(90, 90, 0);
 
     Graphics.Material? mat;
     public Vector3 color;
@@ -14,7 +14,7 @@ public class MonkeyScript : Script, IAwake, IUpdate {
         mat = gameObject.GetComponent<Graphics.MeshComponent>()?.material;
     }
     public void Update () {
-        gameObject.Transform.RotateLocal((float)Time.deltaTime*dir);
+        gameObject.Transform.RotateLocalEuler((float)Time.deltaTime*dir);
 
         color = new Vector3()!;
         color.X = Mathf.Remap01(MathF.Sin(3f*(float)Time.time), -1, 1);

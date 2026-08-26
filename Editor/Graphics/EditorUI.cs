@@ -346,12 +346,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         bool isNestedObject = value is GameObject or Component or Material or PostProcessPass or LogEntry;
         bool isRow = drawInverted && !isCollection && !isNestedObject;
         if (isRow) {
-            float labelWidth = MathF.Max(ImGui.GetContentRegionAvail().X*labelRatio, minLabelWidth);
-            ImGui.AlignTextToFramePadding();
-            ImGui.TextUnformatted(label);
-            ImGui.SameLine(labelWidth);
-            ImGui.SetNextItemWidth(-1);
-            label = "##" + label;
+            InvertedOrder(ref label);
         }
 
         object? result = null;
@@ -521,6 +516,16 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             return ImGui.DragScalar(label, ImGuiDataType.U32, (IntPtr)p, speed,
                 (IntPtr)(&min), (IntPtr)(&max));
         }
+    }
+
+
+    public static void InvertedOrder (ref string label) {
+        float labelWidth = MathF.Max(ImGui.GetContentRegionAvail().X*labelRatio, minLabelWidth);
+        ImGui.AlignTextToFramePadding();
+        ImGui.TextUnformatted(label);
+        ImGui.SameLine(labelWidth);
+        ImGui.SetNextItemWidth(-1);
+        label = "##" + label;
     }
 
 
