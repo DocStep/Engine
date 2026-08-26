@@ -20,8 +20,8 @@ public class Image : Component {
     [Hide][JsonIgnore] public RectTransform Rect => rect;
 
     [Hide][JsonIgnore] private static Mesh? _sharedQuad = null;
+    [Hide][JsonIgnore] private Texture? _texture;
     [JsonIgnore] private MaterialUI _material = null!;
-    [Hide][JsonIgnore] public uint _textureId;
     [Hide][JsonIgnore] private bool _loaded = false;
 
 
@@ -32,30 +32,13 @@ public class Image : Component {
         if (0 < Path.Length) Load(Path);
     }
     public override void OnRemove () {
-        if (_textureId != 0) Renderer.GL.DeleteTexture(_textureId);
+        _texture?.Dispose();
     }
 
     public void Load (string path) {
         Path = path;
-        GL GL = Renderer.GL;
-
-        StbImageSharp.ImageResult image = StbImageSharp.ImageResult.FromMemory(File.ReadAllBytes(path), StbImageSharp.ColorComponents.RedGreenBlueAlpha);
-
-        if (_textureId == 0) _textureId = GL.GenTexture();
-        GL.BindTexture(TextureTarget.Texture2D, _textureId);
-
-        unsafe {
-            fixed (byte* ptr = image.Data) {
-                GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint)image.Width, (uint)image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, ptr);
-            }
-        }
-
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
-
-        _material.textureId = _textureId;
+        _texture = Texture.Load(path);
+        _material.textureId = _texture.Handle;
         _loaded = true;
     }
 
@@ -64,6 +47,7 @@ public class Image : Component {
 
         Vector2 origin = rect.Min; /// Min already accounts for pivot
         _material.SetVector4("uTint", Tint);
+        _texture!.Bind();
 
         Renderer.Instance.AddRenderInfo(new RenderInfo {
             name = "UIImage",

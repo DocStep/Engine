@@ -21,14 +21,14 @@ public class Texture : IAsset<Texture> {
 
         Texture tex = new Texture();
 
-        StbImage.stbi_set_flip_vertically_on_load(1);
+        //StbImage.stbi_set_flip_vertically_on_load(1);
 
         using FileStream stream = File.OpenRead(path);
         ImageResult image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
 
+        tex.Handle = gl.GenTexture();
         tex.Width = image.Width;
         tex.Height = image.Height;
-        tex.Handle = gl.GenTexture();
 
         gl.ActiveTexture(TextureUnit.Texture0);
         gl.BindTexture(TextureTarget.Texture2D, tex.Handle);
