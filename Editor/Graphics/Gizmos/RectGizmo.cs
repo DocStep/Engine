@@ -6,7 +6,7 @@ namespace Editor.Graphics.UI;
 public class RectGizmo : IDisposable {
     public RectGizmo () {
         GL = Engine.Graphics.Renderer.GL;
-        _material = AssetsEngine._mat_Unlit;
+        _material = new Engine.Graphics.Material(AssetsEngine._mat_Unlit);
 
         _vao = GL.GenVertexArray();
         _vbo = GL.GenBuffer();
@@ -24,7 +24,7 @@ public class RectGizmo : IDisposable {
     GL GL;
     uint _vao, _vbo;
     Engine.Graphics.Material _material;
-    Vector4 color = new Vector4 (0f, 1f, 1f, 1f);
+    Vector3 color = new Vector3(0f, 1f, 1f);
 
 
     public void Draw (Engine.Graphics.UI.RectTransform rect, int targetWidth, int targetHeight) {
@@ -46,7 +46,8 @@ public class RectGizmo : IDisposable {
         _material.shader.SetMatrix4x4(Engine.Graphics.Shader.Projection, Engine.Graphics.Renderer.Instance.m4x4_ProjectionUI);
         _material.shader.SetMatrix4x4(Engine.Graphics.Shader.View, Matrix4x4.Identity);
         _material.shader.SetMatrix4x4(Engine.Graphics.Shader.Model, Matrix4x4.Identity);
-        _material.shader.SetVector4(Engine.Graphics.Shader.Color, color);
+        _material.shader.SetVector3(Engine.Graphics.Shader.Color, color);
+        _material.shader.SetFloat(Engine.Graphics.Shader.Alpha, 1);
 
         GL.BindVertexArray(_vao);
         GL.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);

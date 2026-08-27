@@ -13,6 +13,7 @@ public enum RenderFace {
 }
 
 
+
 public class Material /*: IDisposable*/ {
     //public Material () { }
     public Material (Shader shader) {
@@ -46,7 +47,7 @@ public class Material /*: IDisposable*/ {
 
 
     public void Apply () {
-        foreach (var kv in ints) shader.SetFloat(kv.Key, kv.Value);
+        foreach (var kv in ints) shader.SetInt(kv.Key, kv.Value);
         foreach (var kv in floats) shader.SetFloat(kv.Key, kv.Value);
         foreach (var kv in vectors2) shader.SetVector2(kv.Key, kv.Value);
         foreach (var kv in vectors3) shader.SetVector3(kv.Key, kv.Value);

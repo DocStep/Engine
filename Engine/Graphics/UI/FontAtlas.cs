@@ -19,25 +19,43 @@ public class FontAtlas : IDisposable {
         public float XAdvance;
     }
 
-    public static unsafe FontAtlas Load (byte[] fontData, float fontSize) {
+    public static FontAtlas Load (byte[] fontData, float fontSize) {
         GL gl = Renderer.GL;
-        int atlasWidth = 512;
-        int atlasHeight = 512;
+
+        /// scale atlas resolution with font size; start here and grow if packing still overflows
+        int atlasWidth = (int)Math.Max(512, Math.Ceiling(fontSize)*16);
+        int atlasHeight = atlasWidth;
+
+        StbTrueType.stbtt_bakedchar[] bakedChars = new StbTrueType.stbtt_bakedchar[96]; /// ASCII 32-127
+        byte[] bitmap;
+        int bakeResult;
+
+        while (true) {
+            bitmap = new byte[atlasWidth*atlasHeight];
+            unsafe {
+                fixed (byte* fontPtr = fontData)
+                fixed (byte* bitmapPtr = bitmap)
+                fixed (StbTrueType.stbtt_bakedchar* charsPtr = bakedChars) {
+                    bakeResult = StbTrueType.stbtt_BakeFontBitmap(fontPtr, 0, fontSize, bitmapPtr, atlasWidth, atlasHeight, 32, 96, charsPtr);
+                }
+            }
+
+            if (bakeResult > 0) break; /// fit successfully
+
+            atlasWidth *= 2;
+            atlasHeight *= 2;
+            if (4096 < atlasWidth) {
+                Log.log($"FontAtlas: failed to pack font at size {fontSize} even at {atlasWidth}x{atlasHeight}", LogType.warning);
+                break; /// give up rather than loop forever; partial/degenerate glyphs may remain
+            }
+        }
+
         FontAtlas atlas = new FontAtlas {
             GL = Renderer.GL,
             AtlasWidth = atlasWidth,
             AtlasHeight = atlasHeight,
             FontSize = fontSize,
         };
-
-        StbTrueType.stbtt_bakedchar[] bakedChars = new StbTrueType.stbtt_bakedchar[96]; /// ASCII 32-127
-        byte[] bitmap = new byte[atlasWidth*atlasHeight];
-
-        fixed (byte* fontPtr = fontData)
-        fixed (byte* bitmapPtr = bitmap)
-        fixed (StbTrueType.stbtt_bakedchar* charsPtr = bakedChars) {
-            StbTrueType.stbtt_BakeFontBitmap(fontPtr, 0, fontSize, bitmapPtr, atlasWidth, atlasHeight, 32, 96, charsPtr);
-        }
 
         /// expand single-channel bitmap to RGBA so it samples correctly in the shader
         byte[] rgba = new byte[atlasWidth*atlasHeight*4];
@@ -50,8 +68,10 @@ public class FontAtlas : IDisposable {
 
         atlas.TextureId = gl.GenTexture();
         gl.BindTexture(TextureTarget.Texture2D, atlas.TextureId);
-        fixed (byte* rgbaPtr = rgba) {
-            gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint)atlasWidth, (uint)atlasHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, rgbaPtr);
+        unsafe {
+            fixed (byte* rgbaPtr = rgba) {
+                gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint)atlasWidth, (uint)atlasHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, rgbaPtr);
+            }
         }
         gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
         gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);

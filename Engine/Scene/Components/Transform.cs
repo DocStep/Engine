@@ -22,8 +22,7 @@ public class Transform : Component {
 
     [Hide][JsonIgnore] private Vector3 rotationEuler = Vector3.Zero;
 
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     public Transform? Parent {
         get => parent;
         set {
@@ -46,12 +45,10 @@ public class Transform : Component {
         }
     }
 
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     private Transform? parent = null;
 
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     public List<Transform> Children { get; } = new();
 
 
@@ -72,9 +69,7 @@ public class Transform : Component {
     }
 
     /// <summary> Use <see cref="RotateLocalEuler"/> for continuous rotation </summary>
-    [JsonIgnore]
-    [WrapRotation(0, 360)]
-    [ChangeStep(1f)]
+    [JsonIgnore][WrapRotation(0, 360)][ChangeStep(1f)]
     public Vector3 LocalEuler {
         get => localRotationEuler;
         set {
@@ -104,8 +99,7 @@ public class Transform : Component {
         de_RotationChanged?.Invoke(Rotation);
     }
 
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     public Quaternion LocalQuaternion {
         get => localRotation;
         set {
@@ -132,8 +126,7 @@ public class Transform : Component {
     /// WORLD
     /// ============================================================
 
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     public Vector3 Position {
         get {
             if (Parent is null) return LocalPosition;
@@ -147,8 +140,7 @@ public class Transform : Component {
         }
     }
 
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     public Quaternion Rotation {
         get {
             if (Parent is null) return localRotation;
@@ -162,10 +154,7 @@ public class Transform : Component {
         }
     }
 
-    [Hide]
-    [JsonIgnore]
-    [WrapRotation(0, 360)]
-    [ChangeStep(1f)]
+    [Hide][JsonIgnore][WrapRotation(0, 360)][ChangeStep(1f)]
     public Vector3 RotationEuler {
         get => rotationEuler;
         set {
@@ -179,8 +168,7 @@ public class Transform : Component {
         }
     }
 
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     public Vector3 Scale {
         get {
             if (Parent is null) return LocalScale;
@@ -208,14 +196,12 @@ public class Transform : Component {
 
 
     /// Matrices
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     public Matrix4x4 LocalMatrix =>
         Matrix4x4.CreateScale(LocalScale)*
         Matrix4x4.CreateFromQuaternion(localRotation)*
         Matrix4x4.CreateTranslation(LocalPosition);
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     public Matrix4x4 WorldMatrix =>
         Parent is null ? LocalMatrix : LocalMatrix*Parent.WorldMatrix;
 

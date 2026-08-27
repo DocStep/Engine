@@ -143,12 +143,11 @@ public class Engine : IDisposable {
     }
 
     private void Update () {
-
         ComponentManager.Instance.Update();
 
         de_Update?.Invoke();
-        de_UpdateAlways?.Invoke();
         ReflectionActionScripts.Instance?.de_Actions_Update?.Invoke();
+        de_UpdateAlways?.Invoke();
 
         de_AfterUpdate?.Invoke();
 
