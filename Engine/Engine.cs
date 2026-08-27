@@ -107,10 +107,10 @@ public class Engine : IDisposable {
         Inputs.Update();
 
         if (Inputs.Actions[Inputs.EditorPause].pressedDown) {
-            if (engineState == EngineStates.Ready) engineState = EngineStates.Paused;
-            else if (engineState == EngineStates.Paused) engineState = EngineStates.Ready;
+            engineState = EngineStates.Paused;
+            //else if (engineState == EngineStates.Paused) engineState = EngineStates.Ready;
         }
-        
+
         Time.isPaused = engineState == EngineStates.Paused;
         Time.Update(dt);
 

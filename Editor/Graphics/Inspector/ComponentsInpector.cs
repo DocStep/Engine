@@ -43,6 +43,12 @@ public static class ComponentsInpector {
         }
     }
 
+    extension(Engine.Graphics.UI.RectTransform component) {
+        public void DrawInspector () {
+            Graphics.EditorUI.DrawObject(component);
+        }
+    }
+
     extension(PhysicsComponent component) {
         public void DrawInspector () {
             ((Component)component).DrawInspector();

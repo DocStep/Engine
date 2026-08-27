@@ -15,14 +15,14 @@ public class SceneUI : Scene {
         go_canvas.AddComponent<Canvas>();
         Image image;
 
-        GameObject go_image = new GameObject() { Name = "UI", };
+        GameObject go_image = new GameObject() { Name = "Image", };
         go_image.Transform.Parent = go_canvas.Transform;
         image = go_image.AddComponent<Image>();
         image.Load("src/Images/RGBA_Test.png");
         image.Rect.Pivot = new Vector2(0, 0);
         image.Rect.Anchor = new Vector2(0, 0);
 
-        GameObject go_button = new GameObject() { Name = "PlayButton" };
+        GameObject go_button = new GameObject() { Name = "Button" };
         go_button.Transform.Parent = go_canvas.Transform;
         //go_button.Transform.LocalPosition = new Vector3(20, 20, 0);
         image = go_button.AddComponent<Image>();
@@ -32,6 +32,15 @@ public class SceneUI : Scene {
         image.Rect.AnchoredPosition = new Vector2(100, 0);
         Button button = go_button.AddComponent<Button>();
         button.de_Clicked += () => Log.log("clicked");
+        
+        GameObject go_text = new GameObject() { Name = "Text" };
+        go_text.Transform.Parent = go_canvas.Transform;
+        //go_button.Transform.LocalPosition = new Vector3(20, 20, 0);
+        TextComponent text = go_text.AddComponent<TextComponent>();
+        text.Text = "Text Component";
+        text.Rect.Size = new Vector2(200, 50);
+        text.AlignV = TextAlignV.Center;
+        text.AlignH = TextAlignH.Center;
     }
     
 }

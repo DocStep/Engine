@@ -9,7 +9,7 @@ public class MaterialUI : Material {
         depthWrite = false;
     }
 
-    public uint textureId;
+    [Hide][Newtonsoft.Json.JsonIgnore] public uint textureId;
 
 
     public override void ApplyCustom () {

@@ -1,7 +1,7 @@
 ﻿namespace Editor.Graphics;
 
 
-internal static class EditorBootstrap {
+internal static class Editor {
 
     //[System.Runtime.CompilerServices.ModuleInitializer]
     //internal static void Init () {

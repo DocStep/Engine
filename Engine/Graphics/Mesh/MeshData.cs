@@ -117,7 +117,6 @@ public class MeshData {
             Vector3 c = Vertices[ic].Position;
 
             Vector3 faceNormal = Vector3.Cross(b - a, c - a);
-
             Vertices[ia].Normal += faceNormal;
             Vertices[ib].Normal += faceNormal;
             Vertices[ic].Normal += faceNormal;

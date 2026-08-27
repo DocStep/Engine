@@ -1,0 +1,71 @@
+﻿using Silk.NET.OpenGL;
+
+namespace Editor.Graphics.UI;
+
+
+public class RectGizmo : IDisposable {
+    public RectGizmo () {
+        GL = Engine.Graphics.Renderer.GL;
+        _material = AssetsEngine._mat_Unlit;
+
+        _vao = GL.GenVertexArray();
+        _vbo = GL.GenBuffer();
+
+        GL.BindVertexArray(_vao);
+        GL.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
+
+        uint stride = (uint)(2*sizeof(float));
+        GL.EnableVertexAttribArray(0);
+        unsafe {
+            GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, stride, (void*)0);
+        }
+    }
+
+    GL GL;
+    uint _vao, _vbo;
+    Engine.Graphics.Material _material;
+    Vector4 color = new Vector4 (0f, 1f, 1f, 1f);
+
+
+    public void Draw (Engine.Graphics.UI.RectTransform rect, int targetWidth, int targetHeight) {
+        Vector2 min = rect.Min;
+        Vector2 max = min + rect.Size;
+
+        Vector2[] corners = {
+            new Vector2(min.X, min.Y),
+            new Vector2(max.X, min.Y),
+            new Vector2(max.X, max.Y),
+            new Vector2(min.X, max.Y),
+        };
+
+        GL.Viewport(0, 0, (uint)targetWidth, (uint)targetHeight);
+        GL.Disable(EnableCap.DepthTest);
+        GL.Disable(EnableCap.CullFace);
+
+        _material.shader.Use();
+        _material.shader.SetMatrix4x4(Engine.Graphics.Shader.Projection, Engine.Graphics.Renderer.Instance.m4x4_ProjectionUI);
+        _material.shader.SetMatrix4x4(Engine.Graphics.Shader.View, Matrix4x4.Identity);
+        _material.shader.SetMatrix4x4(Engine.Graphics.Shader.Model, Matrix4x4.Identity);
+        _material.shader.SetVector4(Engine.Graphics.Shader.Color, color);
+
+        GL.BindVertexArray(_vao);
+        GL.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
+
+        unsafe {
+            fixed (Vector2* ptr = corners) {
+                GL.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(corners.Length*sizeof(Vector2)), ptr, BufferUsageARB.StreamDraw);
+            }
+        }
+
+        GL.DrawArrays(PrimitiveType.LineLoop, 0, (uint)corners.Length);
+
+        GL.Enable(EnableCap.DepthTest);
+    }
+
+
+    public void Dispose () {
+        GL.DeleteVertexArray(_vao);
+        GL.DeleteBuffer(_vbo);
+    }
+
+}

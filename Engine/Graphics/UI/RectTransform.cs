@@ -6,12 +6,12 @@ public class RectTransform : Transform {
 
     public override string Name => nameof(RectTransform);
 
-    public Vector2 Size { get; set; } = new Vector2(100, 100);
+    [ChangeStep(1f)] public Vector2 Size { get; set; } = new Vector2(100, 100);
     public Vector2 Pivot { get; set; } = new Vector2(0.5f, 0.5f);
 
     /// (0,0) = top-left, (1,1) = bottom-right
     public Vector2 Anchor { get; set; } = new Vector2(0.5f, 0.5f);
-    public Vector2 AnchoredPosition { get; set; } = Vector2.Zero;
+    [ChangeStep(1f)] public Vector2 AnchoredPosition { get; set; } = Vector2.Zero;
 
     public bool RaycastTarget { get; set; } = true;
     public RaycastLayer Layer { get; set; } = RaycastLayer.Default;

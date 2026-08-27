@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace Engine.Graphics.UI;
+
 
 public class Canvas : Component, IUpdate {
 
@@ -26,12 +26,13 @@ public class Canvas : Component, IUpdate {
     private void SyncScreenSize () {
         rect.Size = new Vector2(Renderer.Instance.Width, Renderer.Instance.Height);
     }
-    private void CollectChildren (Transform t) {
-        if (!t.Enabled) return;
+    private void CollectChildren (Transform tr) {
+        if (!tr.Enabled) return;
 
-        t.gameObject.GetComponent<Image>()?.Submit();
+        tr.gameObject.GetComponent<Image>()?.Submit();
+        tr.gameObject.GetComponent<TextComponent>()?.Submit();
 
-        foreach (Transform child in t.Children)
+        foreach (Transform child in tr.Children)
             CollectChildren(child);
     }
 

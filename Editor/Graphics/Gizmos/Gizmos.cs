@@ -10,7 +10,7 @@ namespace Editor.Graphics;
 public static class Gizmos {
     static Gizmos () {
         //Renderer.Instance.de_GizmosDraw += DrawGizmos;
-        GL = RendererEditor.GL;
+        GL = Renderer.GL;
 
         _sh_Outline = new Shader(Assets.LoadText("src/Shaders/Outline_Vertex.shader"), Assets.LoadText("src/Shaders/Outline_Fragment.shader"), "Outline", isLit: false);
         _sh_Outline.SetVector3(Color, Constants.cyan);

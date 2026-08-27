@@ -10,6 +10,7 @@ namespace Editor.Graphics;
 public class GizmoSelected : IDisposable {
     public GizmoSelected () {
         GL = Renderer.GL;
+        RectDebugOutline = new UI.RectGizmo();
         _sh_Outline = Gizmos._sh_Outline;
     }
 
@@ -20,7 +21,7 @@ public class GizmoSelected : IDisposable {
     //public MeshComponent? selectedMeshComp { get; private set; } = null;
     private Mesh? mesh_outlined = null;
     private Mesh? mesh_selectedLast = null;
-
+    private UI.RectGizmo RectDebugOutline = null!;
     public SelectedGizmoMode selectedGizmoMode = SelectedGizmoMode.Position;
     public SelectedPositionGizmoMode selectedPositionMode;
     public SelectedRotationGizmoMode selectedRotationMode;
@@ -354,7 +355,12 @@ public class GizmoSelected : IDisposable {
     private void DrawOutline () {
         if (go_selected is null) return;
         MeshComponent? meshComp = go_selected.GetComponent<MeshComponent>();
-        if (meshComp is null) return;
+        if (meshComp is null) {
+            Engine.Graphics.UI.RectTransform? rect = go_selected.GetComponent<Engine.Graphics.UI.RectTransform>();
+            if (rect is not null)
+                RectDebugOutline.Draw(rect, Renderer.Instance.Width, Renderer.Instance.Height);
+            return;
+        }
         if (meshComp.mesh is null) return;
         if (mesh_outlined is null) return;
 
