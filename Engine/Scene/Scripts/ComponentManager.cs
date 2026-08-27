@@ -16,7 +16,7 @@ public class ComponentManager : Singleton<ComponentManager> {
     private readonly List<IStart> componentsStart = new List<IStart>();
     private readonly List<IStart> _componentsStart = new List<IStart>();
     private readonly List<IUpdate> componentsUpdate = new List<IUpdate>();
-    private readonly List<IUpdate> componentsUpdateAtFreeze = new List<IUpdate>();
+    private readonly List<IUpdate> componentsUpdateAlways = new List<IUpdate>();
     private readonly List<IFixedUpdate> componentsFixedUpdate = new List<IFixedUpdate>();
     private readonly List<IDrawRaw> componentsDrawRaw = new List<IDrawRaw>();
 
@@ -73,12 +73,11 @@ public class ComponentManager : Singleton<ComponentManager> {
                 componentsDrawRaw[c].DrawRaw();
         }
     }
-    /*public void UpdateAtFreeze () {
-        Log.log("UpdateAtFreeze", componentsUpdateAtFreeze.Count);
-        for (int c = 0; c < componentsUpdateAtFreeze.Count; c++) {
-            componentsUpdateAtFreeze[c].Update();
+    public void UpdateAlways () {
+        for (int c = 0; c < componentsUpdateAlways.Count; c++) {
+            componentsUpdateAlways[c].Update();
         }
-    }*/
+    }
     public void FixedUpdate () {
         for (int c = 0; c < componentsFixedUpdate.Count; c++) {
             if (!componentsFixedUpdate[c].Enabled) continue;
@@ -107,7 +106,7 @@ public class ComponentManager : Singleton<ComponentManager> {
             componentsUpdate.Add(iComponentUpdate);
 
             if (component is IUpdateAtFreeze iRenderComponent) {
-                componentsUpdateAtFreeze.Add(iComponentUpdate);
+                componentsUpdateAlways.Add(iComponentUpdate);
             }
         }
         if (component is IDrawRaw iComponentDrawRaw) {
@@ -139,7 +138,7 @@ public class ComponentManager : Singleton<ComponentManager> {
             componentsUpdate.Remove(iComponentUpdate);
 
             if (component is IUpdateAtFreeze iRenderComponent) {
-                componentsUpdateAtFreeze.Remove(iComponentUpdate);
+                componentsUpdateAlways.Remove(iComponentUpdate);
             }
         }
         if (component is IFixedUpdate iComponentFixedUpdate) {

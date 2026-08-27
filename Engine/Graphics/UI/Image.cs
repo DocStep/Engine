@@ -46,7 +46,7 @@ public class Image : Component {
         if (!_loaded || _sharedQuad is null) return;
 
         Vector2 origin = rect.Min; /// Min already accounts for pivot
-        _material.SetVector4("uTint", Tint);
+        _material.SetVector4(Shader.Tint, Tint);
         _texture!.Bind();
 
         Renderer.Instance.AddRenderInfo(new RenderInfo {

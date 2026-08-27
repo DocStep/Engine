@@ -30,7 +30,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         Inputs.de_UpdateInput += UpdateInput;
 
-        Engine.Engine.Instance.de_Update += Update;
+        Engine.Engine.Instance.de_UpdateAlways += Update;
         Engine.Engine.Instance.de_Render += Draw;
         Engine.Engine.Instance.de_Closing += EditorTabs.Closing;
 
@@ -321,6 +321,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         bool isReadonly = false;
         float step = valueStep;
         bool isRaw = false;
+        bool isColor = false;
 
         if (attributes is not null) {
             Attribute[] attrs = attributes as Attribute[] ?? attributes.ToArray();
@@ -336,6 +337,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             if (changeSpeed is not null) step = changeSpeed.Step;
 
             isRaw = attrs.OfType<Raw>().Any();
+            isColor = attrs.OfType<DrawColor>().Any();
         }
 
         if (isReadonly) ImGui.BeginDisabled(true);
@@ -385,13 +387,28 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 if (ImGui.InputText(label, ref temp_s, 256)) result = temp_s;
                 break;
             case Vector2 v2:
-                if (ImGui.DragFloat2(label, ref v2, step, 0, 0, "%.2f")) result = v2;
+                if (isColor) {
+                    Vector3 rg = new(v2.X, v2.Y, 0);
+                    if (ImGui.ColorEdit3(label, ref rg)) result = new Vector2(rg.X, rg.Y);
+                } else {
+                    if (ImGui.DragFloat2(label, ref v2, step, 0, 0, "%.2f")) result = v2;
+                }
                 break;
             case Vector3 v3:
-                if (ImGui.DragFloat3(label, ref v3, step, 0, 0, "%.2f")) result = v3;
+                if (isColor) {
+                    if (ImGui.ColorEdit3(label, ref v3)) result = v3;
+                    //if (ImGui.ColorPicker3(label, ref v3)) result = v3;
+                } else {
+                    if (ImGui.DragFloat3(label, ref v3, step, 0, 0, "%.2f")) result = v3;
+                }
                 break;
             case Vector4 v4:
-                if (ImGui.DragFloat4(label, ref v4, step, 0, 0, "%.2f")) result = v4;
+                if (isColor) {
+                    if (ImGui.ColorEdit4(label, ref v4)) result = v4;
+                    //if (ImGui.ColorPicker4(label, ref v4)) result = v4;
+                } else {
+                    if (ImGui.DragFloat4(label, ref v4, step, 0, 0, "%.2f")) result = v4;
+                }
                 break;
             case Quaternion q:
                 Vector4 temp_v4 = new Vector4(q.X, q.Y, q.Z, q.W);

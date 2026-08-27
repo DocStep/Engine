@@ -28,6 +28,7 @@ public class Engine : IDisposable {
 
     public Action? de_StateReset = null;
     public Action? de_Update = null;
+    public Action? de_UpdateAlways = null;
     public Action? de_AfterUpdate = null;
     public Action? de_FixedUpdate = null;
     public Action? de_Render = null;
@@ -102,13 +103,14 @@ public class Engine : IDisposable {
 
     private void OnUpdate (double dt) {
         de_StateReset?.Invoke();
+        sw_LatencyUpdate.Restart();
 
         WindowInput.Update();
         Inputs.Update();
 
         if (Inputs.Actions[Inputs.EditorPause].pressedDown) {
-            engineState = EngineStates.Paused;
-            //else if (engineState == EngineStates.Paused) engineState = EngineStates.Ready;
+            if (engineState != EngineStates.Paused) engineState = EngineStates.Paused;
+            else if (engineState == EngineStates.Paused) engineState = EngineStates.Ready;
         }
 
         Time.isPaused = engineState == EngineStates.Paused;
@@ -124,7 +126,8 @@ public class Engine : IDisposable {
                 Time.accumulator -= Time.fixedDeltaTime;
             }
         } else {
-            //ComponentManager.Instance.UpdateAtFreeze();
+            de_UpdateAlways?.Invoke();
+            ComponentManager.Instance.UpdateAlways();
         }
 
         F3_Log();
@@ -140,11 +143,11 @@ public class Engine : IDisposable {
     }
 
     private void Update () {
-        sw_LatencyUpdate.Restart();
 
         ComponentManager.Instance.Update();
 
         de_Update?.Invoke();
+        de_UpdateAlways?.Invoke();
         ReflectionActionScripts.Instance?.de_Actions_Update?.Invoke();
 
         de_AfterUpdate?.Invoke();
