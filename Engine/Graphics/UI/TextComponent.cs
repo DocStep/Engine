@@ -34,6 +34,8 @@ public class TextComponent : Component {
 
     public override void OnAdd () {
         rect = gameObject.GetComponent<RectTransform>() ?? gameObject.AddComponent<RectTransform>();
+        rect.AnchorMin = new Vector2(0.5f, 0.5f);
+        rect.AnchorMax = new Vector2(0.5f, .5f);
         LoadAtlas();
         _material = new MaterialUI(AssetsEngine._sh_UI);
         _material.textureId = _atlas.TextureId;
@@ -156,7 +158,7 @@ public class TextComponent : Component {
         if (_mesh is null) return;
 
         Vector2 origin = rect.Min + AlignOffset();
-        _material.SetVector4("uTint", Color);
+        _material.SetVector4(Shader.Tint, Color);
 
         Renderer.Instance.AddRenderInfo(new RenderInfo {
             name = "UIText",

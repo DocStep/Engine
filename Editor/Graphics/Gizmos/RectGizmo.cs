@@ -29,7 +29,7 @@ public class RectGizmo : IDisposable {
 
     public void Draw (Engine.Graphics.UI.RectTransform rect, int targetWidth, int targetHeight) {
         Vector2 min = rect.Min;
-        Vector2 max = min + rect.Size;
+        Vector2 max = rect.Max;
 
         Vector2[] corners = {
             new Vector2(min.X, min.Y),

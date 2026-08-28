@@ -15,12 +15,20 @@ public class SceneUI : Scene {
         go_canvas.AddComponent<Canvas>();
         Image image;
 
+        GameObject go_bg = new GameObject() { Name = "Background" };
+        go_bg.Transform.Parent = go_canvas.Transform;
+        image = go_bg.AddComponent<Image>();
+        image.Load("src/Images/white.png");
+        image.Rect.Pivot = new Vector2(0.5f, 0.5f);
+        image.Rect.SetAnchor(AnchorPreset.StretchAll);
+        image.Alpha = 0.2f;
+
         GameObject go_image = new GameObject() { Name = "Image", };
         go_image.Transform.Parent = go_canvas.Transform;
         image = go_image.AddComponent<Image>();
         image.Load("src/Images/RGBA_Test.png");
         image.Rect.Pivot = new Vector2(0, 0);
-        image.Rect.Anchor = new Vector2(0, 0);
+        image.Rect.SetAnchor(AnchorPreset.TopLeft);
 
         GameObject go_button = new GameObject() { Name = "Button" };
         go_button.Transform.Parent = go_canvas.Transform;
@@ -28,7 +36,9 @@ public class SceneUI : Scene {
         image = go_button.AddComponent<Image>();
         image.Load("src/Images/RGBA_Test.png");
         image.Rect.Pivot = new Vector2(0, 0);
-        image.Rect.Anchor = new Vector2(0, 0);
+        image.Rect.SetAnchor(AnchorPreset.TopLeft);
+        //image.Rect.AnchorMin = new Vector2(0f, 0f);
+        //image.Rect.AnchorMax = new Vector2(1f, 1f);
         image.Rect.AnchoredPosition = new Vector2(100, 0);
         Button button = go_button.AddComponent<Button>();
         button.de_Clicked += () => Log.log("clicked");

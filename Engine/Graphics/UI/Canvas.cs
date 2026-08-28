@@ -14,7 +14,8 @@ public class Canvas : Component, IUpdate {
     public override void OnAdd () {
         rect = gameObject.GetComponent<RectTransform>() ?? gameObject.AddComponent<RectTransform>();
         rect.Pivot = new Vector2(0f, 0f);
-        rect.Anchor = new Vector2(0f, 0f);
+        rect.AnchorMin = new Vector2(0f, 0f);
+        rect.AnchorMax = new Vector2(1f, 1f);
         rect.AnchoredPosition = Vector2.Zero;
         SyncScreenSize();
     }
