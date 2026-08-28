@@ -7,7 +7,7 @@ public class RectTransform : Transform {
     public override string Name => nameof(RectTransform);
 
     /// Size on a stretched axis (AnchorMin != AnchorMax) is a delta from the anchor-driven size; 0 = exact fill
-    [ChangeStep(1f)] public Vector2 Size { get; set; } = new Vector2(100, 100);
+    [ChangeStep(1f)] public Vector2 Size { get; set; } = new Vector2(0, 0);
     public Vector2 Pivot { get; set; } = new Vector2(0.5f, 0.5f);
 
     /// (0,0) = top-left, (1,1) = bottom-right, relative to parent rect
@@ -49,11 +49,33 @@ public class RectTransform : Transform {
         }
     }
 
+    [Hide]
+    [JsonIgnore]
+    public Matrix4x4 RectMatrix {
+        get {
+            Vector2 pivot = WorldPosition;
+            return Matrix4x4.CreateTranslation(new Vector3(-pivot, 0f))
+                 * Matrix4x4.CreateScale(new Vector3(LocalScale.X, LocalScale.Y, 1f))
+                 * Matrix4x4.CreateRotationZ(LocalEuler.Z*Mathf.Deg2Rad)
+                 * Matrix4x4.CreateTranslation(new Vector3(pivot, 0f));
+        }
+    }
+
+    [Hide]
+    [JsonIgnore]
+    public Matrix4x4 RectMatrixInverse {
+        get {
+            Matrix4x4.Invert(RectMatrix, out Matrix4x4 inv);
+            return inv;
+        }
+    }
+
 
     public bool Contains (Vector2 point) {
+        Vector2 local = Vector2.Transform(point, RectMatrixInverse);
         Vector2 min = Min;
         Vector2 max = Max;
-        return min.X <= point.X && point.X <= max.X && min.Y <= point.Y && point.Y <= max.Y;
+        return min.X <= local.X && local.X <= max.X && min.Y <= local.Y && local.Y <= max.Y;
     }
 
     /// Apply a common anchor layout. Does not touch AnchoredPosition/Size — call ResetToAnchor() after for a clean fill/snap.

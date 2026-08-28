@@ -30,12 +30,13 @@ public class RectGizmo : IDisposable {
     public void Draw (Engine.Graphics.UI.RectTransform rect, int targetWidth, int targetHeight) {
         Vector2 min = rect.Min;
         Vector2 max = rect.Max;
+        Matrix4x4 rectMatrix = rect.RectMatrix;
 
         Vector2[] corners = {
-            new Vector2(min.X, min.Y),
-            new Vector2(max.X, min.Y),
-            new Vector2(max.X, max.Y),
-            new Vector2(min.X, max.Y),
+            TransformPoint(new Vector2(min.X, min.Y), rectMatrix),
+            TransformPoint(new Vector2(max.X, min.Y), rectMatrix),
+            TransformPoint(new Vector2(max.X, max.Y), rectMatrix),
+            TransformPoint(new Vector2(min.X, max.Y), rectMatrix),
         };
 
         GL.Viewport(0, 0, (uint)targetWidth, (uint)targetHeight);
@@ -61,6 +62,11 @@ public class RectGizmo : IDisposable {
         GL.DrawArrays(PrimitiveType.LineLoop, 0, (uint)corners.Length);
 
         GL.Enable(EnableCap.DepthTest);
+    }
+
+    private static Vector2 TransformPoint (Vector2 point, Matrix4x4 matrix) {
+        Vector3 result = Vector3.Transform(new Vector3(point, 0f), matrix);
+        return new Vector2(result.X, result.Y);
     }
 
 

@@ -36,9 +36,13 @@ public class Image : Component {
 
 
     public override void OnAdd () {
-        rect = gameObject.GetComponent<RectTransform>() ?? gameObject.AddComponent<RectTransform>();
-        //rect.AnchorMin = new Vector2(0f, 0f);
-        //rect.AnchorMax = new Vector2(1f, 1f);
+        rect = gameObject.GetComponent<RectTransform>()!;
+        if (rect is null) {
+            rect = gameObject.AddComponent<RectTransform>();
+            //rect.Size = new Vector2(100, 100);
+            //rect.AnchorMin = new Vector2(0f, 0f);
+            //rect.AnchorMax = new Vector2(1f, 1f);
+        }
 
         _sharedQuad ??= new Mesh(Plane.GenerateQuadUI());
         _material = new MaterialUI(AssetsEngine._sh_UI);
@@ -65,8 +69,10 @@ public class Image : Component {
         _texture!.Bind();
 
         Renderer.Instance.AddRenderInfo(new RenderInfo {
-            name = "UIImage",
-            model = Matrix4x4.CreateScale(size.X, size.Y, 1f)*Matrix4x4.CreateTranslation(new Vector3(origin.X, origin.Y, 0f)),
+            //name = "UIImage",
+            model = Matrix4x4.CreateScale(size.X, size.Y, 1f)
+              *Matrix4x4.CreateTranslation(new Vector3(origin.X, origin.Y, 0f))
+              *rect.RectMatrix,
             mesh = _sharedQuad,
             material = _material,
         });
