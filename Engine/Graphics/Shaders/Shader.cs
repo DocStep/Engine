@@ -63,6 +63,7 @@ public class Shader : IDisposable {
     public readonly string Name = "Unnamed";
     private readonly string _vertexSource;
     private readonly string _fragmentSource;
+    private int _nextTextureUnit = 0;
     public bool isLit;
 
     public static RendererGLStats Stats = default;
@@ -114,6 +115,7 @@ public class Shader : IDisposable {
 
     public void Use () {
         GL.UseProgram(_program);
+        _nextTextureUnit = 0;
         //GLEnum err = GL.GetError();
         //if (err != GLEnum.NoError) 
         //    Console.WriteLine($"UseProgram({_program}, {Name}) Error: {err}");
@@ -227,9 +229,14 @@ public class Shader : IDisposable {
         //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetMatrix4x4)} {err}", LogType.warning);
     }
 
-    public void SetTexture (string name, TextureUnit unit) {
-        GL.ActiveTexture(unit);
-        GL.BindTexture(TextureTarget.Texture2D, 0);
+    public void SetTexture (string name, Texture texture) {
+        TextureUnit unit = TextureUnit.Texture0 + _nextTextureUnit;
+        texture.Bind(unit);
+
+        int location = GL.GetUniformLocation(texture.Handle, name);
+        GL.Uniform1(location, _nextTextureUnit);
+
+        _nextTextureUnit++;
 
         //var err = GL.GetError();
         //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetTexture)} {err}", LogType.warning);

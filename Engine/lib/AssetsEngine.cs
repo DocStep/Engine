@@ -83,10 +83,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mesh_Suzanne = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Suzanne.obj"));
         _mesh_SuzanneHighRes = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "SuzanneHighRes.obj"));
 
-        /// Post-Process
-        _sh_Fullscreen = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Fragment.shader"), "Fullscreen");
-        _mat_Fullscreen = new Material(_sh_Fullscreen) { Name = "Fullscreen", };
-
+        /// Post-Process Effects
         _sh_Depth = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Depth_Fragment.shader"), "Depth");
         _mat_Depth = new Material(_sh_Depth) { Name = "Depth", };
 
@@ -100,14 +97,20 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mat_SSAO = new MaterialSSAO(_sh_SSAO) { Name = "SSAO", };
 
         _sh_SSAOBlur = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/SSAOBlur_Fragment.shader"), "SSAOBlur");
-        _mat_SSAOBlur = new MaterialSSAOBlur(_sh_SSAOBlur) { Name = "Lit", };
+        _mat_SSAOBlur = new MaterialSSAOBlur(_sh_SSAOBlur) { Name = "SSAO Blur", };
 
         _sh_SSAOComposite = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/SSAOComposite_Fragment.shader"), "SSAOComposite");
         _mat_SSAOComposite = new MaterialSSAOComposite(_sh_SSAOComposite) { Name = "SSAO Composite", };
 
+        _sh_Vignette = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/Vignette_Fragment.shader"), "CameraFocus");
+        _mat_Vignette = new MaterialVignette(_sh_Vignette) { Name = "Vignette", };
+
         _sh_CameraFocus = new Shader(Assets.LoadText("src/Shaders/PostProcessing/Fullscreen_Vertex.shader"), Assets.LoadText("src/Shaders/PostProcessing/CameraFocus_Fragment.shader"), "CameraFocus");
         _mat_CameraFocus = new MaterialCameraFocus(_sh_CameraFocus) { Name = "CameraFocus", };
 
+        Texture tex_Test = Texture.Load("src/Images/RGBA_Test.png");
+        Texture tex_White = Texture.Load("src/Images/white.png");
+        Texture tex_Vignette = Texture.Load("src/Images/vignette.png");
     }
 
 
@@ -134,10 +137,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Material _mat_Text = null!;
     public readonly static byte[] _fontData = null!;
 
-    /// PostProcess
-    public readonly static Shader _sh_Fullscreen = null!;
-    public readonly static Material _mat_Fullscreen = null!;
-    /// Effects
+    /// Post-Process Effects
     public readonly static Shader _sh_Depth = null!;
     public readonly static Material _mat_Depth = null!;
     public readonly static Shader _sh_Grayscale = null!;
@@ -150,11 +150,23 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Material _mat_SSAOBlur = null!;
     public readonly static Shader _sh_SSAOComposite = null!;
     public readonly static Material _mat_SSAOComposite = null!;
+    public readonly static Shader _sh_Vignette = null!;
+    public readonly static Material _mat_Vignette = null!;
     public readonly static Shader _sh_CameraFocus = null!;
     public readonly static Material _mat_CameraFocus = null!;
 
 
-    /// Editor
+    public readonly static Texture tex_Test = Texture.Load("src/Images/RGBA_Test.png");
+    public readonly static Texture tex_White = Texture.Load("src/Images/white.png");
+    public readonly static Texture tex_Vignette = Texture.Load("src/Images/vignette.png");
+
+
+    public readonly static Mesh _mesh_Torus = null!;
+    public readonly static Mesh _mesh_Suzanne = null!;
+    public readonly static Mesh _mesh_SuzanneHighRes = null!;
+
+
+    /// Template
     public readonly static Material _mat_Smooth = null!;
     public readonly static Material _mat_Matt = null!;
     public readonly static Material _mat_Metallic = null!;
@@ -166,9 +178,6 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Material _mat_LitGreen = null!;
     public readonly static Material _mat_LitBlue = null!;
 
-    public readonly static Mesh _mesh_Torus = null!;
-    public readonly static Mesh _mesh_Suzanne = null!;
-    public readonly static Mesh _mesh_SuzanneHighRes = null!;
 
 
     internal static void OnClosing () {
@@ -183,7 +192,14 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _sh_Depth.Dispose();
         _sh_Grayscale.Dispose();
         _sh_Fxaa.Dispose();
-        _sh_Fullscreen.Dispose();
+
+        _sh_Depth.Dispose();
+        _sh_Grayscale.Dispose();
+        _sh_Fxaa.Dispose();
+        _sh_SSAO.Dispose();
+        _sh_SSAOBlur.Dispose();
+        _sh_SSAOComposite.Dispose();
+        _sh_CameraFocus.Dispose();
 
         _sh_Skybox.Dispose();
         _hdr_Skybox?.Dispose();

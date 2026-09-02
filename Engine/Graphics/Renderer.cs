@@ -45,6 +45,7 @@ public class Renderer {
         PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
         PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_Vignette) { Enabled = false });
 
 
         /// Delegates
