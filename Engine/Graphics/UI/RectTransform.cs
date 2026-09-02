@@ -21,8 +21,7 @@ public class RectTransform : Transform {
     public int RaycastPriority { get; set; } = 0;
 
     /// Pivot point in world/parent space (not the same as Min+Size*Pivot when stretched — use Min/Max for actual bounds)
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     public Vector2 WorldPosition => Min + ActualSize*Pivot;
 
     [Hide][JsonIgnore] public Vector2 Min => AnchorMinPos + AnchoredPosition - Size*Pivot;
@@ -31,8 +30,7 @@ public class RectTransform : Transform {
     /// Actual on-screen size — differs from Size on stretched axes; renderers should read this, not Size
     [Hide][JsonIgnore] public Vector2 ActualSize => Max-Min;
 
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     private Vector2 AnchorMinPos {
         get {
             RectTransform? parent = FindParentRect();
@@ -40,8 +38,7 @@ public class RectTransform : Transform {
         }
     }
 
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     private Vector2 AnchorMaxPos {
         get {
             RectTransform? parent = FindParentRect();
@@ -49,8 +46,7 @@ public class RectTransform : Transform {
         }
     }
 
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     public Matrix4x4 RectMatrix {
         get {
             Vector2 pivot = WorldPosition;
@@ -61,8 +57,7 @@ public class RectTransform : Transform {
         }
     }
 
-    [Hide]
-    [JsonIgnore]
+    [Hide][JsonIgnore]
     public Matrix4x4 RectMatrixInverse {
         get {
             Matrix4x4.Invert(RectMatrix, out Matrix4x4 inv);

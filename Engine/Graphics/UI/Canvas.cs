@@ -33,6 +33,7 @@ public class Canvas : Component, IUpdate {
         tr.gameObject.GetComponent<Image>()?.Submit();
         tr.gameObject.GetComponent<TextComponent>()?.Submit();
 
+
         foreach (Transform child in tr.Children)
             CollectChildren(child);
     }

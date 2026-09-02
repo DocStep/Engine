@@ -8,6 +8,7 @@ public static class ComponentsInpector {
 
     private static Transform? _eulerDragTransform = null;
     private static Vector3 _eulerDragValue = Vector3.Zero;
+    private static string _format = "0.##" ;
     private static readonly Dictionary<Transform, (Quaternion rotation, Vector3 euler)> _eulerDisplayCache = new();
 
 

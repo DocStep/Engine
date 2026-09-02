@@ -15,10 +15,13 @@ public class SceneUI : Scene {
         go_canvas.AddComponent<Canvas>();
         Image image;
 
+        Texture tex_imageTest = Texture.Load("src/Images/RGBA_Test.png");
+        Texture tex_imageWhite = Texture.Load("src/Images/white.png");
+
         GameObject go_bg = new GameObject() { Name = "Background" };
         go_bg.Transform.Parent = go_canvas.Transform;
         image = go_bg.AddComponent<Image>();
-        image.Load("src/Images/white.png");
+        image.Texture = tex_imageWhite;
         image.Rect.Pivot = new Vector2(0.5f, 0.5f);
         image.Rect.SetAnchor(AnchorPreset.StretchAll);
         image.Alpha = 0.2f;
@@ -26,31 +29,29 @@ public class SceneUI : Scene {
         GameObject go_image = new GameObject() { Name = "Image", };
         go_image.Transform.Parent = go_canvas.Transform;
         image = go_image.AddComponent<Image>();
-        image.Load("src/Images/RGBA_Test.png");
         image.Rect.Pivot = new Vector2(0, 0);
         image.Rect.SetAnchor(AnchorPreset.TopLeft);
+        image.Rect.Size = new Vector2(100, 100);
+        image.Texture = tex_imageTest;
 
         GameObject go_button = new GameObject() { Name = "Button" };
         go_button.Transform.Parent = go_canvas.Transform;
-        //go_button.Transform.LocalPosition = new Vector3(20, 20, 0);
         image = go_button.AddComponent<Image>();
-        image.Load("src/Images/RGBA_Test.png");
         image.Rect.Pivot = new Vector2(0, 0);
         image.Rect.SetAnchor(AnchorPreset.TopLeft);
-        //image.Rect.AnchorMin = new Vector2(0f, 0f);
-        //image.Rect.AnchorMax = new Vector2(1f, 1f);
+        image.Rect.Size = new Vector2(100, 100);
+        image.Texture = tex_imageTest;
         image.Rect.AnchoredPosition = new Vector2(100, 0);
         Button button = go_button.AddComponent<Button>();
         button.de_Clicked += () => Log.log("clicked");
-        
+
         GameObject go_text = new GameObject() { Name = "Text" };
         go_text.Transform.Parent = go_canvas.Transform;
-        //go_button.Transform.LocalPosition = new Vector3(20, 20, 0);
         TextComponent text = go_text.AddComponent<TextComponent>();
-        text.Text = "Text Component";
         text.Rect.Size = new Vector2(200, 50);
         text.AlignV = TextAlignV.Center;
         text.AlignH = TextAlignH.Center;
+        text.Text = "Text Component";
     }
     
 }

@@ -6,7 +6,7 @@ public enum TextAlignH { Left, Center, Right }
 public enum TextAlignV { Top, Center, Bottom }
 
 
-public class TextComponent : Component {
+public class TextComponent : UIRenderingElement {
 
     public override string Name => nameof(TextComponent);
 
@@ -16,9 +16,6 @@ public class TextComponent : Component {
     public TextAlignH AlignH { get; set; } = TextAlignH.Left;
     public TextAlignV AlignV { get; set; } = TextAlignV.Top;
     private MaterialUI _material = null!;
-
-    [Hide][JsonIgnore] private RectTransform rect = null!;
-    [Hide][JsonIgnore] public RectTransform Rect => rect;
 
     [Hide][JsonIgnore] public bool AutoSize { get; set; } = false;
     [Hide][JsonIgnore] public bool InvertY { get; set; } = false; /// swaps Top/Bottom alignment meaning
@@ -33,7 +30,8 @@ public class TextComponent : Component {
 
 
     public override void OnAdd () {
-        rect = gameObject.GetComponent<RectTransform>() ?? gameObject.AddComponent<RectTransform>();
+        ChangeTransformToRect();
+
         rect.AnchorMin = new Vector2(0.5f, 0.5f);
         rect.AnchorMax = new Vector2(0.5f, .5f);
         LoadAtlas();
@@ -153,11 +151,12 @@ public class TextComponent : Component {
         return new Vector2(ox, oy);
     }
 
-    public void Submit () {
+    public override void Submit () {
         Rebuild();
         if (_mesh is null) return;
 
         Vector2 origin = rect.Min + AlignOffset();
+        Vector2 size = rect.ActualSize;
         _material.SetVector4(Shader.Tint, Color);
 
         Renderer.Instance.AddRenderInfo(new RenderInfo {

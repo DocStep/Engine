@@ -23,6 +23,13 @@ public class Transform : Component {
     [Hide][JsonIgnore] private Vector3 rotationEuler = Vector3.Zero;
 
     [Hide][JsonIgnore]
+    private Transform? parent = null;
+
+    [Hide][JsonIgnore]
+    public List<Transform> Children { get; } = new();
+
+
+    [Hide][JsonIgnore]
     public Transform? Parent {
         get => parent;
         set {
@@ -44,13 +51,6 @@ public class Transform : Component {
             de_RotationChanged?.Invoke(Rotation);
         }
     }
-
-    [Hide][JsonIgnore]
-    private Transform? parent = null;
-
-    [Hide][JsonIgnore]
-    public List<Transform> Children { get; } = new();
-
 
     /// ============================================================
     /// LOCAL
