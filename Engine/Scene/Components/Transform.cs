@@ -26,7 +26,7 @@ public class Transform : Component {
     private Transform? parent = null;
 
     [Hide][JsonIgnore]
-    public List<Transform> Children { get; } = new();
+    public List<Transform> Children { get; } = new List<Transform>();
 
 
     [Hide][JsonIgnore]
@@ -73,7 +73,7 @@ public class Transform : Component {
     public Vector3 LocalEuler {
         get => localRotationEuler;
         set {
-            value = WrapVector3(value, 0f, 360f);
+            value = WrapVector3(value, 0, 360);
 
             localRotationEuler = value;
             localRotation = EulerToQuaternion(value);
@@ -243,6 +243,11 @@ public class Transform : Component {
         localScale = source.localScale;
         rotationEuler = source.rotationEuler;
 
+        de_PositionChanged = source.de_PositionChanged;
+        de_RotationChanged = source.de_RotationChanged;
+        de_ScaleChanged = source.de_ScaleChanged;
+        de_Stop = source.de_Stop;
+
         parent = source.parent;
         if (parent is not null) {
             int childIndex = parent.Children.IndexOf(source);
@@ -257,6 +262,10 @@ public class Transform : Component {
 
         source.Children.Clear();
         source.parent = null;
+        source.de_PositionChanged = null;
+        source.de_RotationChanged = null;
+        source.de_ScaleChanged = null;
+        source.de_Stop = null;
     }
 
     private static Quaternion NormalizeSafe (Quaternion rotation) {

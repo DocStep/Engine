@@ -40,6 +40,8 @@ public class TextComponent : UIRenderingElement {
         Rebuild();
     }
     public override void OnRemove () {
+        ChangeRectToTransform();
+
         _mesh?.Dispose();
         _atlas.Dispose();
     }

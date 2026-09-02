@@ -19,13 +19,15 @@ public enum PrimitiveTypes {
 public class GameObject : ISavable, IDisposable {
     public GameObject() {
         Id = lib.Id;
-        SetTransform(new Transform());
+        Transform tr = new Transform();
+        TransformHandle = new TransformHandle(tr);
+        SetTransform(tr);
         SceneManager.ActiveScene.ObjectAdd(this);
     }
     /*public GameObject (List<Component> Components) : base() {
         this.Components = Components;
     }*/
-    /*public GameObject (TransformComponent Transform, List<Component> Components) : base() {
+    /*public GameObject (Transform Transform, List<Component> Components) : base() {
         this.Transform = Transform;
         this.Components = Components;
     }*/
@@ -34,9 +36,10 @@ public class GameObject : ISavable, IDisposable {
         if (string.IsNullOrEmpty(name)) name = primitive.GetType().Name;
         if (scale.Equals(default)) scale = Vector3.One;
 
-        Id = GetHashCode();
-
-        SetTransform(new Transform());
+        Id = lib.Id;
+        Transform tr = new Transform();
+        TransformHandle = new TransformHandle(tr);
+        SetTransform(tr);
         Transform.Position = position;
         Transform.Rotation = Mathf.EulerToQuaternion(rotation);
         Transform.LocalScale = scale;
@@ -93,7 +96,8 @@ public class GameObject : ISavable, IDisposable {
     public string Name = TypeName;
     public readonly long Id = 0;
     public bool Enabled = true;
-    public Transform Transform { get; private set; } = null!;
+    [Hide] private TransformHandle TransformHandle = null!;
+    public Transform Transform => TransformHandle.Current;
     public readonly List<Component> Components = new List<Component>();
 
     [JsonIgnore] public const string TypeName = nameof(GameObject);
@@ -156,18 +160,19 @@ public class GameObject : ISavable, IDisposable {
     }
 
 
-    public void Dispose () {
-        
+    private void SetTransform (Transform transform) {
+        Transform? previous = TransformHandle.Current;
+        transform.SetParent(this);
+
+        if (previous is not null)
+            transform.CopyFrom(previous);
+
+        TransformHandle.Rebind(transform);
     }
 
-    private void SetTransform (Transform transform) {
-        Transform? previous = Transform;
-        Transform = transform;
-        Transform.SetParent(this);
 
-        if (previous is null) return;
+    public void Dispose () {
 
-        Transform.CopyFrom(previous);
     }
 
 }

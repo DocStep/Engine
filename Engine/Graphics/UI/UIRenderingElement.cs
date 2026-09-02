@@ -11,10 +11,23 @@ public class UIRenderingElement : Component {
     [Hide][JsonIgnore] public RectTransform Rect => rect;
 
 
-    protected void ChangeTransformToRect () {
-        rect = gameObject.GetComponent<RectTransform>() ?? gameObject.AddComponent<RectTransform>();
+    public override void OnRemove () {
+        ChangeRectToTransform();
     }
 
+    protected void ChangeTransformToRect () {
+        rect = gameObject.Transform as RectTransform ?? gameObject.AddComponent<RectTransform>();
+    }
+    protected void ChangeRectToTransform () {
+        for (int i = 0; i < gameObject.Components.Count; i++) {
+            UIRenderingElement? uiComponent = gameObject.Components[i] as UIRenderingElement;
+            if (uiComponent == this) continue;
+            if (uiComponent is not null) return;
+        }
+
+        gameObject.AddComponent<Transform>();
+        rect = null!;
+    }
 
     public virtual void Submit () {
 

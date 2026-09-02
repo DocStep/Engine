@@ -44,6 +44,8 @@ public class Image : UIRenderingElement {
         Material = new MaterialUI(AssetsEngine._sh_UI);
     }
     public override void OnRemove () {
+        ChangeRectToTransform();
+
         _texture?.Dispose();
     }
 
