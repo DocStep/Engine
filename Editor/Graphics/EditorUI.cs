@@ -147,10 +147,10 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         //ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(4, 0));
         //ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f);
 
-        ImGui.Begin("##" + "Toolbar", flags);
+        ImGui.Begin("##Toolbar", flags);
 
         if (ImGui.Button("Tabs")) {
-            ImGui.OpenPopup("##" + "Tabs" + "Context");
+            ImGui.OpenPopup("##TabsContext");
         }
 
         EditorTabs.ContextDrawTab();
@@ -186,7 +186,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
 
-        ImGui.Begin("##" + "DockHost", hostFlags);
+        ImGui.Begin("##DockHost", hostFlags);
         ImGui.PopStyleVar(3);
 
         ImGui.DockSpace(dockspaceId, Vector2.Zero, ImGuiDockNodeFlags.PassthruCentralNode);
@@ -195,7 +195,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     }
 
     public static void DrawTabContext (IEditorTab tab) {
-        if (ImGui.BeginPopupContextItem("##" + Name + "TabContext")) {
+        //if (ImGui.BeginPopupContextItem("##" + Name + "TabContext")) {
+        if (ImGui.BeginPopupContextItem("##TabContext")) {
             if (ImGui.MenuItem("Close"))
                 tab.isActive = false;
 
@@ -465,7 +466,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 } else {
                     if (ImGui.TreeNodeEx(label, ImGuiTreeNodeFlags.DefaultOpen, label)) {
                         for (int i = 0; i < entries.Length; i++) {
-                            DrawLabel($"##{entries[i]?.GetType().Name}[{i}]", entries[i], attributes);
+                            //DrawLabel($"##{entries[i]?.GetType().Name}[{i}]", entries[i], attributes);
+                            DrawLabel("##", entries[i], attributes);
                         }
                         ImGui.TreePop();
                     }

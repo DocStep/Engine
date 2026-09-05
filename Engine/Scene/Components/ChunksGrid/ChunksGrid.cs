@@ -37,6 +37,9 @@ public sealed class ChunksGrid : Component, IUpdate {
     private ChunkLayer[] _unloadOrder = Array.Empty<ChunkLayer>();
     private readonly Dictionary<ChunkLayer, int> _loadRank = new Dictionary<ChunkLayer, int>();
     private readonly Dictionary<ChunkLayer, int> _unloadRank = new Dictionary<ChunkLayer, int>();
+    private readonly Dictionary<ChunkLayer, List<ChunkLayer>> _dependents = new();
+    private readonly HashSet<Vector2Int> _requiredScratch = new HashSet<Vector2Int>();
+    private readonly HashSet<Vector2Int> _existingScratch = new HashSet<Vector2Int>();
 
     private readonly List<ChunkTask> _pending = new List<ChunkTask>();
     private Vector2Int _lastCenterChunk;
@@ -125,25 +128,22 @@ public sealed class ChunksGrid : Component, IUpdate {
         int enqueuedLoads = 0;
 
         foreach (ChunkLayer layer in _loadOrder) {
-            HashSet<Vector2Int> required = new HashSet<Vector2Int>();
+            _requiredScratch.Clear();
             foreach (Vector2Int offset in SpiralOffsets(RingCount(layer.Radius))) {
                 Vector2Int coord = _lastCenterChunk + offset;
                 if (IsInRange(coord, layer.Radius)) {
-                    required.Add(coord);
+                    _requiredScratch.Add(coord);
                     if (RequestLoad(layer, coord)) enqueuedLoads++;
                 }
             }
 
             if (!IsPermanentChunks) {
-                // States alone misses not-yet-started pending Loads (Start() is what populates
-                // States, not Enqueue()) - without Pending here, a chunk that falls out of range
-                // before its Load even begins slips through, runs anyway, and gets unloaded a
-                // moment later. Union both so nothing wasteful gets past this check.
-                HashSet<Vector2Int> existing = new HashSet<Vector2Int>(layer.States.Keys);
-                existing.UnionWith(layer.Pending.Keys);
+                _existingScratch.Clear();
+                foreach (Vector2Int c in layer.States.Keys) _existingScratch.Add(c);
+                foreach (Vector2Int c in layer.Pending.Keys) _existingScratch.Add(c);
 
-                foreach (Vector2Int coord in existing)
-                    if (!required.Contains(coord))
+                foreach (Vector2Int coord in _existingScratch)
+                    if (!_requiredScratch.Contains(coord))
                         RequestUnload(layer, coord);
             }
         }
@@ -219,6 +219,19 @@ public sealed class ChunksGrid : Component, IUpdate {
             if (other.Layer != t.Layer || !other.Coord.Equals(t.Coord)) continue;
             if (other.Started && !other.Running!.IsCompleted) return true;
         }
+
+        if (t.Kind == ChunkTaskKind.Unload) {
+            /// dependents (things that depend on t.Layer) must be fully gone first
+            if (_dependents.TryGetValue(t.Layer, out List<ChunkLayer>? dependents))
+                foreach (ChunkLayer dependent in dependents)
+                    if (IsCoordActive(dependent, t.Coord)) return true;
+        } else {
+            /// Load/Save must wait for dependencies to be Ready first
+            foreach (Type depType in t.Layer.Dependencies) {
+                ChunkLayer? dep = _layers.Find(l => l.GetType() == depType);
+                if (dep != null && dep.GetState(t.Coord) != ChunkState.Ready) return true;
+            }
+        }
         return false;
     }
     /// Cancels a not-yet-started task outright - must remove it from BOTH the lookup
@@ -233,7 +246,7 @@ public sealed class ChunksGrid : Component, IUpdate {
     private bool IsBetter (ChunkTask a, ChunkTask b) {
         bool unloadA = a.Kind == ChunkTaskKind.Unload;
         bool unloadB = b.Kind == ChunkTaskKind.Unload;
-        if (unloadA != unloadB) return !unloadA;
+        if (unloadA != unloadB) return unloadA;   // unload now wins the tier check
 
         int da = ChunkDistanceSq(a.Coord), db = ChunkDistanceSq(b.Coord);
         if (da != db) return unloadA ? da > db : da < db;
@@ -302,18 +315,21 @@ public sealed class ChunksGrid : Component, IUpdate {
     private Vector2Int WorldToChunk (Vector3 pos) =>
         new((int)MathF.Floor(pos.X / ChunkSize), (int)MathF.Floor(pos.Z / ChunkSize));
 
-    // Ring-by-ring square spiral around (0,0), closest ring first - seeds discovery in a
-    // sensible order. Final task order is still governed by IsBetter() above.
-    private static IEnumerable<Vector2Int> SpiralOffsets (int maxRing) {
-        yield return new Vector2Int(0, 0);
+    private static readonly Dictionary<int, Vector2Int[]> _spiralCache = new Dictionary<int, Vector2Int[]>();
+    private static Vector2Int[] SpiralOffsets (int maxRing) {
+        if (_spiralCache.TryGetValue(maxRing, out Vector2Int[]? cached)) return cached;
 
+        List<Vector2Int> list = new List<Vector2Int> { Vector2Int.Zero };
         for (int ring = 1; ring <= maxRing; ring++) {
             int x = ring, z = -ring;
-            for (; z < ring; z++) yield return new Vector2Int(x, z);
-            for (; x > -ring; x--) yield return new Vector2Int(x, z);
-            for (; z > -ring; z--) yield return new Vector2Int(x, z);
-            for (; x < ring; x++) yield return new Vector2Int(x, z);
+            for (; z < ring; z++) list.Add(new Vector2Int(x, z));
+            for (; x > -ring; x--) list.Add(new Vector2Int(x, z));
+            for (; z > -ring; z--) list.Add(new Vector2Int(x, z));
+            for (; x < ring; x++) list.Add(new Vector2Int(x, z));
         }
+        Vector2Int[] arr = list.ToArray();
+        _spiralCache[maxRing] = arr;
+        return arr;
     }
 
     private void RebuildLayerOrder () {
@@ -353,6 +369,22 @@ public sealed class ChunksGrid : Component, IUpdate {
         }
         for (int i = 0; i < _unloadOrder.Length; i++)
             _unloadRank[_unloadOrder[i]] = i;
+
+        RebuildDependents();
     }
+    private void RebuildDependents () {
+        _dependents.Clear();
+        foreach (ChunkLayer layer in _layers)
+            foreach (Type depType in layer.Dependencies) {
+                ChunkLayer? dep = _layers.Find(l => l.GetType() == depType);
+                if (dep == null) continue;
+                if (!_dependents.TryGetValue(dep, out List<ChunkLayer>? list))
+                    _dependents[dep] = list = new List<ChunkLayer>();
+                list.Add(layer);
+            }
+    }
+
+    private bool IsCoordActive (ChunkLayer layer, Vector2Int coord) =>
+        layer.GetState(coord) != ChunkState.None || layer.Pending.ContainsKey(coord);
 
 }
