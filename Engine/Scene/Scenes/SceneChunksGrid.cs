@@ -13,7 +13,7 @@ public class SceneChunksGrid : Scene {
 
         GameObject go_grid = new GameObject() { Name = "Chunks Grid", };
         ChunksGrid grid = go_grid.AddComponent<ChunksGrid>();
-        grid.AddLayer(new TerrainLayer() { Radius = 5 });
+        grid.AddLayer(new TerrainLayer() { Radius = 10 });
 
     }
     

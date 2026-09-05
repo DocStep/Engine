@@ -25,8 +25,9 @@ public sealed class ChunksGrid : Component, IUpdate {
     public Vector3 Center = Vector3.Zero;
     public static int ChunkSize = 16;
     public int MaxTasksStartedPerTick = 4; /// budget - call ProcessTasks() once per frame
+    public int MaxUnloadsStartedPerTick = 2; /// reserved floor for unloads specifically - see ProcessTasks()
 
-    /// Events
+                                             /// Events
     public event Action<ChunkLayer, Vector2Int>? de_ChunkLoaded;
     public event Action<ChunkLayer, Vector2Int>? de_ChunkUnloaded;
     public event Action? de_ChunksLoaded;   /// permanent mode only - fires once every layer's initial load finishes
@@ -85,10 +86,33 @@ public sealed class ChunksGrid : Component, IUpdate {
     /// Steps the task queue - starts up to MaxTasksStartedPerTick new tasks (best priority first),
     /// then finalizes any that completed since last call. Call once per frame.
     public void ProcessTasks () {
-        for (int n = 0; n < MaxTasksStartedPerTick; n++) {
-            ChunkTask? task = PickNextTask();
+        int unloadBudget = MaxUnloadsStartedPerTick;
+        int loadBudget = MaxTasksStartedPerTick - MaxUnloadsStartedPerTick;
+        int started = 0;
+
+        // Pass 1: fill each side's reserved floor first, so neither can be starved by the other.
+        while (unloadBudget > 0 && started < MaxTasksStartedPerTick) {
+            ChunkTask? task = PickNextTask(ChunkTaskKind.Unload);
             if (task == null) break;
             Start(task);
+            unloadBudget--;
+            started++;
+        }
+        while (loadBudget > 0 && started < MaxTasksStartedPerTick) {
+            ChunkTask? task = PickNextTask(null); // Load or Save
+            if (task == null) break;
+            Start(task);
+            loadBudget--;
+            started++;
+        }
+
+        // Pass 2: anything still unspent this tick goes to whichever side has waiting work,
+        // highest overall priority first - no wasted slots if one side ran dry early.
+        while (started < MaxTasksStartedPerTick) {
+            ChunkTask? task = PickNextTask(null);
+            if (task == null) break;
+            Start(task);
+            started++;
         }
 
         for (int i = _pending.Count - 1; i >= 0; i--) {
@@ -99,6 +123,7 @@ public sealed class ChunksGrid : Component, IUpdate {
             }
         }
     }
+
 
     /// Queues a save for a currently-loaded chunk. No-op if a load/unload is already pending.
     public void RequestSave (ChunkLayer layer, Vector2Int coord) {
@@ -200,11 +225,14 @@ public sealed class ChunksGrid : Component, IUpdate {
         _pending.Add(task);
     }
 
-    private ChunkTask? PickNextTask () {
+    /// filterKind == null means "any kind" - picks the single best not-started, not-blocked task.
+    /// filterKind set means "only consider tasks of this kind" - used to fill a reserved floor.
+    private ChunkTask? PickNextTask (ChunkTaskKind? filterKind) {
         ChunkTask? best = null;
         for (int i = 0; i < _pending.Count; i++) {
             ChunkTask t = _pending[i];
             if (t.Started) continue;
+            if (filterKind != null && t.Kind != filterKind) continue;
             if (IsBlocked(t)) continue;
             if (best == null || IsBetter(t, best)) best = t;
         }
@@ -246,7 +274,7 @@ public sealed class ChunksGrid : Component, IUpdate {
     private bool IsBetter (ChunkTask a, ChunkTask b) {
         bool unloadA = a.Kind == ChunkTaskKind.Unload;
         bool unloadB = b.Kind == ChunkTaskKind.Unload;
-        if (unloadA != unloadB) return unloadA;   // unload now wins the tier check
+        if (unloadA != unloadB) return !unloadA; // reverted - budgets handle fairness now, not this
 
         int da = ChunkDistanceSq(a.Coord), db = ChunkDistanceSq(b.Coord);
         if (da != db) return unloadA ? da > db : da < db;
