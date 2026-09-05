@@ -3,8 +3,6 @@
 
 public struct RenderInfo () {
 
-    //public string name = string.Empty;
-
     public Matrix4x4 model;
     public Matrix4x4? normal = null;
 

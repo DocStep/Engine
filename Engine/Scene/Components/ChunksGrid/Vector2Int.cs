@@ -32,6 +32,9 @@ public struct Vector2Int : IEquatable<Vector2Int> {
     public static Vector2Int operator * (int s, Vector2Int a) => new Vector2Int(a.X * s, a.Y * s);
     public static Vector2Int operator / (Vector2Int a, int s) => new Vector2Int(a.X / s, a.Y / s);
 
+    public static Vector2 operator + (Vector2Int a, Vector2 b) => new Vector2(a.X + b.X, a.Y + b.Y);
+    public static Vector2 operator - (Vector2Int a, Vector2 b) => new Vector2(a.X - b.X, a.Y - b.Y);
+
     public static bool operator == (Vector2Int a, Vector2Int b) => a.X == b.X && a.Y == b.Y;
     public static bool operator != (Vector2Int a, Vector2Int b) => !(a == b);
 

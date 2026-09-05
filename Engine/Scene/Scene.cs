@@ -19,7 +19,7 @@ public class Scene : ISavable {
 
     public string Name = nameof(Scene);
     protected readonly List<GameObject> objects = new();
-    public List<GameObject> Objects => objects;
+    public List<GameObject> GameObjects => objects;
 
     public void ObjectAdd (GameObject gameObject) {
         objects.Add(gameObject);
@@ -62,9 +62,9 @@ public class Scene : ISavable {
         /// Own
         /// ...
 
-        int count = Objects.Count;
+        int count = GameObjects.Count;
         for (int i = 0; i < count; i++) {
-            Objects[i].PreSave();
+            GameObjects[i].PreSave();
         }
     }
 

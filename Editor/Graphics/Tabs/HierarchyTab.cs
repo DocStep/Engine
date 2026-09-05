@@ -20,7 +20,7 @@ public class HierarchyTab : IEditorTab {
         ImGui.PopStyleColor();
         ImGui.Separator();
 
-        foreach (GameObject go in scene.Objects) {
+        foreach (GameObject go in scene.GameObjects) {
             if (go.Transform.Parent is null) DrawHierarchyNode(go);
         }
 

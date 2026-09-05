@@ -34,6 +34,7 @@ public class ComponentManager : Singleton<ComponentManager> {
 
         //RegisterAll();
 
+        Engine.Instance.de_AfterUpdate += GameObject.Flush;
         Renderer.Instance.de_DrawUI += DrawRaw;
     }
 
@@ -66,7 +67,6 @@ public class ComponentManager : Singleton<ComponentManager> {
     }
     public void DrawRaw () {
         int count;
-
         count = componentsDrawRaw.Count;
         for (int c = 0; c < count; c++) {
             if (componentsDrawRaw[c].Enabled) 
@@ -121,6 +121,7 @@ public class ComponentManager : Singleton<ComponentManager> {
         //Log.log("ComponentManager.ComponentRegister", component);
     }
     internal void ComponentUnregister (Component component) {
+        //Log.log(nameof(ComponentUnregister),  component);
         Type type = component.GetType();
 
         if (components.TryGetValue(type, out List<Component>? list)) {

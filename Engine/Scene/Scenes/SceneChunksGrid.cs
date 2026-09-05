@@ -11,8 +11,8 @@ public class SceneChunksGrid : Scene {
         go_camera.Transform.Position = new Vector3(-2, 3, -10);
         Camera camera = go_camera.AddComponent<Camera>();
 
-        GameObject go_grid = new GameObject() { Name = "Grid", };
-        ChunkGrid grid = go_grid.AddComponent<ChunkGrid>();
+        GameObject go_grid = new GameObject() { Name = "Chunks Grid", };
+        ChunksGrid grid = go_grid.AddComponent<ChunksGrid>();
         grid.AddLayer(new TerrainLayer() { Radius = 5 });
 
     }

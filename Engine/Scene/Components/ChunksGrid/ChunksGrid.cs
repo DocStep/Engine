@@ -12,15 +12,18 @@ public enum ChunkState { None, Loading, Ready, Saving, Unloading }
 public enum ChunkTaskKind { Load, Save, Unload }
 
 
-public sealed class ChunkGrid : Component, IUpdate {
+public sealed class ChunksGrid : Component, IUpdate {
 
-    public override string Name => nameof(ChunkGrid);
+    public override string Name => nameof(ChunksGrid);
+
+    public static Transform Transform { get; private set; } = null!;
+    public static Transform TransformTarget { get; private set; } = null!;
 
     /// Config
     public bool IsPermanentChunks = false; /// true = load full extent once per layer, never streams/unloads on move
     public bool IsCircle = true;          /// false = quad
     public Vector3 Center = Vector3.Zero;
-    public int ChunkSize = 16;
+    public static int ChunkSize = 16;
     public int MaxTasksStartedPerTick = 4; /// budget - call ProcessTasks() once per frame
 
     /// Events
@@ -40,17 +43,23 @@ public sealed class ChunkGrid : Component, IUpdate {
     private bool _initialized;
     private int _initialLoadRemaining;
 
+
     /// Register layers before the first UpdateCenter call.
     public void AddLayer (ChunkLayer layer) {
         _layers.Add(layer);
         RebuildLayerOrder();
     }
 
+
+    public override void OnAdd () {
+        Transform = gameObject.Transform;
+        TransformTarget = new GameObject() { Name = "ChunksGridTarget", }.Transform;
+    }
     public void Update () {
-        UpdateCenter(gameObject.Transform.Position);
+        Vector3 targetPos = TransformTarget.Position;
+        UpdateCenter(targetPos);
         ProcessTasks();
     }
-
     /// Call on spawn and whenever the streaming center moves (player position, etc).
     /// Only enqueues work - pair with ProcessTasks() every frame or nothing actually runs.
     public void UpdateCenter (Vector3 newCenter) {

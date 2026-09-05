@@ -182,7 +182,7 @@ public static class Raycast {
         float closestT = float.MaxValue;
         bool hitAny = false;
 
-        foreach (GameObject go in scene.Objects) {
+        foreach (GameObject go in scene.GameObjects) {
             Graphics.MeshComponent? meshComponent = go.GetComponent<Graphics.MeshComponent>();
             if (meshComponent is null) continue;
             if (meshComponent.mesh is null) continue;

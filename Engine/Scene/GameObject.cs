@@ -171,6 +171,43 @@ public class GameObject : ISavable, IDisposable {
     }
 
 
+    [Hide] public bool Destroyed = false;
+    [Hide] private static readonly System.Collections.Concurrent.ConcurrentQueue<GameObject> DestroyQueue =
+        new System.Collections.Concurrent.ConcurrentQueue<GameObject>();
+
+    /// <summary>Safe to call from any thread.</summary>
+    private static void EnqueueDestroy (GameObject go) {
+        DestroyQueue.Enqueue(go);
+    }
+
+    public void Destroy () {
+        if (Destroyed) return;
+        Destroyed = true;
+        EnqueueDestroy(this);
+    }
+    public void DestroyImmediate () {
+        int count = Components.Count;
+        for (int i = count - 1; i >= 0; i--) {
+            ComponentManager.Instance.ComponentUnregister(Components[i]);
+        }
+        Components.Clear();
+
+        ComponentManager.Instance.ComponentUnregister(Transform);
+        SceneManager.ActiveScene.GameObjects.Remove(this);
+        Dispose();
+    }
+
+    /// <summary>Main thread only. Call once per frame before Update().</summary>
+    public static void Flush () {
+        //Log.log();
+        while (DestroyQueue.TryDequeue(out GameObject? go)) {
+            go.DestroyImmediate();
+        }
+    }
+
+
+
+
     public void Dispose () {
 
     }
