@@ -135,7 +135,14 @@ public sealed class ChunksGrid : Component, IUpdate {
             }
 
             if (!IsPermanentChunks) {
-                foreach (Vector2Int coord in new List<Vector2Int>(layer.States.Keys))
+                // States alone misses not-yet-started pending Loads (Start() is what populates
+                // States, not Enqueue()) - without Pending here, a chunk that falls out of range
+                // before its Load even begins slips through, runs anyway, and gets unloaded a
+                // moment later. Union both so nothing wasteful gets past this check.
+                HashSet<Vector2Int> existing = new HashSet<Vector2Int>(layer.States.Keys);
+                existing.UnionWith(layer.Pending.Keys);
+
+                foreach (Vector2Int coord in existing)
                     if (!required.Contains(coord))
                         RequestUnload(layer, coord);
             }
@@ -156,7 +163,7 @@ public sealed class ChunksGrid : Component, IUpdate {
             if (pending.Kind != ChunkTaskKind.Unload) return false; // Save in flight - leave it be
 
             if (!pending.Started) {
-                layer.Pending.Remove(coord); // cancel - chunk stays Ready, was never actually unloaded
+                Cancel(pending); // chunk stays Ready, was never actually unloaded
                 return false;
             }
             Enqueue(layer, coord, ChunkTaskKind.Load); // unload already running - queue load right after
@@ -171,17 +178,19 @@ public sealed class ChunksGrid : Component, IUpdate {
     private void RequestUnload (ChunkLayer layer, Vector2Int coord) {
         if (layer.Pending.TryGetValue(coord, out ChunkTask? pending)) {
             if (pending.Kind == ChunkTaskKind.Unload) return;
-            if (pending.Kind == ChunkTaskKind.Save) return; // let the save finish, re-checked next sync
 
-            if (!pending.Started) {
-                layer.Pending.Remove(coord); // cancel - never actually loaded
+            if (pending.Started) {
+                Enqueue(layer, coord, ChunkTaskKind.Unload); // load/save already running - queue unload right after
                 return;
             }
-            Enqueue(layer, coord, ChunkTaskKind.Unload); // load already running - queue unload right after
+
+            Cancel(pending); // not started yet, no wasted work
+            if (pending.Kind == ChunkTaskKind.Load) return; // never actually loaded, nothing to unload
+                                                            // Kind == Save: chunk is already Ready, unload will persist it - no need to save separately
+        } else if (layer.GetState(coord) != ChunkState.Ready) {
             return;
         }
 
-        if (layer.GetState(coord) != ChunkState.Ready) return;
         Enqueue(layer, coord, ChunkTaskKind.Unload);
     }
 
@@ -196,11 +205,28 @@ public sealed class ChunksGrid : Component, IUpdate {
         for (int i = 0; i < _pending.Count; i++) {
             ChunkTask t = _pending[i];
             if (t.Started) continue;
+            if (IsBlocked(t)) continue;
             if (best == null || IsBetter(t, best)) best = t;
         }
         return best;
     }
-
+    /// A chained task (Unload queued right after a running Load, etc) must wait for its
+    /// predecessor on the same chunk to actually finish - otherwise both run at once.
+    private bool IsBlocked (ChunkTask t) {
+        for (int i = 0; i < _pending.Count; i++) {
+            ChunkTask other = _pending[i];
+            if (other == t) continue;
+            if (other.Layer != t.Layer || !other.Coord.Equals(t.Coord)) continue;
+            if (other.Started && !other.Running!.IsCompleted) return true;
+        }
+        return false;
+    }
+    /// Cancels a not-yet-started task outright - must remove it from BOTH the lookup
+    /// dict and the run queue, or it silently runs anyway despite being "cancelled".
+    private void Cancel (ChunkTask task) {
+        task.Layer.Pending.Remove(task.Coord);
+        _pending.Remove(task);
+    }
     // Non-unload work beats unload work; within each, live distance to the center chunk breaks
     // ties (closer first for load/save, farther first for unload, so it stays correct as Center
     // keeps moving mid-queue); dependency order breaks the rest.
@@ -236,7 +262,9 @@ public sealed class ChunksGrid : Component, IUpdate {
 
     private void Finish (ChunkTask task) {
         ChunkLayer layer = task.Layer;
-        layer.Pending.Remove(task.Coord);
+        if (layer.Pending.TryGetValue(task.Coord, out ChunkTask? current) && current == task)
+            layer.Pending.Remove(task.Coord);
+        // else a newer task was already chained in for this coord - leave the dict pointing at it
 
         switch (task.Kind) {
             case ChunkTaskKind.Load:
