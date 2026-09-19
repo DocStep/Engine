@@ -32,6 +32,7 @@ public abstract class ChunkLayer {
         return Task.CompletedTask;
     }
 
+    internal readonly HashSet<Vector2Int> Running = new();
     internal readonly Dictionary<Vector2Int, ChunkState> States = new();
     internal readonly Dictionary<Vector2Int, ChunkTask> Pending = new();
 

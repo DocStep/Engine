@@ -47,7 +47,9 @@ public sealed class ChunksGrid : Component, IUpdate {
     [Hide] private bool _initialized;
     [Hide] private int _initialLoadRemaining;
 
+    [Hide] private readonly Dictionary<ChunkLayer, List<ChunkLayer>> _dependencyLayers = new();
 
+    
     /// Register layers before the first UpdateCenter call.
     public void AddLayer (ChunkLayer layer) {
         _layers.Add(layer);
@@ -241,24 +243,16 @@ public sealed class ChunksGrid : Component, IUpdate {
     /// A chained task (Unload queued right after a running Load, etc) must wait for its
     /// predecessor on the same chunk to actually finish - otherwise both run at once.
     private bool IsBlocked (ChunkTask t) {
-        for (int i = 0; i < _pending.Count; i++) {
-            ChunkTask other = _pending[i];
-            if (other == t) continue;
-            if (other.Layer != t.Layer || !other.Coord.Equals(t.Coord)) continue;
-            if (other.Started && !other.Running!.IsCompleted) return true;
-        }
+        if (t.Layer.Running.Contains(t.Coord)) return true; // O(1) - was O(n)
 
         if (t.Kind == ChunkTaskKind.Unload) {
-            /// dependents (things that depend on t.Layer) must be fully gone first
             if (_dependents.TryGetValue(t.Layer, out List<ChunkLayer>? dependents))
                 foreach (ChunkLayer dependent in dependents)
                     if (IsCoordActive(dependent, t.Coord)) return true;
         } else {
-            /// Load/Save must wait for dependencies to be Ready first
-            foreach (Type depType in t.Layer.Dependencies) {
-                ChunkLayer? dep = _layers.Find(l => l.GetType() == depType);
-                if (dep != null && dep.GetState(t.Coord) != ChunkState.Ready) return true;
-            }
+            if (_dependencyLayers.TryGetValue(t.Layer, out List<ChunkLayer>? deps))
+                foreach (ChunkLayer dep in deps)
+                    if (dep.GetState(t.Coord) != ChunkState.Ready) return true;
         }
         return false;
     }
@@ -292,6 +286,7 @@ public sealed class ChunksGrid : Component, IUpdate {
             ChunkTaskKind.Unload => ChunkState.Unloading,
             _ => ChunkState.None,
         };
+        layer.Running.Add(task.Coord);
 
         task.Running = task.Kind switch {
             ChunkTaskKind.Load => layer.RunLoad(task.Coord),
@@ -303,6 +298,7 @@ public sealed class ChunksGrid : Component, IUpdate {
 
     private void Finish (ChunkTask task) {
         ChunkLayer layer = task.Layer;
+        layer.Running.Remove(task.Coord);
         if (layer.Pending.TryGetValue(task.Coord, out ChunkTask? current) && current == task)
             layer.Pending.Remove(task.Coord);
         // else a newer task was already chained in for this coord - leave the dict pointing at it
@@ -402,14 +398,19 @@ public sealed class ChunksGrid : Component, IUpdate {
     }
     private void RebuildDependents () {
         _dependents.Clear();
-        foreach (ChunkLayer layer in _layers)
+        _dependencyLayers.Clear();
+        foreach (ChunkLayer layer in _layers) {
+            List<ChunkLayer> deps = new List<ChunkLayer>();
             foreach (Type depType in layer.Dependencies) {
                 ChunkLayer? dep = _layers.Find(l => l.GetType() == depType);
                 if (dep == null) continue;
+                deps.Add(dep);
                 if (!_dependents.TryGetValue(dep, out List<ChunkLayer>? list))
                     _dependents[dep] = list = new List<ChunkLayer>();
                 list.Add(layer);
             }
+            _dependencyLayers[layer] = deps;
+        }
     }
 
     private bool IsCoordActive (ChunkLayer layer, Vector2Int coord) =>
