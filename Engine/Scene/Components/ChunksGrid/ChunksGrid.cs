@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Engine;
 
 public enum ChunkState { None, Loading, Ready, Saving, Unloading }
-public enum ChunkTaskKind { Load, Save, Unload }
+public enum ChunkTaskType { Load, Save, Unload }
 
 
 public sealed class ChunksGrid : Component, IUpdate {
@@ -24,8 +24,8 @@ public sealed class ChunksGrid : Component, IUpdate {
     public bool IsCircle = true;          /// false = quad
     public Vector3 Center = Vector3.Zero;
     public static int ChunkSize = 16;
-    public int MaxTasksStartedPerTick = 4; /// budget - call ProcessTasks() once per frame
-    public int MaxUnloadsStartedPerTick = 2; /// reserved floor for unloads specifically - see ProcessTasks()
+    public int MaxTasksStartedPerTick = 16; /// budget - call ProcessTasks() once per frame
+    public int MaxUnloadsStartedPerTick = 8; /// reserved floor for unloads specifically - see ProcessTasks()
 
     /// Events
     public event Action<ChunkLayer, Vector2Int>? de_ChunkLoaded;
@@ -63,8 +63,14 @@ public sealed class ChunksGrid : Component, IUpdate {
     }
     public void Update () {
         Vector3 targetPos = TransformTarget.Position;
+
+        //VoidLatencyChecker.Start("ChunksGrid.UpdateCenter");
         UpdateCenter(targetPos);
+        //VoidLatencyChecker.End("ChunksGrid.UpdateCenter");
+
+        //VoidLatencyChecker.Start("ChunksGrid.ProcessTasks");
         ProcessTasks();
+        //VoidLatencyChecker.End("ChunksGrid.ProcessTasks");
     }
     /// Call on spawn and whenever the streaming center moves (player position, etc).
     /// Only enqueues work - pair with ProcessTasks() every frame or nothing actually runs.
@@ -94,16 +100,16 @@ public sealed class ChunksGrid : Component, IUpdate {
 
         // Pass 1: fill each side's reserved floor first, so neither can be starved by the other.
         while (unloadBudget > 0 && started < MaxTasksStartedPerTick) {
-            ChunkTask? task = PickNextTask(ChunkTaskKind.Unload);
+            ChunkTask? task = PickNextTask(ChunkTaskType.Unload);
             if (task == null) break;
-            Start(task);
+            TaskStart(task);
             unloadBudget--;
             started++;
         }
         while (loadBudget > 0 && started < MaxTasksStartedPerTick) {
             ChunkTask? task = PickNextTask(null); // Load or Save
             if (task == null) break;
-            Start(task);
+            TaskStart(task);
             loadBudget--;
             started++;
         }
@@ -113,7 +119,7 @@ public sealed class ChunksGrid : Component, IUpdate {
         while (started < MaxTasksStartedPerTick) {
             ChunkTask? task = PickNextTask(null);
             if (task == null) break;
-            Start(task);
+            TaskStart(task);
             started++;
         }
 
@@ -131,7 +137,7 @@ public sealed class ChunksGrid : Component, IUpdate {
     public void RequestSave (ChunkLayer layer, Vector2Int coord) {
         if (layer.Pending.ContainsKey(coord)) return;
         if (layer.GetState(coord) != ChunkState.Ready) return;
-        Enqueue(layer, coord, ChunkTaskKind.Save);
+        Enqueue(layer, coord, ChunkTaskType.Save);
     }
 
     /// Full teardown (level unload, grid reset...). Blocking - for explicit teardown, not the streaming path.
@@ -152,6 +158,7 @@ public sealed class ChunksGrid : Component, IUpdate {
     }
 
     private void Resync (bool firstSync) {
+        //VoidLatencyChecker.Start("ChunksGrid.Resync");
         int enqueuedLoads = 0;
 
         foreach (ChunkLayer layer in _loadOrder) {
@@ -179,6 +186,8 @@ public sealed class ChunksGrid : Component, IUpdate {
             _initialLoadRemaining = enqueuedLoads;
             if (_initialLoadRemaining == 0) de_ChunksLoaded?.Invoke();
         }
+
+        //VoidLatencyChecker.End("ChunksGrid.Resync");
     }
 
     // Single pending-task slot per (layer, coord) - load/save/unload are mutually exclusive.
@@ -186,42 +195,42 @@ public sealed class ChunksGrid : Component, IUpdate {
     // followed by its opposite once it finishes.
     private bool RequestLoad (ChunkLayer layer, Vector2Int coord) {
         if (layer.Pending.TryGetValue(coord, out ChunkTask? pending)) {
-            if (pending.Kind == ChunkTaskKind.Load) return false;
-            if (pending.Kind != ChunkTaskKind.Unload) return false; // Save in flight - leave it be
+            if (pending.Type == ChunkTaskType.Load) return false;
+            if (pending.Type != ChunkTaskType.Unload) return false; // Save in flight - leave it be
 
             if (!pending.Started) {
                 Cancel(pending); // chunk stays Ready, was never actually unloaded
                 return false;
             }
-            Enqueue(layer, coord, ChunkTaskKind.Load); // unload already running - queue load right after
+            Enqueue(layer, coord, ChunkTaskType.Load); // unload already running - queue load right after
             return true;
         }
 
         if (layer.GetState(coord) == ChunkState.Ready) return false;
-        Enqueue(layer, coord, ChunkTaskKind.Load);
+        Enqueue(layer, coord, ChunkTaskType.Load);
         return true;
     }
 
     private void RequestUnload (ChunkLayer layer, Vector2Int coord) {
         if (layer.Pending.TryGetValue(coord, out ChunkTask? pending)) {
-            if (pending.Kind == ChunkTaskKind.Unload) return;
+            if (pending.Type == ChunkTaskType.Unload) return;
 
             if (pending.Started) {
-                Enqueue(layer, coord, ChunkTaskKind.Unload); // load/save already running - queue unload right after
+                Enqueue(layer, coord, ChunkTaskType.Unload); // load/save already running - queue unload right after
                 return;
             }
 
             Cancel(pending); // not started yet, no wasted work
-            if (pending.Kind == ChunkTaskKind.Load) return; // never actually loaded, nothing to unload
+            if (pending.Type == ChunkTaskType.Load) return; // never actually loaded, nothing to unload
                                                             // Kind == Save: chunk is already Ready, unload will persist it - no need to save separately
         } else if (layer.GetState(coord) != ChunkState.Ready) {
             return;
         }
 
-        Enqueue(layer, coord, ChunkTaskKind.Unload);
+        Enqueue(layer, coord, ChunkTaskType.Unload);
     }
 
-    private void Enqueue (ChunkLayer layer, Vector2Int coord, ChunkTaskKind kind) {
+    private void Enqueue (ChunkLayer layer, Vector2Int coord, ChunkTaskType kind) {
         ChunkTask task = new ChunkTask(layer, coord, kind);
         layer.Pending[coord] = task;
         _pending.Add(task);
@@ -229,12 +238,12 @@ public sealed class ChunksGrid : Component, IUpdate {
 
     /// filterKind == null means "any kind" - picks the single best not-started, not-blocked task.
     /// filterKind set means "only consider tasks of this kind" - used to fill a reserved floor.
-    private ChunkTask? PickNextTask (ChunkTaskKind? filterKind) {
+    private ChunkTask? PickNextTask (ChunkTaskType? filterKind) {
         ChunkTask? best = null;
         for (int i = 0; i < _pending.Count; i++) {
             ChunkTask t = _pending[i];
             if (t.Started) continue;
-            if (filterKind != null && t.Kind != filterKind) continue;
+            if (filterKind != null && t.Type != filterKind) continue;
             if (IsBlocked(t)) continue;
             if (best == null || IsBetter(t, best)) best = t;
         }
@@ -245,7 +254,7 @@ public sealed class ChunksGrid : Component, IUpdate {
     private bool IsBlocked (ChunkTask t) {
         if (t.Layer.Running.Contains(t.Coord)) return true; // O(1) - was O(n)
 
-        if (t.Kind == ChunkTaskKind.Unload) {
+        if (t.Type == ChunkTaskType.Unload) {
             if (_dependents.TryGetValue(t.Layer, out List<ChunkLayer>? dependents))
                 foreach (ChunkLayer dependent in dependents)
                     if (IsCoordActive(dependent, t.Coord)) return true;
@@ -266,8 +275,8 @@ public sealed class ChunksGrid : Component, IUpdate {
     // ties (closer first for load/save, farther first for unload, so it stays correct as Center
     // keeps moving mid-queue); dependency order breaks the rest.
     private bool IsBetter (ChunkTask a, ChunkTask b) {
-        bool unloadA = a.Kind == ChunkTaskKind.Unload;
-        bool unloadB = b.Kind == ChunkTaskKind.Unload;
+        bool unloadA = a.Type == ChunkTaskType.Unload;
+        bool unloadB = b.Type == ChunkTaskType.Unload;
         if (unloadA != unloadB) return !unloadA; // reverted - budgets handle fairness now, not this
 
         int da = ChunkDistanceSq(a.Coord), db = ChunkDistanceSq(b.Coord);
@@ -278,22 +287,25 @@ public sealed class ChunksGrid : Component, IUpdate {
             : _loadRank[a.Layer] < _loadRank[b.Layer];
     }
 
-    private void Start (ChunkTask task) {
+    private void TaskStart (ChunkTask task) {
         ChunkLayer layer = task.Layer;
-        layer.States[task.Coord] = task.Kind switch {
-            ChunkTaskKind.Load => ChunkState.Loading,
-            ChunkTaskKind.Save => ChunkState.Saving,
-            ChunkTaskKind.Unload => ChunkState.Unloading,
+        layer.States[task.Coord] = task.Type switch {
+            ChunkTaskType.Load => ChunkState.Loading,
+            ChunkTaskType.Save => ChunkState.Saving,
+            ChunkTaskType.Unload => ChunkState.Unloading,
             _ => ChunkState.None,
         };
         layer.Running.Add(task.Coord);
 
-        task.Running = task.Kind switch {
-            ChunkTaskKind.Load => layer.RunLoad(task.Coord),
-            ChunkTaskKind.Save => layer.RunSave(task.Coord),
-            ChunkTaskKind.Unload => layer.RunUnload(task.Coord),
+        //string tag = $"{layer.Name}.{task.Type}";
+        //VoidLatencyChecker.Start(tag);
+        task.Running = task.Type switch {
+            ChunkTaskType.Load => layer.RunLoad(task.Coord),
+            ChunkTaskType.Save => layer.RunSave(task.Coord),
+            ChunkTaskType.Unload => layer.RunUnload(task.Coord),
             _ => Task.CompletedTask,
         };
+        //VoidLatencyChecker.End(tag);
     }
 
     private void Finish (ChunkTask task) {
@@ -303,17 +315,17 @@ public sealed class ChunksGrid : Component, IUpdate {
             layer.Pending.Remove(task.Coord);
         // else a newer task was already chained in for this coord - leave the dict pointing at it
 
-        switch (task.Kind) {
-            case ChunkTaskKind.Load:
+        switch (task.Type) {
+            case ChunkTaskType.Load:
                 layer.States[task.Coord] = ChunkState.Ready;
                 de_ChunkLoaded?.Invoke(layer, task.Coord);
                 if (IsPermanentChunks && 0 < _initialLoadRemaining && --_initialLoadRemaining == 0)
                     de_ChunksLoaded?.Invoke();
                 break;
-            case ChunkTaskKind.Save:
+            case ChunkTaskType.Save:
                 layer.States[task.Coord] = ChunkState.Ready;
                 break;
-            case ChunkTaskKind.Unload:
+            case ChunkTaskType.Unload:
                 layer.States.Remove(task.Coord);
                 de_ChunkUnloaded?.Invoke(layer, task.Coord);
                 break;

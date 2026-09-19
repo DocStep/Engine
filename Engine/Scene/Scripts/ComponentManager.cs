@@ -39,6 +39,7 @@ public class ComponentManager : Singleton<ComponentManager> {
     }
 
     public void Update () {
+        //VoidLatencyChecker.Start("ComponentManager.Update");
         int count;
 
         _componentsAwake.AddRange(componentsAwake);
@@ -64,6 +65,8 @@ public class ComponentManager : Singleton<ComponentManager> {
             if (!componentsUpdate[c].Enabled) continue;
             componentsUpdate[c].Update();
         }
+
+        //VoidLatencyChecker.End("ComponentManager.Update");
     }
     public void DrawRaw () {
         int count;
