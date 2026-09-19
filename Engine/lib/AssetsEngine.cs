@@ -11,11 +11,12 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         //Shader.StatsReset();
 
         //_sh_Lit = new Shader(Assets.LoadText("src/Shaders/Lit_Vertex.shader"), Assets.LoadText("src/Shaders/Lit_Fragment.shader"), "Lit");
-        _sh_Lit = new Shader(Assets.LoadText("src/Shaders/Lit_Vertex.shader"), Assets.LoadText("src/Shaders/LitAlt_Fragment.shader"), "Lit", isLit: true);
+        _sh_LitInstanced = new Shader(Assets.LoadText("src/Shaders/Lit_Vertex.shader"), Assets.LoadText("src/Shaders/LitAlt_Fragment.shader"), "Lit", isLit: true);
         _sh_Unlit = new Shader(Assets.LoadText("src/Shaders/Unlit_Vertex.shader"), Assets.LoadText("src/Shaders/Unlit_Fragment.shader"), "Unlit", isLit: false);
+        _sh_UnlitInstanced = new Shader(Assets.LoadText("src/Shaders/Unlit_Instanced_Vertex.shader"), Assets.LoadText("src/Shaders/Unlit_Fragment.shader"), "UnlitInstanced", isLit: false);
         _sh_UI = new Shader(Assets.LoadText("src/Shaders/UI_Vertex.shader"), Assets.LoadText("src/Shaders/UI_Fragment.shader"), "UI", isLit: false);
         
-        _mat_Lit = new Material(_sh_Lit) { Name = "Lit", };
+        _mat_Lit = new Material(_sh_LitInstanced) { Name = "Lit", };
         _mat_Lit.SetVector3(Color, Constants.white);
         _mat_Lit.SetFloat(Smoothness, 0.5f);
         _mat_Lit.SetFloat(Metallic, 0);
@@ -61,22 +62,22 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mat_MaterialPreview.SetFloat(Smoothness, 1);
         _mat_MaterialPreview.SetFloat(Metallic, 1);
         ///
-        _mat_LitWhite = new Material(_sh_Lit) { Name = "Lit White", };
+        _mat_LitWhite = new Material(_sh_LitInstanced) { Name = "Lit White", };
         _mat_LitWhite.SetVector3(Color, Constants.white);
         ///
-        _mat_LitBlack = new Material(_sh_Lit) { Name = "Lit Black", };
+        _mat_LitBlack = new Material(_sh_LitInstanced) { Name = "Lit Black", };
         _mat_LitBlack.SetVector3(Color, Constants.black);
         ///
-        _mat_LitGray = new Material(_sh_Lit) { Name = "Lit Gray", };
+        _mat_LitGray = new Material(_sh_LitInstanced) { Name = "Lit Gray", };
         _mat_LitGray.SetVector3(Color, Constants.gray);
         ///
-        _mat_LitRed = new Material(_sh_Lit) { Name = "Lit Red", };
+        _mat_LitRed = new Material(_sh_LitInstanced) { Name = "Lit Red", };
         _mat_LitRed.SetVector3(Color, Constants.red);
         ///
-        _mat_LitGreen = new Material(_sh_Lit) { Name = "Lit Green", };
+        _mat_LitGreen = new Material(_sh_LitInstanced) { Name = "Lit Green", };
         _mat_LitGreen.SetVector3(Color, Constants.green);
         ///
-        _mat_LitBlue = new Material(_sh_Lit) { Name = "Lit Blue", };
+        _mat_LitBlue = new Material(_sh_LitInstanced) { Name = "Lit Blue", };
         _mat_LitBlue.SetVector3(Color, Constants.blue);
 
         _mesh_Torus = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Torus.obj"));
@@ -115,8 +116,9 @@ public class AssetsEngine : Singleton<AssetsEngine> {
 
 
     /// Editor
-    public readonly static Shader _sh_Lit = null!;
+    public readonly static Shader _sh_LitInstanced = null!;
     public readonly static Shader _sh_Unlit = null!;
+    public readonly static Shader _sh_UnlitInstanced = null!;
     public readonly static Shader _sh_UI = null!;
 
     public readonly static Material _mat_Lit = null!;
@@ -187,7 +189,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mesh_Plane.Dispose();
         _mesh_PlaneQuad.Dispose();
 
-        _sh_Lit.Dispose();
+        _sh_LitInstanced.Dispose();
         _sh_Unlit.Dispose();
         _sh_Depth.Dispose();
         _sh_Grayscale.Dispose();

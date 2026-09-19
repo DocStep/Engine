@@ -75,6 +75,12 @@ public class Mesh : IAsset<Mesh> {
 
     public string Name { get; private set; }
 
+    /// Instancing — set up lazily on first DrawInstanced() call so meshes that are never
+    /// instanced don't pay for the extra buffer/attribute setup.
+    private uint _instanceVbo;
+    private int _instanceCapacity = -1; /// -1 = EnsureInstanceBuffer() not yet called
+    private float[] _instanceUploadScratch = Array.Empty<float>(); /// grows, never shrinks — avoids a per-draw heap alloc
+
 
     private static float[] Flatten (Vertex[] verts) {
         float[] result = new float[verts.Length*Vertex.FloatStride];
@@ -110,6 +116,87 @@ public class Mesh : IAsset<Mesh> {
         GL.BindVertexArray(0);
     }
 
+    /// Draws `models.Length` copies of this mesh in a single draw call. The shader assigned to
+    /// the material used for this draw MUST read the model/normal matrix from the instanced
+    /// vertex attributes (location 3 = model mat4, location 7 = normal mat4 — see the
+    /// *_instanced shader variants) instead of the uModel/uNormalMatrix uniforms, or every
+    /// instance renders with garbage/zeroed transforms.
+    public void DrawInstanced (ReadOnlySpan<Matrix4x4> models, ReadOnlySpan<Matrix4x4> normals, PrimitiveType primitiveType = PrimitiveType.Triangles) {
+        int instanceCount = models.Length;
+        if (instanceCount == 0) return;
+
+        EnsureInstanceBuffer();
+
+        const int floatsPerInstance = 32; /// mat4 model (16) + mat4 normal (16)
+        int floatCount = instanceCount*floatsPerInstance;
+        if (_instanceUploadScratch.Length < floatCount) _instanceUploadScratch = new float[floatCount];
+
+        for (int i = 0; i < instanceCount; i++) {
+            int o = i*floatsPerInstance;
+            WriteMatrix(_instanceUploadScratch, o, models[i]);
+            WriteMatrix(_instanceUploadScratch, o + 16, normals[i]);
+        }
+
+        GL.BindVertexArray(_vao);
+        GL.BindBuffer(GLEnum.ArrayBuffer, _instanceVbo);
+
+        unsafe {
+            fixed (float* b = _instanceUploadScratch) {
+                if (_instanceCapacity < instanceCount) {
+                    GL.BufferData(GLEnum.ArrayBuffer, (nuint)(floatCount*sizeof(float)), b, GLEnum.DynamicDraw);
+                    _instanceCapacity = instanceCount;
+                } else {
+                    GL.BufferSubData(GLEnum.ArrayBuffer, 0, (nuint)(floatCount*sizeof(float)), b);
+                }
+            }
+
+            GL.DrawElementsInstanced(primitiveType, _indexCount, DrawElementsType.UnsignedInt, null, (uint)instanceCount);
+        }
+
+        Renderer.Instance.Stats.DrawCalls++;
+        GL.BindVertexArray(0);
+    }
+
+    /// A mat4 vertex attribute consumes 4 consecutive locations (one vec4 per column), so the
+    /// model matrix occupies 3-6 and the normal matrix occupies 7-10. Divisor 1 on every column
+    /// makes them advance once per instance instead of once per vertex.
+    private void EnsureInstanceBuffer () {
+        if (0 <= _instanceCapacity) return;
+
+        _instanceVbo = GL.GenBuffer();
+        _instanceCapacity = 0;
+
+        GL.BindVertexArray(_vao);
+        GL.BindBuffer(GLEnum.ArrayBuffer, _instanceVbo);
+
+        const uint mat4Size = 16*sizeof(float);
+        const uint instanceStride = mat4Size*2;
+
+        unsafe {
+            for (uint col = 0; col < 4; col++) {
+                uint loc = 3 + col;
+                GL.VertexAttribPointer(loc, 4, VertexAttribPointerType.Float, false, instanceStride, (void*)(col*4*sizeof(float)));
+                GL.EnableVertexAttribArray(loc);
+                GL.VertexAttribDivisor(loc, 1);
+            }
+            for (uint col = 0; col < 4; col++) {
+                uint loc = 7 + col;
+                GL.VertexAttribPointer(loc, 4, VertexAttribPointerType.Float, false, instanceStride, (void*)(mat4Size + col*4*sizeof(float)));
+                GL.EnableVertexAttribArray(loc);
+                GL.VertexAttribDivisor(loc, 1);
+            }
+        }
+
+        GL.BindVertexArray(0);
+    }
+
+    private static void WriteMatrix (float[] dst, int offset, Matrix4x4 m) {
+        dst[offset + 0] = m.M11; dst[offset + 1] = m.M12; dst[offset + 2] = m.M13; dst[offset + 3] = m.M14;
+        dst[offset + 4] = m.M21; dst[offset + 5] = m.M22; dst[offset + 6] = m.M23; dst[offset + 7] = m.M24;
+        dst[offset + 8] = m.M31; dst[offset + 9] = m.M32; dst[offset + 10] = m.M33; dst[offset + 11] = m.M34;
+        dst[offset + 12] = m.M41; dst[offset + 13] = m.M42; dst[offset + 14] = m.M43; dst[offset + 15] = m.M44;
+    }
+
     public static Mesh Load (string path) {
         return new Mesh(ObjLoader.Load(path)) { Name = Path.GetFileNameWithoutExtension(path) };
     }
@@ -118,6 +205,7 @@ public class Mesh : IAsset<Mesh> {
     public void Dispose () {
         GL.DeleteBuffer(_vbo);
         GL.DeleteBuffer(_ebo);
+        if (0 <= _instanceCapacity) GL.DeleteBuffer(_instanceVbo);
         GL.DeleteVertexArray(_vao);
     }
 

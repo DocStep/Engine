@@ -24,20 +24,4 @@ public sealed class TerrainLayer : ChunkLayer {
         return Task.CompletedTask;
     }
 
-    public override Task RunUnload (Vector2Int coord) {
-        if (!GameObjects.TryGetValue(coord, out List<GameObject>? list)) {
-            //Log.log(Name, nameof(RunUnload), coord, "null");
-            return Task.CompletedTask;
-        }
-
-        //Log.log(Name, nameof(RunUnload), coord, list.Count);
-        int n = list.Count;
-        for (int i = n - 1; 0 <= i; i--) {
-            list[i].Destroy();
-        }
-        GameObjects.Remove(coord);
-
-        return Task.CompletedTask;
-    }
-
 }

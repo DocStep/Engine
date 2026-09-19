@@ -7,17 +7,17 @@ public class MeshComponent : Component, IUpdate, IUpdateAtFreeze {
 
     [JsonIgnore] public override string Name => nameof(MeshComponent);
 
-    [JsonIgnore] public Mesh? mesh = null;
-    [Hide][JsonProperty("mesh")] public string? meshPath = null;
-    [JsonIgnore] public Material? material = AssetsEngine._mat_Lit;
-    [Hide][JsonProperty("material")] public string? materialPath = null;
+    [JsonIgnore] public Mesh? Mesh = null;
+    [Hide][JsonProperty("Mesh")] public string? meshPath = null;
+    [JsonIgnore] public Material? Material = AssetsEngine._mat_Lit;
+    [Hide][JsonProperty("Material")] public string? materialPath = null;
     //[JsonProperty("pass")] public RenderPass pass = RenderPass.Opaque;
 
     [Hide][JsonIgnore] public RenderInfo renderInfo { get; private set; }
 
 
     public void Update () {
-        if (mesh is null || material is null) return;
+        if (Mesh is null || Material is null) return;
 
         //if (mesh?.Name == "SuzanneHighRes") 
             //Log.log($"[{Guid}] AddRenderInfo {mesh?.Name}");
@@ -26,15 +26,15 @@ public class MeshComponent : Component, IUpdate, IUpdateAtFreeze {
 
     [Hide][JsonIgnore] public RenderInfo CreateRenderInfo {
         get {
-            if (mesh is null) return default;
-            if (material is null) return default;
+            if (Mesh is null) return default;
+            if (Material is null) return default;
 
             RenderInfo renderInfo = new RenderInfo() {
                 model = gameObject.Transform.GetWorldMatrix(),
 
-                mesh = mesh,
-                material = material,
-                primitiveType = mesh.Data is not null ? mesh.Data.PrimitiveType : default,
+                mesh = Mesh,
+                material = Material,
+                primitiveType = Mesh.Data is not null ? Mesh.Data.PrimitiveType : default,
             };
 
             this.renderInfo = renderInfo;

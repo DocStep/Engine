@@ -24,16 +24,16 @@ public class SceneTerrain : Scene {
                 heightmap[xx, yy] = 2*noise.Value(xx, yy);
             }
         }
-        terrain_meshComp.mesh = new Mesh(MeshData.CreateFromArray(heightmap, 1f));
-        terrain_meshComp.material = new Material(AssetsEngine._mat_Lit) { Name = "Terrain", };
-        terrain_meshComp.material.SetVector3(Shader.Color, Constants.white);
-        terrain_meshComp.material.SetFloat(Shader.Smoothness, 0f);
+        terrain_meshComp.Mesh = new Mesh(MeshData.CreateFromArray(heightmap, 1f));
+        terrain_meshComp.Material = new Material(AssetsEngine._mat_Lit) { Name = "Terrain", };
+        terrain_meshComp.Material.SetVector3(Shader.Color, Constants.white);
+        terrain_meshComp.Material.SetFloat(Shader.Smoothness, 0f);
         MeshColliderComponent terrain_meshColliderComp = go_terrain.AddComponent<MeshColliderComponent>();
-        terrain_meshColliderComp.SetMesh(terrain_meshComp.mesh);
+        terrain_meshColliderComp.SetMesh(terrain_meshComp.Mesh);
 
         GameObject cube = new GameObject() { Name = "Cube", };
         cube.Transform.Position = new Vector3(0, 10, 0);
-        cube.AddComponent<MeshComponent>().mesh = AssetsEngine._mesh_Cube;
+        cube.AddComponent<MeshComponent>().Mesh = AssetsEngine._mesh_Cube;
         cube.AddComponent<BoxColliderComponent>();
         cube.AddComponent<PhysicsComponent>();
 

@@ -28,8 +28,8 @@ public class SceneMaterials : Scene {
         reflectionSuzanneHightRes.Transform.Position = new Vector3(x, 0, 0);
         reflectionSuzanneHightRes.Transform.LocalEuler = new Vector3(0, 180, 0);
         mesh = reflectionSuzanneHightRes.AddComponent<MeshComponent>();
-        mesh.mesh = AssetsEngine._mesh_SuzanneHighRes;
-        mesh.material = AssetsEngine._mat_MaterialPreview;
+        mesh.Mesh = AssetsEngine._mesh_SuzanneHighRes;
+        mesh.Material = AssetsEngine._mat_MaterialPreview;
         reflectionSuzanneHightRes.AddComponent<MonkeyScript>();
         //Camera camera = reflectionSuzanneHightRes.AddComponent<Camera>();
         //camera.priority = 0;
@@ -38,14 +38,14 @@ public class SceneMaterials : Scene {
         reflectionSuzanne.Transform.Position = new Vector3(x, 0, 4);
         reflectionSuzanne.Transform.LocalEuler = new Vector3(0, 180, 0);
         mesh = reflectionSuzanne.AddComponent<MeshComponent>();
-        mesh.mesh = AssetsEngine._mesh_Suzanne;
-        mesh.material = AssetsEngine._mat_MaterialPreview;
+        mesh.Mesh = AssetsEngine._mesh_Suzanne;
+        mesh.Material = AssetsEngine._mat_MaterialPreview;
 
         GameObject reflectionTorus = new GameObject() { Name = "Reflection Torus", };
         reflectionTorus.Transform.Position = new Vector3(x, 0, 8);
         mesh = reflectionTorus.AddComponent<MeshComponent>();
-        mesh.mesh = AssetsEngine._mesh_Torus;
-        mesh.material = AssetsEngine._mat_MaterialPreview;
+        mesh.Mesh = AssetsEngine._mesh_Torus;
+        mesh.Material = AssetsEngine._mat_MaterialPreview;
 
         ///// Primitives
         x = 4;
@@ -72,40 +72,40 @@ public class SceneMaterials : Scene {
         GameObject sphereR = new GameObject() { Name = "Sphere R", };
         sphereR.Transform.Position = new Vector3(x, 0, 0);
         mesh = sphereR.AddComponent<MeshComponent>();
-        mesh.mesh = AssetsEngine._mesh_Sphere;
-        mesh.material = AssetsEngine._mat_LitRed;
+        mesh.Mesh = AssetsEngine._mesh_Sphere;
+        mesh.Material = AssetsEngine._mat_LitRed;
 
         GameObject sphereG = new GameObject() { Name = "Sphere G", };
         sphereG.Transform.Position = new Vector3(x, 0, 2);
         mesh = sphereG.AddComponent<MeshComponent>();
-        mesh.mesh = AssetsEngine._mesh_Sphere;
-        mesh.material = AssetsEngine._mat_LitGreen;
+        mesh.Mesh = AssetsEngine._mesh_Sphere;
+        mesh.Material = AssetsEngine._mat_LitGreen;
 
         GameObject sphereB = new GameObject() { Name = "Sphere B", };
         sphereB.Transform.Position = new Vector3(x, 0, 4);
         mesh = sphereB.AddComponent<MeshComponent>();
-        mesh.mesh = AssetsEngine._mesh_Sphere;
-        mesh.material = AssetsEngine._mat_LitBlue;
+        mesh.Mesh = AssetsEngine._mesh_Sphere;
+        mesh.Material = AssetsEngine._mat_LitBlue;
 
         x = 10;
         GameObject sphereMatt = new GameObject() { Name = "Sphere Matt", };
         sphereMatt.Transform.Position = new Vector3(x, 0, 0);
         mesh = sphereMatt.AddComponent<MeshComponent>();
-        mesh.mesh = AssetsEngine._mesh_Sphere;
-        mesh.material = AssetsEngine._mat_Matt;
+        mesh.Mesh = AssetsEngine._mesh_Sphere;
+        mesh.Material = AssetsEngine._mat_Matt;
 
         GameObject sphereSmooth = new GameObject() { Name = "Sphere Smooth", };
         sphereSmooth.Transform.Position = new Vector3(x, 0, 2);
         mesh = sphereSmooth.AddComponent<MeshComponent>();
-        mesh.mesh = AssetsEngine._mesh_Sphere;
-        mesh.material = AssetsEngine._mat_Smooth;
+        mesh.Mesh = AssetsEngine._mesh_Sphere;
+        mesh.Material = AssetsEngine._mat_Smooth;
 
         GameObject reflectionSphere = new GameObject() { Name = "Reflection Sphere", };
         reflectionSphere.Transform.Position = new Vector3(0, 0, -8);
         reflectionSphere.Transform.LocalScale = 2*Vector3.One;
         mesh = reflectionSphere.AddComponent<MeshComponent>();
-        mesh.mesh = AssetsEngine._mesh_Sphere;
-        mesh.material = AssetsEngine._mat_MaterialPreview;
+        mesh.Mesh = AssetsEngine._mesh_Sphere;
+        mesh.Material = AssetsEngine._mat_MaterialPreview;
 
         x = 0;
         GameObject ssao1 = new GameObject(PrimitiveTypes.Sphere) { Name = "ssao1", };

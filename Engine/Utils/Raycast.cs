@@ -185,15 +185,15 @@ public static class Raycast {
         foreach (GameObject go in scene.GameObjects) {
             Graphics.MeshComponent? meshComponent = go.GetComponent<Graphics.MeshComponent>();
             if (meshComponent is null) continue;
-            if (meshComponent.mesh is null) continue;
-            if (meshComponent.mesh.Data is null) continue;
-            if (meshComponent.mesh.Data.PrimitiveType != Silk.NET.OpenGL.PrimitiveType.Triangles) continue;
+            if (meshComponent.Mesh is null) continue;
+            if (meshComponent.Mesh.Data is null) continue;
+            if (meshComponent.Mesh.Data.PrimitiveType != Silk.NET.OpenGL.PrimitiveType.Triangles) continue;
 
             Matrix4x4 worldMatrix = go.Transform.GetWorldMatrix();
-            AABB worldAabb = meshComponent.mesh.LocalAABB.Transformed(worldMatrix);
+            AABB worldAabb = meshComponent.Mesh.LocalAABB.Transformed(worldMatrix);
             if (!RayAABB(ray, worldAabb, out float aabbT) || closestT < aabbT) continue; /// broadphase reject, can't be the closest hit
 
-            if (RaycastMesh(ray, meshComponent.mesh.Data, worldMatrix, out Vector3 localHitPoint, out float t, out Vector3 localNormal) && t < closestT) {
+            if (RaycastMesh(ray, meshComponent.Mesh.Data, worldMatrix, out Vector3 localHitPoint, out float t, out Vector3 localNormal) && t < closestT) {
                 closestT = t;
                 hitMesh = meshComponent;
                 hitPoint = localHitPoint;

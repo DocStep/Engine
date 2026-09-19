@@ -361,7 +361,7 @@ public class GizmoSelected : IDisposable {
                 RectDebugOutline.Draw(rect, Renderer.Instance.Width, Renderer.Instance.Height);
             return;
         }
-        if (meshComp.mesh is null) return;
+        if (meshComp.Mesh is null) return;
         if (mesh_outlined is null) return;
 
         RenderInfo renderInfo = meshComp.renderInfo;
@@ -444,7 +444,7 @@ public class GizmoSelected : IDisposable {
 
         if (meshComp is not null) go_selected = meshComp.gameObject;
 
-        Mesh? mesh = meshComp?.mesh;
+        Mesh? mesh = meshComp?.Mesh;
         if (mesh == mesh_selectedLast) return; // already built, nothing changed
 
         mesh_selectedLast = mesh;

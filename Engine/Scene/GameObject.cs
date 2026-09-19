@@ -47,19 +47,19 @@ public class GameObject : ISavable, IDisposable {
         MeshComponent mesh = AddComponent<MeshComponent>();
         switch (primitive) {
             case PrimitiveTypes.Cube:
-                mesh.mesh = AssetsEngine._mesh_Cube;
+                mesh.Mesh = AssetsEngine._mesh_Cube;
                 //AddComponent<PhysicsComponent>();
                 break;
             case PrimitiveTypes.Sphere:
-                mesh.mesh = AssetsEngine._mesh_Sphere;
+                mesh.Mesh = AssetsEngine._mesh_Sphere;
                 //AddComponent<PhysicsComponent>();
                 break;
             case PrimitiveTypes.Capsule:
-                mesh.mesh = AssetsEngine._mesh_Capsule;
+                mesh.Mesh = AssetsEngine._mesh_Capsule;
                 //AddComponent<PhysicsComponent>();
                 break;
             case PrimitiveTypes.Plane:
-                mesh.mesh = AssetsEngine._mesh_Plane;
+                mesh.Mesh = AssetsEngine._mesh_Plane;
                 //AddComponent<PhysicsComponent>();
                 break;
 
@@ -99,6 +99,7 @@ public class GameObject : ISavable, IDisposable {
     [Hide] private TransformHandle TransformHandle = null!;
     public Transform Transform => TransformHandle.Current;
     public readonly List<Component> Components = new List<Component>();
+    private bool destroyed = false;
 
     [JsonIgnore] public const string TypeName = nameof(GameObject);
 
@@ -186,6 +187,9 @@ public class GameObject : ISavable, IDisposable {
         EnqueueDestroy(this);
     }
     public void DestroyImmediate () {
+        Transform.Parent = null;
+        destroyed = true;
+
         int count = Components.Count;
         for (int i = count - 1; i >= 0; i--) {
             ComponentManager.Instance.ComponentUnregister(Components[i]);
@@ -194,6 +198,7 @@ public class GameObject : ISavable, IDisposable {
 
         ComponentManager.Instance.ComponentUnregister(Transform);
         SceneManager.ActiveScene.GameObjects.Remove(this);
+
         Dispose();
     }
 

@@ -5,12 +5,12 @@ using System.Text;
 namespace Engine.Graphics;
 
 
-public class LightSource : Component {
+public abstract class LightSource : Component {
     public override string Name => nameof(SunLight);
 
     [Hide] public Vector3 Position => gameObject.Transform.Position;
 
-    public Vector3 Color = Constants.Light_Color;
+    [DrawColor] public Vector3 Color = Constants.Light_Color;
     public float Intensity = Constants.Light_Intensity;
 
 

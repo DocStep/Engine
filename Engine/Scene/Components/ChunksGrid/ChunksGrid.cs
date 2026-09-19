@@ -27,25 +27,25 @@ public sealed class ChunksGrid : Component, IUpdate {
     public int MaxTasksStartedPerTick = 4; /// budget - call ProcessTasks() once per frame
     public int MaxUnloadsStartedPerTick = 2; /// reserved floor for unloads specifically - see ProcessTasks()
 
-                                             /// Events
+    /// Events
     public event Action<ChunkLayer, Vector2Int>? de_ChunkLoaded;
     public event Action<ChunkLayer, Vector2Int>? de_ChunkUnloaded;
     public event Action? de_ChunksLoaded;   /// permanent mode only - fires once every layer's initial load finishes
     public event Action? de_ChunksUnloaded; /// UnloadAll
 
-    private readonly List<ChunkLayer> _layers = new List<ChunkLayer>();
-    private ChunkLayer[] _loadOrder = Array.Empty<ChunkLayer>();
-    private ChunkLayer[] _unloadOrder = Array.Empty<ChunkLayer>();
-    private readonly Dictionary<ChunkLayer, int> _loadRank = new Dictionary<ChunkLayer, int>();
-    private readonly Dictionary<ChunkLayer, int> _unloadRank = new Dictionary<ChunkLayer, int>();
-    private readonly Dictionary<ChunkLayer, List<ChunkLayer>> _dependents = new();
-    private readonly HashSet<Vector2Int> _requiredScratch = new HashSet<Vector2Int>();
-    private readonly HashSet<Vector2Int> _existingScratch = new HashSet<Vector2Int>();
+    [Hide] private readonly List<ChunkLayer> _layers = new List<ChunkLayer>();
+    [Hide] private ChunkLayer[] _loadOrder = Array.Empty<ChunkLayer>();
+    [Hide] private ChunkLayer[] _unloadOrder = Array.Empty<ChunkLayer>();
+    [Hide] private readonly Dictionary<ChunkLayer, int> _loadRank = new Dictionary<ChunkLayer, int>();
+    [Hide] private readonly Dictionary<ChunkLayer, int> _unloadRank = new Dictionary<ChunkLayer, int>();
+    [Hide] private readonly Dictionary<ChunkLayer, List<ChunkLayer>> _dependents = new();
+    [Hide] private readonly HashSet<Vector2Int> _requiredScratch = new HashSet<Vector2Int>();
+    [Hide] private readonly HashSet<Vector2Int> _existingScratch = new HashSet<Vector2Int>();
 
-    private readonly List<ChunkTask> _pending = new List<ChunkTask>();
-    private Vector2Int _lastCenterChunk;
-    private bool _initialized;
-    private int _initialLoadRemaining;
+    [Hide] private readonly List<ChunkTask> _pending = new List<ChunkTask>();
+    [Hide] private Vector2Int _lastCenterChunk;
+    [Hide] private bool _initialized;
+    [Hide] private int _initialLoadRemaining;
 
 
     /// Register layers before the first UpdateCenter call.

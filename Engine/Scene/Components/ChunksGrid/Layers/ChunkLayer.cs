@@ -16,7 +16,21 @@ public abstract class ChunkLayer {
 
     public virtual Task RunLoad (Vector2Int coord) => Task.CompletedTask;
     public virtual Task RunSave (Vector2Int coord) => Task.CompletedTask;
-    public virtual Task RunUnload (Vector2Int coord) => Task.CompletedTask;
+    public virtual Task RunUnload (Vector2Int coord) {
+        if (!GameObjects.TryGetValue(coord, out List<GameObject>? list)) {
+            //Log.log(Name, nameof(RunUnload), coord, "null");
+            return Task.CompletedTask;
+        }
+
+        int n = list.Count;
+        for (int i = n - 1; 0 <= i; i--) {
+            list[i].Destroy();
+        }
+        GameObjects.Remove(coord);
+        //Log.log(Name, nameof(RunUnload), coord, list.Count);
+
+        return Task.CompletedTask;
+    }
 
     internal readonly Dictionary<Vector2Int, ChunkState> States = new();
     internal readonly Dictionary<Vector2Int, ChunkTask> Pending = new();
