@@ -25,7 +25,7 @@ public sealed class ChunksGrid : Component, IUpdate {
     public Vector3 Center = Vector3.Zero;
     public static int ChunkSize = 16;
     public int MaxTasksStartedPerTick = 16; /// budget - call ProcessTasks() once per frame
-    public int MaxUnloadsStartedPerTick = 8; /// reserved floor for unloads specifically - see ProcessTasks()
+    public int MaxUnloadTasksStartedPerTick = 8; /// reserved floor for unloads specifically - see ProcessTasks()
 
     /// Events
     public event Action<ChunkLayer, Vector2Int>? de_ChunkLoaded;
@@ -63,14 +63,8 @@ public sealed class ChunksGrid : Component, IUpdate {
     }
     public void Update () {
         Vector3 targetPos = TransformTarget.Position;
-
-        //VoidLatencyChecker.Start("ChunksGrid.UpdateCenter");
         UpdateCenter(targetPos);
-        //VoidLatencyChecker.End("ChunksGrid.UpdateCenter");
-
-        //VoidLatencyChecker.Start("ChunksGrid.ProcessTasks");
         ProcessTasks();
-        //VoidLatencyChecker.End("ChunksGrid.ProcessTasks");
     }
     /// Call on spawn and whenever the streaming center moves (player position, etc).
     /// Only enqueues work - pair with ProcessTasks() every frame or nothing actually runs.
@@ -94,8 +88,8 @@ public sealed class ChunksGrid : Component, IUpdate {
     /// Steps the task queue - starts up to MaxTasksStartedPerTick new tasks (best priority first),
     /// then finalizes any that completed since last call. Call once per frame.
     public void ProcessTasks () {
-        int unloadBudget = MaxUnloadsStartedPerTick;
-        int loadBudget = MaxTasksStartedPerTick - MaxUnloadsStartedPerTick;
+        int unloadBudget = MaxUnloadTasksStartedPerTick;
+        int loadBudget = MaxTasksStartedPerTick - MaxUnloadTasksStartedPerTick;
         int started = 0;
 
         // Pass 1: fill each side's reserved floor first, so neither can be starved by the other.

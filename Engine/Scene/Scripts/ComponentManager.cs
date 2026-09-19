@@ -77,9 +77,9 @@ public class ComponentManager : Singleton<ComponentManager> {
         }
     }
     public void UpdateAlways () {
-        for (int c = 0; c < componentsUpdateAlways.Count; c++) {
-            componentsUpdateAlways[c].Update();
-        }
+        //for (int c = 0; c < componentsUpdateAlways.Count; c++) {
+        //    componentsUpdateAlways[c].Update();
+        //}
     }
     public void FixedUpdate () {
         for (int c = 0; c < componentsFixedUpdate.Count; c++) {

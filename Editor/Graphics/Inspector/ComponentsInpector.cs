@@ -25,18 +25,11 @@ public static class ComponentsInpector {
             transform.LocalPosition = localPosition;
 
             Vector3 localEuler = transform.LocalEuler;
-            Vector3 draggedEuler = localEuler;
 
             string label = nameof(transform.LocalEuler);
             Graphics.EditorUI.InvertedOrder(ref label);
-            if (ImGui.DragFloat3(label, ref draggedEuler, 1f, 0f, 0f, "%.2f")) {
-                Vector3 delta = new Vector3(
-                    ShortestAngle(localEuler.X, draggedEuler.X),
-                    ShortestAngle(localEuler.Y, draggedEuler.Y),
-                    ShortestAngle(localEuler.Z, draggedEuler.Z)
-                );
-                transform.RotateLocalEuler(delta);
-            }
+            if (ImGui.DragFloat3(label, ref localEuler, 1f, 0f, 0f, "%.2f"))
+                transform.LocalEuler = localEuler;
 
             Vector3 localScale = transform.LocalScale;
             Graphics.EditorUI.DrawVar(nameof(transform.LocalScale), ref localScale);

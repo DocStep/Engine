@@ -6,7 +6,7 @@ using System.Diagnostics;
 /// Measures execution time of void calls, including fire-and-forget
 /// async void methods where a normal await-based timer does not work.
 /// </summary>
-public static class VoidLatencyChecker {
+public static class LatencyTracker {
     private static readonly Dictionary<string, Stopwatch> _active = new();
 
     /// <summary> Starts timing a span identified by id. </summary>

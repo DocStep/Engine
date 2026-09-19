@@ -17,14 +17,14 @@ public static class Gizmos {
         
         //_sh_DepthClear = new Graphics.Shader(Assets.LoadText("src/Shaders/DepthClear_Vertex.shader"), Assets.LoadText("src/Shaders/DepthClear_Fragment.shader"), "DepthClear");
         
-        _mat_GizmosGreen = new Material(_sh_UnlitInstanced);
+        _mat_GizmosGreen = new Material(_sh_Unlit);
         _mat_GizmosGreen.SetVector3(Color, Constants.green);
         _mat_GizmosGreen.SetFloat(Alpha, 0.5f);
         _mat_GizmosGreen.pass = RenderPass.Transparent;
         _mat_GizmosGreen.face = RenderFace.Both;
         _mat_GizmosGreen.depthWrite = false;
 
-        _mat_GizmoWireframe = new Material(_sh_UnlitInstanced);
+        _mat_GizmoWireframe = new Material(_sh_Unlit);
         _mat_GizmoWireframe.SetVector3(Color, Constants.black);
         _mat_GizmoWireframe.SetFloat(Alpha, 0.1f);
         _mat_GizmoWireframe.pass = RenderPass.Transparent;
@@ -59,7 +59,7 @@ public static class Gizmos {
         _mat_GizmoAxis.face = RenderFace.Both;
         _mat_GizmoAxis.depthWrite = false;
 
-        _mat_GizmoSun = new Material(_sh_UnlitInstanced);
+        _mat_GizmoSun = new Material(_sh_Unlit);
         _mat_GizmoSun.SetVector3(Color, Constants.yellow);
         _mat_GizmoSun.SetFloat(Alpha, 0.5f);
         _mat_GizmoSun.pass = RenderPass.Transparent;
