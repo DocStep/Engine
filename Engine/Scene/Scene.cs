@@ -3,7 +3,7 @@
 namespace Engine;
 
 
-public class Scene : ISavable {
+public class Scene : ISavable, IUpdate {
     public Scene () {
         Name = GetType().Name;
         SceneManager.Instance.scenes.Add(this);
@@ -16,10 +16,13 @@ public class Scene : ISavable {
     }*/
 
     [JsonIgnore] public readonly static string TypeName = typeof(Scene).Name;
+    [JsonIgnore] public bool Enabled { get; set; } = true;
 
     public string Name = nameof(Scene);
-    protected readonly List<GameObject> objects = new();
+    protected readonly List<GameObject> objects = new List<GameObject>();
     public List<GameObject> GameObjects => objects;
+
+
 
     public void ObjectAdd (GameObject gameObject) {
         objects.Add(gameObject);
@@ -70,5 +73,9 @@ public class Scene : ISavable {
 
     public void PostLoad () {
         
+    }
+
+    void IUpdate.Update () {
+        throw new NotImplementedException();
     }
 }

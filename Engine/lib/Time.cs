@@ -25,27 +25,31 @@ public static class Time {
 
 
     /// --- Game time: stops/scales with isPaused / timeScale ---
-    [InspectorName("Time")] private static double _time = 0d;
-    [Hide] public static double time {
+    [Hide] private static double _time = 0d;
+    [InspectorName("Time")]
+    public static double time {
         get => _time;
         internal set => _time = value;
     }
 
-    [InspectorName("DeltaTime")] private static double _deltaTime;
-    [Hide] public static double deltaTime {
+    [Hide] private static double _deltaTime;
+    [InspectorName("DeltaTime")] 
+    public static double deltaTime {
         get => _deltaTime;
         internal set => _deltaTime = value;
     }
 
-    [InspectorName("FixedDeltaTime")] private static double _fixedDeltaTime = 1d/50d;
-    [Hide] public static double fixedDeltaTime {
+    [Hide] private static double _fixedDeltaTime = 1d/50d;
+    [InspectorName("FixedDeltaTime")]
+    public static double fixedDeltaTime {
         get => _fixedDeltaTime;
-        internal set => _fixedDeltaTime = value;
+        internal set => SetFixedDeltaTime(value);
     }
 
     /// --- Fixed-step time: advances once per FixedUpdate call ---
-    [InspectorName("FixedTime")] private static double _fixedTime = 0d;
-    [Hide] public static double fixedTime {
+    [Hide] private static double _fixedTime = 0d;
+    [InspectorName("FixedTime")]
+    public static double fixedTime {
         get => _fixedTime;
         internal set => _fixedTime = value;
     }
@@ -56,25 +60,29 @@ public static class Time {
     }
 
     /// --- Real time: never stops, drives the engine loop, editor UI, etc. ---
-    [InspectorName("UnscaledTime")] private static double _unscaledTime = 0d;
-    [Hide] public static double unscaledTime {
+    [Hide] private static double _unscaledTime = 0d;
+    [InspectorName("UnscaledTime")]
+    public static double unscaledTime {
         get => _unscaledTime;
         internal set => _unscaledTime = value;
     }
-    [InspectorName("UnscaledDeltaTime")] private static double _unscaledDeltaTime;
-    [Hide] public static double unscaledDeltaTime {
+    [Hide] private static double _unscaledDeltaTime;
+    [InspectorName("UnscaledDeltaTime")]
+    public static double unscaledDeltaTime {
         get => _unscaledDeltaTime;
         internal set => _unscaledDeltaTime = value;
     }
 
     
-    [Readonly] public static string getCurrentTime {
+    [Readonly]
+    public static string getCurrentTime {
         get {
             DateTime now = DateTime.Now;
             return now.ToString(TimeFormat);
         }
     }
-    [Readonly] public static string getCurrentTimeLog {
+    [Readonly]
+    public static string getCurrentTimeLog {
         get {
             DateTime now = DateTime.UtcNow;
             return now.ToString(TimeFormat);
@@ -98,5 +106,11 @@ public static class Time {
         fixedFrameCount++;
     }
 
+    public static void SetFixedDeltaTime (double value) {
+        const double minValue = 0.01d;
+        if (value < minValue) value = minValue;
+        _fixedDeltaTime = value;
+        Log.log(_fixedDeltaTime);
+    }
 
 }

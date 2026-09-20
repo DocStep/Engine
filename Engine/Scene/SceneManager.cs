@@ -18,7 +18,8 @@ public class SceneManager : Singleton<SceneManager> {
         //scene = new ScenePhysics() { Name = "Scene Physics", };
         //scene = new SceneTerrain() { Name = "Scene Terrain", };
         //scene = new SceneUI() { Name = "Scene UI", };
-        scene = new SceneChunksGrid() { Name = "Scene Chunks Grid", };
+        //scene = new SceneChunksGrid() { Name = "Scene Chunks Grid", };
+        scene = new ScenePrefabs() { Name = "Scene Prefabs", };
 
         Engine.Instance.de_Update += Update;
     }

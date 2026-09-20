@@ -2,9 +2,6 @@
 
 
 public class ScenePhysics : Scene {
-    public ScenePhysics () {
-
-    }
 
     public override void Load () {
         GameObject ground = new GameObject() { Name = "Plane", };

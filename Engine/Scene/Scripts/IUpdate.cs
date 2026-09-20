@@ -2,8 +2,6 @@
 
 
 public interface IUpdate {
-
-    void Update();
     public bool Enabled { get; set; }
-
+    void Update();
 }

@@ -4,9 +4,6 @@ namespace Engine;
 
 
 public class SceneMaterials : Scene {
-    public SceneMaterials () {
-
-    }
 
     public override void Load () {
         float x;

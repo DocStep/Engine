@@ -172,15 +172,6 @@ public class Engine : IDisposable {
         Stats.LatencyFixedUpdate = (float)sw_LatencyFixedUpdate.Elapsed.TotalMilliseconds;
     }
 
-    public static void SetFixedDeltaTime (double value) {
-        if (value <= 0d) {
-            Log.log("fixedDeltaTime must be > 0");
-            return;
-        }
-
-        Time.fixedDeltaTime = value;
-    }
-
 
     public static void SetFPSMax (double fpsMax) {
         Windows.Window.FramesPerSecond = fpsMax;

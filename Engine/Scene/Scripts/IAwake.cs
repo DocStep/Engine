@@ -2,8 +2,6 @@
 
 
 public interface IAwake {
-
-    void Awake();
     public bool Enabled { get; set; }
-
+    void Awake();
 }
