@@ -5,7 +5,7 @@ public struct LogEntry {
     public LogEntry (string text, LogType type) {
         this.text = text;
         stackTrace = new System.Diagnostics.StackTrace(1);
-        timestamp = Time.getCurrentTimeLog;
+        timestamp = Time.CurrentTimeLog;
         this.type = type;
     }
 

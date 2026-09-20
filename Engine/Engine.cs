@@ -61,7 +61,7 @@ public class Engine : IDisposable {
         //Reflection.CreateSingleton();
         Json.CreateSingleton();
 
-        Log.log($"[{Time.getCurrentTime}]");
+        Log.log($"[{Time.CurrentTime}]");
 
         Inputs.OverrideActions(DataEngine.InputsData);
 

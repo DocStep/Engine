@@ -6,7 +6,7 @@ namespace Engine;
 
 public class SceneChunksGrid : Scene {
 
-    public override void Load () {
+    public override void OnCreate () {
         GameObject go_camera = new GameObject() { Name = "Camera", };
         go_camera.Transform.Position = new Vector3(-2, 3, -10);
         Camera camera = go_camera.AddComponent<Camera>();

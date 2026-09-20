@@ -2,6 +2,7 @@
 
 namespace Engine;
 
+
 public static class Time {
 
     public static void Init () {
@@ -13,7 +14,7 @@ public static class Time {
     [Hide] static DateTime startTime;
     [Hide] public static double accumulator = 0d;
 
-    [Hide] public const string TimeFormat = "HH:mm:ss.fffffff";
+    [Hide] public const string TimeFormat = "HH:mm:ss.ff";
 
 
     /// --- Pause / scale control ---
@@ -21,12 +22,12 @@ public static class Time {
     public static double timeScale = 1d;
 
     [Readonly] public static int FPS => 
-        (int)(0 < Windows.Window.FramesPerSecond ? Windows.Window.FramesPerSecond : (int)(1/Time.unscaledDeltaTime));
+        (int)(0 < Windows.Window.FramesPerSecond ? Windows.Window.FramesPerSecond : (int)(1/unscaledDeltaTime));
 
 
     /// --- Game time: stops/scales with isPaused / timeScale ---
     [Hide] private static double _time = 0d;
-    [InspectorName("Time")]
+    [Separator][InspectorName("Time")]
     public static double time {
         get => _time;
         internal set => _time = value;
@@ -48,7 +49,7 @@ public static class Time {
 
     /// --- Fixed-step time: advances once per FixedUpdate call ---
     [Hide] private static double _fixedTime = 0d;
-    [InspectorName("FixedTime")]
+    [Separator, InspectorName("FixedTime")]
     public static double fixedTime {
         get => _fixedTime;
         internal set => _fixedTime = value;
@@ -61,7 +62,7 @@ public static class Time {
 
     /// --- Real time: never stops, drives the engine loop, editor UI, etc. ---
     [Hide] private static double _unscaledTime = 0d;
-    [InspectorName("UnscaledTime")]
+    [Separator, InspectorName("UnscaledTime")]
     public static double unscaledTime {
         get => _unscaledTime;
         internal set => _unscaledTime = value;
@@ -74,15 +75,15 @@ public static class Time {
     }
 
     
-    [Readonly]
-    public static string getCurrentTime {
+    [Separator, Readonly]
+    public static string CurrentTime {
         get {
             DateTime now = DateTime.Now;
             return now.ToString(TimeFormat);
         }
     }
     [Readonly]
-    public static string getCurrentTimeLog {
+    public static string CurrentTimeLog {
         get {
             DateTime now = DateTime.UtcNow;
             return now.ToString(TimeFormat);

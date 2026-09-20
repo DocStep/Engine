@@ -339,6 +339,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
             isRaw = attrs.OfType<Raw>().Any();
             isColor = attrs.OfType<DrawColor>().Any();
+
+            if (attrs.OfType<Separator>().Any()) ImGui.Separator();
         }
 
         if (isReadonly) ImGui.BeginDisabled(true);

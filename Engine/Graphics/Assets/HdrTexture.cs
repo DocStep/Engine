@@ -3,18 +3,33 @@
 namespace Engine.Graphics;
 
 
-public class HdrTexture : IDisposable {
-    public HdrTexture (string path) {
-        GL gl = Renderer.GL;
-        HdrLoader.Load(path, out float[] data, out Width, out Height);
+/// GPU texture wrapper for an HDR (equirectangular) image
+public class HdrTexture : IAsset<HdrTexture> {
 
-        Handle = gl.GenTexture();
-        gl.BindTexture(TextureTarget.Texture2D, Handle);
+    public string Name { get; protected set; } = string.Empty;
+
+    public uint Handle { get; private set; }
+    public int Width { get; private set; }
+    public int Height { get; private set; }
+
+
+    public static HdrTexture Load (string path) {
+        GL gl = Renderer.GL;
+        HdrLoader.Load(path, out float[] data, out int width, out int height);
+
+        HdrTexture tex = new HdrTexture {
+            Name = Path.GetFileName(path),
+            Width = width,
+            Height = height,
+        };
+
+        tex.Handle = gl.GenTexture();
+        gl.BindTexture(TextureTarget.Texture2D, tex.Handle);
 
         unsafe {
             fixed (float* d = data) {
-                gl.TexImage2D(TextureTarget.Texture2D, level: 0, InternalFormat.Rgb32f, (uint)Width, (uint)Height,
-                    border:  0, PixelFormat.Rgb, PixelType.Float, d);
+                gl.TexImage2D(TextureTarget.Texture2D, level: 0, InternalFormat.Rgb32f, (uint)width, (uint)height,
+                    border: 0, PixelFormat.Rgb, PixelType.Float, d);
             }
         }
 
@@ -26,12 +41,9 @@ public class HdrTexture : IDisposable {
         gl.GenerateMipmap(TextureTarget.Texture2D);
 
         gl.BindTexture(TextureTarget.Texture2D, 0);
+
+        return tex;
     }
-
-
-    public readonly uint Handle;
-    public readonly int Width;
-    public readonly int Height;
 
 
     public void Bind (TextureUnit unit = TextureUnit.Texture0) {

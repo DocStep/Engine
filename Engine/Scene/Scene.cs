@@ -7,7 +7,7 @@ public class Scene : ISavable, IUpdate {
     public Scene () {
         Name = GetType().Name;
         SceneManager.Instance.scenes.Add(this);
-        Load();
+        OnCreate();
     }
     /*public Scene (string path) {
         Name = GetType().Name;
@@ -32,7 +32,7 @@ public class Scene : ISavable, IUpdate {
     }*/
 
 
-    public virtual void Load () {
+    public virtual void OnCreate () {
 
     }
 

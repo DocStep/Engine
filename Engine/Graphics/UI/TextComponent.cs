@@ -48,7 +48,7 @@ public class TextComponent : UIRenderingElement {
 
     private void LoadAtlas () {
         _atlas?.Dispose();
-        _atlas = FontAtlas.Load(AssetsEngine._fontData, FontSize);
+        _atlas = Assets.LoadFont(Assets.DefaultFontPath, FontSize);
         _lastFontSize = FontSize;
     }
 

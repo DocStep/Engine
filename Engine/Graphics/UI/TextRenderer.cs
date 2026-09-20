@@ -6,7 +6,7 @@ namespace Engine.Graphics.UI;
 public class TextRenderer : IDisposable {
     public unsafe TextRenderer () {
         GL = Renderer.GL;
-        _atlas = FontAtlas.Load(AssetsEngine._fontData, 24);
+        _atlas = Assets.LoadFont(Assets.DefaultFontPath, 24);
         _material = AssetsEngine._mat_Text;
         
         _vao = GL.GenVertexArray();

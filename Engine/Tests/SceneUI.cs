@@ -6,7 +6,7 @@ namespace Engine;
 
 public class SceneUI : Scene {
 
-    public override void Load () {
+    public override void OnCreate () {
         Image image;
 
         GameObject go_camera = new GameObject() { Name = "Camera", };

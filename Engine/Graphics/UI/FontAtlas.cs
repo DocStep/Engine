@@ -4,6 +4,7 @@ using StbTrueTypeSharp;
 namespace Engine.Graphics.UI;
 
 
+/// Baked font atlas for a single font at a single size
 public class FontAtlas : IDisposable {
     GL? GL = null;
     public uint TextureId;
@@ -19,7 +20,8 @@ public class FontAtlas : IDisposable {
         public float XAdvance;
     }
 
-    public static FontAtlas Load (byte[] fontData, float fontSize) {
+    public static FontAtlas Load (RawFont font, float fontSize) {
+        byte[] fontData = font.Data;
         GL gl = Renderer.GL;
 
         /// scale atlas resolution with font size; start here and grow if packing still overflows
@@ -45,7 +47,7 @@ public class FontAtlas : IDisposable {
             atlasWidth *= 2;
             atlasHeight *= 2;
             if (4096 < atlasWidth) {
-                Log.log($"FontAtlas: failed to pack font at size {fontSize} even at {atlasWidth}x{atlasHeight}", LogType.warning);
+                Log.log($"FontAtlas: failed to pack font '{font.Name}' at size {fontSize} even at {atlasWidth}x{atlasHeight}", LogType.warning);
                 break; /// give up rather than loop forever; partial/degenerate glyphs may remain
             }
         }
