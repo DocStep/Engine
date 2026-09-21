@@ -64,6 +64,9 @@ public class Mesh : IAsset<Mesh> {
     }
 
 
+    public string Name { get; set; }
+    public long Id { get; set; }
+
     private readonly GL GL = null!;
     private readonly uint _vao;
     private readonly uint _vbo;
@@ -72,8 +75,6 @@ public class Mesh : IAsset<Mesh> {
 
     public readonly MeshData? Data;
     public readonly AABB LocalAABB;
-
-    public string Name { get; private set; }
 
     /// Instancing — set up lazily on first DrawInstanced() call so meshes that are never
     /// instanced don't pay for the extra buffer/attribute setup.

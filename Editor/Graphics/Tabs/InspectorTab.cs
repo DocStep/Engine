@@ -19,7 +19,9 @@ public class InspectorTab : IEditorTab {
             bool temp_b = selectedGO.Enabled;
             if (ImGui.Checkbox("##" + nameof(selectedGO.Enabled), ref temp_b)) selectedGO.Enabled = temp_b;
             ImGui.SameLine();
-            ImGui.InputText(nameof(selectedGO.Name), ref selectedGO.Name, 256);
+            string name = selectedGO.Name;
+            ImGui.InputText(nameof(selectedGO.Name), ref name, 256);
+            selectedGO.Name = name;
             ImGui.Separator();
 
             EditorUI.DrawComponent(selectedGO.Transform);

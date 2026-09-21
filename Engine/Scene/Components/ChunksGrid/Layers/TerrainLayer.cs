@@ -5,7 +5,7 @@ namespace Engine;
 
 public sealed class TerrainLayer : ChunkLayer {
 
-    public override string Name => "Terrain";
+    public override string Name { get; protected set; } = "Terrain";
 
 
     public override Task RunLoad (Vector2Int coord) {

@@ -559,7 +559,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             .Where(m => typeof(Component).IsAssignableFrom(m.GetParameters()[0].ParameterType))
             .ToList();
 
-        foreach (var kv in ComponentManager.Instance.Components) {
+        foreach (var kv in ComponentsManager.Instance.Components) {
             Type componentType = kv.Key;
 
             MethodInfo? best = drawMethods

@@ -28,11 +28,11 @@ public class AssetsEngine : Singleton<AssetsEngine> {
 
         _sh_Skybox = new Shader(Assets.LoadText("src/Shaders/Skybox_Vertex.shader"), Assets.LoadText("src/Shaders/Skybox_Fragment.shader"), "Skybox", isLit: false);
         _mat_Skybox = new MaterialSkybox(_sh_Skybox);
-        _hdr_Skybox = Assets.Load<HdrTexture>("src/hdr/autumn_field_puresky_4k.hdr");
-        //_hdr_Skybox = new HdrTexture("src/hdr/rogland_clear_night_4k.hdr");
-        //_hdr_Skybox = new HdrTexture("src/hdr/grasslands_sunset_4k.hdr");
-        //_hdr_Skybox = new HdrTexture("src/hdr/overcast_soil_puresky_4k.hdr");
-        //_hdr_Skybox = new HdrTexture("src/hdr/qwantani_dusk_2_puresky_4k.hdr");
+        _hdr_Skybox = Assets.Load<HdrTexture>("src/HDR/autumn_field_puresky_4k.hdr");
+        //_hdr_Skybox = new HdrTexture("src/HDR/rogland_clear_night_4k.hdr");
+        //_hdr_Skybox = new HdrTexture("src/HDR/grasslands_sunset_4k.hdr");
+        //_hdr_Skybox = new HdrTexture("src/HDR/overcast_soil_puresky_4k.hdr");
+        //_hdr_Skybox = new HdrTexture("src/HDR/qwantani_dusk_2_puresky_4k.hdr");
 
         _mesh_Cube = new Mesh(Cube.Generate());
         _mesh_Sphere = new Mesh(Sphere.Generate());

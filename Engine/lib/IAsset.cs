@@ -1,11 +1,27 @@
-﻿namespace Engine;
+﻿using Newtonsoft.Json.Linq;
+
+namespace Engine;
 
 
 public interface IAsset : IDisposable {
-    string Name { get; }
+    public string Name { get; protected set; }
+    public long Id { get; protected set; }
 }
 
 /// Asset type that knows how to load itself from a path
 public interface IAsset<T> : IAsset where T : IAsset<T> {
-    static abstract T Load (string path);
+    //public static abstract T? Save (string path);
+    public static abstract T? Load (string path);
+}
+
+
+/// One flat entry in a saved file — a GameObject, a Transform, or any Component
+public class Block {
+    public long Id;
+    public string Type = null!; /// "GameObject", "Transform", "ChunksGrid", etc.
+    public JObject Data = null!; /// the object's own fields; refs to other blocks stored as ids
+}
+
+public class PrefabFile {
+    public List<Block> Blocks = new List<Block>();
 }

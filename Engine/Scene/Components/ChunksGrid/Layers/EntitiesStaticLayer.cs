@@ -6,9 +6,9 @@ namespace Engine;
 
 public sealed class EntitiesStaticLayer : ChunkLayer {
 
-    public override string Name => "EntitiesStatic";
+    public override string Name { get; protected set; } = "EntitiesStatic";
 
-    public override IReadOnlyList<Type> Dependencies { get; } = [ typeof(TerrainLayer) ];
+    public override List<Type> Dependencies => [ typeof(TerrainLayer) ];
 
     Material mat = new Material(AssetsEngine._sh_LitInstanced);
 

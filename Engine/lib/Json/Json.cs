@@ -6,14 +6,14 @@ namespace Engine;
 
 public class Json : Singleton<Json> {
 
-    public static readonly List<Type> types = new List<Type>();
+    public static readonly List<Type> Types = new List<Type>();
 
     protected override void Init () {
-        types.Clear();
-        types.AddRange(JsonEngine.jsonTypes);
+        Types.Clear();
+        Types.AddRange(JsonEngine.jsonTypes);
 
         KnownTypesBinder = new KnownTypesBinder() {
-            KnownTypes = types,
+            KnownTypes = Types,
         };
 
         Converters = new List<JsonConverter> {
@@ -21,7 +21,9 @@ public class Json : Singleton<Json> {
         };
 
         JsonSettings_General = new JsonSerializerSettings {
+            //TypeNameHandling = TypeNameHandling.All,
             TypeNameHandling = TypeNameHandling.Auto,
+            PreserveReferencesHandling = PreserveReferencesHandling.Objects,
             //TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             SerializationBinder = KnownTypesBinder,
@@ -84,6 +86,8 @@ public class Json : Singleton<Json> {
     //}
 
     public static void Write (string path, object obj, Formatting formatting = Formatting.Indented, bool withPrivate = false) {
+        string? dir = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
         string json = JsonConvert.SerializeObject(obj, formatting, withPrivate ? Instance.JsonSettings_Private : Instance.JsonSettings_General);
         lock (GetLock(path)) {
             File.WriteAllText(path, json);

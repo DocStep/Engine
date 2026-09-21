@@ -3,7 +3,7 @@
 namespace Engine;
 
 
-public class ComponentManager : Singleton<ComponentManager> {
+public class ComponentsManager : Singleton<ComponentsManager> {
 
     public Action<Type>? de_RegisterType = null;
 
@@ -25,12 +25,18 @@ public class ComponentManager : Singleton<ComponentManager> {
 
 
     protected override void Init () {
-        Type[] types = Reflection.FindAllSubclasses<Component>();
+        Type[] types = Reflection.FindAllSubclasses<IAsset>();
+        Json.Types.AddRange(System.Linq.Enumerable.ToList(types));
+
+        types = Reflection.FindAllSubclasses<Component>();
         for (int t = 0; t < types.Length; t++) {
             components.Add(types[t], new List<Component>());
-            //Log.log("ComponentManager.ComponentRegister", types[t]);
-            //de_RegisterType?.Invoke(types[t]);
+            //Log.log(types[t]);
         }
+        Json.Types.AddRange(System.Linq.Enumerable.ToList(types));
+
+        types = Reflection.FindAllSubclasses<ChunkLayer>();
+        Json.Types.AddRange(System.Linq.Enumerable.ToList(types));
 
         //RegisterAll();
 
@@ -89,7 +95,7 @@ public class ComponentManager : Singleton<ComponentManager> {
     }
 
 
-    internal void ComponentRegister (Component component) {
+    public void ComponentRegister (Component component) {
         Type type = component.GetType();
         if (components.TryGetValue(type, out List<Component>? list)) {
             components[type].Add(component);
@@ -123,7 +129,7 @@ public class ComponentManager : Singleton<ComponentManager> {
         component.OnAdd();
         //Log.log("ComponentManager.ComponentRegister", component);
     }
-    internal void ComponentUnregister (Component component) {
+    public void ComponentUnregister (Component component) {
         //Log.log(nameof(ComponentUnregister),  component);
         Type type = component.GetType();
 
@@ -163,6 +169,8 @@ public class ComponentManager : Singleton<ComponentManager> {
             ComponentUnregister(components[c]);
         }
     }*/
+
+
 
 
     private static readonly Dictionary<Type, Func<object>> factories = new Dictionary<Type, Func<object>>();

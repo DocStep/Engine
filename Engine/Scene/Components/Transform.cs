@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Linq;
+using Newtonsoft.Json;
 
 namespace Engine;
 
@@ -22,11 +23,19 @@ public class Transform : Component {
 
     [Hide][JsonIgnore] private Vector3 rotationEuler = Vector3.Zero;
 
-    [Hide][JsonIgnore]
+    [Hide]
     private Transform? parent = null;
 
-    [Hide][JsonIgnore]
+    [JsonIgnore, Hide]
     public List<Transform> Children { get; } = new List<Transform>();
+    [JsonProperty("Children")]
+    private List<GameObject> SerializedChildren {
+        get => Children.Select(t => t.gameObject).ToList();
+        set {
+            foreach (GameObject child in value)
+                child.Transform.SetParent(this);
+        }
+    }
 
 
     [Hide][JsonIgnore]
@@ -507,6 +516,11 @@ public class Transform : Component {
 
     public Matrix4x4 GetWorldMatrix () {
         return WorldMatrix;
+    }
+
+
+    public void SetParent (Transform parent) {
+        Parent = parent;
     }
 
 }

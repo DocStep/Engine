@@ -8,7 +8,7 @@ namespace Engine;
 public static class lib {
 
     public static Guid Guid => Guid.NewGuid();
-    public static string Uuid => Guid.ToString("N");
+    public static string Uuid => Guid.NewGuid().ToString("N");
     public static long Id => BitConverter.ToInt64(Guid.NewGuid().ToByteArray(), 0);
     private static long _Id_Natural_Next = 0;
     public static long Id_Natural => Interlocked.Increment(ref _Id_Natural_Next);

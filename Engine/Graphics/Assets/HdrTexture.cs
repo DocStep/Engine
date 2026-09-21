@@ -6,7 +6,8 @@ namespace Engine.Graphics;
 /// GPU texture wrapper for an HDR (equirectangular) image
 public class HdrTexture : IAsset<HdrTexture> {
 
-    public string Name { get; protected set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public long Id { get; set; }
 
     public uint Handle { get; private set; }
     public int Width { get; private set; }

@@ -12,7 +12,7 @@ public enum ChunkState { None, Loading, Ready, Saving, Unloading }
 public enum ChunkTaskType { Load, Save, Unload }
 
 
-public sealed class ChunksGrid : Component, IUpdate {
+public class ChunksGrid : Component, IUpdate {
 
     public override string Name => nameof(ChunksGrid);
 
@@ -33,7 +33,7 @@ public sealed class ChunksGrid : Component, IUpdate {
     public event Action? de_ChunksLoaded;   /// permanent mode only - fires once every layer's initial load finishes
     public event Action? de_ChunksUnloaded; /// UnloadAll
 
-    [Hide] private readonly List<ChunkLayer> _layers = new List<ChunkLayer>();
+    [Hide] public readonly List<ChunkLayer> Layers = new List<ChunkLayer>();
     [Hide] private ChunkLayer[] _loadOrder = Array.Empty<ChunkLayer>();
     [Hide] private ChunkLayer[] _unloadOrder = Array.Empty<ChunkLayer>();
     [Hide] private readonly Dictionary<ChunkLayer, int> _loadRank = new Dictionary<ChunkLayer, int>();
@@ -52,7 +52,7 @@ public sealed class ChunksGrid : Component, IUpdate {
     
     /// Register layers before the first UpdateCenter call.
     public void AddLayer (ChunkLayer layer) {
-        _layers.Add(layer);
+        Layers.Add(layer);
         RebuildLayerOrder();
     }
 
@@ -60,10 +60,22 @@ public sealed class ChunksGrid : Component, IUpdate {
     public override void OnAdd () {
         Transform = gameObject.Transform;
         TransformTarget = new GameObject() { Name = "ChunksGridTarget", }.Transform;
+        RebuildLayerOrder();
+
+        de_ChunksLoaded += save;
     }
+    public override void OnRemove () {
+        de_ChunksLoaded -= save;
+    }
+    void save () {
+        gameObject.Save("src/Prefabs/chunksgrid.json");
+        Log.log("de_ChunksLoaded");
+    }
+
     public void Update () {
         Vector3 targetPos = TransformTarget.Position;
         UpdateCenter(targetPos);
+        //ForceResync();
         ProcessTasks();
     }
     /// Call on spawn and whenever the streaming center moves (player position, etc).
@@ -73,9 +85,11 @@ public sealed class ChunksGrid : Component, IUpdate {
 
         if (IsPermanentChunks && _initialized) return;
 
+        Log.log("1");
         Vector2Int centerChunk = WorldToChunk(newCenter);
         if (_initialized && centerChunk.Equals(_lastCenterChunk)) return;
 
+        Log.log("2");
         _lastCenterChunk = centerChunk;
         bool firstSync = !_initialized;
         _initialized = true;
@@ -95,14 +109,14 @@ public sealed class ChunksGrid : Component, IUpdate {
         // Pass 1: fill each side's reserved floor first, so neither can be starved by the other.
         while (unloadBudget > 0 && started < MaxTasksStartedPerTick) {
             ChunkTask? task = PickNextTask(ChunkTaskType.Unload);
-            if (task == null) break;
+            if (task is null) break;
             TaskStart(task);
             unloadBudget--;
             started++;
         }
         while (loadBudget > 0 && started < MaxTasksStartedPerTick) {
             ChunkTask? task = PickNextTask(null); // Load or Save
-            if (task == null) break;
+            if (task is null) break;
             TaskStart(task);
             loadBudget--;
             started++;
@@ -112,7 +126,7 @@ public sealed class ChunksGrid : Component, IUpdate {
         // highest overall priority first - no wasted slots if one side ran dry early.
         while (started < MaxTasksStartedPerTick) {
             ChunkTask? task = PickNextTask(null);
-            if (task == null) break;
+            if (task is null) break;
             TaskStart(task);
             started++;
         }
@@ -124,6 +138,8 @@ public sealed class ChunksGrid : Component, IUpdate {
                 _pending.RemoveAt(i);
             }
         }
+
+        Log.log("_pending", _pending.Count);
     }
 
 
@@ -363,7 +379,7 @@ public sealed class ChunksGrid : Component, IUpdate {
     }
 
     private void RebuildLayerOrder () {
-        List<ChunkLayer> sorted = new List<ChunkLayer>(_layers.Count);
+        List<ChunkLayer> sorted = new List<ChunkLayer>(Layers.Count);
         HashSet<Type> done = new HashSet<Type>();
         HashSet<Type> stack = new HashSet<Type>();
 
@@ -374,7 +390,7 @@ public sealed class ChunksGrid : Component, IUpdate {
                 throw new InvalidOperationException($"Circular chunk layer dependency at {t.Name}.");
 
             foreach (Type depType in layer.Dependencies) {
-                ChunkLayer? dep = _layers.Find(l => l.GetType() == depType);
+                ChunkLayer? dep = Layers.Find(l => l.GetType() == depType);
                 if (dep == null)
                     throw new InvalidOperationException(
                         $"{t.Name} depends on {depType.Name}, which is not registered on this grid.");
@@ -386,7 +402,7 @@ public sealed class ChunksGrid : Component, IUpdate {
             sorted.Add(layer);
         }
 
-        foreach (ChunkLayer layer in _layers)
+        foreach (ChunkLayer layer in Layers)
             Visit(layer);
 
         _loadOrder = sorted.ToArray();
@@ -405,10 +421,10 @@ public sealed class ChunksGrid : Component, IUpdate {
     private void RebuildDependents () {
         _dependents.Clear();
         _dependencyLayers.Clear();
-        foreach (ChunkLayer layer in _layers) {
+        foreach (ChunkLayer layer in Layers) {
             List<ChunkLayer> deps = new List<ChunkLayer>();
             foreach (Type depType in layer.Dependencies) {
-                ChunkLayer? dep = _layers.Find(l => l.GetType() == depType);
+                ChunkLayer? dep = Layers.Find(l => l.GetType() == depType);
                 if (dep == null) continue;
                 deps.Add(dep);
                 if (!_dependents.TryGetValue(dep, out List<ChunkLayer>? list))

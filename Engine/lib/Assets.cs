@@ -13,9 +13,9 @@ public static class Assets {
     static readonly Dictionary<string, FontAtlas> _fontCache = new Dictionary<string, FontAtlas>();
     static readonly Dictionary<string, int> _fontRefCount = new Dictionary<string, int>();
 
-    static string NormalizePath (string path) {
+    /*static string NormalizePath (string path) {
         return Path.GetFullPath(path).ToLowerInvariant();
-    }
+    }*/
 
     static string CacheKey<T> (string path) {
         return typeof(T).Name + ":" + path;
@@ -26,7 +26,7 @@ public static class Assets {
     }
 
     public static T Load<T> (string path) where T : class, IAsset<T> {
-        path = NormalizePath(path);
+        //path = NormalizePath(path);
         string key = CacheKey<T>(path);
 
         if (_cache.TryGetValue(key, out IAsset? existing)) {
@@ -38,7 +38,7 @@ public static class Assets {
         try {
             asset = T.Load(path);
         } catch (Exception e) {
-            throw new IOException($"Failed to load {typeof(T).Name} from '{path}': {e.Message}.", e);
+            throw new Exception($"Failed to load {typeof(T).Name} from '{path}': {e.Message}.", e);
         }
 
         _cache[key] = asset;
@@ -57,7 +57,7 @@ public static class Assets {
     /// bytes are cached separately (via Load<RawFont>), so baking the same file at another
     /// size skips the disk read
     public static FontAtlas LoadFont (string path, float fontSize) {
-        path = NormalizePath(path);
+        //path = NormalizePath(path);
         string key = FontCacheKey(path, fontSize);
 
         if (_fontCache.TryGetValue(key, out FontAtlas? existing)) {
@@ -81,7 +81,7 @@ public static class Assets {
 
     /// Releases a reference to an asset; disposes it once no references remain
     public static void Unload<T> (string path) where T : class, IAsset<T> {
-        path = NormalizePath(path);
+        //path = NormalizePath(path);
         string key = CacheKey<T>(path);
 
         if (!_cache.TryGetValue(key, out IAsset? asset)) return;
@@ -95,7 +95,7 @@ public static class Assets {
     /// Releases a reference to a font atlas; disposes it once no references remain.
     /// Also releases the underlying RawFont reference taken by LoadFont
     public static void UnloadFont (string path, float fontSize) {
-        path = NormalizePath(path);
+        //path = NormalizePath(path);
         string key = FontCacheKey(path, fontSize);
 
         if (!_fontCache.TryGetValue(key, out FontAtlas? atlas)) return;

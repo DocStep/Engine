@@ -3,7 +3,7 @@
 namespace Engine;
 
 
-public class Scene : ISavable, IUpdate {
+public class Scene : IUpdate, IAsset<Scene> {
     public Scene () {
         Name = GetType().Name;
         SceneManager.Instance.scenes.Add(this);
@@ -18,14 +18,17 @@ public class Scene : ISavable, IUpdate {
     [JsonIgnore] public readonly static string TypeName = typeof(Scene).Name;
     [JsonIgnore] public bool Enabled { get; set; } = true;
 
-    public string Name = nameof(Scene);
+    public string Name { get; set; } = nameof(Scene);
+    public long Id { get; set; }
+
     protected readonly List<GameObject> objects = new List<GameObject>();
     public List<GameObject> GameObjects => objects;
 
 
 
-    public void ObjectAdd (GameObject gameObject) {
+    public void GameObjectAdd (GameObject gameObject) {
         objects.Add(gameObject);
+        Log.log("GameObjectAdd", gameObject.Name);
     }
     /*public void ObjectRemove (GameObject gameObject) {
         objects.Remove(gameObject);
@@ -65,17 +68,28 @@ public class Scene : ISavable, IUpdate {
         /// Own
         /// ...
 
-        int count = GameObjects.Count;
+        /*int count = GameObjects.Count;
         for (int i = 0; i < count; i++) {
             GameObjects[i].PreSave();
-        }
+        }*/
     }
-
     public void PostLoad () {
         
     }
 
+
+    public static Scene? Load (string path) {
+        return null;
+    }
+    public void Save (string path) {
+
+    }
+
     void IUpdate.Update () {
-        throw new NotImplementedException();
+        
+    }
+
+    public void Dispose () {
+
     }
 }

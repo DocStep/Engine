@@ -247,6 +247,12 @@ public class Renderer {
         while (idx < count) {
             RenderInfo first = RenderList[_visibleIndices[idx]];
 
+            if (first.material.pass == RenderPass.UI) {
+                DrawRenderInfo(first);
+                idx++;
+                continue;
+            }
+
             int runEnd = idx + 1;
             while (runEnd < count) {
                 RenderInfo next = RenderList[_visibleIndices[runEnd]];

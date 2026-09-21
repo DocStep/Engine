@@ -15,12 +15,20 @@ public class SceneChunksGrid : Scene {
         go_sun.Transform.RotationEuler = new Vector3(60, -30, 0);
         SunLight sun = go_sun.AddComponent<SunLight>();
 
-        GameObject go_grid = new GameObject() { Name = "Chunks Grid", };
-        ChunksGrid grid = go_grid.AddComponent<ChunksGrid>();
-        grid.AddLayer(new TerrainLayer() { Radius = 10 });
-        grid.AddLayer(new EntitiesStaticLayer() { Radius = 7 });
-        grid.AddLayer(new EntitiesLayer() { Radius = 3 });
+        GameObject go_grid;
 
+        //go_grid = new GameObject() { Name = "Chunks Grid", };
+        //ChunksGrid grid = go_grid.AddComponent<ChunksGrid>();
+        //new GameObject() { Name = "inner", }.Transform.Parent = grid.gameObject.Transform;
+        ////grid.IsPermanentChunks = true;
+        //grid.AddLayer(new TerrainLayer() { Radius = 2 });
+        //grid.AddLayer(new EntitiesStaticLayer() { Radius = 2 });
+        //grid.AddLayer(new EntitiesLayer() { Radius = 1 });
+        //grid.gameObject.Save("src/Prefabs/chunksgrid.json");
+        //System.Threading.Thread.Sleep(10000);
+        go_grid = Assets.Load<GameObject>("src/Prefabs/chunksgrid.json");
+
+        Log.log(go_grid.Name);
     }
     
 }

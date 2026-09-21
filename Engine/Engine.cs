@@ -86,7 +86,7 @@ public class Engine : IDisposable {
         if (renderer as Graphics.Renderer is null) throw new Exception("Renderer is null");
 
         PhysicsManager.CreateSingleton();
-        ComponentManager.CreateSingleton();
+        ComponentsManager.CreateSingleton();
         SceneManager.CreateSingleton();
 
         Log.log($"===== Hook Layer =====", LogType.system);
@@ -127,7 +127,7 @@ public class Engine : IDisposable {
             }
         } else {
             de_UpdateAlways?.Invoke();
-            ComponentManager.Instance.UpdateAlways();
+            ComponentsManager.Instance.UpdateAlways();
         }
 
         F3_Log();
@@ -143,7 +143,7 @@ public class Engine : IDisposable {
     }
 
     private void Update () {
-        ComponentManager.Instance.Update();
+        ComponentsManager.Instance.Update();
 
         de_Update?.Invoke();
         ReflectionActionScripts.Instance?.de_Actions_Update?.Invoke();
@@ -163,7 +163,7 @@ public class Engine : IDisposable {
         Stats.LatencyPhysics = (float)sw_LatencySystems.Elapsed.TotalMilliseconds;
 
         sw_LatencySystems.Restart();
-        ComponentManager.Instance.FixedUpdate();
+        ComponentsManager.Instance.FixedUpdate();
         Stats.LatencyComponents = (float)sw_LatencySystems.Elapsed.TotalMilliseconds;
 
         de_FixedUpdate?.Invoke();
@@ -182,7 +182,7 @@ public class Engine : IDisposable {
         Graphics.UI.TextRenderer.AddText($"Time: {Time.time:F2}");
         Graphics.UI.TextRenderer.AddText($"FPS: {Time.FPS}");
         Graphics.UI.TextRenderer.AddText($"ms: {Time.deltaTime*1000:F3}");
-        Graphics.UI.TextRenderer.AddText($"Components: {ComponentManager.Instance.componentsCount}");
+        Graphics.UI.TextRenderer.AddText($"Components: {ComponentsManager.Instance.componentsCount}");
         Graphics.UI.TextRenderer.AddText($"SceneSize: {Graphics.Renderer.Instance.Stats.SceneSize}");
         Graphics.UI.TextRenderer.AddText($"MousePos: {Inputs.MousePos}");
         Graphics.UI.TextRenderer.AddText($"MousePos_Window: {Inputs.MousePos_Window}");

@@ -4,7 +4,8 @@
 /// Raw font file bytes, loaded once and reused to bake atlases at any size
 public class RawFont : IAsset<RawFont> {
 
-    public string Name { get; protected set; } = string.Empty;
+    public string Name { get; set; } = null!;
+    public long Id { get; set; }
 
     public byte[] Data { get; private set; } = null!;
 

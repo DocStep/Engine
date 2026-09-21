@@ -10,8 +10,8 @@ namespace Engine;
 /// it does not isolate synchronous work for you.
 public abstract class ChunkLayer {
 
-    public abstract string Name { get; }
-    public virtual IReadOnlyList<Type> Dependencies => Array.Empty<Type>();
+    public abstract string Name { get; protected set; }
+    public virtual List<Type> Dependencies => [];
     public float Radius = 64f; /// own radius against the grid's shared shape (IsCircle)
 
     public virtual Task RunLoad (Vector2Int coord) => Task.CompletedTask;

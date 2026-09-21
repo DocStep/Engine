@@ -1,4 +1,5 @@
-﻿using Engine.Graphics;
+﻿using System.Linq;
+using Engine.Graphics;
 using Newtonsoft.Json;
 
 namespace Engine;
@@ -16,21 +17,24 @@ public enum PrimitiveTypes {
 }
 
 
-public class GameObject : ISavable, IDisposable {
-    public GameObject() {
+public class GameObject : IDisposable, IAsset<GameObject> {
+    public GameObject () {
         Id = lib.Id;
+        InitTransform();
+        SceneManager.ActiveScene.GameObjectAdd(this);
+    }
+    /// Used only by the deserializer — sets up JsonIgnore'd runtime state
+    /// without touching the scene or generating a throwaway Id
+    [JsonConstructor]
+    private GameObject (bool _deserializing) {
+        InitTransform();
+        SceneManager.ActiveScene.GameObjectAdd(this);
+    }
+    void InitTransform () {
         Transform tr = new Transform();
         TransformHandle = new TransformHandle(tr);
         SetTransform(tr);
-        SceneManager.ActiveScene.ObjectAdd(this);
     }
-    /*public GameObject (List<Component> Components) : base() {
-        this.Components = Components;
-    }*/
-    /*public GameObject (Transform Transform, List<Component> Components) : base() {
-        this.Transform = Transform;
-        this.Components = Components;
-    }*/
     public GameObject (PrimitiveTypes primitive, Vector3 position = new Vector3(), 
         Vector3 rotation = new Vector3(), Vector3 scale = default, string? name = default) {
         if (string.IsNullOrEmpty(name)) name = primitive.GetType().Name;
@@ -88,18 +92,20 @@ public class GameObject : ISavable, IDisposable {
                 break;
         }
         //mesh.material = AssetsEngine._mat_Lit;
-        SceneManager.ActiveScene.ObjectAdd(this);
+        SceneManager.ActiveScene.GameObjectAdd(this);
     }
 
     [JsonIgnore] public readonly static string typeName = typeof(GameObject).Name;
 
-    public string Name = TypeName;
-    public readonly long Id = 0;
+    public string Name { get; set; } = TypeName;
+    public long Id { get; set; }
+
     public bool Enabled = true;
-    [Hide] private TransformHandle TransformHandle = null!;
+    [JsonIgnore, Hide] private TransformHandle TransformHandle = null!;
     public Transform Transform => TransformHandle.Current;
+
     public readonly List<Component> Components = new List<Component>();
-    private bool destroyed = false;
+    [JsonIgnore, Hide] private bool destroyed = false;
 
     [JsonIgnore] public const string TypeName = nameof(GameObject);
 
@@ -113,8 +119,8 @@ public class GameObject : ISavable, IDisposable {
         //throw new Exception($"Component of type {typeof(T)} not found in GameObject {Name}");
         return null;
     }
-    public T AddComponent<T> () where T : Component, new() {
-        T component = new T();
+    public T AddComponent<T> () where T : Component, new() => AddComponentInternal(new T());
+    public T AddComponentInternal<T> (T component) where T : Component {
         if (component is Transform transform) {
             SetTransform(transform);
             return component;
@@ -122,7 +128,7 @@ public class GameObject : ISavable, IDisposable {
 
         Components.Add(component);
         component.SetParent(this);
-        ComponentManager.Instance.ComponentRegister(component);
+        ComponentsManager.Instance.ComponentRegister(component);
         return component;
     }
 
@@ -135,33 +141,18 @@ public class GameObject : ISavable, IDisposable {
             }
         }
         if (component is not null) 
-            ComponentManager.Instance.ComponentUnregister(component);
+            ComponentsManager.Instance.ComponentUnregister(component);
     }
     public void RemoveComponent (Component component) {
-        if (component == Transform) return;
+        if (component is Transform) return;
 
         component.gameObject = null!;
         Components.Remove(component);
-        ComponentManager.Instance.ComponentUnregister(component);
+        ComponentsManager.Instance.ComponentUnregister(component);
     }
 
 
-    public void PreSave () {
-        /// Own
-        /// ...
-
-        int count = Components.Count;
-        for (int i = 0; i < count; i++) {
-            Components[i].PreSave();
-        }
-    }
-
-    public void PostLoad () {
-        
-    }
-
-
-    private void SetTransform (Transform transform) {
+    internal void SetTransform (Transform transform) {
         Transform? previous = TransformHandle.Current;
         transform.SetParent(this);
 
@@ -172,8 +163,8 @@ public class GameObject : ISavable, IDisposable {
     }
 
 
-    [Hide] public bool Destroyed = false;
-    [Hide] private static readonly System.Collections.Concurrent.ConcurrentQueue<GameObject> DestroyQueue =
+    [JsonIgnore, Hide] public bool Destroyed = false;
+    [JsonIgnore, Hide] private static readonly System.Collections.Concurrent.ConcurrentQueue<GameObject> DestroyQueue =
         new System.Collections.Concurrent.ConcurrentQueue<GameObject>();
 
     /// <summary>Safe to call from any thread.</summary>
@@ -192,11 +183,11 @@ public class GameObject : ISavable, IDisposable {
 
         int count = Components.Count;
         for (int i = count - 1; i >= 0; i--) {
-            ComponentManager.Instance.ComponentUnregister(Components[i]);
+            ComponentsManager.Instance.ComponentUnregister(Components[i]);
         }
         Components.Clear();
 
-        ComponentManager.Instance.ComponentUnregister(Transform);
+        ComponentsManager.Instance.ComponentUnregister(Transform);
         SceneManager.ActiveScene.GameObjects.Remove(this);
 
         Dispose();
@@ -210,6 +201,34 @@ public class GameObject : ISavable, IDisposable {
         }
     }
 
+
+
+    public void Save (string path) {
+        Json.Write(path, this);
+    }
+    public static GameObject? Load (string path) {
+        GameObject? go = Json.Read<GameObject>(path);
+        if (go is null) {
+            Log.log("Failed to load GameObject from " + path, LogType.warning);
+            return null;
+        }
+
+        FixupOwners(go);
+        return go;
+    }
+    static void FixupOwners (GameObject go) {
+        go.Transform.gameObject = go;
+        ComponentsManager.Instance.ComponentRegister(go.Transform);
+
+        for (int i = 0; i < go.Components.Count; i++) {
+            go.Components[i].gameObject = go;
+            ComponentsManager.Instance.ComponentRegister(go.Components[i]);
+            Log.log("ComponentRegister", go.Components[i]);
+        }
+
+        foreach (Transform child in go.Transform.Children)
+            FixupOwners(child.gameObject);
+    }
 
 
 
