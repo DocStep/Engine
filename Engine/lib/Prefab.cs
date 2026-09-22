@@ -22,16 +22,14 @@ public static class Prefab {
     }
 
 
+    private static readonly Dictionary<string, Type> TypesByName = AppDomain.CurrentDomain.GetAssemblies()
+        .SelectMany(a => a.GetTypes())
+        .Where(t => !t.IsAbstract && !t.IsInterface)
+        .GroupBy(t => t.Name)
+        .ToDictionary(g => g.Key, g => g.First());
 
     private sealed class ShortNameBinder : Newtonsoft.Json.Serialization.ISerializationBinder {
-        private static readonly Dictionary<string, Type> ByName = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(a => a.GetTypes())
-            .Where(t => !t.IsAbstract && !t.IsInterface)
-            .GroupBy(t => t.Name)
-            .ToDictionary(g => g.Key, g => g.First()); // assumes unique short names across loaded assemblies
-
-        public Type BindToType (string? assemblyName, string typeName) => ByName[typeName];
-
+        public Type BindToType (string? assemblyName, string typeName) => TypesByName[typeName];
         public void BindToName (Type serializedType, out string? assemblyName, out string? typeName) {
             assemblyName = null;
             typeName = serializedType.Name;
@@ -87,8 +85,10 @@ public static class Prefab {
                 foreach (FieldInfo field in c.GetType().GetFields(FieldFlags)) {
                     if (field.IsDefined(typeof(JsonIgnoreAttribute))) continue;
                     object? value = field.GetValue(c);
-                    if (value is IAsset asset && asset.Path == null && !ctx.WriteIds.ContainsKey(asset))
+                    if (value is IAsset asset && asset.Path == null && !ctx.WriteIds.ContainsKey(asset)) {
                         ctx.WriteIds[asset] = nextId++;
+                        ctx.InlineAssets.Add(asset);
+                    }
                 }
             }
         }
@@ -101,7 +101,22 @@ public static class Prefab {
             objects.Add(WriteTransformEntry(g.Transform, ctx));
             foreach (Component c in g.Components) objects.Add(WriteComponentEntry(c, ctx));
         }
+        foreach (IAsset asset in ctx.InlineAssets) objects.Add(WriteAssetEntry(asset, ctx));
         return objects;
+    }
+
+    /// Same shape as WriteComponentEntry, minus the "GameObject" back-ref — inline assets aren't
+    /// owned by a GameObject.
+    private static JObject WriteAssetEntry (IAsset asset, PrefabContext ctx) {
+        JObject obj = new JObject {
+            ["$id"] = ctx.WriteIds[asset],
+            ["Type"] = asset.GetType().Name,
+        };
+        foreach (FieldInfo field in asset.GetType().GetFields(FieldFlags)) {
+            if (field.IsDefined(typeof(JsonIgnoreAttribute))) continue;
+            obj[field.Name] = WriteValue(field.GetValue(asset), ctx);
+        }
+        return obj;
     }
 
     /// Two-pass load: instantiate every GameObject/Component up front (fields still default)
@@ -126,6 +141,17 @@ public static class Prefab {
             }
         }
 
+        // Pass 1b: any entry not already claimed by a GameObject or its Components list is a
+        // standalone inline asset (Path == null at save time) — instantiate it directly.
+        foreach (JObject entry in objects.Cast<JObject>()) {
+            string type = entry["Type"]!.Value<string>()!;
+            if (type == "GameObject" || type == "Transform") continue;
+            int id = entry["$id"]!.Value<int>();
+            if (ctx.ReadObjects.ContainsKey(id)) continue; // already a Component
+
+            ctx.ReadObjects[id] = Activator.CreateInstance(TypesByName[type])!;
+        }
+
         foreach (JObject entry in objects.Cast<JObject>()) {
             string type = entry["Type"]!.Value<string>()!;
             if (type == "GameObject") continue;
@@ -140,8 +166,8 @@ public static class Prefab {
                 continue;
             }
 
-            Component c = (Component)ctx.ReadObjects[entry["$id"]!.Value<int>()];
-            ReadFields(c, entry, ctx);
+            object obj = ctx.ReadObjects[entry["$id"]!.Value<int>()]; // Component or inline IAsset — same field-fill either way
+            ReadFields(obj, entry, ctx);
         }
     }
 
@@ -193,7 +219,7 @@ public static class Prefab {
         return JToken.FromObject(value, PolymorphicSerializer);
     }
 
-    private static void ReadFields (Component c, JObject obj, PrefabContext ctx) {
+    private static void ReadFields (object c, JObject obj, PrefabContext ctx) {
         foreach (FieldInfo field in c.GetType().GetFields(FieldFlags)) {
             if (field.IsDefined(typeof(JsonIgnoreAttribute))) continue;
             if (!obj.TryGetValue(field.Name, out JToken? token) || token == null) continue;
@@ -212,5 +238,8 @@ public static class Prefab {
         }
         return token.ToObject(fieldType, PolymorphicSerializer);
     }
+
+
+
 
 }
