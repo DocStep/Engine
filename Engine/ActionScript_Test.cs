@@ -1,7 +1,7 @@
 ﻿namespace Engine;
 
 
-public class ScriptTest : IActionScript_Update {
+public class ActionScript_Test : IActionScript_Update {
 
     public void Update_AS () {
         if (SceneManager.ActiveScene.GameObjects.Count < 2) return;
