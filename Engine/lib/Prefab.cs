@@ -22,6 +22,29 @@ public static class Prefab {
     }
 
 
+
+    private sealed class ShortNameBinder : Newtonsoft.Json.Serialization.ISerializationBinder {
+        private static readonly Dictionary<string, Type> ByName = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(a => a.GetTypes())
+            .Where(t => !t.IsAbstract && !t.IsInterface)
+            .GroupBy(t => t.Name)
+            .ToDictionary(g => g.Key, g => g.First()); // assumes unique short names across loaded assemblies
+
+        public Type BindToType (string? assemblyName, string typeName) => ByName[typeName];
+
+        public void BindToName (Type serializedType, out string? assemblyName, out string? typeName) {
+            assemblyName = null;
+            typeName = serializedType.Name;
+        }
+    }
+
+    private static readonly JsonSerializer PolymorphicSerializer = new JsonSerializer {
+        TypeNameHandling = TypeNameHandling.Auto,
+        SerializationBinder = new ShortNameBinder(),
+    };
+
+
+
     /// Serializes any set of GameObject trees (roots + all descendants) to one file.
     /// Used directly by Scene; Prefab.Save wraps it with a single root.
     public static void SaveObjects (List<GameObject> roots, string path) {
@@ -167,7 +190,7 @@ public static class Prefab {
             if (asset.Path != null) return JToken.FromObject(asset.Path);
             return ctx.WriteIds.TryGetValue(asset, out int id) ? new JObject { ["$ref"] = id } : JValue.CreateNull();
         }
-        return JToken.FromObject(value);
+        return JToken.FromObject(value, PolymorphicSerializer);
     }
 
     private static void ReadFields (Component c, JObject obj, PrefabContext ctx) {
@@ -182,8 +205,12 @@ public static class Prefab {
         if (token.Type == JTokenType.Null) return null;
         if (typeof(Transform).IsAssignableFrom(fieldType)) return ctx.ReadObjects.TryGetValue(token["$ref"]!.Value<int>(), out object? o) ? (Transform)o : null;
         if (typeof(GameObject).IsAssignableFrom(fieldType)) return ctx.ReadObjects.TryGetValue(token["$ref"]!.Value<int>(), out object? o) ? (GameObject)o : null;
-        if (typeof(IAsset).IsAssignableFrom(fieldType)) return AssetsLoadMethod.MakeGenericMethod(fieldType).Invoke(null, new object[] { token.Value<string>()! });
-        return token.ToObject(fieldType);
+        if (typeof(IAsset).IsAssignableFrom(fieldType)) {
+            if (token.Type == JTokenType.Object)
+                return ctx.ReadObjects.TryGetValue(token["$ref"]!.Value<int>(), out object? o) ? o : null;
+            return AssetsLoadMethod.MakeGenericMethod(fieldType).Invoke(null, new object[] { token.Value<string>()! });
+        }
+        return token.ToObject(fieldType, PolymorphicSerializer);
     }
 
 }
