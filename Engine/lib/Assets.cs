@@ -13,9 +13,10 @@ public static class Assets {
     static readonly Dictionary<string, FontAtlas> _fontCache = new Dictionary<string, FontAtlas>();
     static readonly Dictionary<string, int> _fontRefCount = new Dictionary<string, int>();
 
-    /*static string NormalizePath (string path) {
-        return Path.GetFullPath(path).ToLowerInvariant();
-    }*/
+    /// Built-ins (e.g. AssetsEngine._mat_Lit, _mesh_Cube) never touch disk. Register them once at
+    /// startup under a "builtin:Name" key so Assets.Load<T> can hand back the exact same instance
+    /// instead of trying to resolve a path — same identity story as a file-backed asset.
+    static readonly Dictionary<string, IAsset> _builtins = new Dictionary<string, IAsset>();
 
     static string CacheKey<T> (string path) {
         return typeof(T).Name + ":" + path;
@@ -25,20 +26,45 @@ public static class Assets {
         return path + ":" + fontSize;
     }
 
-    public static T Load<T> (string path) where T : class, IAsset<T> {
-        //path = NormalizePath(path);
-        string key = CacheKey<T>(path);
+    /// Normalizes to (fullPath, relativePath) regardless of which one the caller passed in —
+    /// fullPath is only ever used for the actual file read, relativePath is what gets stored on
+    /// the asset and used as the cache key, so identity stays portable across machines.
+    static (string fullPath, string relativePath) ResolvePath (string path) {
+        if (Path.IsPathRooted(path)) {
+            return (path, Path.GetRelativePath(AppContext.BaseDirectory, path));
+        }
+        return (Path.Combine(AppContext.BaseDirectory, path), path);
+    }
+
+    public static void RegisterBuiltin<T> (string name, T asset) where T : class, IAsset<T> {
+        asset.Path = "builtin:" + name;
+        _builtins[asset.Path] = asset;
+    }
+
+    public static void SaveAll () {
+        //Type[] types = Reflection.FindAllSubclasses<IAsset>(doAbstract: false);
+    }
+
+
+    public static T? Load<T> (string path) where T : class, IAsset<T> {
+        if (_builtins.TryGetValue(path, out IAsset? builtin)) return (T)builtin;
+
+        (string fullPath, string relativePath) = ResolvePath(path);
+        string key = CacheKey<T>(relativePath);
 
         if (_cache.TryGetValue(key, out IAsset? existing)) {
             _refCount[key]++;
             return (T)existing;
         }
 
-        T asset;
+        T? asset;
         try {
-            asset = T.Load(path);
+            asset = T.Load(fullPath);
+            if (asset is null) return null;
+            asset.Path = relativePath;
         } catch (Exception e) {
-            throw new Exception($"Failed to load {typeof(T).Name} from '{path}': {e.Message}.", e);
+            throw;
+            //throw new Exception($"Failed to load {typeof(T).Name} from '{path}': {e.Message}.", e);
         }
 
         _cache[key] = asset;
@@ -57,7 +83,6 @@ public static class Assets {
     /// bytes are cached separately (via Load<RawFont>), so baking the same file at another
     /// size skips the disk read
     public static FontAtlas LoadFont (string path, float fontSize) {
-        //path = NormalizePath(path);
         string key = FontCacheKey(path, fontSize);
 
         if (_fontCache.TryGetValue(key, out FontAtlas? existing)) {
@@ -65,7 +90,7 @@ public static class Assets {
             return existing;
         }
 
-        RawFont font = Load<RawFont>(path);
+        RawFont font = Load<RawFont>(path)!;
         FontAtlas atlas;
         try {
             atlas = FontAtlas.Load(font, fontSize);
@@ -81,8 +106,10 @@ public static class Assets {
 
     /// Releases a reference to an asset; disposes it once no references remain
     public static void Unload<T> (string path) where T : class, IAsset<T> {
-        //path = NormalizePath(path);
-        string key = CacheKey<T>(path);
+        if (_builtins.ContainsKey(path)) return; /// built-ins are never disposed
+
+        (_, string relativePath) = ResolvePath(path);
+        string key = CacheKey<T>(relativePath);
 
         if (!_cache.TryGetValue(key, out IAsset? asset)) return;
         if (--_refCount[key] > 0) return;
@@ -95,7 +122,6 @@ public static class Assets {
     /// Releases a reference to a font atlas; disposes it once no references remain.
     /// Also releases the underlying RawFont reference taken by LoadFont
     public static void UnloadFont (string path, float fontSize) {
-        //path = NormalizePath(path);
         string key = FontCacheKey(path, fontSize);
 
         if (!_fontCache.TryGetValue(key, out FontAtlas? atlas)) return;

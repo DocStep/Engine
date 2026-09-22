@@ -26,17 +26,17 @@ public class ComponentsManager : Singleton<ComponentsManager> {
 
     protected override void Init () {
         Type[] types = Reflection.FindAllSubclasses<IAsset>();
-        Json.Types.AddRange(System.Linq.Enumerable.ToList(types));
+        Json.KnownTypes.AddRange(System.Linq.Enumerable.ToList(types));
 
         types = Reflection.FindAllSubclasses<Component>();
         for (int t = 0; t < types.Length; t++) {
             components.Add(types[t], new List<Component>());
             //Log.log(types[t]);
         }
-        Json.Types.AddRange(System.Linq.Enumerable.ToList(types));
+        Json.KnownTypes.AddRange(System.Linq.Enumerable.ToList(types));
 
         types = Reflection.FindAllSubclasses<ChunkLayer>();
-        Json.Types.AddRange(System.Linq.Enumerable.ToList(types));
+        Json.KnownTypes.AddRange(System.Linq.Enumerable.ToList(types));
 
         //RegisterAll();
 

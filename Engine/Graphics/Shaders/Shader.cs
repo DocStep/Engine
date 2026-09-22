@@ -1,18 +1,20 @@
 ﻿using Silk.NET.OpenGL;
+using Newtonsoft.Json;
 
 namespace Engine.Graphics;
 
 
-public class Shader : IDisposable {
-    public Shader (string vertexSource, string fragmentSource, string name = "unnamed", bool isLit = true) {
+public class Shader : IAsset<Shader> {
+    public Shader (string vertexSourcePath, string fragmentSourcePath, string name = "unnamed", bool isLit = true) {
         GL = Renderer.GL;
         Name = name;
         this.isLit = isLit;
 
-        _vertexSource = vertexSource;
-        _fragmentSource = fragmentSource;
+        this.vertexSourcePath = vertexSourcePath;
+        this.fragmentSourcePath = fragmentSourcePath;
 
-
+        string vertexSource = Assets.LoadText(vertexSourcePath);
+        string fragmentSource = Assets.LoadText(fragmentSourcePath);
         uint vertex = CompileShader(ShaderType.VertexShader, vertexSource);
         uint fragment = CompileShader(ShaderType.FragmentShader, fragmentSource);
 
@@ -52,64 +54,75 @@ public class Shader : IDisposable {
             return shaderId;
         }
     }
+    public void Compile () {
+
+    }
+    public void Rebind () {
+
+    }
+
     /*public Shader (Shader shader) : this(shader._vertexSource, shader._fragmentSource, shader.Name + " (copy)") {
         pass = shader.pass;
         depthTest = shader.depthTest;
         depthWrite = shader.depthWrite;
     }*/
 
-    private readonly GL GL;
-    private readonly uint _program;
-    public readonly string Name = "Unnamed";
-    private readonly string _vertexSource;
-    private readonly string _fragmentSource;
-    private int _nextTextureUnit = 0;
+    public string Name { get; set; } = "Unnamed";
+    public long Id { get; set; }
+    public string? Path { get; set; }
+
+    [JsonProperty] private readonly string vertexSourcePath;
+    [JsonProperty] private readonly string fragmentSourcePath;
     public bool isLit;
 
-    public static RendererGLStats Stats = default;
+    [JsonIgnore] private readonly GL GL;
+    [JsonIgnore] private readonly uint _program;
+    [JsonIgnore] private int _nextTextureUnit = 0;
+
+    [JsonIgnore] public static RendererGLStats Stats = default;
     /*public static void StatsReset () {
         Stats = new RendererGLStats();
     }*/
 
 
-    public const string View = "uView";
-    public const string Projection = "uProjection";
-    public const string InvProjection = "uInvProjection";
-    public const string ViewPos = "uViewPos";
-    public const string Model = "uModel";
-    public const string NormalMatrix = "uNormalMatrix";
-    public const string CameraPos = "uCameraPos";
-    public const string Scene = "uSceneColor";
-    public const string Depth = "uDepth";
+    [JsonIgnore] public const string View = "uView";
+    [JsonIgnore] public const string Projection = "uProjection";
+    [JsonIgnore] public const string InvProjection = "uInvProjection";
+    [JsonIgnore] public const string ViewPos = "uViewPos";
+    [JsonIgnore] public const string Model = "uModel";
+    [JsonIgnore] public const string NormalMatrix = "uNormalMatrix";
+    [JsonIgnore] public const string CameraPos = "uCameraPos";
+    [JsonIgnore] public const string Scene = "uSceneColor";
+    [JsonIgnore] public const string Depth = "uDepth";
 
-    public const string SunLightCount = "uSunLightCount";
-    public const string SunLightDir = "uSunLightDir";
-    public const string SunLightColor = "uSunLightColor";
-    public const string SunLightIntensity = "uSunLightIntensity";
+    [JsonIgnore] public const string SunLightCount = "uSunLightCount";
+    [JsonIgnore] public const string SunLightDir = "uSunLightDir";
+    [JsonIgnore] public const string SunLightColor = "uSunLightColor";
+    [JsonIgnore] public const string SunLightIntensity = "uSunLightIntensity";
 
-    public const string PointLightCount = "uPointLightCount";
-    public const string PointLightColor = "uPointLightColor";
-    public const string PointLightIntensity = "uPointLightIntensity";
-    public const string PointLightPos = "uPointLightPos";
-    public const string PointLightRange = "uPointLightRange";
+    [JsonIgnore] public const string PointLightCount = "uPointLightCount";
+    [JsonIgnore] public const string PointLightColor = "uPointLightColor";
+    [JsonIgnore] public const string PointLightIntensity = "uPointLightIntensity";
+    [JsonIgnore] public const string PointLightPos = "uPointLightPos";
+    [JsonIgnore] public const string PointLightRange = "uPointLightRange";
 
-    public const string Exposure = "uExposure";
-    public const string AmbientColor = "uAmbientColor";
-    public const string AmbientColorIntensity = "uAmbientColorIntensity";
-    public const string ReflectionIntensity = "uReflectionIntensity";
+    [JsonIgnore] public const string Exposure = "uExposure";
+    [JsonIgnore] public const string AmbientColor = "uAmbientColor";
+    [JsonIgnore] public const string AmbientColorIntensity = "uAmbientColorIntensity";
+    [JsonIgnore] public const string ReflectionIntensity = "uReflectionIntensity";
 
 
-    public const string MaxReflectionLod = "uMaxReflectionLod";
-    public const string Skybox = "uSkybox";
+    [JsonIgnore] public const string MaxReflectionLod = "uMaxReflectionLod";
+    [JsonIgnore] public const string Skybox = "uSkybox";
 
-    public const string Color = "uColor";
-    public const string Texture = "uTexture";
-    public const string Smoothness = "uSmoothness";
-    public const string Metallic = "uMetallic";
-    public const string Alpha = "uAlpha";
-    public const string Radius = "uRadius";
-    public const string Fade = "uFade";
-    public const string Tint = "uTint";
+    [JsonIgnore] public const string Color = "uColor";
+    [JsonIgnore] public const string Texture = "uTexture";
+    [JsonIgnore] public const string Smoothness = "uSmoothness";
+    [JsonIgnore] public const string Metallic = "uMetallic";
+    [JsonIgnore] public const string Alpha = "uAlpha";
+    [JsonIgnore] public const string Radius = "uRadius";
+    [JsonIgnore] public const string Fade = "uFade";
+    [JsonIgnore] public const string Tint = "uTint";
 
 
 
@@ -242,6 +255,17 @@ public class Shader : IDisposable {
         //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetTexture)} {err}", LogType.warning);
     }
 
+
+
+    public void Save (string path) {
+        Path = path;
+        Json.Write(path, this);
+    }
+
+    public static Shader? Load (string path) {
+        Shader shader = Json.Read<Shader>(path);
+        return shader;
+    }
 
 
     public void Dispose () {

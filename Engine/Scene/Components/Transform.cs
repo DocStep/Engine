@@ -11,19 +11,19 @@ public class Transform : Component {
 
     public override string Name => nameof(Transform);
 
-    [Hide][JsonIgnore] public Action<Vector3>? de_PositionChanged = null;
-    [Hide][JsonIgnore] public Action<Quaternion>? de_RotationChanged = null;
-    [Hide][JsonIgnore] public Action<Vector3>? de_ScaleChanged = null;
-    [Hide][JsonIgnore] public Action? de_Stop = null;
+    [Hide, JsonIgnore] public Action<Vector3>? de_PositionChanged = null;
+    [Hide, JsonIgnore] public Action<Quaternion>? de_RotationChanged = null;
+    [Hide, JsonIgnore] public Action<Vector3>? de_ScaleChanged = null;
+    [Hide, JsonIgnore] public Action? de_Stop = null;
 
-    [Hide][JsonIgnore] private Vector3 localPosition = Vector3.Zero;
-    [Hide][JsonIgnore] private Quaternion localRotation = Quaternion.Identity;
-    [Hide][JsonIgnore] private Vector3 localRotationEuler = Vector3.Zero;
-    [Hide][JsonIgnore] private Vector3 localScale = Vector3.One;
+    [Hide, JsonIgnore] private Vector3 localPosition = Vector3.Zero;
+    [Hide, JsonIgnore] private Quaternion localRotation = Quaternion.Identity;
+    [Hide, JsonIgnore] private Vector3 localRotationEuler = Vector3.Zero;
+    [Hide, JsonIgnore] private Vector3 localScale = Vector3.One;
 
-    [Hide][JsonIgnore] private Vector3 rotationEuler = Vector3.Zero;
+    [Hide, JsonIgnore] private Vector3 rotationEuler = Vector3.Zero;
 
-    [Hide]
+    [Hide, JsonProperty]
     private Transform? parent = null;
 
     [JsonIgnore, Hide]

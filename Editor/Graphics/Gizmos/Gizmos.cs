@@ -12,10 +12,12 @@ public static class Gizmos {
         //Renderer.Instance.de_GizmosDraw += DrawGizmos;
         GL = Renderer.GL;
 
-        _sh_Outline = new Shader(Assets.LoadText("src/Shaders/Outline_Vertex.shader"), Assets.LoadText("src/Shaders/Outline_Fragment.shader"), "Outline", isLit: false);
+        _sh_Outline = new Shader("src/Shaders/Gizmos/Outline_Vertex.shader", 
+            "src/Shaders/Gizmos/Outline_Fragment.shader", "Outline", isLit: false);
         _sh_Outline.SetVector3(Color, Constants.cyan);
         
-        //_sh_DepthClear = new Graphics.Shader(Assets.LoadText("src/Shaders/DepthClear_Vertex.shader"), Assets.LoadText("src/Shaders/DepthClear_Fragment.shader"), "DepthClear");
+        //_sh_DepthClear = new Graphics.Shader(Assets.LoadText("src/Shaders/DepthClear_Vertex.shader"),
+        //Assets.LoadText("src/Shaders/DepthClear_Fragment.shader"), "DepthClear");
         
         _mat_GizmosGreen = new Material(_sh_Unlit);
         _mat_GizmosGreen.SetVector3(Color, Constants.green);
@@ -31,7 +33,8 @@ public static class Gizmos {
         _mat_GizmoWireframe.face = RenderFace.Both;
         _mat_GizmoWireframe.depthWrite = false;
 
-        _sh_GizmoGrid = new Shader(Assets.LoadText("src/Shaders/Grid_Vertex.shader"), Assets.LoadText("src/Shaders/Grid_Fragment.shader"), "Grid", isLit: false);
+        _sh_GizmoGrid = new Shader("src/Shaders/Gizmos/Grid_Vertex.shader", 
+            "src/Shaders/Gizmos/Grid_Fragment.shader", "Grid", isLit: false);
         _mat_GizmoGrid = new Material(_sh_GizmoGrid);
         _mat_GizmoGrid.SetVector3(Color, Constants.lightGray);
         _mat_GizmoGrid.SetFloat(Alpha, 0.5f);
@@ -41,7 +44,8 @@ public static class Gizmos {
         _mat_GizmoGrid.face = RenderFace.Both;
         _mat_GizmoGrid.depthWrite = false;
 
-        _sh_GizmoAxisLine = new Shader(Assets.LoadText("src/Shaders/AxisLine_Vertex.shader"), Assets.LoadText("src/Shaders/AxisLine_Fragment.shader"), "AxisLine", isLit: false);
+        _sh_GizmoAxisLine = new Shader("src/Shaders/Gizmos/AxisLine_Vertex.shader", 
+            "src/Shaders/Gizmos/AxisLine_Fragment.shader", "AxisLine", isLit: false);
         _mat_GizmoAxisLine = new Material(_sh_GizmoAxisLine);
         _mat_GizmoAxisLine.SetFloat(Alpha, 0.5f);
         _mat_GizmoAxisLine.SetFloat(Radius, 100f);
@@ -50,7 +54,8 @@ public static class Gizmos {
         _mat_GizmoAxisLine.face = RenderFace.Both;
         _mat_GizmoAxisLine.depthWrite = false;
 
-        _sh_GizmoAxis = new Shader(Assets.LoadText("src/Shaders/Axis_Vertex.shader"), Assets.LoadText("src/Shaders/Axis_Fragment.shader"), "Axis", isLit: false);
+        _sh_GizmoAxis = new Shader("src/Shaders/Gizmos/Axis_Vertex.shader", 
+            "src/Shaders/Gizmos/Axis_Fragment.shader", "Axis", isLit: false);
         _mat_GizmoAxis = new Material(_sh_GizmoAxis);
         _mat_GizmoAxis.SetFloat(Alpha, 0.5f);
         _mat_GizmoAxis.SetFloat(Radius, 100f);

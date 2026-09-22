@@ -14,8 +14,9 @@ public enum RenderFace {
 
 
 
-public class Material /*: IDisposable*/ {
-    //public Material () { }
+public class Material : IAsset<Material> {
+    [Newtonsoft.Json.JsonConstructor]
+    public Material () { }
     public Material (Shader shader) {
         this.shader = shader;
     }
@@ -28,7 +29,10 @@ public class Material /*: IDisposable*/ {
         ///textures = (Silk.NET.OpenGL.Texture?[])material.textures.Clone();
     }
 
-    public string Name = nameof(Material);
+    public string Name { get; set; } = nameof (Material);
+    public long Id { get; set; }
+    public string? Path { get; set; }
+
     [Hide] public Shader shader = null!;
 
     [Raw] public readonly Dictionary<string, int> ints = new();
@@ -81,8 +85,18 @@ public class Material /*: IDisposable*/ {
     }
 
 
-    /*public void Dispose () {
-        
-    }*/
+
+    public void Save (string path) {
+        Path = path;
+        Json.Write(path, this);
+    }
+    public static Material? Load (string path) {
+        return Json.Read<Material>(path);
+    }
+
+
+    public void Dispose () {
+
+    }
 
 }

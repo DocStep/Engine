@@ -8,20 +8,29 @@ public class HdrTexture : IAsset<HdrTexture> {
 
     public string Name { get; set; } = string.Empty;
     public long Id { get; set; }
+    public string? Path { get; set; }
 
     public uint Handle { get; private set; }
     public int Width { get; private set; }
     public int Height { get; private set; }
 
+    public void Bind (TextureUnit unit = TextureUnit.Texture0) {
+        Renderer.GL.ActiveTexture(unit);
+        Renderer.GL.BindTexture(TextureTarget.Texture2D, Handle);
+    }
+
+
+    public void Save (string path) { }
 
     public static HdrTexture Load (string path) {
         GL gl = Renderer.GL;
         HdrLoader.Load(path, out float[] data, out int width, out int height);
 
         HdrTexture tex = new HdrTexture {
-            Name = Path.GetFileName(path),
+            Name = System.IO.Path.GetFileName(path),
             Width = width,
             Height = height,
+            Path = path,
         };
 
         tex.Handle = gl.GenTexture();
@@ -46,11 +55,6 @@ public class HdrTexture : IAsset<HdrTexture> {
         return tex;
     }
 
-
-    public void Bind (TextureUnit unit = TextureUnit.Texture0) {
-        Renderer.GL.ActiveTexture(unit);
-        Renderer.GL.BindTexture(TextureTarget.Texture2D, Handle);
-    }
 
 
     public void Dispose () {

@@ -491,7 +491,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 break;
             case Transform tr:
                 ImGui.BeginDisabled();
-                temp_s = tr.Parent is not null ? tr.Parent.Name : "null";
+                temp_s = tr.gameObject is not null ? tr.gameObject.Name : "null";
                 if (ImGui.InputText(label, ref temp_s, 256)) result = temp_s;
                 ImGui.EndDisabled();
                 break;

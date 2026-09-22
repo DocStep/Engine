@@ -20,6 +20,7 @@ public class Scene : IUpdate, IAsset<Scene> {
 
     public string Name { get; set; } = nameof(Scene);
     public long Id { get; set; }
+    public string? Path { get; set; }
 
     protected readonly List<GameObject> objects = new List<GameObject>();
     public List<GameObject> GameObjects => objects;

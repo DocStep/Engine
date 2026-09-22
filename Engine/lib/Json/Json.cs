@@ -4,20 +4,18 @@ using Newtonsoft.Json.Serialization;
 namespace Engine;
 
 
-public class Json : Singleton<Json> {
+public static class Json {
 
-    public static readonly List<Type> Types = new List<Type>();
-
-    protected override void Init () {
-        Types.Clear();
-        Types.AddRange(JsonEngine.jsonTypes);
+    public static void Init () {
+        KnownTypes.Clear();
+        KnownTypes.AddRange(JsonEngine.jsonTypes);
 
         KnownTypesBinder = new KnownTypesBinder() {
-            KnownTypes = Types,
+            KnownTypes = KnownTypes,
         };
 
         Converters = new List<JsonConverter> {
-            
+
         };
 
         JsonSettings_General = new JsonSerializerSettings {
@@ -45,13 +43,15 @@ public class Json : Singleton<Json> {
         };
     }
 
+    
+    public static readonly List<Type> KnownTypes = new List<Type>();
 
-    public KnownTypesBinder? KnownTypesBinder;
-    public List<JsonConverter>? Converters;
+    public static KnownTypesBinder? KnownTypesBinder;
+    public static List<JsonConverter>? Converters;
 
-    public JsonSerializerSettings? JsonSettings_General;
-    public JsonSerializerSettings? JsonSettings_Private;
-    public JsonSerializerSettings? JsonSettings_Settings;
+    public static JsonSerializerSettings? JsonSettings_General;
+    public static JsonSerializerSettings? JsonSettings_Private;
+    public static JsonSerializerSettings? JsonSettings_Settings;
 
 
 
@@ -71,14 +71,14 @@ public class Json : Singleton<Json> {
         lock (GetLock(path)) {
             json = File.ReadAllText(path);
         }
-        return JsonConvert.DeserializeObject<T>(json, withPrivate ? Instance.JsonSettings_Private : Instance.JsonSettings_General);
+        return JsonConvert.DeserializeObject<T>(json, withPrivate ? JsonSettings_Private : JsonSettings_General);
     }
     public async static System.Threading.Tasks.Task<T> ReadAsync<T> (string path, bool withPrivate = false) {
         return await Json.ReadAsync<T>(path, withPrivate);
     }
 
     public static T? Convert<T> (string json, bool withPrivate = false) {
-        return JsonConvert.DeserializeObject<T>(json, withPrivate ? Instance.JsonSettings_Private : Instance.JsonSettings_General);
+        return JsonConvert.DeserializeObject<T>(json, withPrivate ? JsonSettings_Private : JsonSettings_General);
     }
     //public static void JsonRead<T> (string path, out T output, bool withPrivate = false) {
     //    string json = File.ReadAllText(path);
@@ -88,7 +88,7 @@ public class Json : Singleton<Json> {
     public static void Write (string path, object obj, Formatting formatting = Formatting.Indented, bool withPrivate = false) {
         string? dir = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-        string json = JsonConvert.SerializeObject(obj, formatting, withPrivate ? Instance.JsonSettings_Private : Instance.JsonSettings_General);
+        string json = JsonConvert.SerializeObject(obj, formatting, withPrivate ? JsonSettings_Private : JsonSettings_General);
         lock (GetLock(path)) {
             File.WriteAllText(path, json);
         }
@@ -97,10 +97,10 @@ public class Json : Singleton<Json> {
 
     public static T? ReadSettings<T> (string path) {
         string json = File.ReadAllText(path);
-        return JsonConvert.DeserializeObject<T>(json, Instance.JsonSettings_Settings);
+        return JsonConvert.DeserializeObject<T>(json, JsonSettings_Settings);
     }
     public static void WriteSettings (string path, SettingsEngine settings) {
-        string json = JsonConvert.SerializeObject(settings, Formatting.Indented, Json.Instance.JsonSettings_Settings);
+        string json = JsonConvert.SerializeObject(settings, Formatting.Indented, JsonSettings_Settings);
         File.WriteAllText(path, json);
     }
 

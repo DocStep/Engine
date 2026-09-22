@@ -1,9 +1,14 @@
-﻿namespace Engine;
+﻿using Newtonsoft.Json;
+
+namespace Engine;
 
 
 public class MonkeyScript : Script, IAwake, IUpdate {
 
     [ChangeStep(1f)] public Vector3 dir = new Vector3(0, 90, 0);
+
+    public Transform tr1 = null!;
+    public Transform tr2 = null!;
 
     Graphics.Material? mat;
     public Vector3 color;

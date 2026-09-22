@@ -59,7 +59,7 @@ public class Engine : IDisposable {
         //CrashHandlers.Init();
 
         //Reflection.CreateSingleton();
-        Json.CreateSingleton();
+        Json.Init();
 
         Log.log($"[{Time.CurrentTime}]");
 
@@ -82,8 +82,8 @@ public class Engine : IDisposable {
 
         Log.log($"===== Systems Layer =====", LogType.system);
 
-        object? renderer = Activator.CreateInstance(rendererType);
-        if (renderer as Graphics.Renderer is null) throw new Exception("Renderer is null");
+        Graphics.Renderer? renderer = Activator.CreateInstance(rendererType) as Graphics.Renderer;
+        if (renderer is null) throw new Exception("Renderer is null");
 
         PhysicsManager.CreateSingleton();
         ComponentsManager.CreateSingleton();

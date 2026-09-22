@@ -66,6 +66,7 @@ public class Mesh : IAsset<Mesh> {
 
     public string Name { get; set; }
     public long Id { get; set; }
+    public string? Path { get; set; }
 
     private readonly GL GL = null!;
     private readonly uint _vao;
@@ -198,9 +199,19 @@ public class Mesh : IAsset<Mesh> {
         dst[offset + 12] = m.M41; dst[offset + 13] = m.M42; dst[offset + 14] = m.M43; dst[offset + 15] = m.M44;
     }
 
-    public static Mesh Load (string path) {
-        return new Mesh(ObjLoader.Load(path)) { Name = Path.GetFileNameWithoutExtension(path) };
+
+    public void Save (string path) {
+        if (Data is null) return;
+        ObjLoader.Save(path, Data);
     }
+
+    public static Mesh Load (string path) {
+        return new Mesh(ObjLoader.Load(path)) {
+            Name = System.IO.Path.GetFileNameWithoutExtension(path),
+            Path = path,
+        };
+    }
+
 
 
     public void Dispose () {

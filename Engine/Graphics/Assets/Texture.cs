@@ -10,11 +10,22 @@ public class Texture : IAsset<Texture> {
 
     public string Name { get; set; } = string.Empty;
     public long Id { get; set; }
+    public string? Path { get; set; }
 
     public uint Handle { get; private set; }
     public int Width { get; private set; }
     public int Height { get; private set; }
 
+
+    public void Bind (TextureUnit unit = TextureUnit.Texture0) {
+        Renderer.GL.ActiveTexture(unit);
+        Renderer.GL.BindTexture(TextureTarget.Texture2D, Handle);
+    }
+
+
+    public void Save (string path) {
+
+    }
 
     /// <summary> Loads a texture from an image file (png/jpg/etc via StbImageSharp) and uploads it to the GPU. </summary>
     public static Texture Load (string path) {
@@ -50,11 +61,6 @@ public class Texture : IAsset<Texture> {
         gl.BindTexture(TextureTarget.Texture2D, 0);
 
         return tex;
-    }
-
-    public void Bind (TextureUnit unit = TextureUnit.Texture0) {
-        Renderer.GL.ActiveTexture(unit);
-        Renderer.GL.BindTexture(TextureTarget.Texture2D, Handle);
     }
 
 

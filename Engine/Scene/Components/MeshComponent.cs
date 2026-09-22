@@ -7,10 +7,8 @@ public class MeshComponent : Component, IUpdate, IUpdateAtFreeze {
 
     [JsonIgnore] public override string Name => nameof(MeshComponent);
 
-    [JsonIgnore] public Mesh? Mesh = null;
-    [Hide][JsonProperty("Mesh")] public string? meshPath = null;
-    [JsonIgnore] public Material? Material = AssetsEngine._mat_Lit;
-    [Hide][JsonProperty("Material")] public string? materialPath = null;
+    public Mesh? Mesh = null;
+    /*[JsonIgnore]*/ public Material? Material = AssetsEngine._mat_Lit;
     //[JsonProperty("pass")] public RenderPass pass = RenderPass.Opaque;
 
     [Hide][JsonIgnore] public RenderInfo renderInfo { get; private set; }

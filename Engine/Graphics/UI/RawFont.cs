@@ -6,13 +6,19 @@ public class RawFont : IAsset<RawFont> {
 
     public string Name { get; set; } = null!;
     public long Id { get; set; }
+    public string? Path { get; set; }
 
     public byte[] Data { get; private set; } = null!;
 
 
+    public void Save (string path) {
+        File.WriteAllBytes(path, Data);
+    }
+
     public static RawFont Load (string path) {
         return new RawFont {
-            Name = Path.GetFileName(path),
+            Name = System.IO.Path.GetFileName(path),
+            Path = path,
             Data = File.ReadAllBytes(path),
         };
     }
