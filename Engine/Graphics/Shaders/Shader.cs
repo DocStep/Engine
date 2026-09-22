@@ -13,49 +13,50 @@ public class Shader : IAsset<Shader> {
         this.vertexSourcePath = vertexSourcePath;
         this.fragmentSourcePath = fragmentSourcePath;
 
+        Compile();
+    }
+    public void Compile () {
         string vertexSource = Assets.LoadText(vertexSourcePath);
         string fragmentSource = Assets.LoadText(fragmentSourcePath);
+
         uint vertex = CompileShader(ShaderType.VertexShader, vertexSource);
         uint fragment = CompileShader(ShaderType.FragmentShader, fragmentSource);
 
-        _program = GL.CreateProgram();
-        GL.AttachShader(_program, vertex);
-        GL.AttachShader(_program, fragment);
-        GL.LinkProgram(_program);
-        GL.GetProgram(_program, ProgramPropertyARB.ActiveUniforms, out int uniformCount);
-        //for (uint i = 0; i < uniformCount; i++) {
-        //    GL.GetActiveUniform(_program, i, 256, out uint length, out int size, out UniformType type, out string namee);
-        //    if (namee.Contains("Sun")) Log.log($"uniform {namee}", $"size={size} type={type}");
-        //}
+        uint program = GL.CreateProgram();
+        GL.AttachShader(program, vertex);
+        GL.AttachShader(program, fragment);
+        GL.LinkProgram(program);
 
-        GL.GetProgram(_program, ProgramPropertyARB.LinkStatus, out int status);
-        Stats.RecordCompile(status);
-        if (status == 0) {
-            string log = GL.GetProgramInfoLog(_program);
-            throw new Exception($"Shader program failed to link: {log}");
-        }
+        GL.GetProgram(program, ProgramPropertyARB.LinkStatus, out int status);
 
-        GL.DetachShader(_program, vertex);
-        GL.DetachShader(_program, fragment);
+        GL.DetachShader(program, vertex);
+        GL.DetachShader(program, fragment);
         GL.DeleteShader(vertex);
         GL.DeleteShader(fragment);
 
-        uint CompileShader (ShaderType type, string source) {
-            uint shaderId = GL.CreateShader(type);
-            GL.ShaderSource(shaderId, source);
-            GL.CompileShader(shaderId);
-
-            GL.GetShader(shaderId, ShaderParameterName.CompileStatus, out int status);
-            if (status == 0) {
-                string log = GL.GetShaderInfoLog(shaderId);
-                throw new Exception($"{type} failed to compile: {log}");
-            }
-
-            return shaderId;
+        if (status == 0) {
+            string log = GL.GetProgramInfoLog(program);
+            GL.DeleteProgram(program);
+            throw new Exception($"Shader program failed to link: {log}");
         }
-    }
-    public void Compile () {
 
+        uint oldProgram = _program;
+        _program = program;
+
+        GL.DeleteProgram(oldProgram);
+    }
+    uint CompileShader (ShaderType type, string source) {
+        uint shaderId = GL.CreateShader(type);
+        GL.ShaderSource(shaderId, source);
+        GL.CompileShader(shaderId);
+
+        GL.GetShader(shaderId, ShaderParameterName.CompileStatus, out int status);
+        if (status == 0) {
+            string log = GL.GetShaderInfoLog(shaderId);
+            throw new Exception($"{type} failed to compile: {log}");
+        }
+
+        return shaderId;
     }
     public void Rebind () {
 
@@ -76,7 +77,7 @@ public class Shader : IAsset<Shader> {
     public bool isLit;
 
     [JsonIgnore] private readonly GL GL;
-    [JsonIgnore] private readonly uint _program;
+    [JsonIgnore] private uint _program;
     [JsonIgnore] private int _nextTextureUnit = 0;
 
     [JsonIgnore] public static RendererGLStats Stats = default;
@@ -246,7 +247,7 @@ public class Shader : IAsset<Shader> {
         TextureUnit unit = TextureUnit.Texture0 + _nextTextureUnit;
         texture.Bind(unit);
 
-        int location = GL.GetUniformLocation(texture.Handle, name);
+        int location = GL.GetUniformLocation(_program, name);
         GL.Uniform1(location, _nextTextureUnit);
 
         _nextTextureUnit++;
