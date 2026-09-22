@@ -32,16 +32,16 @@ public class SceneChunksGrid : Scene {
 
         GameObject? go;
 
-        //go = new GameObject() { Name = "Prefab", };
-        //GameObject go_mesh = new GameObject(PrimitiveTypes.Cube) { Name = "Mesh", };
-        //go_mesh.Transform.Parent = go.Transform;
-        //MonkeyScript script = go_mesh.AddComponent<MonkeyScript>();
-        //script.dir = new Vector3(90, 90, 0);
-        //script.tr1 = go.Transform;
-        //script.tr2 = go_mesh.Transform;
-        //go.Save("src/Prefabs/Prefab.json");
+        go = new GameObject() { Name = "Prefab", };
+        GameObject go_mesh = new GameObject(PrimitiveTypes.Cube) { Name = "Mesh", };
+        go_mesh.Transform.Parent = go.Transform;
+        MonkeyScript script = go_mesh.AddComponent<MonkeyScript>();
+        script.dir = new Vector3(90, 90, 0);
+        script.tr1 = go.Transform;
+        script.tr2 = go_mesh.Transform;
+        go.Save("src/Prefabs/Prefab.json");
 
-        go = Assets.Load<GameObject>("src/Prefabs/Prefab.json");
+        //go = Assets.Load<GameObject>("src/Prefabs/Prefab.json");
 
         Log.log(go.Name);
     }

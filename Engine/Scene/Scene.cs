@@ -9,6 +9,12 @@ public class Scene : IUpdate, IAsset<Scene> {
         SceneManager.Instance.scenes.Add(this);
         OnCreate();
     }
+    [JsonConstructor]
+    public Scene (bool isSerializing) {
+        Name = GetType().Name;
+        SceneManager.Instance.scenes.Add(this);
+    }
+
     /*public Scene (string path) {
         Name = GetType().Name;
         SceneManager.Instance.scenes.Add(this);
@@ -22,13 +28,13 @@ public class Scene : IUpdate, IAsset<Scene> {
     public long Id { get; set; }
     public string? Path { get; set; }
 
-    protected readonly List<GameObject> objects = new List<GameObject>();
-    public List<GameObject> GameObjects => objects;
+    [JsonProperty] protected readonly List<GameObject> Objects = new List<GameObject>();
+    public List<GameObject> GameObjects => Objects;
 
 
 
     public void GameObjectAdd (GameObject gameObject) {
-        objects.Add(gameObject);
+        Objects.Add(gameObject);
         Log.log("GameObjectAdd", gameObject.Name);
     }
     /*public void ObjectRemove (GameObject gameObject) {
@@ -46,9 +52,9 @@ public class Scene : IUpdate, IAsset<Scene> {
 
 
     public GameObject? Find (string name) {
-        for (int i = 0; i < objects.Count; i++) {
-            if (objects[i].Name == name)
-                return objects[i];
+        for (int i = 0; i < Objects.Count; i++) {
+            if (Objects[i].Name == name)
+                return Objects[i];
         }
         return null;
     }
@@ -79,16 +85,17 @@ public class Scene : IUpdate, IAsset<Scene> {
     }
 
 
-    public static Scene? Load (string path) {
-        return null;
-    }
     public void Save (string path) {
-
+        Path = path;
+        Prefab.SaveObjects(Objects, path);
+    }
+    public static Scene? Load (string path) {
+        Scene scene = new Scene { Path = path };
+        scene.Objects.Clear(); /// constructor left Objects empty anyway, but explicit if that changes
+        scene.Objects.AddRange(Prefab.LoadObjects(path));
+        return scene;
     }
 
-    void IUpdate.Update () {
-        
-    }
 
     public void Dispose () {
 
