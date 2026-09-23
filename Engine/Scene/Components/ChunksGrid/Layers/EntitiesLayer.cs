@@ -6,20 +6,19 @@ namespace Engine;
 
 public sealed class EntitiesLayer : ChunkLayer {
     public EntitiesLayer () {
-        Radius = 32f;
+        Radius = 8f;
+        mat = new Material(AssetsEngine._sh_LitInstanced);
+        mat.SetVector3(Shader.Color, new Vector3(1, 0, 0));
     }
 
+    public override string Name { get; protected set; } = "Entities";
 
-    public override string Name { get; protected set; }= "Entities";
+    public override List<Type> Dependencies { get; } = [ typeof(TerrainLayer) ];
 
-    public override List<Type> Dependencies => [ typeof(TerrainLayer) ];
-
-    Material mat = new Material(AssetsEngine._sh_LitInstanced);
+    Material mat = null!;
 
 
     public override Task RunLoad (Vector2Int coord) {
-        mat.SetVector3(Shader.Color, new Vector3(1, 0, 0));
-
         List<GameObject> list = GetObjects(coord);
         int n = 1;
         for (int i = 0; i < n; i++) {

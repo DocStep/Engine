@@ -17,16 +17,16 @@ public class SceneChunksGrid : Scene {
 
         GameObject go_grid;
 
-        //go_grid = new GameObject() { Name = "Chunks Grid", };
-        //ChunksGrid grid = go_grid.AddComponent<ChunksGrid>();
-        //new GameObject() { Name = "inner", }.Transform.Parent = grid.gameObject.Transform;
+        go_grid = new GameObject() { Name = "Chunks Grid", };
+        ChunksGrid grid = go_grid.AddComponent<ChunksGrid>();
+        new GameObject() { Name = "inner", }.Transform.Parent = grid.gameObject.Transform;
         //grid.IsPermanentChunks = true;
-        //grid.AddLayer(new TerrainLayer() { Radius = 2 });
-        //grid.AddLayer(new EntitiesStaticLayer() { Radius = 2 });
-        //grid.AddLayer(new EntitiesLayer() { Radius = 1 });
-        //grid.gameObject.Save("src/Prefabs/chunksgrid.json");
+        grid.AddLayer(new TerrainLayer() { Radius = 2 });
+        grid.AddLayer(new EntitiesStaticLayer() { Radius = 2 });
+        grid.AddLayer(new EntitiesLayer() { Radius = 1 });
+        //grid.gameObject.Save("src/Prefabs/ChunksGrid.json");
 
-        go_grid = Assets.Load<GameObject>("src/Prefabs/chunksgrid.json");
+        //go_grid = Assets.Load<GameObject>("src/Prefabs/ChunksGrid.json");
 
         //Log.log(go_grid.Name);
 
@@ -45,5 +45,5 @@ public class SceneChunksGrid : Scene {
 
         //Log.log(go.Name);
     }
-    
+
 }

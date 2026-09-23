@@ -35,7 +35,7 @@ public class Scene : IUpdate, IAsset<Scene> {
 
     public void GameObjectAdd (GameObject gameObject) {
         Objects.Add(gameObject);
-        Log.log("GameObjectAdd", gameObject.Name);
+        //Log.log("GameObjectAdd", gameObject.Name);
     }
     /*public void ObjectRemove (GameObject gameObject) {
         objects.Remove(gameObject);

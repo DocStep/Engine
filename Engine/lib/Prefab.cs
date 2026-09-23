@@ -53,7 +53,7 @@ public static class Prefab {
         AssignWriteIds(flat, ctx);
 
         JObject json = new JObject {
-            ["Roots"] = new JArray(roots.Where(seen.Contains).Select(r => ctx.WriteIds[r])),
+            ["Roots"] = new JArray(flat.Where(g => g.Transform.Parent == null).Select(g => ctx.WriteIds[g])),
             ["Objects"] = WriteObjects(flat, ctx),
         };
         File.WriteAllText(path, json.ToString(Formatting.Indented));
@@ -71,6 +71,7 @@ public static class Prefab {
     private static void Flatten (GameObject go, List<GameObject> into, HashSet<GameObject> seen) {
         if (!seen.Add(go)) return; // already flattened as someone else's child — skip
         into.Add(go);
+        if (go.GetComponent<ChunksGrid>() != null) return; // chunks are runtime-generated — don't serialize them
         foreach (Transform child in go.Transform.Children) Flatten(child.gameObject, into, seen);
     }
 
@@ -121,13 +122,17 @@ public static class Prefab {
 
     /// Two-pass load: instantiate every GameObject/Component up front (fields still default)
     /// so every $ref in pass 2 resolves regardless of file order, then fill in fields.
+    /// A final pass registers GameObjects with the scene and components with ComponentsManager
+    /// only once the whole hierarchy (Transform.Parent) and all fields are fully resolved —
+    /// so nothing with a lifecycle callback (e.g. ChunksGrid generating its cells) ever runs
+    /// against default/unparented state.
     private static void ReadObjects (JArray objects, PrefabContext ctx) {
         Dictionary<int, JObject> byId = objects.Cast<JObject>().ToDictionary(o => o["$id"]!.Value<int>());
 
         foreach (JObject entry in objects.Cast<JObject>()) {
             if (entry["Type"]!.Value<string>() != "GameObject") continue;
 
-            GameObject go = new GameObject() { Name = entry["Name"]!.Value<string>()! };
+            GameObject go = new GameObject(true) { Name = entry["Name"]!.Value<string>()! };
             ctx.ReadObjects[entry["$id"]!.Value<int>()] = go;
             ctx.ReadObjects[entry["Transform"]!["$ref"]!.Value<int>()] = go.Transform;
 
@@ -136,7 +141,7 @@ public static class Prefab {
                 JObject componentEntry = byId[componentId];
                 Type type = ComponentTypes.Resolve(componentEntry["Type"]!.Value<string>()!);
                 Component component = (Component)Activator.CreateInstance(type)!;
-                go.AddComponentInternal(component);
+                go.AttachComponentInternal(component); // attach only — no register yet
                 ctx.ReadObjects[componentId] = component;
             }
         }
@@ -168,6 +173,15 @@ public static class Prefab {
 
             object obj = ctx.ReadObjects[entry["$id"]!.Value<int>()]; // Component or inline IAsset — same field-fill either way
             ReadFields(obj, entry, ctx);
+        }
+
+        // Pass 3: hierarchy and fields are fully resolved now — safe to register with the
+        // scene and bring components live.
+        foreach (JObject entry in objects.Cast<JObject>()) {
+            if (entry["Type"]!.Value<string>() != "GameObject") continue;
+            GameObject go = (GameObject)ctx.ReadObjects[entry["$id"]!.Value<int>()];
+            SceneManager.ActiveScene.GameObjectAdd(go);
+            go.RegisterComponentsInternal();
         }
     }
 

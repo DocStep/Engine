@@ -48,6 +48,10 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
     private static readonly Dictionary<Type, Action<Component>> _drawers = new Dictionary<Type, Action<Component>>();
 
+    private static readonly HashSet<object> _visiting = new HashSet<object>(ReferenceEqualityComparer.Instance);
+    private static int _depth = 0;
+    private const int maxDepth = 32;
+
     public bool isUIClick { get; private set; } = false;
     private bool _docked = false;
     private bool _dockBuilt = false;
@@ -258,11 +262,17 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
 
     private static void DrawMember (object? target, MemberInfo member) {
-        object? value = member switch {
-            FieldInfo f => f.GetValue(target),
-            PropertyInfo p when p.CanRead => p.GetValue(target),
-            _ => null,
-        };
+        object? value;
+        try {
+            value = member switch {
+                FieldInfo f => f.GetValue(target),
+                PropertyInfo p when p.CanRead => p.GetValue(target),
+                _ => null,
+            };
+        } catch {
+            ImGui.TextDisabled($"{member.Name}: <unreadable>");
+            return;
+        }
 
         bool isWritable = member switch {
             FieldInfo f => !f.IsLiteral && !f.IsInitOnly,
@@ -348,7 +358,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         bool isCollection = (value is IList or IDictionary || (value?.GetType().IsGenericType == true &&
             value.GetType().GetGenericTypeDefinition() == typeof(System.Collections.Concurrent.ConcurrentQueue<>)))
             && value is not (Vector2 or Vector3 or Vector4 or Quaternion);
-        bool isNestedObject = value is GameObject or Component or Material or PostProcessPass or LogEntry;
+        bool isNestedObject = value is GameObject or Component or Material or PostProcessPass or LogEntry
+            || (!isCollection && !IsSimpleValue(value));
         bool isRow = drawInverted && !isCollection && !isNestedObject;
         if (isRow) {
             InvertedOrder(ref label);
@@ -517,6 +528,18 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 ImGui.EndDisabled();
                 break;
 
+            case Type t:
+                ImGui.BeginDisabled();
+                temp_s = t.FullName ?? t.Name;
+                ImGui.InputText(label, ref temp_s, 256);
+                ImGui.EndDisabled();
+                break;
+            case MemberInfo mi:
+                ImGui.BeginDisabled();
+                temp_s = mi.Name;
+                ImGui.InputText(label, ref temp_s, 256);
+                ImGui.EndDisabled();
+                break;
             case null:
                 ImGui.BeginDisabled();
                 string nullLabel = "null";
@@ -524,7 +547,22 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
                 ImGui.EndDisabled();
                 break;
             default:
-                ImGui.TextDisabled($"[fallback] {value}");
+                //ImGui.TextDisabled($"[fallback] {value}");
+                if (value is null) {
+                    ImGui.TextDisabled("[fallback] null");
+                    break;
+                }
+                if (_depth >= maxDepth) {
+                    ImGui.TextDisabled($"[max depth] {label}");
+                    break;
+                }
+
+                _depth++;
+                if (ImGui.TreeNodeEx(label, ImGuiTreeNodeFlags.DefaultOpen, label)) {
+                    DrawObject(value, attributes);
+                    ImGui.TreePop();
+                }
+                _depth--;
                 break;
         }
 
@@ -583,6 +621,12 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             t = t.BaseType;
         }
         return depth;
+    }
+
+    private static bool IsSimpleValue (object? value) {
+        return value is null or int or uint or long or float or double or bool or string
+            or Enum or Guid or Vector2 or Vector3 or Vector4 or Quaternion
+            or Type or MemberInfo or Assembly or Module;
     }
 
 

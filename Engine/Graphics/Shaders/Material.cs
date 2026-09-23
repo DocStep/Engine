@@ -16,7 +16,10 @@ public enum RenderFace {
 
 public class Material : IAsset<Material> {
     [Newtonsoft.Json.JsonConstructor]
-    public Material () { }
+    private Material () { }
+    public Material Clone () {
+        return (Material)MemberwiseClone();
+    }
     public Material (Shader shader) {
         this.shader = shader;
     }
@@ -26,7 +29,7 @@ public class Material : IAsset<Material> {
         vectors2 = new Dictionary<string, Vector2>(material.vectors2);
         vectors3 = new Dictionary<string, Vector3>(material.vectors3);
         vectors4 = new Dictionary<string, Vector4>(material.vectors4);
-        ///textures = (Silk.NET.OpenGL.Texture?[])material.textures.Clone();
+        textures = new Dictionary<string, Texture>(material.textures);
     }
 
     public string Name { get; set; } = nameof (Material);
@@ -40,7 +43,7 @@ public class Material : IAsset<Material> {
     [Raw] public readonly Dictionary<string, Vector2> vectors2 = new();
     [Raw] public readonly Dictionary<string, Vector3> vectors3 = new();
     [Raw] public readonly Dictionary<string, Vector4> vectors4 = new();
-    ///private readonly Silk.NET.OpenGL.Texture?[] textures = new Silk.NET.OpenGL.Texture?[4];
+    [Raw] public readonly Dictionary<string, Texture> textures = new();
 
     /// Render State
     public RenderFace face = RenderFace.Front;
@@ -56,7 +59,7 @@ public class Material : IAsset<Material> {
         foreach (var kv in vectors2) shader.SetVector2(kv.Key, kv.Value);
         foreach (var kv in vectors3) shader.SetVector3(kv.Key, kv.Value);
         foreach (var kv in vectors4) shader.SetVector4(kv.Key, kv.Value);
-        /// texture binding here later
+        foreach (var kv in textures) shader.SetTexture(kv.Key, kv.Value);
 
         ApplyCustom();
     }
@@ -83,7 +86,10 @@ public class Material : IAsset<Material> {
         vectors4[name] = value;
         return this;
     }
-
+    public Material SetTexture (string name, Texture value) {
+        textures[name] = value;
+        return this;
+    }
 
 
     public void Save (string path) {

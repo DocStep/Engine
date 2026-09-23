@@ -1,4 +1,5 @@
-﻿using Task = System.Threading.Tasks.Task;
+﻿using Newtonsoft.Json;
+using Task = System.Threading.Tasks.Task;
 
 namespace Engine;
 
@@ -11,8 +12,15 @@ namespace Engine;
 public abstract class ChunkLayer {
 
     public abstract string Name { get; protected set; }
-    public virtual List<Type> Dependencies => [];
+    public virtual List<Type> Dependencies { get; } = [];
     public float Radius = 64f; /// own radius against the grid's shared shape (IsCircle)
+
+    [JsonIgnore, Hide] public readonly HashSet<Vector2Int> Running = new();
+    [JsonIgnore, Hide] public readonly Dictionary<Vector2Int, ChunkState> States = new();
+    [JsonIgnore, Hide] public readonly Dictionary<Vector2Int, ChunkTask> Pending = new();
+
+    [JsonIgnore, Hide] public readonly Dictionary<Vector2Int, List<GameObject>> GameObjects = new();
+
 
     public virtual Task RunLoad (Vector2Int coord) => Task.CompletedTask;
     public virtual Task RunSave (Vector2Int coord) => Task.CompletedTask;
@@ -31,12 +39,6 @@ public abstract class ChunkLayer {
 
         return Task.CompletedTask;
     }
-
-    internal readonly HashSet<Vector2Int> Running = new();
-    internal readonly Dictionary<Vector2Int, ChunkState> States = new();
-    internal readonly Dictionary<Vector2Int, ChunkTask> Pending = new();
-
-    internal readonly Dictionary<Vector2Int, List<GameObject>> GameObjects = new();
 
 
     /// <summary>Gets (creating if needed) the GameObject list owned by a chunk.</summary>

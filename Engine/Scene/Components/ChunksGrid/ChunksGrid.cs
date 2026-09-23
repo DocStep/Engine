@@ -5,6 +5,7 @@
 /// the task/dependency/priority machinery doesn't change.
 
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Engine;
 
@@ -16,8 +17,14 @@ public class ChunksGrid : Component, IUpdate {
 
     public override string Name => nameof(ChunksGrid);
 
-    public static Transform Transform { get; private set; } = null!;
-    public static Transform TransformTarget { get; private set; } = null!;
+    /// Events
+    public event Action<ChunkLayer, Vector2Int>? de_ChunkLoaded;
+    public event Action<ChunkLayer, Vector2Int>? de_ChunkUnloaded;
+    public event Action? de_ChunksLoaded;   /// permanent mode only - fires once every layer's initial load finishes
+    public event Action? de_ChunksUnloaded; /// UnloadAll
+
+    [JsonIgnore] public static Transform Transform { get; private set; } = null!;
+    [JsonIgnore] public static Transform TransformTarget { get; private set; } = null!;
 
     /// Config
     public bool IsPermanentChunks = false; /// true = load full extent once per layer, never streams/unloads on move
@@ -27,13 +34,8 @@ public class ChunksGrid : Component, IUpdate {
     public int MaxTasksStartedPerTick = 16; /// budget - call ProcessTasks() once per frame
     public int MaxUnloadTasksStartedPerTick = 8; /// reserved floor for unloads specifically - see ProcessTasks()
 
-    /// Events
-    public event Action<ChunkLayer, Vector2Int>? de_ChunkLoaded;
-    public event Action<ChunkLayer, Vector2Int>? de_ChunkUnloaded;
-    public event Action? de_ChunksLoaded;   /// permanent mode only - fires once every layer's initial load finishes
-    public event Action? de_ChunksUnloaded; /// UnloadAll
+    public readonly List<ChunkLayer> Layers = new List<ChunkLayer>();
 
-    [Hide] public readonly List<ChunkLayer> Layers = new List<ChunkLayer>();
     [Hide] private ChunkLayer[] _loadOrder = Array.Empty<ChunkLayer>();
     [Hide] private ChunkLayer[] _unloadOrder = Array.Empty<ChunkLayer>();
     [Hide] private readonly Dictionary<ChunkLayer, int> _loadRank = new Dictionary<ChunkLayer, int>();
@@ -68,8 +70,9 @@ public class ChunksGrid : Component, IUpdate {
         de_ChunksLoaded -= save;
     }
     void save () {
-        gameObject.Save("src/Prefabs/chunksgrid.json");
-        Log.log("de_ChunksLoaded");
+        //System.Threading.Thread.Sleep(1000);
+        //Log.log("de_ChunksLoaded", Transform.Children.Count);
+        gameObject.Save("src/Prefabs/ChunksGrid.json");
     }
 
     public void Update () {
@@ -85,11 +88,11 @@ public class ChunksGrid : Component, IUpdate {
 
         if (IsPermanentChunks && _initialized) return;
 
-        Log.log("1");
+        //Log.log("1");
         Vector2Int centerChunk = WorldToChunk(newCenter);
         if (_initialized && centerChunk.Equals(_lastCenterChunk)) return;
 
-        Log.log("2");
+        //Log.log("2");
         _lastCenterChunk = centerChunk;
         bool firstSync = !_initialized;
         _initialized = true;
@@ -139,7 +142,7 @@ public class ChunksGrid : Component, IUpdate {
             }
         }
 
-        Log.log("_pending", _pending.Count);
+        //Log.log("_pending", _pending.Count);
     }
 
 

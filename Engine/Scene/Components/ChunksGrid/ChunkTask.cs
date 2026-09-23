@@ -1,7 +1,7 @@
 ﻿namespace Engine;
 
 
-internal sealed class ChunkTask {
+public sealed class ChunkTask {
     public readonly ChunkLayer Layer;
     public readonly Vector2Int Coord;
     public readonly ChunkTaskType Type;

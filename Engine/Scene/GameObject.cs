@@ -25,9 +25,9 @@ public class GameObject : IDisposable, IAsset<GameObject> {
     /// Used only by the deserializer — sets up JsonIgnore'd runtime state
     /// without touching the scene or generating a throwaway Id
     [JsonConstructor]
-    private GameObject (bool _deserializing) {
+    public GameObject (bool deserializing) {
         InitTransform();
-        SceneManager.ActiveScene.GameObjectAdd(this);
+        //SceneManager.ActiveScene.GameObjectAdd(this);
     }
     void InitTransform () {
         Transform tr = new Transform();
@@ -130,7 +130,21 @@ public class GameObject : IDisposable, IAsset<GameObject> {
         component.SetParent(this);
         ComponentsManager.Instance.ComponentRegister(component);
         return component;
-    } 
+    }
+
+    /// Used only by the deserializer — attaches the component to this GameObject
+    /// (list + SetParent) without registering it, so no lifecycle callback fires
+    /// until fields are fully populated. Caller must follow up with RegisterComponentsInternal.
+    internal T AttachComponentInternal<T> (T component) where T : Component {
+        if (component is Transform transform) {
+            SetTransform(transform);
+            return component;
+        }
+
+        Components.Add(component);
+        component.SetParent(this);
+        return component;
+    }
 
     public void RemoveComponent<T> () where T : Component, new() {
         T? component = null;
@@ -149,6 +163,12 @@ public class GameObject : IDisposable, IAsset<GameObject> {
         component.gameObject = null!;
         Components.Remove(component);
         ComponentsManager.Instance.ComponentUnregister(component);
+    }
+
+    /// Used only by the deserializer, after all fields on this GameObject's components
+    /// have been read — brings every attached component live.
+    internal void RegisterComponentsInternal () {
+        foreach (Component component in Components) ComponentsManager.Instance.ComponentRegister(component);
     }
 
 

@@ -8,7 +8,12 @@ public class SceneManager : Singleton<SceneManager> {
     public readonly List<Scene> scenes = new List<Scene>();
     private readonly int sceneActiveID = 0;
 
-    public static Scene ActiveScene => Instance.scenes[Instance.sceneActiveID];
+    public static Scene ActiveScene {
+        get {
+            if (0< Instance.scenes.Count) return Instance.scenes[Instance.sceneActiveID];
+            else return null;
+        }
+    }
     public static int ActiveSceneID => Instance.sceneActiveID;
 
 
@@ -18,9 +23,9 @@ public class SceneManager : Singleton<SceneManager> {
         //scene = new ScenePhysics() { Name = "Scene Physics", };
         //scene = new SceneTerrain() { Name = "Scene Terrain", };
         //scene = new SceneUI() { Name = "Scene UI", };
-        //scene = new SceneChunksGrid() { Name = "Scene Chunks Grid", };
+        scene = new SceneChunksGrid() { Name = "Scene Chunks Grid", };
         //scene.Save("src/Scenes/SceneChunksGrid.json");
-        scene = Assets.Load<Scene>("src/Scenes/SceneChunksGrid.json");
+        //scene = Assets.Load<Scene>("src/Scenes/SceneChunksGrid.json");
         //scene = new ScenePrefabs() { Name = "Scene Prefabs", };
 
         Engine.Instance.de_Update += Update;
