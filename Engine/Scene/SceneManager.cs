@@ -8,9 +8,9 @@ public class SceneManager : Singleton<SceneManager> {
     public readonly List<Scene> scenes = new List<Scene>();
     private readonly int sceneActiveID = 0;
 
-    public static Scene ActiveScene {
+    public static Scene? ActiveScene {
         get {
-            if (0< Instance.scenes.Count) return Instance.scenes[Instance.sceneActiveID];
+            if (0 < Instance.scenes.Count) return Instance.scenes[Instance.sceneActiveID];
             else return null;
         }
     }
@@ -18,6 +18,10 @@ public class SceneManager : Singleton<SceneManager> {
 
 
     protected override void Init () {
+        Engine.Instance.de_Update += Update;
+    }
+
+    public void Awake () {
         Scene scene;
         //scene = new SceneMaterials() { Name = "Scene Materials", };
         //scene = new ScenePhysics() { Name = "Scene Physics", };
@@ -27,10 +31,7 @@ public class SceneManager : Singleton<SceneManager> {
         //scene.Save("src/Scenes/SceneChunksGrid.json");
         //scene = Assets.Load<Scene>("src/Scenes/SceneChunksGrid.json");
         //scene = new ScenePrefabs() { Name = "Scene Prefabs", };
-
-        Engine.Instance.de_Update += Update;
     }
-
 
     public void Update () {
         if (Inputs.Actions[Inputs.EditorSave].pressedDown) {

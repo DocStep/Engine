@@ -4,6 +4,7 @@
 public class ActionScript_Test : IActionScript_Update {
 
     public void Update_AS () {
+        if (SceneManager.ActiveScene is null) return;
         if (SceneManager.ActiveScene.GameObjects.Count < 2) return;
         GameObject? Suzanne = SceneManager.ActiveScene.Find("Reflection Suzanne");
         if (Suzanne is null) return;

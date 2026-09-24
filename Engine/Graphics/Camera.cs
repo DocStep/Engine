@@ -7,17 +7,22 @@ namespace Engine.Graphics;
 
 public class Camera : Component {
     public Camera () {
-        priority = 0 < Cameras.Count ? Cameras[0]._priority : 0;
-        Cameras.Insert(0, this);
-        //Log.log(GetType(), _priority);
+        //priority = 0 < Cameras.Count ? Cameras[0].priority : 0;
+        //Cameras.Insert(0, this);
+        //Log.log(GetType(), priority);
     }
 
     public override string Name { get; } = nameof(Camera);
 
-    public static List<Camera> Cameras { get; private set; } = new List<Camera>();
+    public readonly static List<Camera> Cameras = new List<Camera>();
+
     public static Camera? Main {
         get {
-            return 0 < Cameras.Count ? Cameras[0] : null;
+            Camera? best = null;
+            for (int i = 0; i < Cameras.Count; i++) {
+                if (best == null || best.Priority <= Cameras[i].Priority) best = Cameras[i];
+            }
+            return best;
         }
     }
 
@@ -28,26 +33,20 @@ public class Camera : Component {
     public static bool wantWarpPos = false;
 
     public float FOV = 60;
-    public float planeNear = 0.1f;
-    public float planeFar = 1000f;
+    public float PlaneNear = 0.1f;
+    public float PlaneFar = 1000f;
     public float Exposure = 1f;
-    private float _priority = 0f;
-    public float priority {
-        get => _priority;
+    [Newtonsoft.Json.JsonIgnore] protected float priority = 0f;
+    public float Priority {
+        get => priority;
         set {
-            if (_priority == value) return;
+            if (priority == value) return;
 
-            _priority = value;
-            int posOld = Cameras.IndexOf(this);
-            int count = Cameras.Count;
-            for (int i = count-1; 0 <= i; i--) {
-                if (_priority < Cameras[i]._priority) {
-                    Cameras.Remove(this);
-                    Cameras.Insert(i, this);
-                    break;
-                }
-            }
-            Cameras.Sort((a, b) => a._priority.CompareTo(b._priority));
+            priority = value;
+            Cameras.Remove(this);
+            int i = 0;
+            while (i < Cameras.Count && Cameras[i].priority < priority) i++;
+            Cameras.Insert(i, this);
 
             //Log.log("Cameras");
             //for (int i = 0; i < count; i++) {
@@ -57,7 +56,12 @@ public class Camera : Component {
     }
 
 
-    public virtual void Update () { }
+    public override void OnAdd () {
+        Cameras.Add(this);
+    }
+    override public void OnRemove () {
+        Cameras.Remove(this);
+    }
 
 
     public virtual Matrix4x4 GetRotationMatrix () {

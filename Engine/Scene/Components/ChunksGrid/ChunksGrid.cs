@@ -30,9 +30,9 @@ public class ChunksGrid : Component, IUpdate {
     public bool IsPermanentChunks = false; /// true = load full extent once per layer, never streams/unloads on move
     public bool IsCircle = true;          /// false = quad
     public Vector3 Center = Vector3.Zero;
-    public static int ChunkSize = 16;
-    public int MaxTasksStartedPerTick = 16; /// budget - call ProcessTasks() once per frame
-    public int MaxUnloadTasksStartedPerTick = 8; /// reserved floor for unloads specifically - see ProcessTasks()
+    public static int ChunkSize = 10;
+    public int MaxTasksStartedPerTick = 32; /// budget - call ProcessTasks() once per frame
+    public int MaxUnloadTasksStartedPerTick = 16; /// reserved floor for unloads specifically - see ProcessTasks()
 
     public readonly List<ChunkLayer> Layers = new List<ChunkLayer>();
 

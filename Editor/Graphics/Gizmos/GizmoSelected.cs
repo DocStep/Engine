@@ -59,6 +59,7 @@ public class GizmoSelected : IDisposable {
 
 
     public void Draw () {
+        if (Renderer.Instance.Camera is null) return;
         if (go_selected is null) return;
 
         Transform tr_obj = go_selected.Transform;
@@ -73,7 +74,7 @@ public class GizmoSelected : IDisposable {
             selectedGizmoWorldSpace = !selectedGizmoWorldSpace;
         }
 
-        bool rayTrue = Camera.Main.GetRayMouse(out Ray ray);
+        bool rayTrue = Renderer.Instance.Camera.GetRayMouse(out Ray ray);
 
         switch (selectedGizmoMode) {
             case SelectedGizmoMode.Position:
@@ -279,7 +280,7 @@ public class GizmoSelected : IDisposable {
         }
 
         /// Draw
-        GL.Viewport(0, 0, (uint)RendererEditor.Instance.Width, (uint)RendererEditor.Instance.Height);
+        GL.Viewport(0, 0, (uint)Renderer.Instance.Width, (uint)Renderer.Instance.Height);
 
         Renderer.GL.Disable(EnableCap.DepthTest);
         Renderer.GL.Disable(EnableCap.CullFace);
@@ -288,7 +289,7 @@ public class GizmoSelected : IDisposable {
         _sh_Unlit.Use();
         _sh_Unlit.SetMatrix4x4(View, Renderer.Instance.m4x4_View);
         _sh_Unlit.SetMatrix4x4(Projection, Renderer.Instance.m4x4_Projection);
-        _sh_Unlit.SetVector3(ViewPos, Camera.Main.CameraPos);
+        _sh_Unlit.SetVector3(ViewPos, Renderer.Instance.Camera.CameraPos);
 
         DrawOutline();
         DrawGizmo();

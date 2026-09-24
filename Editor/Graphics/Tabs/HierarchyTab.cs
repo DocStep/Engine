@@ -14,7 +14,9 @@ public class HierarchyTab : IEditorTab {
 
         EditorUI.DrawTabContext(this);
 
-        Scene scene = SceneManager.ActiveScene;
+        Scene? scene = SceneManager.ActiveScene;
+        if (scene is null) return;
+
         ImGui.PushStyleColor(ImGuiCol.Text, EditorUIStyle.AccentColor);
         ImGui.TextUnformatted(scene.Name);
         ImGui.PopStyleColor();

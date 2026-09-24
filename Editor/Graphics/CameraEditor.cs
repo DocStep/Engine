@@ -15,10 +15,10 @@ public sealed class CameraEditor : Camera {
 
         Engine.Engine.Instance.de_AfterUpdate += Update;
 
-        priority = -10;
+        //Log.log(GetType(), priority);
     }
 
-    public static CameraEditor Instance = null!;
+    public static CameraEditor? Instance = null;
 
     public override string Name { get; } = nameof(CameraEditor);
 
@@ -117,8 +117,7 @@ public sealed class CameraEditor : Camera {
     }
 
 
-    public override void Update () {
-        //Log.log("Update", Inputs.isMouseVisible);
+    public void Update () {
         float baseSpeed = Inputs.Actions[Shift].pressed ? _cameraSpeedShift : _cameraSpeed;
         Vector3 cameraPosDelta = Vector3.Zero;
         Matrix4x4 cameraRot = GetRotationMatrix();

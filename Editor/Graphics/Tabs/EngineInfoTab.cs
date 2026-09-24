@@ -35,8 +35,10 @@ public class EngineInfoTab : IEditorTab {
         DrawGraphics();
 
         EditorUI.DrawObject(Engine.Engine.Instance.Stats);
-        int count = SceneManager.ActiveScene.GameObjects.Count;
-        EditorUI.DrawVar("GameObjects", ref count);
+        if (SceneManager.ActiveScene is not null) {
+            int count = SceneManager.ActiveScene.GameObjects.Count;
+            EditorUI.DrawVar("GameObjects", ref count);
+        }
 
         long totalBytes = GC.GetTotalAllocatedBytes();
         long gbRemainder = totalBytes % GBBytes;

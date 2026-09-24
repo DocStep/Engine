@@ -43,6 +43,15 @@ public static class ComponentsInpector {
         }
     }
 
+    extension(ChunksGrid component) {
+        public void DrawInspector () {
+            if (ImGui.Button("Save")) {
+                component.gameObject.Save("src/Prefabs/ChunksGrid.json");
+            }
+            Graphics.EditorUI.DrawObject(component);
+        }
+    }
+
     extension(PhysicsComponent component) {
         public void DrawInspector () {
             ((Component)component).DrawInspector();

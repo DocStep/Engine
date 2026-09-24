@@ -39,6 +39,9 @@ public class RendererEditor : Renderer {
     }
     public override void PresentToBackbuffer () { }
 
+    protected override Camera? MainCamera => CameraEditor.Instance;
+
+
     protected override void DrawSceneAll () {
         switch (Constants.drawMode) {
             case DrawMode.Normal:
@@ -113,12 +116,13 @@ public class RendererEditor : Renderer {
 
 
     protected void DrawInfoWireframe (RenderInfo info) {
+        if (Renderer.Instance.Camera is null) return;
         if (info.mesh is null) return;
 
         Shader shader = Gizmos._mat_GizmoWireframe.shader;
 
         shader.Use();
-        SetSceneUniformsUnlit(shader, Camera.Main.CameraPos);
+        SetSceneUniformsUnlit(shader, Renderer.Instance.Camera.CameraPos);
 
         shader.SetMatrix4x4(Model, info.model);
         Gizmos._mat_GizmoWireframe.Apply();

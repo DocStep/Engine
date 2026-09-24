@@ -115,11 +115,9 @@ public static class Gizmos {
 
     public readonly static GizmoSelected _gizmo_Selected = null!;
 
-    private static float cameraOrbitCenterRadius = 0.5f;
-
 
     public static void Draw () {
-        if (Camera.Main is null) {
+        if (Renderer.Instance.Camera is null) {
             Log.log($"No {nameof(Camera)} found");
             return;
         }
@@ -153,11 +151,13 @@ public static class Gizmos {
         GL.DepthMask(depthWrite);
 
 
-        Renderer.Instance.SetSceneUniformsUnlit(shader, Camera.Main.CameraPos);
+        Renderer.Instance.SetSceneUniformsUnlit(shader, Renderer.Instance.Camera.CameraPos);
     }
 
     private static void GizmoGrid () {
-        Vector3 pos = Camera.Main.CameraPos;
+        if (Renderer.Instance.Camera is null) return;
+
+        Vector3 pos = Renderer.Instance.Camera.CameraPos;
 
         Mesh mesh = _mesh_GridWireframe;
         Material material = _mat_GizmoGrid;
@@ -178,7 +178,9 @@ public static class Gizmos {
     //static void GizmoGridPost () => GL.DepthRange(0, 1);
 
     private static void GizmoAxes () {
-        Vector3 pos = Camera.Main.CameraPos;
+        if (Renderer.Instance.Camera is null) return;
+
+        Vector3 pos = Renderer.Instance.Camera.CameraPos;
         float halfPi = MathF.PI/2f;
 
         Mesh mesh = _mesh_Line;
@@ -209,23 +211,26 @@ public static class Gizmos {
         GL.DepthRange(0, 1);
     }
     private static void DrawGizmoAxesWidget () {
+        Camera? camera = Renderer.Instance.Camera;
+        if (camera is null) return;
+
         const int gizmoSize = 90;
         const int gizmoMargin = 16;
-            
+
         int windowWidth = Windows.Window.Size.X;
         int windowHeight = Windows.Window.Size.Y;
 
         int gizmoX = windowWidth - gizmoSize - gizmoMargin;
         int gizmoY = windowHeight - gizmoSize - gizmoMargin;
 
-        Matrix4x4 rotation = Camera.Main.GetRotationMatrix();
+        Matrix4x4 rotation = camera.GetRotationMatrix();
         Vector3 forward = Vector3.Transform(Vector3.UnitZ, rotation);
         Vector3 up = Vector3.Transform(Vector3.UnitY, rotation);
         Vector3 gizmoCamPos = -forward*5f;
         Matrix4x4 gizmoView = Matrix4x4.CreateLookAtLeftHanded(gizmoCamPos, Vector3.Zero, up);
         float aspect = Windows.Window.Size.X/(float)Windows.Window.Size.Y;
         Matrix4x4 gizmoProjection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
-            Camera.Main.FOV/180*MathF.PI, aspect, Camera.Main.planeNear, Camera.Main.planeFar);
+            camera.FOV/180*MathF.PI, aspect, camera.PlaneNear, camera.PlaneFar);
 
 
         GL.Viewport(gizmoX, gizmoY, (uint)gizmoSize, (uint)gizmoSize);

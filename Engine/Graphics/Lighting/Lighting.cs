@@ -24,6 +24,8 @@ public static class Lighting {
 
 
     public static void SetSceneUniformsLit (Shader shader) {
+        if (Renderer.Instance.Camera is null) return;
+
         List<SunLight> enabledLights = SunLights.Where(l => l.Enabled).ToList();
         int count = Math.Min(enabledLights.Count, SunLights_Max);
         if (0 < count) {
@@ -71,7 +73,7 @@ public static class Lighting {
         /// General
         shader.SetVector3(AmbientColor, Constants.Ambient_Color);
         shader.SetFloat(AmbientColorIntensity, Constants.Ambient_Intensity);
-        shader.SetFloat(Exposure, Camera.Main!.Exposure);
+        shader.SetFloat(Exposure, Renderer.Instance.Camera.Exposure);
 
         if (Constants.renderSkyboxReflection)
             shader.SetFloat(ReflectionIntensity, Constants.reflectionIntensity);

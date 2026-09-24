@@ -22,6 +22,8 @@ public class MaterialSSAO : Material {
 
 
     public override void ApplyCustom () {
+        if (Renderer.Instance.Camera is null) return;
+
         Matrix4x4.Invert(Renderer.Instance.m4x4_Projection, out invProjection);
 
         shader.SetMatrix4x4(Shader.Projection, Renderer.Instance.m4x4_Projection);
@@ -30,8 +32,8 @@ public class MaterialSSAO : Material {
         shader.SetFloat(Radius, radius);
         shader.SetFloat(Bias, bias);
         shader.SetFloat(Strength, strength);
-        shader.SetFloat(Near, Camera.Main.planeNear);
-        shader.SetFloat(Far, Camera.Main.planeFar);
+        shader.SetFloat(Near, Renderer.Instance.Camera.PlaneNear);
+        shader.SetFloat(Far, Renderer.Instance.Camera.PlaneFar);
         shader.SetFloat(FalloffPower, falloffPower);
     }
 

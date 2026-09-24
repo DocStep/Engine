@@ -97,6 +97,7 @@ public class Engine : IDisposable {
         engineState = EngineStates.Ready;
         Log.log($"========== Init Finish ==========", LogType.system);
 
+        SceneManager.Instance.Awake();
         //Engine.SetFPSMax(144);
     }
 

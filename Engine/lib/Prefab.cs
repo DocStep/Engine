@@ -97,12 +97,19 @@ public static class Prefab {
 
     private static JArray WriteObjects (List<GameObject> flat, PrefabContext ctx) {
         JArray objects = new JArray();
-        foreach (GameObject g in flat) {
-            objects.Add(WriteGameObjectEntry(g, ctx));
-            objects.Add(WriteTransformEntry(g.Transform, ctx));
-            foreach (Component c in g.Components) objects.Add(WriteComponentEntry(c, ctx));
+        foreach (GameObject go in flat) {
+            Log.log("GameObject", go.Name);
+            objects.Add(WriteGameObjectEntry(go, ctx));
+            objects.Add(WriteTransformEntry(go.Transform, ctx));
+            foreach (Component comp in go.Components) {
+                Log.log("Component", comp.Name);
+                objects.Add(WriteComponentEntry(comp, ctx));
+            }
         }
-        foreach (IAsset asset in ctx.InlineAssets) objects.Add(WriteAssetEntry(asset, ctx));
+        foreach (IAsset asset in ctx.InlineAssets) {
+            Log.log("IAsset", asset.Name);
+            objects.Add(WriteAssetEntry(asset, ctx));
+        }
         return objects;
     }
 

@@ -20,9 +20,11 @@ public class MaterialCameraFocus : Material {
 
 
     public override void ApplyCustom () {
+        if (Renderer.Instance.Camera is null) return;
+
         shader.SetInt(SceneDepth, 1);
-        shader.SetFloat(Near, Camera.Main.planeNear);
-        shader.SetFloat(Far, Camera.Main.planeFar);
+        shader.SetFloat(Near, Renderer.Instance.Camera.PlaneNear);
+        shader.SetFloat(Far, Renderer.Instance.Camera.PlaneFar);
         shader.SetFloat(FocusDistance, focusDistance);
         shader.SetFloat(FocusRange, focusRange);
         shader.SetFloat(BokehRadius, bokehRadius);

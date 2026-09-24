@@ -56,6 +56,8 @@ public class Renderer {
 
     public static Renderer Instance = null!;
 
+    public Camera? Camera = null!;
+
     //public Action? de_LateUpdate = null;
 
     public Action? de_PreRender = null;
@@ -103,14 +105,17 @@ public class Renderer {
 
 
 
-    public void Render () {
+    public virtual void Render () {
+        /// Clear Fraame
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
-        if (Camera.Main is null) {
-            Log.log($"No {nameof(Camera)} found");
+        /// Render
+        Camera = MainCamera;
+        if (Camera is null) {
+            Log.log($"No {nameof(Graphics.Camera)} found");
             return;
         }
-        DrawStart();
+        StatsStart();
 
         de_PreRender?.Invoke();
 
@@ -119,8 +124,7 @@ public class Renderer {
         PostProcess.Resize(Width, Height);
 
         /// Camera Matrix
-        m4x4_View = Camera.Main.GetViewMatrix();
-        UpdateProjection(Width, Height);
+        UpdateViewProjection(Width, Height);
 
         PostProcess.BeginScene();
 
@@ -148,7 +152,7 @@ public class Renderer {
 
         Stats.Frame++;
 
-        DrawEnd();
+        StatsEnd();
 
         //Log.log("Renderer", Stats.Frame, Windows.Window.Size, Stats.SceneSize);
         //Thread.Sleep(500);
@@ -156,7 +160,7 @@ public class Renderer {
     public void RenderReset () {
 
     }
-    protected void DrawStart () {
+    protected void StatsStart () {
         sw_Latency.Restart();
 
         Stats.DrawCalls = 0;
@@ -170,7 +174,7 @@ public class Renderer {
         _lastDrawnMaterial = null;
         _lastDrawnShader = null;
     }
-    protected void DrawEnd () {
+    protected void StatsEnd () {
         Stats.Latency = (float)sw_Latency.Elapsed.TotalMilliseconds;
 
         RenderList.Clear();
@@ -186,10 +190,12 @@ public class Renderer {
         RenderList.Add(renderInfo);
     }
 
-    protected void UpdateProjection (float width, float height) {
+    protected void UpdateViewProjection (float width, float height) {
+        m4x4_View = Camera!.GetViewMatrix();
+
         float aspect = width/height;
         m4x4_Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
-            Camera.Main.FOV*Mathf.Deg2Rad, aspect, Camera.Main.planeNear, Camera.Main.planeFar);
+            Camera.FOV*Mathf.Deg2Rad, aspect, Camera.PlaneNear, Camera.PlaneFar);
 
         /// Ortho only depends on width/height, not the camera — skip rebuilding it every frame
         if (width != _lastProjWidth || height != _lastProjHeight) {
@@ -198,6 +204,7 @@ public class Renderer {
             _lastProjHeight = height;
         }
     }
+    protected virtual Camera? MainCamera => Camera.Main;
 
     protected virtual void DrawSceneAll () {
         switch (Constants.drawMode) {
@@ -307,12 +314,14 @@ public class Renderer {
     ///   changes between consecutive draws. (Front-to-back early-Z sorting would fight this —
     ///   pick that instead of material batching if overdraw turns out to be the bigger cost.)
     protected static int CompareRenderInfo (RenderInfo a, RenderInfo b) {
+        if (Renderer.Instance.Camera is null) return 0;
+
         int passCompare = a.material.pass.CompareTo(b.material.pass);
         if (passCompare != 0) return passCompare;
 
         if (a.material.pass == RenderPass.Transparent) {
-            float distA = Vector3.DistanceSquared(Camera.Main.CameraPos, a.model.Translation);
-            float distB = Vector3.DistanceSquared(Camera.Main.CameraPos, b.model.Translation);
+            float distA = Vector3.DistanceSquared(Renderer.Instance.Camera.CameraPos, a.model.Translation);
+            float distB = Vector3.DistanceSquared(Renderer.Instance.Camera.CameraPos, b.model.Translation);
             return distB.CompareTo(distA);
         }
 
@@ -371,6 +380,7 @@ public class Renderer {
     }
 
     public void DrawRenderInfo (RenderInfo info) {
+        if (Renderer.Instance.Camera is null) return;
         if (info.mesh is null) return;
         if (info.material is null) return;
 
@@ -384,7 +394,7 @@ public class Renderer {
         switch (info.material.pass) {
             case RenderPass.Opaque:
             case RenderPass.Transparent:
-                SetSceneUniformsUnlit(shader, Camera.Main.CameraPos);
+                SetSceneUniformsUnlit(shader, Renderer.Instance.Camera.CameraPos);
                 SetSceneUniformsLit(shader);
                 SetSceneUniformsSkybox(shader, Skybox.texture, Skybox.maxLod);
                 break;
@@ -431,7 +441,7 @@ public class Renderer {
         switch (first.material.pass) {
             case RenderPass.Opaque:
             case RenderPass.Transparent:
-                SetSceneUniformsUnlit(shader, Camera.Main.CameraPos);
+                SetSceneUniformsUnlit(shader, Camera!.CameraPos);
                 SetSceneUniformsLit(shader);
                 SetSceneUniformsSkybox(shader, Skybox.texture, Skybox.maxLod);
                 break;
