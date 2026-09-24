@@ -1,5 +1,4 @@
 ﻿using Silk.NET.OpenGL;
-using System.Runtime.Serialization;
 
 namespace Engine.Graphics;
 
@@ -9,14 +8,12 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
         GL = Renderer.GL;
     }
     [Newtonsoft.Json.JsonConstructor]
-    public Mesh (MeshData? Data, bool deserializing) {
+    public Mesh (bool deserializing) {
         if (Data is null) return;
         GL = Renderer.GL;
-        Upload(Data);
     }
-    //[OnDeserialized, OnLoaded]
+    [System.Runtime.Serialization.OnDeserialized]
     public void OnLoaded () {
-        //Log.log("OnDeserialized", LogType.warning);
         if (Data is not null) Upload(Data);
     }
     public Mesh (MeshData data) {
