@@ -16,8 +16,8 @@ public abstract class ChunkLayer {
     public float Radius = 64f; /// own radius against the grid's shared shape (IsCircle)
 
     [JsonIgnore, Hide] public readonly HashSet<Vector2Int> Running = new();
-    [JsonIgnore, Hide] public readonly Dictionary<Vector2Int, ChunkState> States = new();
-    [JsonIgnore, Hide] public readonly Dictionary<Vector2Int, ChunkTask> Pending = new();
+    [Hide] public readonly Dictionary<Vector2Int, ChunkState> States = new();
+    [Hide] public readonly Dictionary<Vector2Int, ChunkTask> Pending = new();
 
     [JsonIgnore, Hide] public readonly Dictionary<Vector2Int, List<GameObject>> GameObjects = new();
 

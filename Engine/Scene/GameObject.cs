@@ -20,12 +20,12 @@ public class GameObject : IDisposable, IAsset<GameObject> {
     public GameObject () {
         Id = lib.Id;
         InitTransform();
-        SceneManager.ActiveScene.GameObjectAdd(this);
+        SceneManager.ActiveScene?.GameObjectAdd(this);
     }
     /// Used only by the deserializer — sets up JsonIgnore'd runtime state
     /// without touching the scene or generating a throwaway Id
     [JsonConstructor]
-    public GameObject (bool deserializing) {
+    internal GameObject (bool deserializing) {
         InitTransform();
         //SceneManager.ActiveScene.GameObjectAdd(this);
     }

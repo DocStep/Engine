@@ -3,7 +3,7 @@
 
 public class ScenePhysics : Scene {
 
-    public override void OnCreate () {
+    public override void OnGenerate () {
         GameObject ground = new GameObject() { Name = "Plane", };
         ground.Transform.Position = new Vector3(0, 0, 0);
         //ground.Transform.RotationEuler = new Vector3(180, 0, 0);

@@ -5,7 +5,7 @@ namespace Engine;
 
 public class SceneTerrain : Scene {
 
-    public override void OnCreate () {
+    public override void OnGenerate () {
         GameObject go_camera = new GameObject() { Name = "Camera", };
         go_camera.Transform.Position = new Vector3(-2, 3, -10);
         Camera camera = go_camera.AddComponent<Camera>();

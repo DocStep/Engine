@@ -5,12 +5,12 @@ namespace Engine;
 
 public class SceneManager : Singleton<SceneManager> {
 
-    public readonly List<Scene> scenes = new List<Scene>();
+    public readonly List<Scene> Scenes = new List<Scene>();
     private readonly int sceneActiveID = 0;
 
     public static Scene? ActiveScene {
         get {
-            if (0 < Instance.scenes.Count) return Instance.scenes[Instance.sceneActiveID];
+            if (0 < Instance.Scenes.Count) return Instance.Scenes[Instance.sceneActiveID];
             else return null;
         }
     }
@@ -38,9 +38,9 @@ public class SceneManager : Singleton<SceneManager> {
             ActiveSceneSave();
         }
 
-        int count = scenes.Count;
+        int count = Scenes.Count;
         for (int i = 0; i < count; i++) {
-            scenes[i].Update();
+            Scenes[i].Update();
         }
     }
 

@@ -6,13 +6,13 @@ namespace Engine;
 public class Scene : IUpdate, IAsset<Scene> {
     public Scene () {
         Name = GetType().Name;
-        SceneManager.Instance.scenes.Add(this);
-        OnCreate();
+        SceneManager.Instance.Scenes.Add(this);
+        OnGenerate();
     }
     [JsonConstructor]
-    public Scene (bool isSerializing) {
-        Name = GetType().Name;
-        SceneManager.Instance.scenes.Add(this);
+    internal Scene (bool deserializing) {
+        //Name = GetType().Name;
+        //SceneManager.Instance.scenes.Add(this);
     }
 
     /*public Scene (string path) {
@@ -42,7 +42,7 @@ public class Scene : IUpdate, IAsset<Scene> {
     }*/
 
 
-    public virtual void OnCreate () {
+    public virtual void OnGenerate () {
 
     }
 
@@ -90,9 +90,10 @@ public class Scene : IUpdate, IAsset<Scene> {
         Prefab.SaveObjects(Objects, path);
     }
     public static Scene? Load (string path) {
-        Scene scene = new Scene { Path = path };
+        Scene scene = new Scene(true) { Path = path };
         scene.Objects.Clear(); /// constructor left Objects empty anyway, but explicit if that changes
         scene.Objects.AddRange(Prefab.LoadObjects(path));
+        SceneManager.Instance.Scenes.Add(scene);
         return scene;
     }
 

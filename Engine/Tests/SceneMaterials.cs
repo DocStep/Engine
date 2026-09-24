@@ -5,7 +5,7 @@ namespace Engine;
 
 public class SceneMaterials : Scene {
 
-    public override void OnCreate () {
+    public override void OnGenerate () {
         float x;
         MeshComponent? mesh;
 

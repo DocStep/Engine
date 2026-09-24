@@ -16,7 +16,7 @@ public enum RenderFace {
 
 public class Material : IAsset<Material> {
     [Newtonsoft.Json.JsonConstructor]
-    private Material () { }
+    public Material () { }
     public Material Clone () {
         return (Material)MemberwiseClone();
     }

@@ -3,7 +3,7 @@
 
 public class ScenePrefabs : Scene {
 
-    public override void OnCreate () {
+    public override void OnGenerate () {
         
     }
 

@@ -1,22 +1,57 @@
 ﻿using Silk.NET.OpenGL;
+using System.Runtime.Serialization;
 
 namespace Engine.Graphics;
 
 
-public class Mesh : IAsset<Mesh> {
+public class Mesh : IAsset<Mesh>, IOnLoaded {
     public Mesh () {
         GL = Renderer.GL;
-        Name = nameof(Mesh);
+    }
+    [Newtonsoft.Json.JsonConstructor]
+    public Mesh (MeshData? Data, bool deserializing) {
+        if (Data is null) return;
+        GL = Renderer.GL;
+        Upload(Data);
+    }
+    //[OnDeserialized, OnLoaded]
+    public void OnLoaded () {
+        //Log.log("OnDeserialized", LogType.warning);
+        if (Data is not null) Upload(Data);
     }
     public Mesh (MeshData data) {
         GL = Renderer.GL;
-        Name = nameof(Mesh);
+        Upload(data);
+    }
 
-        _indexCount = (uint)data.Indices.Length;
+
+    public string Name { get; set; } = nameof(Mesh);
+    public long Id { get; set; }
+    public string? Path { get; set; }
+
+    private readonly GL GL = null!;
+    private uint _vao;
+    private uint _vbo;
+    private uint _ebo;
+    private uint _indexCount;
+
+    public MeshData? Data;
+    public AABB LocalAABB;
+
+    /// Instancing — set up lazily on first DrawInstanced() call so meshes that are never
+    /// instanced don't pay for the extra buffer/attribute setup.
+    private uint _instanceVbo;
+    private int _instanceCapacity = -1; /// -1 = EnsureInstanceBuffer() not yet called
+    private float[] _instanceUploadScratch = Array.Empty<float>(); /// grows, never shrinks — avoids a per-draw heap alloc
+
+
+    private void Upload (MeshData data) {
         Data = data;
-        LocalAABB = AABB.FromVertices(data.Vertices);
+        //Log.log(Name, Data.Vertices.Length, Data.Indices.Length);
+        _indexCount = (uint)Data.Indices.Length;
+        LocalAABB = AABB.FromVertices(Data.Vertices);
 
-        float[] vertices = Flatten(data.Vertices);
+        float[] vertices = Flatten(Data.Vertices);
 
         _vao = GL.GenVertexArray();
         GL.BindVertexArray(_vao);
@@ -25,64 +60,30 @@ public class Mesh : IAsset<Mesh> {
         GL.BindBuffer(GLEnum.ArrayBuffer, _vbo);
         unsafe {
             fixed (float* v = vertices) {
-                GL.BufferData(
-                    GLEnum.ArrayBuffer,
-                    (nuint)(vertices.Length*sizeof(float)),
-                    v,
-                    GLEnum.StaticDraw);
+                GL.BufferData(GLEnum.ArrayBuffer, (nuint)(vertices.Length*sizeof(float)), v, GLEnum.StaticDraw);
             }
         }
 
         _ebo = GL.GenBuffer();
         GL.BindBuffer(GLEnum.ElementArrayBuffer, _ebo);
         unsafe {
-            fixed (uint* i = data.Indices) {
-                GL.BufferData(
-                    GLEnum.ElementArrayBuffer,
-                    (nuint)(data.Indices.Length*sizeof(uint)),
-                    i,
-                    GLEnum.StaticDraw);
+            fixed (uint* i = Data.Indices) {
+                GL.BufferData(GLEnum.ElementArrayBuffer, (nuint)(Data.Indices.Length*sizeof(uint)), i, GLEnum.StaticDraw);
             }
         }
 
         const uint stride = Vertex.FloatStride*sizeof(float);
         unsafe {
-            /// Position (location 0)
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, stride, (void*)0);
             GL.EnableVertexAttribArray(0);
-
-            /// Normal (location 1)
             GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, stride, (void*)(3*sizeof(float)));
             GL.EnableVertexAttribArray(1);
-
-            /// UV (location 2)
             GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, stride, (void*)(6*sizeof(float)));
             GL.EnableVertexAttribArray(2);
         }
 
         GL.BindVertexArray(0);
     }
-
-
-    public string Name { get; set; }
-    public long Id { get; set; }
-    public string? Path { get; set; }
-
-    private readonly GL GL = null!;
-    private readonly uint _vao;
-    private readonly uint _vbo;
-    private readonly uint _ebo;
-    private readonly uint _indexCount;
-
-    public readonly MeshData? Data;
-    public readonly AABB LocalAABB;
-
-    /// Instancing — set up lazily on first DrawInstanced() call so meshes that are never
-    /// instanced don't pay for the extra buffer/attribute setup.
-    private uint _instanceVbo;
-    private int _instanceCapacity = -1; /// -1 = EnsureInstanceBuffer() not yet called
-    private float[] _instanceUploadScratch = Array.Empty<float>(); /// grows, never shrinks — avoids a per-draw heap alloc
-
 
     private static float[] Flatten (Vertex[] verts) {
         float[] result = new float[verts.Length*Vertex.FloatStride];

@@ -6,6 +6,8 @@ public class MeshData {
     public uint[] Indices;
     public Silk.NET.OpenGL.PrimitiveType PrimitiveType = Silk.NET.OpenGL.PrimitiveType.Triangles;
 
+    [Newtonsoft.Json.JsonConstructor]
+    public MeshData () { }
     public MeshData (Vertex[] vertices, uint[] indices, Silk.NET.OpenGL.PrimitiveType primitiveType) {
         Vertices = vertices;
         Indices = indices;

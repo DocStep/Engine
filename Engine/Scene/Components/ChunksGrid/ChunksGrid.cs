@@ -28,16 +28,16 @@ public class ChunksGrid : Component, IUpdate {
 
     /// Config
     public bool IsPermanentChunks = false; /// true = load full extent once per layer, never streams/unloads on move
-    public bool IsCircle = true;          /// false = quad
+    public bool IsCircle = true; /// false = quad
     public Vector3 Center = Vector3.Zero;
-    public static int ChunkSize = 10;
+    public static int ChunkSize = 5;
     public int MaxTasksStartedPerTick = 32; /// budget - call ProcessTasks() once per frame
     public int MaxUnloadTasksStartedPerTick = 16; /// reserved floor for unloads specifically - see ProcessTasks()
 
     public readonly List<ChunkLayer> Layers = new List<ChunkLayer>();
 
-    [Hide] private ChunkLayer[] _loadOrder = Array.Empty<ChunkLayer>();
-    [Hide] private ChunkLayer[] _unloadOrder = Array.Empty<ChunkLayer>();
+    [Hide] private ChunkLayer[] _loadOrder = [];
+    [Hide] private ChunkLayer[] _unloadOrder = [];
     [Hide] private readonly Dictionary<ChunkLayer, int> _loadRank = new Dictionary<ChunkLayer, int>();
     [Hide] private readonly Dictionary<ChunkLayer, int> _unloadRank = new Dictionary<ChunkLayer, int>();
     [Hide] private readonly Dictionary<ChunkLayer, List<ChunkLayer>> _dependents = new();
@@ -49,7 +49,7 @@ public class ChunksGrid : Component, IUpdate {
     [Hide] private bool _initialized;
     [Hide] private int _initialLoadRemaining;
 
-    [Hide] private readonly Dictionary<ChunkLayer, List<ChunkLayer>> _dependencyLayers = new();
+    [Hide, JsonProperty] private readonly Dictionary<ChunkLayer, List<ChunkLayer>> DependencyLayers = new();
 
     
     /// Register layers before the first UpdateCenter call.
@@ -72,7 +72,7 @@ public class ChunksGrid : Component, IUpdate {
     void save () {
         //System.Threading.Thread.Sleep(1000);
         //Log.log("de_ChunksLoaded", Transform.Children.Count);
-        gameObject.Save("src/Prefabs/ChunksGrid.json");
+        //gameObject.Save("src/Prefabs/ChunksGrid.json");
     }
 
     public void Update () {
@@ -272,7 +272,7 @@ public class ChunksGrid : Component, IUpdate {
                 foreach (ChunkLayer dependent in dependents)
                     if (IsCoordActive(dependent, t.Coord)) return true;
         } else {
-            if (_dependencyLayers.TryGetValue(t.Layer, out List<ChunkLayer>? deps))
+            if (DependencyLayers.TryGetValue(t.Layer, out List<ChunkLayer>? deps))
                 foreach (ChunkLayer dep in deps)
                     if (dep.GetState(t.Coord) != ChunkState.Ready) return true;
         }
@@ -423,7 +423,7 @@ public class ChunksGrid : Component, IUpdate {
     }
     private void RebuildDependents () {
         _dependents.Clear();
-        _dependencyLayers.Clear();
+        DependencyLayers.Clear();
         foreach (ChunkLayer layer in Layers) {
             List<ChunkLayer> deps = new List<ChunkLayer>();
             foreach (Type depType in layer.Dependencies) {
@@ -434,7 +434,7 @@ public class ChunksGrid : Component, IUpdate {
                     _dependents[dep] = list = new List<ChunkLayer>();
                 list.Add(layer);
             }
-            _dependencyLayers[layer] = deps;
+            DependencyLayers[layer] = deps;
         }
     }
 

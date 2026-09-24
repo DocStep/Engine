@@ -8,7 +8,8 @@ public sealed class TerrainLayer : ChunkLayer {
 
     public override string Name { get; protected set; } = "Terrain";
 
-    Material mat = null!;
+    public Material mat = null!;
+
 
     public override Task RunLoad (Vector2Int chunkPos2Int) {
         List<GameObject> list = GetObjects(chunkPos2Int);

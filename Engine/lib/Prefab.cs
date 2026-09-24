@@ -10,17 +10,7 @@ public static class Prefab {
 
     private static readonly BindingFlags FieldFlags = BindingFlags.Public | BindingFlags.Instance;
     private static readonly MethodInfo AssetsLoadMethod = typeof(Assets).GetMethod(nameof(Assets.Load))!;
-
-
-    public static void Save (GameObject go, string path) {
-        go.Path = path;
-        SaveObjects(new List<GameObject> { go }, path);
-    }
-
-    public static GameObject Load (string path) {
-        return LoadObjects(path)[0];
-    }
-
+    private static readonly Dictionary<Type, MethodInfo?> OnLoadedCache = new();
 
     private static readonly Dictionary<string, Type> TypesByName = AppDomain.CurrentDomain.GetAssemblies()
         .SelectMany(a => a.GetTypes())
@@ -40,6 +30,18 @@ public static class Prefab {
         TypeNameHandling = TypeNameHandling.Auto,
         SerializationBinder = new ShortNameBinder(),
     };
+
+
+
+    public static void Save (GameObject go, string path) {
+        go.Path = path;
+        SaveObjects(new List<GameObject> { go }, path);
+    }
+
+    public static GameObject Load (string path) {
+        return LoadObjects(path)[0];
+    }
+
 
 
 
@@ -71,7 +73,7 @@ public static class Prefab {
     private static void Flatten (GameObject go, List<GameObject> into, HashSet<GameObject> seen) {
         if (!seen.Add(go)) return; // already flattened as someone else's child — skip
         into.Add(go);
-        if (go.GetComponent<ChunksGrid>() != null) return; // chunks are runtime-generated — don't serialize them
+        //if (go.GetComponent<ChunksGrid>() != null) return; // chunks are runtime-generated — don't serialize them
         foreach (Transform child in go.Transform.Children) Flatten(child.gameObject, into, seen);
     }
 
@@ -153,8 +155,8 @@ public static class Prefab {
             }
         }
 
-        // Pass 1b: any entry not already claimed by a GameObject or its Components list is a
-        // standalone inline asset (Path == null at save time) — instantiate it directly.
+        /// Pass 1b: any entry not already claimed by a GameObject or its Components list is a
+        /// standalone inline asset (Path == null at save time) — instantiate it directly.
         foreach (JObject entry in objects.Cast<JObject>()) {
             string type = entry["Type"]!.Value<string>()!;
             if (type == "GameObject" || type == "Transform") continue;
@@ -178,19 +180,35 @@ public static class Prefab {
                 continue;
             }
 
-            object obj = ctx.ReadObjects[entry["$id"]!.Value<int>()]; // Component or inline IAsset — same field-fill either way
+            object obj = ctx.ReadObjects[entry["$id"]!.Value<int>()]; /// Component or inline IAsset — same field-fill either way
             ReadFields(obj, entry, ctx);
+
+            if (obj is IOnLoaded onLoad) onLoad.OnLoaded();
+            //MethodInfo? onLoaded = obj.GetType()
+            //    .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+            //    .FirstOrDefault(m => m.IsDefined(typeof(OnLoaded)) && m.GetParameters().Length == 0);
+            //onLoaded?.Invoke(obj, null);
         }
 
-        // Pass 3: hierarchy and fields are fully resolved now — safe to register with the
-        // scene and bring components live.
+        /// Pass 3: hierarchy and fields are fully resolved now — safe to register with the
+        /// scene and bring components live.
         foreach (JObject entry in objects.Cast<JObject>()) {
             if (entry["Type"]!.Value<string>() != "GameObject") continue;
             GameObject go = (GameObject)ctx.ReadObjects[entry["$id"]!.Value<int>()];
-            SceneManager.ActiveScene.GameObjectAdd(go);
+            SceneManager.ActiveScene?.GameObjectAdd(go);
             go.RegisterComponentsInternal();
         }
     }
+
+    private static MethodInfo? GetOnLoaded (Type type) {
+        if (OnLoadedCache.TryGetValue(type, out MethodInfo? cached)) return cached;
+        MethodInfo? method = type
+            .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+            .FirstOrDefault(m => m.IsDefined(typeof(OnLoaded)) && m.GetParameters().Length == 0);
+        OnLoadedCache[type] = method;
+        return method;
+    }
+
 
     private static JObject WriteGameObjectEntry (GameObject go, PrefabContext ctx) {
         return new JObject {

@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.ComponentModel;
 
 namespace Engine;
 
 
+[TypeConverter(typeof(Vector2IntConverter))]
 public struct Vector2Int : IEquatable<Vector2Int> {
     public Vector2Int (int x, int y) {
         X = x;

@@ -9,7 +9,7 @@ namespace Engine;
 public class MeshColliderComponent : ColliderComponent {
     [JsonIgnore] public override string Name => nameof(MeshColliderComponent);
 
-    [Hide][JsonIgnore] public Graphics.Mesh? mesh = null;
+    [Hide] public Graphics.Mesh? Mesh = null;
 
     public Vector3 Position => gameObject.Transform.Position;
     public Quaternion Rotation => gameObject.Transform.Rotation;
@@ -24,7 +24,7 @@ public class MeshColliderComponent : ColliderComponent {
     [JsonIgnore] public TypedIndex ShapeIndex { get; private set; }
 
     public override void OnAdd () {
-        if (mesh is null) return;
+        if (Mesh is null) return;
 
         CreateCollider();
     }
@@ -36,12 +36,12 @@ public class MeshColliderComponent : ColliderComponent {
     public override void Update () { }
 
     private void CreateCollider () {
-        if (mesh is null) return;
+        if (Mesh is null) return;
 
         RemoveCollider();
 
         Simulation simulation = PhysicsManager.Instance.Simulation;
-        Graphics.MeshData data = mesh.Data!;
+        Graphics.MeshData data = Mesh.Data!;
 
         BufferPool pool = PhysicsManager.Instance.BufferPool;
         int triangleCount = data.Indices.Length/3;
@@ -86,7 +86,7 @@ public class MeshColliderComponent : ColliderComponent {
     }
 
     public void SetMesh (Graphics.Mesh? mesh) {
-        this.mesh = mesh;
+        this.Mesh = mesh;
         if (gameObject is not null) CreateCollider();
     }
 
@@ -106,7 +106,7 @@ public class MeshColliderComponent : ColliderComponent {
     public void SetScale (Vector3 scale) {
         // Bepu Mesh geometry is baked when the shape is created.
         // Therefore scaling requires rebuilding the shape.
-        if (mesh is not null) CreateCollider();
+        if (Mesh is not null) CreateCollider();
     }
 
 }
