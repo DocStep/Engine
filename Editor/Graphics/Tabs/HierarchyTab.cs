@@ -15,15 +15,17 @@ public class HierarchyTab : IEditorTab {
         EditorUI.DrawTabContext(this);
 
         Scene? scene = SceneManager.ActiveScene;
-        if (scene is null) return;
+        if (scene is not null) {
+            ImGui.PushStyleColor(ImGuiCol.Text, EditorUIStyle.AccentColor);
+            ImGui.TextUnformatted(scene.Name);
+            ImGui.PopStyleColor();
+            ImGui.Separator();
 
-        ImGui.PushStyleColor(ImGuiCol.Text, EditorUIStyle.AccentColor);
-        ImGui.TextUnformatted(scene.Name);
-        ImGui.PopStyleColor();
-        ImGui.Separator();
+            foreach (GameObject go in scene.GameObjects) {
+                if (go.Transform.Parent is null) DrawHierarchyNode(go);
+            }
 
-        foreach (GameObject go in scene.GameObjects) {
-            if (go.Transform.Parent is null) DrawHierarchyNode(go);
+            DrawAddGameObjectContext();
         }
 
         ImGui.End();
@@ -52,6 +54,27 @@ public class HierarchyTab : IEditorTab {
         }
 
         ImGui.PopID();
+    }
+
+    public static void DrawAddGameObjectContext () {
+        if (!ImGui.BeginPopupContextWindow("##HierarchyContext", ImGuiPopupFlags.MouseButtonRight | ImGuiPopupFlags.NoOpenOverItems))
+            return;
+
+        if (ImGui.MenuItem("Empty")) {
+            Gizmos._gizmo_Selected.UpdateSelected(new GameObject());
+        }
+
+        if (ImGui.BeginMenu("Primitive")) {
+            foreach (PrimitiveTypes primitive in Enum.GetValues<PrimitiveTypes>()) {
+                if (ImGui.MenuItem(primitive.ToString())) {
+                    GameObject go = new GameObject(primitive, Vector3.Zero, Vector3.Zero, Vector3.One, primitive.ToString());
+                    Gizmos._gizmo_Selected.UpdateSelected(go);
+                }
+            }
+            ImGui.EndMenu();
+        }
+
+        ImGui.EndPopup();
     }
 
 }

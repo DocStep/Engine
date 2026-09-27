@@ -408,7 +408,8 @@ public class Renderer {
 
         info.material.Apply();
 
-        info.mesh.Draw(info.primitiveType);
+        //info.mesh.Draw(info.primitiveType);
+        info.mesh.Draw(info.indexOffset, info.indexCount, info.primitiveType);
 
         _lastDrawnMaterial = info.material;
         _lastDrawnShader = shader;
@@ -455,6 +456,7 @@ public class Renderer {
         first.mesh.DrawInstanced(
             new ReadOnlySpan<Matrix4x4>(_instanceModelScratch, 0, runLength),
             new ReadOnlySpan<Matrix4x4>(_instanceNormalScratch, 0, runLength),
+            first.indexOffset, first.indexCount,
             first.primitiveType);
 
         _lastDrawnMaterial = first.material;

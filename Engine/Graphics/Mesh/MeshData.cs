@@ -2,9 +2,6 @@
 
 
 public class MeshData {
-    public Vertex[] Vertices;
-    public uint[] Indices;
-    public Silk.NET.OpenGL.PrimitiveType PrimitiveType = Silk.NET.OpenGL.PrimitiveType.Triangles;
 
     [Newtonsoft.Json.JsonConstructor]
     public MeshData () { }
@@ -98,6 +95,11 @@ public class MeshData {
         /// the heightmap gradient above, which is smoother than triangle averaging
         return new MeshData(vertices, indices, Silk.NET.OpenGL.PrimitiveType.Triangles);
     }
+
+    public Vertex[] Vertices;
+    public uint[] Indices;
+    public SubMeshRange[] SubMeshes = null!;
+    public Silk.NET.OpenGL.PrimitiveType PrimitiveType = Silk.NET.OpenGL.PrimitiveType.Triangles;
 
 
     /// Recomputes per-vertex normals from triangle faces (area-weighted via

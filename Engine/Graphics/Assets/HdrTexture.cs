@@ -22,7 +22,7 @@ public class HdrTexture : IAsset<HdrTexture> {
 
     public void Save (string path) { }
 
-    public static HdrTexture Load (string path) {
+    public static HdrTexture Load (string path, int part = 100) {
         GL gl = Renderer.GL;
         HdrLoader.Load(path, out float[] data, out int width, out int height);
 

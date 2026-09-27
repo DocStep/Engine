@@ -15,7 +15,7 @@ public class ShaderRaw : IAsset<ShaderRaw> {
         File.WriteAllBytes(path, System.Text.Encoding.UTF8.GetBytes(source));
     }
 
-    public static ShaderRaw? Load (string path) {
+    public static ShaderRaw? Load (string path, int part = 100) {
         ShaderRaw shaderRaw = new ShaderRaw() {
             Path = path,
             source = Assets.LoadText(path),

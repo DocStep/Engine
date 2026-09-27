@@ -131,6 +131,13 @@ public class GameObject : IDisposable, IAsset<GameObject> {
         ComponentsManager.Instance.ComponentRegister(component);
         return component;
     }
+    public Component AddComponent (Type type) {
+        if (type.IsAbstract || !typeof(Component).IsAssignableFrom(type))
+            throw new ArgumentException($"{type.Name} is not a concrete Component");
+
+        Component component = (Component)Activator.CreateInstance(type)!;
+        return AddComponentInternal(component);
+    }
 
     /// Used only by the deserializer — attaches the component to this GameObject
     /// (list + SetParent) without registering it, so no lifecycle callback fires
@@ -228,7 +235,7 @@ public class GameObject : IDisposable, IAsset<GameObject> {
         Prefab.Save(this, path);
     }
 
-    public static GameObject Load (string path) {
+    public static GameObject Load (string path, int part = 100) {
         return Prefab.Load(path);
     }
 

@@ -13,5 +13,5 @@ public interface IAsset : IDisposable {
 
 /// Asset type that knows how to load itself from a path
 public interface IAsset<T> : IAsset where T : IAsset<T> {
-    public static abstract T? Load (string path);
+    public static abstract T? Load (string path, int part = 100);
 }

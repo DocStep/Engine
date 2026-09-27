@@ -38,7 +38,7 @@ public static class Prefab {
         SaveObjects(new List<GameObject> { go }, path);
     }
 
-    public static GameObject Load (string path) {
+    public static GameObject Load (string path, int part = 100) {
         return LoadObjects(path)[0];
     }
 
@@ -268,12 +268,14 @@ public static class Prefab {
 
     private static object? ReadValue (Type fieldType, JToken token, PrefabContext ctx) {
         if (token.Type == JTokenType.Null) return null;
-        if (typeof(Transform).IsAssignableFrom(fieldType)) return ctx.ReadObjects.TryGetValue(token["$ref"]!.Value<int>(), out object? o) ? (Transform)o : null;
-        if (typeof(GameObject).IsAssignableFrom(fieldType)) return ctx.ReadObjects.TryGetValue(token["$ref"]!.Value<int>(), out object? o) ? (GameObject)o : null;
+        if (typeof(Transform).IsAssignableFrom(fieldType)) 
+            return ctx.ReadObjects.TryGetValue(token["$ref"]!.Value<int>(), out object? o) ? (Transform)o : null;
+        if (typeof(GameObject).IsAssignableFrom(fieldType)) 
+            return ctx.ReadObjects.TryGetValue(token["$ref"]!.Value<int>(), out object? o) ? (GameObject)o : null;
         if (typeof(IAsset).IsAssignableFrom(fieldType)) {
             if (token.Type == JTokenType.Object)
                 return ctx.ReadObjects.TryGetValue(token["$ref"]!.Value<int>(), out object? o) ? o : null;
-            return AssetsLoadMethod.MakeGenericMethod(fieldType).Invoke(null, new object[] { token.Value<string>()! });
+            return AssetsLoadMethod.MakeGenericMethod(fieldType).Invoke(null, [token.Value<string>()!]);
         }
         return token.ToObject(fieldType, PolymorphicSerializer);
     }

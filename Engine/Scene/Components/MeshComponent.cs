@@ -9,6 +9,7 @@ public class MeshComponent : Component, IUpdate, IUpdateAtFreeze {
 
     public Mesh? Mesh = null;
     /*[JsonIgnore]*/ public Material? Material = AssetsEngine._mat_Lit;
+    public Dictionary<string, Material>? MaterialOverrides;
     //[JsonProperty("pass")] public RenderPass pass = RenderPass.Opaque;
 
     [Hide][JsonIgnore] public RenderInfo renderInfo { get; private set; }
@@ -39,11 +40,5 @@ public class MeshComponent : Component, IUpdate, IUpdateAtFreeze {
             return renderInfo;
         }
     }
-
-
-    /*public override void DrawInspector () {
-        ImGuiNET.ImGui.TextDisabled("Mesh: " + mesh?.Name);
-        ImGuiNET.ImGui.TextDisabled("Shader: " + material?.shader.Name);
-    }*/
 
 }

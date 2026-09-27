@@ -1,4 +1,6 @@
-﻿using ImGuiNET;
+﻿using System.Linq;
+using System.Reflection;
+using ImGuiNET;
 
 namespace Editor.Graphics;
 
@@ -7,6 +9,9 @@ public class InspectorTab : IEditorTab {
 
     public string Name { get; set; } = "Inspector";
     public bool isActive { get; set; } = true;
+
+    private static List<Type>? _addableComponents;
+    private static string _componentFilter = "";
 
 
     public void Draw () {
@@ -29,9 +34,58 @@ public class InspectorTab : IEditorTab {
             for (int c = 0; c < selectedGO.Components.Count; c++) {
                 EditorUI.DrawComponent(selectedGO.Components[c]);
             }
+
+            DrawAddComponentButton(selectedGO);
         }
 
         ImGui.End();
+    }
+
+    public static void DrawAddComponentButton (GameObject go) {
+        ImGui.Separator();
+        if (ImGui.Button("Add Component", new Vector2(-1, 0))) {
+            _componentFilter = "";
+            ImGui.OpenPopup("##AddComponent");
+        }
+
+        if (!ImGui.BeginPopup("##AddComponent")) return;
+
+        ImGui.SetNextItemWidth(220);
+        ImGui.InputTextWithHint("##filter", "Search...", ref _componentFilter, 64);
+
+        if (ImGui.BeginChild("##list", new Vector2(220, 240))) {
+            foreach (Type type in GetAddableComponents()) {
+                if (_componentFilter.Length > 0 && !type.Name.Contains(_componentFilter, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (ImGui.Selectable(type.Name)) {
+                    go.AddComponent(type); /// adjust to your API
+                    ImGui.CloseCurrentPopup();
+                }
+            }
+        }
+        ImGui.EndChild();
+
+        ImGui.EndPopup();
+    }
+
+    /// every non-abstract Component subclass, cached
+    private static List<Type> GetAddableComponents () {
+        _addableComponents ??= AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(LoadTypes)
+            .Where(t => t.IsClass && !t.IsAbstract && typeof(Component).IsAssignableFrom(t))
+            .OrderBy(t => t.Name)
+            .ToList();
+
+        return _addableComponents;
+    }
+
+    private static IEnumerable<Type> LoadTypes (Assembly assembly) {
+        try {
+            return assembly.GetTypes();
+        } catch (ReflectionTypeLoadException e) {
+            return e.Types.Where(t => t is not null)!;
+        }
     }
 
 }

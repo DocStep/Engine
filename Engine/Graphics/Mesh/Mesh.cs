@@ -1,4 +1,5 @@
-﻿using Silk.NET.OpenGL;
+﻿using System.Linq;
+using Silk.NET.OpenGL;
 
 namespace Engine.Graphics;
 
@@ -35,18 +36,33 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
     public MeshData? Data;
     public AABB LocalAABB;
 
+    public struct SubMesh {
+        public string MaterialName;
+        public uint IndexOffset;
+        public uint IndexCount;
+    }
+    /// Empty when the OBJ had no usemtl groups — whole-mesh draw is the norm in that case.
+    public SubMesh[] SubMeshes = Array.Empty<SubMesh>();
+
     /// Instancing — set up lazily on first DrawInstanced() call so meshes that are never
     /// instanced don't pay for the extra buffer/attribute setup.
     private uint _instanceVbo;
     private int _instanceCapacity = -1; /// -1 = EnsureInstanceBuffer() not yet called
-    private float[] _instanceUploadScratch = Array.Empty<float>(); /// grows, never shrinks — avoids a per-draw heap alloc
+    private float[] _instanceUploadScratch = []; /// grows, never shrinks — avoids a per-draw heap alloc
 
 
     private void Upload (MeshData data) {
         Data = data;
-        //Log.log(Name, Data.Vertices.Length, Data.Indices.Length);
         _indexCount = (uint)Data.Indices.Length;
         LocalAABB = AABB.FromVertices(Data.Vertices);
+
+        SubMeshes = Data.SubMeshes is { Length: > 0 }
+            ? Data.SubMeshes.Select(r => new SubMesh {
+                MaterialName = r.MaterialName,
+                IndexOffset = (uint)r.IndexStart,
+                IndexCount = (uint)r.IndexCount,
+            }).ToArray()
+            : Array.Empty<SubMesh>();
 
         float[] vertices = Flatten(Data.Vertices);
 
@@ -98,14 +114,24 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
         return result;
     }
 
+    /// Whole-mesh draw — unchanged behavior for single-material meshes.
     public void Draw (PrimitiveType primitiveType = PrimitiveType.Triangles) {
+        Draw(0, _indexCount, primitiveType);
+    }
+
+    /// Sliced draw — indexCount == 0 means "whole mesh" so RenderInfo's default (0) still works
+    /// for meshes that never got submesh ranges.
+    public void Draw (uint indexOffset, uint indexCount, PrimitiveType primitiveType = PrimitiveType.Triangles) {
+        uint count = indexCount == 0 ? _indexCount : indexCount;
+
         GL.BindVertexArray(_vao);
         unsafe {
-            GL.DrawElements(primitiveType, _indexCount, DrawElementsType.UnsignedInt, null);
+            GL.DrawElements(primitiveType, count, DrawElementsType.UnsignedInt, (void*)(indexOffset*sizeof(uint)));
         }
         Renderer.Instance.Stats.DrawCalls++;
         GL.BindVertexArray(0);
     }
+
     /// Non-indexed draw, used for fullscreen triangle / no vertex buffer
     public void Draw (uint vertexCount, PrimitiveType primitiveType = PrimitiveType.Triangles) {
         GL.BindVertexArray(_vao);
@@ -116,14 +142,16 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
         GL.BindVertexArray(0);
     }
 
-    /// Draws `models.Length` copies of this mesh in a single draw call. The shader assigned to
-    /// the material used for this draw MUST read the model/normal matrix from the instanced
-    /// vertex attributes (location 3 = model mat4, location 7 = normal mat4 — see the
+    /// Draws `models.Length` copies of a slice of this mesh in a single draw call. The shader
+    /// assigned to the material used for this draw MUST read the model/normal matrix from the
+    /// instanced vertex attributes (location 3 = model mat4, location 7 = normal mat4 — see the
     /// *_instanced shader variants) instead of the uModel/uNormalMatrix uniforms, or every
     /// instance renders with garbage/zeroed transforms.
-    public void DrawInstanced (ReadOnlySpan<Matrix4x4> models, ReadOnlySpan<Matrix4x4> normals, PrimitiveType primitiveType = PrimitiveType.Triangles) {
+    public void DrawInstanced (ReadOnlySpan<Matrix4x4> models, ReadOnlySpan<Matrix4x4> normals, uint indexOffset, uint indexCount, PrimitiveType primitiveType = PrimitiveType.Triangles) {
         int instanceCount = models.Length;
         if (instanceCount == 0) return;
+
+        uint count = indexCount == 0 ? _indexCount : indexCount;
 
         EnsureInstanceBuffer();
 
@@ -150,7 +178,7 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
                 }
             }
 
-            GL.DrawElementsInstanced(primitiveType, _indexCount, DrawElementsType.UnsignedInt, null, (uint)instanceCount);
+            GL.DrawElementsInstanced(primitiveType, count, DrawElementsType.UnsignedInt, (void*)(indexOffset*sizeof(uint)), (uint)instanceCount);
         }
 
         Renderer.Instance.Stats.DrawCalls++;
@@ -203,7 +231,7 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
         ObjLoader.Save(path, Data);
     }
 
-    public static Mesh Load (string path) {
+    public static Mesh Load (string path, int part = 100) {
         return new Mesh(ObjLoader.Load(path)) {
             Name = System.IO.Path.GetFileNameWithoutExtension(path),
             Path = path,

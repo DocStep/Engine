@@ -96,7 +96,7 @@ public class Material : IAsset<Material> {
         Path = path;
         Json.Write(path, this);
     }
-    public static Material? Load (string path) {
+    public static Material? Load (string path, int part = 100) {
         return Json.Read<Material>(path);
     }
 

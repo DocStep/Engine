@@ -15,7 +15,7 @@ public class RawFont : IAsset<RawFont> {
         File.WriteAllBytes(path, Data);
     }
 
-    public static RawFont Load (string path) {
+    public static RawFont Load (string path, int part = 100) {
         return new RawFont {
             Name = System.IO.Path.GetFileName(path),
             Path = path,

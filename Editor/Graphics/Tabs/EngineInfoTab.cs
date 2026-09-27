@@ -1,6 +1,4 @@
 using ImGuiNET;
-using System;
-using System.Numerics;
 
 namespace Editor.Graphics;
 

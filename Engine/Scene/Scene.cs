@@ -89,7 +89,7 @@ public class Scene : IUpdate, IAsset<Scene> {
         Path = path;
         Prefab.SaveObjects(Objects, path);
     }
-    public static Scene? Load (string path) {
+    public static Scene? Load (string path, int part = 100) {
         Scene scene = new Scene(true) { Path = path };
         scene.Objects.Clear(); /// constructor left Objects empty anyway, but explicit if that changes
         scene.Objects.AddRange(Prefab.LoadObjects(path));

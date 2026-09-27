@@ -263,7 +263,7 @@ public class Shader : IAsset<Shader> {
         Json.Write(path, this);
     }
 
-    public static Shader? Load (string path) {
+    public static Shader? Load (string path, int part = 100) {
         Shader shader = Json.Read<Shader>(path);
         return shader;
     }

@@ -13,7 +13,7 @@ public enum ChunkState { None, Loading, Ready, Saving, Unloading }
 public enum ChunkTaskType { Load, Save, Unload }
 
 
-public class ChunksGrid : Component, IUpdate {
+public class ChunksGrid : Component, IUpdate, ICustomLoad<ChunksGrid> {
 
     public override string Name => nameof(ChunksGrid);
 
@@ -440,5 +440,11 @@ public class ChunksGrid : Component, IUpdate {
 
     private bool IsCoordActive (ChunkLayer layer, Vector2Int coord) =>
         layer.GetState(coord) != ChunkState.None || layer.Pending.ContainsKey(coord);
+
+
+    public static ChunksGrid? Load (string path, int part = 100) {
+        return Load(path);
+    }
+
 
 }

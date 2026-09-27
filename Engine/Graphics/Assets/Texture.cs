@@ -28,7 +28,7 @@ public class Texture : IAsset<Texture> {
     }
 
     /// <summary> Loads a texture from an image file (png/jpg/etc via StbImageSharp) and uploads it to the GPU. </summary>
-    public static Texture Load (string path) {
+    public static Texture Load (string path, int part = 100) {
         GL gl = Renderer.GL;
 
         Texture tex = new Texture();

@@ -20,6 +20,18 @@ public class SceneMaterials : Scene {
         SunLight sun1 = go_sun1.AddComponent<SunLight>();
 
         /// Reflection
+        x = -2;
+        GameObject go_plane2Materials = new GameObject() { Name = "Plane2Materials", };
+        go_plane2Materials.Transform.Position = new Vector3(x, 0, 0);
+        mesh = go_plane2Materials.AddComponent<MeshComponent>();
+        mesh.Mesh = Assets.Load<Mesh>("src/Models/Plane2Materials.obj");
+        mesh.Material = AssetsEngine._mat_LitRed;
+        mesh.MaterialOverrides = new Dictionary<string, Material> {
+            ["Red"] = AssetsEngine._mat_LitRed,
+            ["Blue"] = AssetsEngine._mat_LitBlue,
+        };
+
+        /// Reflection
         x = 0;
         GameObject reflectionSuzanneHightRes = new GameObject() { Name = "Reflection SuzanneHighRes", };
         reflectionSuzanneHightRes.Transform.Position = new Vector3(x, 0, 0);
