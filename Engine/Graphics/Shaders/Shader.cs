@@ -78,13 +78,19 @@ public class Shader : IAsset<Shader> {
     [JsonProperty] private readonly string fragmentSourcePath;
     public bool isLit;
 
-    [JsonIgnore] private readonly GL GL;
-    [JsonIgnore] private uint _program;
-    [JsonIgnore] private int _nextTextureUnit = 0;
+    [JsonIgnore, Hide] private readonly GL GL;
+    [JsonIgnore, Hide] private uint _program;
+    [JsonIgnore, Hide] private int _nextTextureUnit = 0;
 
-    [JsonIgnore, Hide] public Dictionary<string, UniformInfo> ActiveUniforms { get; private set; } = new();
+    static int _nextId = 0;
+    public readonly int Id_Renderer = System.Threading.Interlocked.Increment(ref _nextId);
+
+    [JsonIgnore, Hide]
+    public Dictionary<string, UniformInfo> ActiveUniforms { get; private set; } = new Dictionary<string, UniformInfo>();
+
     /// Uniform names the renderer sets globally per-frame/per-pass (camera, lights, time...).
     /// FillDefaults must never touch these -- they don't belong to any one material.
+    [JsonIgnore, Hide]
     public static readonly HashSet<string> ReservedUniforms = new() {
         View, Projection, ViewPos, Model, NormalMatrix, CameraPos, Scene, Depth,
         SunLightCount, SunLightDir, SunLightColor, SunLightIntensity, 
@@ -92,6 +98,21 @@ public class Shader : IAsset<Shader> {
         Skybox, MaxReflectionLod, 
         Exposure, AmbientColor, AmbientColorIntensity, ReflectionIntensity,
         SHAr, SHAg, SHAb, SHBr, SHBg, SHBb, SHC,
+    };
+
+    [JsonIgnore, Hide]
+    public readonly static Dictionary<UniformType, object> TypeDefaults = new Dictionary<UniformType, object>() {
+        [UniformType.Float] = 0.5f,
+        [UniformType.FloatVec2] = Vector2.Zero,
+        [UniformType.FloatVec3] = Vector3.One,
+        [UniformType.FloatVec4] = Vector4.One,
+        [UniformType.Int] = 0,
+    };
+    [JsonIgnore, Hide]
+    public readonly static Dictionary<string, object> UniformDefaults = new Dictionary<string, object>() {
+        [Shader.Smoothness] = 0.5f,
+        [Shader.Metallic] = 0f,
+        [Shader.ReflectionIntensity] = 1f,
     };
 
     [JsonIgnore] public static RendererGLStats Stats = default;

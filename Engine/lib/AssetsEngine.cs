@@ -26,8 +26,6 @@ public class AssetsEngine : Singleton<AssetsEngine> {
 
         _mat_Lit = new Material(_sh_LitInstanced) { Name = "Lit", };
         _mat_Lit.SetVector3(Color, Constants.white);
-        _mat_Lit.SetFloat(Smoothness, 0.5f);
-        _mat_Lit.SetFloat(Metallic, 0);
         _mat_Lit.Save("src/Materials/Lit.mat");
         ///
         _mat_Unlit = new Material(_sh_Unlit) { Name = "Unlit", };

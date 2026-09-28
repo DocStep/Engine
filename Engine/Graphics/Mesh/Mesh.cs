@@ -33,6 +33,9 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
     private uint _ebo;
     private uint _indexCount;
 
+    static int _nextId = 0;
+    public readonly int Id_Renderer = System.Threading.Interlocked.Increment(ref _nextId);
+
     public MeshData? Data;
     public AABB LocalAABB;
 

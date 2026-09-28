@@ -1,4 +1,6 @@
-﻿namespace Engine.Graphics;
+﻿using Newtonsoft.Json;
+
+namespace Engine.Graphics;
 
 public enum RenderPass {
     Opaque,
@@ -53,18 +55,8 @@ public class Material : IAsset<Material>, IOnLoaded {
 
     [Hide] public Shader shader = null!;
 
-    static readonly Dictionary<Silk.NET.OpenGL.UniformType, object> TypeDefaults = new() {
-        [Silk.NET.OpenGL.UniformType.Float] = 0.5f,
-        [Silk.NET.OpenGL.UniformType.FloatVec2] = Vector2.Zero,
-        [Silk.NET.OpenGL.UniformType.FloatVec3] = Vector3.One,
-        [Silk.NET.OpenGL.UniformType.FloatVec4] = Vector4.One,
-        [Silk.NET.OpenGL.UniformType.Int] = 0,
-    };
-    static readonly Dictionary<string, object> NameOverrides = new() {
-        ["uMetallic"] = 0f,
-        ["uSmoothness"] = 0.5f,
-        ["uReflectionIntensity"] = 1f,
-    };
+    static int _nextId = 0;
+    public readonly int Id_Renderer = System.Threading.Interlocked.Increment(ref _nextId);
 
     /// Render State
     public RenderFace face = RenderFace.Front;
@@ -82,6 +74,7 @@ public class Material : IAsset<Material>, IOnLoaded {
     [Raw] public Dictionary<string, Vector4> vectors4 = new();
     [Raw] public Dictionary<string, Texture> textures = new();
 
+
     public void Apply () {
         foreach (var kv in ints) shader.SetInt(kv.Key, kv.Value);
         foreach (var kv in floats) shader.SetFloat(kv.Key, kv.Value);
@@ -93,14 +86,15 @@ public class Material : IAsset<Material>, IOnLoaded {
     }
     public virtual void ApplyCustom () { }
 
+
     public void FillDefaults () {
         foreach (var info in shader.ActiveUniforms.Values) {
             if (Shader.ReservedUniforms.Contains(info.Name)) continue;
 
-            object def = NameOverrides.TryGetValue(info.Name, out var over) ? over
-                : TypeDefaults.TryGetValue(info.Type, out var byType) ? byType
+            object def = Shader.UniformDefaults.TryGetValue(info.Name, out var over) ? over
+                : Shader.TypeDefaults.TryGetValue(info.Type, out var byType) ? byType
                 : null!;
-            if (def == null) continue;
+            if (def is null) continue;
 
             switch (def) {
                 case float f: floats.TryAdd(info.Name, f); break;

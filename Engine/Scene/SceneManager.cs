@@ -1,4 +1,5 @@
-﻿using Engine.Input;
+﻿using System.Diagnostics;
+using Engine.Input;
 
 namespace Engine;
 
@@ -13,6 +14,7 @@ public class SceneManager : Singleton<SceneManager> {
             if (0 < Instance.Scenes.Count) return Instance.Scenes[Instance.sceneActiveID];
             else {
                 Log.log(error_NoActiveScene, LogType.warning);
+                Log.log(new StackTrace());
                 return null;
             }
         }

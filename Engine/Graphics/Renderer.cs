@@ -20,8 +20,6 @@ public class Renderer {
         if (Instance is not null && Instance != this)
             throw new Exception($"[ctor] {typeof(Renderer)}.{nameof(Instance)} ({GetHashCode()}) is not null");
 
-        _visibleIndexComparer = new RenderInfoIndexComparer(RenderList);
-
         Engine.Instance.de_Render += Render;
         Windows.Window.FramebufferResize += OnFrameBufferResize;
         Windows.Window.Closing += Dispose;
@@ -34,8 +32,6 @@ public class Renderer {
         Skybox = new Skybox(_hdr_Skybox);
 
         //SetTargetSize(Engine.Window.Size.X, Engine.Window.Size.Y);
-
-        Stats = new RendererStats();
 
         TextRenderer = new TextRenderer();
 
@@ -83,13 +79,15 @@ public class Renderer {
     public Matrix4x4 m4x4_ProjectionUI = Matrix4x4.Identity;
 
     protected readonly List<RenderInfo> RenderList = new List<RenderInfo>();
-    protected readonly List<int> _visibleIndices = new List<int>();
+    protected int[] _visibleIndices = Array.Empty<int>();
+    protected ulong[] _sortKeys = Array.Empty<ulong>();
+    protected int _visibleCount = 0;
     protected readonly Vector4[] _frustumPlanes = new Vector4[4]; /// left, right, bottom, top — (normal.xyz, d); inside test is dot(normal, p) + d >= 0
 
     protected Matrix4x4[] _instanceModelScratch = Array.Empty<Matrix4x4>();
     protected Matrix4x4[] _instanceNormalScratch = Array.Empty<Matrix4x4>();
 
-    public RendererStats Stats = new RendererStats(); /// set in ctor
+    public RendererStats Stats = new RendererStats();
     public int Width => (int)MathF.Round(Stats.SceneSize.X);
     public int Height => (int)MathF.Round(Stats.SceneSize.Y);
 
@@ -99,9 +97,13 @@ public class Renderer {
     protected float _lastProjWidth = -1f;
     protected float _lastProjHeight = -1f;
 
-    /// State-change dedup across a frame's draw calls — reset each frame in DrawStart
-    protected Material? _lastDrawnMaterial = null;
+    static int _nextId = 0;
+    public readonly int Id = System.Threading.Interlocked.Increment(ref _nextId);
+    //public readonly int Id = ++_nextId;
+
+    /// State-change dedup across a frame's draw calls — reset each frame in StatsStart
     protected Shader? _lastDrawnShader = null;
+    protected Material? _lastDrawnMaterial = null;
 
 
 
@@ -113,6 +115,7 @@ public class Renderer {
         Camera = MainCamera;
         if (Camera is null) {
             Log.log($"No {nameof(Graphics.Camera)} found");
+            RenderList.Clear();
             return;
         }
         StatsStart();
@@ -171,8 +174,8 @@ public class Renderer {
 
         /// GL state from a previous frame (post-process, gizmos, editor UI) may not match
         /// the first material we draw — force the first DrawRenderInfo call to re-apply state
-        _lastDrawnMaterial = null;
         _lastDrawnShader = null;
+        _lastDrawnMaterial = null;
     }
     protected void StatsEnd () {
         Stats.Latency = (float)sw_Latency.Elapsed.TotalMilliseconds;
@@ -222,36 +225,37 @@ public class Renderer {
         //DrawSame();
         //Log.log("RenderList", RenderList.Count);
         //int s = 0;
+
         ExtractFrustumPlanes(m4x4_View*m4x4_Projection);
 
-        _visibleIndices.Clear();
         int total = RenderList.Count;
+        if (_visibleIndices.Length < total) {
+            _visibleIndices = new int[total];
+            _sortKeys = new ulong[total];
+        }
+
+        Vector3 camPos = Camera!.CameraPos;
+        _visibleCount = 0;
+
         for (int i = 0; i < total; i++) {
             RenderInfo info = RenderList[i];
             if (info.mesh is null || info.material is null) continue;
 
-            if (info.material.pass == RenderPass.UI) {
-                _visibleIndices.Add(i); /// UI is screen-space — a world-space frustum test doesn't apply
-                continue;
-            }
+            if (info.material.pass != RenderPass.UI) {
+                AABB worldAABB = info.mesh.LocalAABB.Transformed(info.model);
+                if (!IsInFrustum(worldAABB, _frustumPlanes)) continue;
+            } /// UI is screen-space, so the world-space frustum test doesn't apply
 
-            AABB worldAABB = info.mesh.LocalAABB.Transformed(info.model);
-            if (IsInFrustum(worldAABB, _frustumPlanes)) _visibleIndices.Add(i);
+            _visibleIndices[_visibleCount] = i;
+            _sortKeys[_visibleCount] = MakeSortKey(info, camPos);
+            _visibleCount++;
         }
 
-        /// Sorting int indices (4 bytes) instead of RenderInfo values directly — RenderInfo
-        /// carries a Matrix4x4 plus a Matrix4x4? (~150 bytes total), and Sort() does O(n log n)
-        /// swaps of whatever type you give it. Swapping indices instead of full structs cuts
-        /// that memory traffic drastically once the cube count gets large.
-        _visibleIndices.Sort(_visibleIndexComparer);
+        /// Sorts the keys and moves the indices along with them
+        Array.Sort(_sortKeys, _visibleIndices, 0, _visibleCount);
 
-        /// Consecutive runs of the same (mesh, material) — guaranteed adjacent by the sort's
-        /// mesh/material tie-break above — get drawn as one instanced call instead of one
-        /// draw call each. Every shader used here must read the model/normal matrix from the
-        /// instanced attributes (locations 3 and 7) — see DrawInstancedRun / Mesh.DrawInstanced.
-        int count = _visibleIndices.Count;
         int idx = 0;
-        while (idx < count) {
+        while (idx < _visibleCount) {
             RenderInfo first = RenderList[_visibleIndices[idx]];
 
             if (first.material.pass == RenderPass.UI) {
@@ -261,21 +265,32 @@ public class Renderer {
             }
 
             int runEnd = idx + 1;
-            while (runEnd < count) {
+            while (runEnd < _visibleCount) {
                 RenderInfo next = RenderList[_visibleIndices[runEnd]];
                 if (!ReferenceEquals(next.mesh, first.mesh) || !ReferenceEquals(next.material, first.material)) break;
                 runEnd++;
             }
 
-            /// Always instanced — no uniform-based fallback. A run of 1 just becomes a batch
-            /// of 1 through the same instanced path; every shader used here MUST read the
-            /// model/normal matrix from the instanced attributes, with no uModel/uNormalMatrix
-            /// uniform variant to fall back to.
             DrawInstancedRun(idx, runEnd);
-
             idx = runEnd;
         }
-        //Log.log("SuzanneHighRes", s);
+    }
+
+    /// Opaque/UI: pass 2 bits | shader 22 bits | material 20 bits | mesh 20 bits
+    /// Transparent: pass 2 bits | inverted distance 32 bits (back-to-front)
+    protected static ulong MakeSortKey (in RenderInfo info, Vector3 camPos) {
+        ulong pass = (ulong)info.material.pass & 3UL;
+
+        if (info.material.pass == RenderPass.Transparent) {
+            float d = Vector3.DistanceSquared(camPos, info.model.Translation);
+            uint inv = ~BitConverter.SingleToUInt32Bits(d); /// positive floats order as uints; invert for far-first
+            return pass << 62 | (ulong)inv << 30;
+        }
+
+        return pass << 62
+            | ((ulong)info.material.shader.Id_Renderer & 0x3FFFFFUL) << 40
+            | ((ulong)info.material.Id_Renderer & 0xFFFFFUL) << 20
+            | ((ulong)info.mesh.Id_Renderer & 0xFFFFFUL);
     }
 
     /// Row-vector convention (v*M, matching the ScreenPointToRay code): a clip-space
@@ -380,45 +395,19 @@ public class Renderer {
     }
 
     public void DrawRenderInfo (RenderInfo info) {
-        if (Renderer.Instance.Camera is null) return;
+        if (Camera is null) return;
         if (info.mesh is null) return;
         if (info.material is null) return;
 
-        bool materialChanged = !ReferenceEquals(info.material, _lastDrawnMaterial);
-        if (materialChanged) ApplyMaterialState(info.material);
+        BindMaterial(info.material);
 
         Shader shader = info.material.shader;
-        if (!ReferenceEquals(shader, _lastDrawnShader)) shader.Use();
-
-        /// Uniforms
-        switch (info.material.pass) {
-            case RenderPass.Opaque:
-            case RenderPass.Transparent:
-                SetSceneUniformsUnlit(shader, Renderer.Instance.Camera.CameraPos);
-                SetSceneUniformsLit(shader);
-                SetSceneUniformsSkybox(shader, Skybox.texture, Skybox.maxLod);
-                break;
-            case RenderPass.UI:
-                shader.SetMatrix4x4(Projection, m4x4_ProjectionUI);
-                break;
-        }
-
         shader.SetMatrix4x4(Model, info.model);
         shader.SetMatrix4x4(NormalMatrix, info.normal ?? GetNormalMatrix(info.model));
 
-        info.material.Apply();
-
-        //info.mesh.Draw(info.primitiveType);
         info.mesh.Draw(info.indexOffset, info.indexCount, info.primitiveType);
-
-        _lastDrawnMaterial = info.material;
-        _lastDrawnShader = shader;
     }
 
-    /// Draws a run of identical (mesh, material) entries as one instanced call. Material/shader
-    /// state and the shared uniforms (view/projection/lighting/skybox) are applied once for the
-    /// whole run instead of once per object — the model/normal matrices go through the instanced
-    /// vertex attributes on Mesh instead of the uModel/uNormalMatrix uniforms.
     protected void DrawInstancedRun (int startIndex, int endIndexExclusive) {
         int runLength = endIndexExclusive - startIndex;
         if (_instanceModelScratch.Length < runLength) {
@@ -434,12 +423,26 @@ public class Renderer {
             _instanceNormalScratch[i] = info.normal ?? GetNormalMatrix(info.model);
         }
 
-        ApplyMaterialState(first.material);
+        BindMaterial(first.material);
 
-        Shader shader = first.material.shader;
+        first.mesh.DrawInstanced(
+            new ReadOnlySpan<Matrix4x4>(_instanceModelScratch, 0, runLength),
+            new ReadOnlySpan<Matrix4x4>(_instanceNormalScratch, 0, runLength),
+            first.indexOffset, first.indexCount,
+            first.primitiveType);
+    }
+
+    /// Applies material GL state, shader, per-pass uniforms and material textures.
+    /// Shared by DrawRenderInfo and DrawInstancedRun so the dedup lives in one place.
+    protected void BindMaterial (Material material) {
+        if (!ReferenceEquals(material, _lastDrawnMaterial)) ApplyMaterialState(material);
+
+        Shader shader = material.shader;
         if (!ReferenceEquals(shader, _lastDrawnShader)) shader.Use();
 
-        switch (first.material.pass) {
+        /// Kept outside the shader-changed branch on purpose: the skybox binds Texture0,
+        /// and material.Apply() may rebind it, so this has to run per bind (same as before)
+        switch (material.pass) {
             case RenderPass.Opaque:
             case RenderPass.Transparent:
                 SetSceneUniformsUnlit(shader, Camera!.CameraPos);
@@ -451,15 +454,9 @@ public class Renderer {
                 break;
         }
 
-        first.material.Apply();
+        material.Apply();
 
-        first.mesh.DrawInstanced(
-            new ReadOnlySpan<Matrix4x4>(_instanceModelScratch, 0, runLength),
-            new ReadOnlySpan<Matrix4x4>(_instanceNormalScratch, 0, runLength),
-            first.indexOffset, first.indexCount,
-            first.primitiveType);
-
-        _lastDrawnMaterial = first.material;
+        _lastDrawnMaterial = material;
         _lastDrawnShader = shader;
     }
 

@@ -38,7 +38,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         new CameraEditor();
 
-        Draw();
+        //Draw();
 
         //ComponentManager.Instance.de_RegisterType += RegisterType;
         RegisterTypes();
