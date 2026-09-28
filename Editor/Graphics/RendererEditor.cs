@@ -16,10 +16,11 @@ namespace Editor.Graphics;
 /// UI
 
 public class RendererEditor : Renderer {
-    public RendererEditor() : base() {
+    public RendererEditor () : base() {
         //Engine.Engine.Instance.de_Update_Engine += EngineUpdate;
 
         Engine.Engine.Instance.de_AfterUpdate += DrawMaterialsGrid;
+        Engine.Engine.Instance.de_AfterUpdate += DrawMaterialGrid;
         //de_DrawPostScene += DrawGizmos;
         de_DrawAfterPostProcess += Gizmos.Draw;
     }
@@ -70,13 +71,26 @@ public class RendererEditor : Renderer {
         GL.Disable(EnableCap.DepthTest);
         GL.DepthMask(false);
 
-        RenderList.Sort((a, b) => a.material.pass.CompareTo(b.material.pass));
-        int count = RenderList.Count;
+        /// The queue's raw list is untouched by DrawScene (it only sorts indices), so this
+        /// works after it in NormalWireframe mode. Two passes replace the old in-place sort:
+        /// scene items as wireframe first, then everything else (UI) the normal way.
+        IReadOnlyList<RenderInfo> items = _queue.Items;
+        int count = items.Count;
+
         for (int i = 0; i < count; i++) {
-            RenderInfo info = RenderList[i];
-            if (info.material.pass == RenderPass.Opaque || info.material.pass == RenderPass.Transparent)
+            RenderInfo info = items[i];
+            if (info.material is null) continue;
+            if (info.material.Pass == RenderPass.Opaque || info.material.Pass == RenderPass.Transparent)
                 DrawInfoWireframe(info);
-            else DrawRenderInfo(info);
+        }
+
+        _state.Reset(); /// DrawInfoWireframe bound its own shader, so the cache is stale
+
+        for (int i = 0; i < count; i++) {
+            RenderInfo info = items[i];
+            if (info.material is null) continue;
+            if (info.material.Pass != RenderPass.Opaque && info.material.Pass != RenderPass.Transparent)
+                DrawRenderInfo(info);
         }
 
         GL.Enable(EnableCap.CullFace);
@@ -132,33 +146,70 @@ public class RendererEditor : Renderer {
 
 
 
-    public static void DrawMaterialsGrid (float offsetX, float offsetZ, int testGridCount = 10, float testGridDensity = 1f) {
-        if (!Constants.drawMaterialsGrid) return;
+    /// Built once and reused — a new Material per cell per frame means no batching,
+    /// per-frame garbage, and a fast-growing Material.Id
+    static Material[] _gridMaterialsA = [];
+    static int _gridTotalA = -1;
 
-        int total = testGridCount*(int)testGridDensity;
-        float speed = 2f;
+    static void BuildGridMaterials (ref Material[] cache, ref int cachedTotal, int total) {
+        cache = new Material[total*total];
         for (int x = 0; x < total; x++) {
             for (int z = 0; z < total; z++) {
                 float smoothness = (float)x/(total - 1);
                 float metallic = (float)z/(total - 1);
-
                 Material mat = new Material(_mat_MaterialPreview);
                 mat.SetVector3(Color, Constants.lightGray);
                 mat.SetFloat(Smoothness, smoothness);
                 mat.SetFloat(Metallic, metallic);
+                cache[x*total + z] = mat;
+            }
+        }
+        cachedTotal = total;
+    }
 
+    public static void DrawMaterialsGrid (float offsetX, float offsetZ, int testGridCount = 10, float testGridDensity = 1f) {
+        if (!Constants.drawMaterialsGrid) return;
+
+        int total = testGridCount*(int)testGridDensity;
+        if (total != _gridTotalA) BuildGridMaterials(ref _gridMaterialsA, ref _gridTotalA, total);
+
+        float speed = 2f;
+        for (int x = 0; x < total; x++) {
+            for (int z = 0; z < total; z++) {
                 float _x = x/testGridDensity + offsetX;
                 float _z = z/testGridDensity + offsetZ;
-                float y = 0.25f*MathF.Sin(_x + speed*(float)Time.time) * MathF.Cos(_z + speed*(float)Time.time);
+                float y = 0.25f*MathF.Sin(_x + speed*(float)Time.time)*MathF.Cos(_z + speed*(float)Time.time);
                 RenderInfo info = new RenderInfo() {
                     model = Matrix4x4.CreateTranslation(new Vector3(_x, y, _z)),
                     mesh = _mesh_Sphere,
-                    material = mat,
+                    material = _gridMaterialsA[x*total + z],
                 };
                 Renderer.Instance.AddRenderInfo(info);
             }
         }
     }
     public void DrawMaterialsGrid () => DrawMaterialsGrid(-14f, 0f);
+
+    public static void DrawMaterialGrid (float offsetX, float offsetZ, int testGridCount = 1000, float testGridDensity = 1f) {
+        if (!Constants.drawMaterialGrid) return;
+
+        int total = testGridCount*(int)testGridDensity;
+
+        float speed = 2f;
+        for (int x = 0; x < total; x++) {
+            for (int z = 0; z < total; z++) {
+                float _x = x/testGridDensity + offsetX;
+                float _z = z/testGridDensity + offsetZ;
+                float y = 0.25f*MathF.Sin(_x + speed*(float)Time.time)*MathF.Cos(_z + speed*(float)Time.time);
+                RenderInfo info = new RenderInfo() {
+                    model = Matrix4x4.CreateTranslation(new Vector3(_x, y, _z)),
+                    mesh = _mesh_Sphere,
+                    material = AssetsEngine._mat_Lit,
+                };
+                Renderer.Instance.AddRenderInfo(info);
+            }
+        }
+    }
+    public void DrawMaterialGrid () => DrawMaterialGrid(0f, 20f);
 
 }

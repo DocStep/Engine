@@ -3,10 +3,10 @@
 
 public class MaterialUI : Material {
     public MaterialUI (Shader shader) : base(shader) {
-        pass = RenderPass.UI;
-        face = RenderFace.Both;
-        depthTest = false;
-        depthWrite = false;
+        Pass = RenderPass.UI;
+        Face = RenderFace.Both;
+        DepthTest = false;
+        DepthWrite = false;
     }
 
     [Hide][Newtonsoft.Json.JsonIgnore] public uint textureId;

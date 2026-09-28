@@ -52,7 +52,7 @@ public class Renderer {
 
     public static Renderer Instance = null!;
 
-    public Camera? Camera = null!;
+    public Camera? Camera = null;
 
     //public Action? de_LateUpdate = null;
 
@@ -78,11 +78,9 @@ public class Renderer {
     public Matrix4x4 m4x4_Projection = Matrix4x4.Identity;
     public Matrix4x4 m4x4_ProjectionUI = Matrix4x4.Identity;
 
-    protected readonly List<RenderInfo> RenderList = new List<RenderInfo>();
-    protected int[] _visibleIndices = Array.Empty<int>();
-    protected ulong[] _sortKeys = Array.Empty<ulong>();
-    protected int _visibleCount = 0;
-    protected readonly Vector4[] _frustumPlanes = new Vector4[4]; /// left, right, bottom, top — (normal.xyz, d); inside test is dot(normal, p) + d >= 0
+    protected readonly RenderState _state = new RenderState();
+    protected readonly RenderQueue _queue = new RenderQueue();
+    protected Frustum _frustum = new Frustum(); /// not readonly — a readonly struct field makes a defensive copy on every call
 
     protected Matrix4x4[] _instanceModelScratch = Array.Empty<Matrix4x4>();
     protected Matrix4x4[] _instanceNormalScratch = Array.Empty<Matrix4x4>();
@@ -93,29 +91,21 @@ public class Renderer {
 
     protected System.Diagnostics.Stopwatch sw_Latency = new System.Diagnostics.Stopwatch();
 
-    /// Cached so UpdateProjection only rebuilds the UI ortho matrix when size actually changes
+    /// Cached so UpdateViewProjection only rebuilds the UI ortho matrix when size actually changes
     protected float _lastProjWidth = -1f;
     protected float _lastProjHeight = -1f;
-
-    static int _nextId = 0;
-    public readonly int Id = System.Threading.Interlocked.Increment(ref _nextId);
-    //public readonly int Id = ++_nextId;
-
-    /// State-change dedup across a frame's draw calls — reset each frame in StatsStart
-    protected Shader? _lastDrawnShader = null;
-    protected Material? _lastDrawnMaterial = null;
 
 
 
     public virtual void Render () {
-        /// Clear Fraame
+        /// Clear Frame
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
         /// Render
         Camera = MainCamera;
         if (Camera is null) {
             Log.log($"No {nameof(Graphics.Camera)} found");
-            RenderList.Clear();
+            _queue.Clear(); /// otherwise the queue grows every frame while there is no camera
             return;
         }
         StatsStart();
@@ -160,9 +150,6 @@ public class Renderer {
         //Log.log("Renderer", Stats.Frame, Windows.Window.Size, Stats.SceneSize);
         //Thread.Sleep(500);
     }
-    public void RenderReset () {
-
-    }
     protected void StatsStart () {
         sw_Latency.Restart();
 
@@ -172,15 +159,12 @@ public class Renderer {
         Stats.WindowSize = new Vector2(Windows.Window.Size.X, Windows.Window.Size.Y);
         Stats.SceneSize = Stats.WindowSize;
 
-        /// GL state from a previous frame (post-process, gizmos, editor UI) may not match
-        /// the first material we draw — force the first DrawRenderInfo call to re-apply state
-        _lastDrawnShader = null;
-        _lastDrawnMaterial = null;
+        _state.Reset();
     }
     protected void StatsEnd () {
         Stats.Latency = (float)sw_Latency.Elapsed.TotalMilliseconds;
 
-        RenderList.Clear();
+        _queue.Clear();
     }
     public virtual void SetTargetSize () {
         Stats.SceneSize = new Vector2(Windows.Window.Size.X, Windows.Window.Size.Y);
@@ -190,7 +174,7 @@ public class Renderer {
     }
 
     public void AddRenderInfo (RenderInfo renderInfo) {
-        RenderList.Add(renderInfo);
+        _queue.Add(renderInfo);
     }
 
     protected void UpdateViewProjection (float width, float height) {
@@ -226,172 +210,54 @@ public class Renderer {
         //Log.log("RenderList", RenderList.Count);
         //int s = 0;
 
-        ExtractFrustumPlanes(m4x4_View*m4x4_Projection);
-
-        int total = RenderList.Count;
-        if (_visibleIndices.Length < total) {
-            _visibleIndices = new int[total];
-            _sortKeys = new ulong[total];
-        }
-
-        Vector3 camPos = Camera!.CameraPos;
-        _visibleCount = 0;
-
-        for (int i = 0; i < total; i++) {
-            RenderInfo info = RenderList[i];
-            if (info.mesh is null || info.material is null) continue;
-
-            if (info.material.pass != RenderPass.UI) {
-                AABB worldAABB = info.mesh.LocalAABB.Transformed(info.model);
-                if (!IsInFrustum(worldAABB, _frustumPlanes)) continue;
-            } /// UI is screen-space, so the world-space frustum test doesn't apply
-
-            _visibleIndices[_visibleCount] = i;
-            _sortKeys[_visibleCount] = MakeSortKey(info, camPos);
-            _visibleCount++;
-        }
-
-        /// Sorts the keys and moves the indices along with them
-        Array.Sort(_sortKeys, _visibleIndices, 0, _visibleCount);
-
+        _frustum.Extract(m4x4_View*m4x4_Projection);
+        long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
+        _queue.Build(_frustum, Camera!.CameraPos);
+        long t1 = System.Diagnostics.Stopwatch.GetTimestamp();
+        /// Consecutive runs of the same (mesh, material) — adjacent thanks to the sort key —
+        /// get drawn as one instanced call. Every shader used here must read the model/normal
+        /// matrix from the instanced attributes (locations 3 and 7) — see Mesh.DrawInstanced.
+        /// UI is the exception: it goes through DrawRenderInfo with uniforms.
+        int count = _queue.Count;
         int idx = 0;
-        while (idx < _visibleCount) {
-            RenderInfo first = RenderList[_visibleIndices[idx]];
+        while (idx < count) {
+            RenderInfo first = _queue[idx];
 
-            if (first.material.pass == RenderPass.UI) {
+            if (first.material.Pass == RenderPass.UI) {
                 DrawRenderInfo(first);
                 idx++;
                 continue;
             }
 
-            int runEnd = idx + 1;
-            while (runEnd < _visibleCount) {
-                RenderInfo next = RenderList[_visibleIndices[runEnd]];
-                if (!ReferenceEquals(next.mesh, first.mesh) || !ReferenceEquals(next.material, first.material)) break;
-                runEnd++;
-            }
-
+            int runEnd = _queue.RunEnd(idx);
             DrawInstancedRun(idx, runEnd);
             idx = runEnd;
         }
+        long t2 = System.Diagnostics.Stopwatch.GetTimestamp();
+        Log.log("build ms", System.Diagnostics.Stopwatch.GetElapsedTime(t0, t1).TotalMilliseconds,
+            "draw ms", System.Diagnostics.Stopwatch.GetElapsedTime(t1, t2).TotalMilliseconds);
     }
 
-    /// Opaque/UI: pass 2 bits | shader 22 bits | material 20 bits | mesh 20 bits
-    /// Transparent: pass 2 bits | inverted distance 32 bits (back-to-front)
-    protected static ulong MakeSortKey (in RenderInfo info, Vector3 camPos) {
-        ulong pass = (ulong)info.material.pass & 3UL;
+    /// Applies material GL state, shader, per-pass uniforms and material textures.
+    /// Shared by DrawRenderInfo and DrawInstancedRun.
+    protected void BindMaterial (Material material) {
+        Shader shader = _state.Bind(material);
 
-        if (info.material.pass == RenderPass.Transparent) {
-            float d = Vector3.DistanceSquared(camPos, info.model.Translation);
-            uint inv = ~BitConverter.SingleToUInt32Bits(d); /// positive floats order as uints; invert for far-first
-            return pass << 62 | (ulong)inv << 30;
-        }
-
-        return pass << 62
-            | ((ulong)info.material.shader.Id_Renderer & 0x3FFFFFUL) << 40
-            | ((ulong)info.material.Id_Renderer & 0xFFFFFUL) << 20
-            | ((ulong)info.mesh.Id_Renderer & 0xFFFFFUL);
-    }
-
-    /// Row-vector convention (v*M, matching the ScreenPointToRay code): a clip-space
-    /// component is a dot product of v with a COLUMN of M, not a row — the opposite of the
-    /// textbook (column-vector) Gribb-Hartmann derivation. Left/right/bottom/top are
-    /// convention-independent either way. Near/far are deliberately not tested here — they
-    /// depend on whether the projection's depth range is [-1,1] or [0,1], which I can't
-    /// confirm from this file alone, and getting that wrong silently pops objects in and out
-    /// near the camera. Side-plane culling still catches the common "off to the side" case.
-    protected void ExtractFrustumPlanes (Matrix4x4 viewProj) {
-        _frustumPlanes[0] = new Vector4(viewProj.M14+viewProj.M11, viewProj.M24+viewProj.M21, viewProj.M34+viewProj.M31, viewProj.M44+viewProj.M41); /// Left
-        _frustumPlanes[1] = new Vector4(viewProj.M14-viewProj.M11, viewProj.M24-viewProj.M21, viewProj.M34-viewProj.M31, viewProj.M44-viewProj.M41); /// Right
-        _frustumPlanes[2] = new Vector4(viewProj.M14+viewProj.M12, viewProj.M24+viewProj.M22, viewProj.M34+viewProj.M32, viewProj.M44+viewProj.M42); /// Bottom
-        _frustumPlanes[3] = new Vector4(viewProj.M14-viewProj.M12, viewProj.M24-viewProj.M22, viewProj.M34-viewProj.M32, viewProj.M44-viewProj.M42); /// Top
-    }
-
-    /// Positive-vertex AABB/plane test: for each plane, only the corner furthest along the
-    /// plane's normal can fail the test, so we pick that corner directly instead of testing all 8.
-    protected static bool IsInFrustum (AABB worldAABB, Vector4[] planes) {
-        for (int i = 0; i < planes.Length; i++) {
-            Vector4 plane = planes[i];
-
-            float px = 0f <= plane.X ? worldAABB.Max.X : worldAABB.Min.X;
-            float py = 0f <= plane.Y ? worldAABB.Max.Y : worldAABB.Min.Y;
-            float pz = 0f <= plane.Z ? worldAABB.Max.Z : worldAABB.Min.Z;
-
-            if (plane.X*px + plane.Y*py + plane.Z*pz + plane.W < 0f) return false;
-        }
-        return true;
-    }
-
-    /// Sort order: pass first (Opaque < Transparent < UI), then:
-    /// - Transparent: back-to-front by camera distance — required for correct blending,
-    ///   not just an optimization; without this overlapping transparent surfaces blend wrong.
-    /// - Opaque/UI: by shader then material, so DrawRenderInfo can skip redundant GL state
-    ///   changes between consecutive draws. (Front-to-back early-Z sorting would fight this —
-    ///   pick that instead of material batching if overdraw turns out to be the bigger cost.)
-    protected static int CompareRenderInfo (RenderInfo a, RenderInfo b) {
-        if (Renderer.Instance.Camera is null) return 0;
-
-        int passCompare = a.material.pass.CompareTo(b.material.pass);
-        if (passCompare != 0) return passCompare;
-
-        if (a.material.pass == RenderPass.Transparent) {
-            float distA = Vector3.DistanceSquared(Renderer.Instance.Camera.CameraPos, a.model.Translation);
-            float distB = Vector3.DistanceSquared(Renderer.Instance.Camera.CameraPos, b.model.Translation);
-            return distB.CompareTo(distA);
-        }
-
-        int shaderCompare = a.material.shader.GetHashCode().CompareTo(b.material.shader.GetHashCode());
-        if (shaderCompare != 0) return shaderCompare;
-
-        int materialCompare = a.material.GetHashCode().CompareTo(b.material.GetHashCode());
-        if (materialCompare != 0) return materialCompare;
-
-        return a.mesh.GetHashCode().CompareTo(b.mesh.GetHashCode()); /// groups instancing candidates together
-    }
-
-    /// A cached IComparer over indices into RenderList — see the comment at the Sort() call
-    /// for why we compare indices instead of RenderInfo values directly.
-    protected readonly IComparer<int> _visibleIndexComparer;
-    protected sealed class RenderInfoIndexComparer : IComparer<int> {
-        private readonly List<RenderInfo> _renderList;
-        public RenderInfoIndexComparer (List<RenderInfo> renderList) { _renderList = renderList; }
-        public int Compare (int a, int b) => CompareRenderInfo(_renderList[a], _renderList[b]);
-    }
-
-    /// Shared between DrawRenderInfo and DrawInstancedRun — the pass/cull/depth GL state only
-    /// depends on the material, so both paths apply it the same way.
-    protected void ApplyMaterialState (Material material) {
-        /// Pass
-        switch (material.pass) {
+        /// Kept outside the shader-changed check on purpose: the skybox binds Texture0,
+        /// and material.Apply() may rebind it, so this runs on every bind
+        switch (material.Pass) {
             case RenderPass.Opaque:
-                GL.Disable(EnableCap.Blend);
-                break;
             case RenderPass.Transparent:
+                SetSceneUniformsUnlit(shader, Camera!.CameraPos);
+                SetSceneUniformsLit(shader);
+                SetSceneUniformsSkybox(shader, Skybox.texture, Skybox.maxLod);
+                break;
             case RenderPass.UI:
-                GL.Enable(EnableCap.Blend);
-                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+                shader.SetMatrix4x4(Projection, m4x4_ProjectionUI);
                 break;
         }
 
-        /// CullFace
-        switch (material.face) {
-            case RenderFace.Front:
-                GL.Enable(EnableCap.CullFace);
-                GL.CullFace(TriangleFace.Back);
-                break;
-            case RenderFace.Back:
-                GL.Enable(EnableCap.CullFace);
-                GL.CullFace(TriangleFace.Front);
-                break;
-            case RenderFace.Both:
-                GL.Disable(EnableCap.CullFace);
-                break;
-        }
-
-        /// Depth
-        if (material.depthTest) GL.Enable(EnableCap.DepthTest);
-        else GL.Disable(EnableCap.DepthTest);
-        GL.DepthMask(material.depthWrite);
+        material.Apply();
     }
 
     public void DrawRenderInfo (RenderInfo info) {
@@ -408,6 +274,7 @@ public class Renderer {
         info.mesh.Draw(info.indexOffset, info.indexCount, info.primitiveType);
     }
 
+    /// Draws queue items [startIndex, endIndexExclusive) as one instanced call
     protected void DrawInstancedRun (int startIndex, int endIndexExclusive) {
         int runLength = endIndexExclusive - startIndex;
         if (_instanceModelScratch.Length < runLength) {
@@ -415,10 +282,10 @@ public class Renderer {
             _instanceNormalScratch = new Matrix4x4[runLength];
         }
 
-        RenderInfo first = RenderList[_visibleIndices[startIndex]];
+        RenderInfo first = _queue[startIndex];
 
         for (int i = 0; i < runLength; i++) {
-            RenderInfo info = RenderList[_visibleIndices[startIndex + i]];
+            RenderInfo info = _queue[startIndex + i];
             _instanceModelScratch[i] = info.model;
             _instanceNormalScratch[i] = info.normal ?? GetNormalMatrix(info.model);
         }
@@ -430,34 +297,6 @@ public class Renderer {
             new ReadOnlySpan<Matrix4x4>(_instanceNormalScratch, 0, runLength),
             first.indexOffset, first.indexCount,
             first.primitiveType);
-    }
-
-    /// Applies material GL state, shader, per-pass uniforms and material textures.
-    /// Shared by DrawRenderInfo and DrawInstancedRun so the dedup lives in one place.
-    protected void BindMaterial (Material material) {
-        if (!ReferenceEquals(material, _lastDrawnMaterial)) ApplyMaterialState(material);
-
-        Shader shader = material.shader;
-        if (!ReferenceEquals(shader, _lastDrawnShader)) shader.Use();
-
-        /// Kept outside the shader-changed branch on purpose: the skybox binds Texture0,
-        /// and material.Apply() may rebind it, so this has to run per bind (same as before)
-        switch (material.pass) {
-            case RenderPass.Opaque:
-            case RenderPass.Transparent:
-                SetSceneUniformsUnlit(shader, Camera!.CameraPos);
-                SetSceneUniformsLit(shader);
-                SetSceneUniformsSkybox(shader, Skybox.texture, Skybox.maxLod);
-                break;
-            case RenderPass.UI:
-                shader.SetMatrix4x4(Projection, m4x4_ProjectionUI);
-                break;
-        }
-
-        material.Apply();
-
-        _lastDrawnMaterial = material;
-        _lastDrawnShader = shader;
     }
 
     /// A full inverse-transpose is only needed for non-uniform scale. Uniform scale cancels out,
@@ -492,20 +331,6 @@ public class Renderer {
         texture.Bind(TextureUnit.Texture0);
         shader.SetInt(Shader.Skybox, 0);
         shader.SetFloat(MaxReflectionLod, maxLod);
-    }
-
-
-
-
-    protected List<RenderInfo> RenderListSame = new List<RenderInfo>();
-    protected void DrawSame () {
-        if (Stats.Frame == 0) {
-            RenderListSame.AddRange(RenderList);
-        } else {
-            RenderList.Clear();
-            RenderList.AddRange(RenderListSame);
-        }
-        //if (iter == 100) Thread.Sleep(10000);
     }
 
     protected void OnFrameBufferResize (Silk.NET.Maths.Vector2D<int> newSize) {

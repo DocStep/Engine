@@ -46,4 +46,25 @@ public struct AABB {
 
         return new AABB(newMin, newMax);
     }
+
+    /// Center/extents form: transforms the center once, then the new half-size is |M| applied to the
+    /// old half-size. Gives the same tight world-space AABB as transforming all 8 corners.
+    /// Row-vector convention (v*M): x' = x*M11 + y*M21 + z*M31 + M41
+    public readonly AABB Transformed_Alt (Matrix4x4 worldMatrix) {
+        Vector3 c = (Min + Max)*0.5f;
+        Vector3 e = (Max - Min)*0.5f;
+
+        Vector3 nc = new Vector3(
+            c.X*worldMatrix.M11 + c.Y*worldMatrix.M21 + c.Z*worldMatrix.M31 + worldMatrix.M41,
+            c.X*worldMatrix.M12 + c.Y*worldMatrix.M22 + c.Z*worldMatrix.M32 + worldMatrix.M42,
+            c.X*worldMatrix.M13 + c.Y*worldMatrix.M23 + c.Z*worldMatrix.M33 + worldMatrix.M43);
+
+        Vector3 ne = new Vector3(
+            MathF.Abs(worldMatrix.M11)*e.X + MathF.Abs(worldMatrix.M21)*e.Y + MathF.Abs(worldMatrix.M31)*e.Z,
+            MathF.Abs(worldMatrix.M12)*e.X + MathF.Abs(worldMatrix.M22)*e.Y + MathF.Abs(worldMatrix.M32)*e.Z,
+            MathF.Abs(worldMatrix.M13)*e.X + MathF.Abs(worldMatrix.M23)*e.Y + MathF.Abs(worldMatrix.M33)*e.Z);
+
+        return new AABB(nc - ne, nc + ne);
+    }
+
 }

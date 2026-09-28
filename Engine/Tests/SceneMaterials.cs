@@ -124,6 +124,8 @@ public class SceneMaterials : Scene {
         GameObject ssao2 = new GameObject(PrimitiveTypes.Sphere) { Name = "ssao2", };
         ssao2.Transform.Position = new Vector3(x, 0, -4.5f);
 
+
+
     }
 
     public override void DrawRaw () {

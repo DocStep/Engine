@@ -27,7 +27,7 @@ public static class LatencyTracker {
         _active.Remove(id);
 
         double ms = sw.Elapsed.TotalMilliseconds;
-        if (threshold < ms) Log.log($"[Latency] {id} took {ms:F2} ms");
+        if (threshold < ms) Log.log($"[Latency] {id}: {ms:F2} ms");
     }
 
     public static double Elapsed (string id) {
@@ -40,7 +40,7 @@ public static class LatencyTracker {
     }
 
     public static void Write (string id, double ms) {
-        Log.log($"[Latency] {id} took {ms:F2} ms");
+        Log.log($"[Latency] {id}: {ms:F2} ms");
     }
 
 

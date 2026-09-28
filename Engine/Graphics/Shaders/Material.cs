@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-
-namespace Engine.Graphics;
+﻿namespace Engine.Graphics;
 
 public enum RenderPass {
     Opaque,
@@ -59,14 +57,13 @@ public class Material : IAsset<Material>, IOnLoaded {
     public readonly int Id_Renderer = System.Threading.Interlocked.Increment(ref _nextId);
 
     /// Render State
-    public RenderFace face = RenderFace.Front;
-    public bool opaque = true;
-    public bool depthTest = true;
-    public bool depthWrite = true;
-    public RenderPass pass = RenderPass.Opaque;
+    public RenderPass Pass = RenderPass.Opaque;
+    public RenderFace Face = RenderFace.Front;
+    //public bool Opaque = true;
+    public bool DepthTest = true;
+    public bool DepthWrite = true;
 
-    /// Dicts are no longer readonly -- Clone() needs to reassign new instances
-    /// rather than mutate the source's dicts in place.
+    /// Clone() needs to reassign new instances
     [Raw] public Dictionary<string, int> ints = new();
     [Raw] public Dictionary<string, float> floats = new();
     [Raw] public Dictionary<string, Vector2> vectors2 = new();

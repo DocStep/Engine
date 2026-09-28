@@ -1,14 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Engine.Graphics;
+﻿namespace Engine.Graphics;
 
 
 public struct Frustum () {
+
     readonly Vector4[] _planes = new Vector4[4];
 
-    /// Row-vector convention: planes come from columns of viewProj
+
+    /// Row-vector convention (v*M, matching the ScreenPointToRay code): a clip-space
+    /// component is a dot product of v with a COLUMN of M, not a row — the opposite of the
+    /// textbook (column-vector) Gribb-Hartmann derivation. Left/right/bottom/top are
+    /// convention-independent either way. Near/far are deliberately not tested here — they
+    /// depend on whether the projection's depth range is [-1,1] or [0,1], which I can't
+    /// confirm from this file alone, and getting that wrong silently pops objects in and out
+    /// near the camera. Side-plane culling still catches the common "off to the side" case.
     public void Extract (in Matrix4x4 m) {
         _planes[0] = new Vector4(m.M14 + m.M11, m.M24 + m.M21, m.M34 + m.M31, m.M44 + m.M41); /// Left
         _planes[1] = new Vector4(m.M14 - m.M11, m.M24 - m.M21, m.M34 - m.M31, m.M44 - m.M41); /// Right
@@ -26,4 +30,5 @@ public struct Frustum () {
         }
         return true;
     }
+
 }

@@ -49,6 +49,7 @@ public static class Constants {
     public static float reflectionIntensity = 1f;
 
     public static bool drawMaterialsGrid = false;
+    public static bool drawMaterialGrid = true;
     public static int materialsGridCount = 5;
     public static int materialsGridDensity = 1;
 
