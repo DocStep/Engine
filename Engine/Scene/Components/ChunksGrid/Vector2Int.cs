@@ -41,7 +41,7 @@ public struct Vector2Int : IEquatable<Vector2Int> {
     public static explicit operator Vector3 (Vector2Int v) => new Vector3(v.X, v.Y, 0);
 
     public bool Equals (Vector2Int other) => X == other.X && Y == other.Y;
-    public override bool Equals (object obj) => obj is Vector2Int v && Equals(v);
+    public override bool Equals (object? obj) => obj is Vector2Int v && Equals(v);
     public override int GetHashCode () => HashCode.Combine(X, Y);
     public override string ToString () => $"({X}, {Y})";
 

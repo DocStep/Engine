@@ -54,7 +54,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
     public bool isUIClick { get; private set; } = false;
     private bool _docked = false;
-    private bool _dockBuilt = false;
+    //private bool _dockBuilt = false;
     private bool _isClosing = false;
 
     public const bool drawInverted = true;
@@ -207,15 +207,27 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             ImGui.EndPopup();
         }
     }
-    
-    public static void DrawComponent (Component component) {
+
+    public static bool DrawComponent (Component component) {
+        bool remove = false;
+
         ImGui.PushID(component.GetHashCode());
         bool enabled = component.Enabled;
-        if (ImGui.Checkbox("##" + nameof(component.Enabled), ref enabled)) {
+        if (ImGui.Checkbox("##Enabled", ref enabled)) {
             component.Enabled = enabled;
         }
         ImGui.SameLine();
-        if (ImGui.CollapsingHeader(component.Name, ImGuiTreeNodeFlags.DefaultOpen)) {
+        bool open = ImGui.CollapsingHeader(component.Name, ImGuiTreeNodeFlags.DefaultOpen);
+
+        /// must come right after the header, it attaches to the last item
+        if (ImGui.BeginPopupContextItem("##ComponentContext")) {
+            ImGui.BeginDisabled(component is Transform);
+            if (ImGui.MenuItem("Remove")) remove = true;
+            ImGui.EndDisabled();
+            ImGui.EndPopup();
+        }
+
+        if (open) {
             if (_drawers.TryGetValue(component.GetType(), out var componentDrawer)) {
                 componentDrawer(component);
             } else {
@@ -223,11 +235,13 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             }
         }
         ImGui.PopID();
+
+        return remove;
     }
 
 
 
-    
+
     public static void DrawObject (object target, IEnumerable<Attribute>? attributes = null) {
         ImGui.PushID(target.GetHashCode());
 
@@ -292,7 +306,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         }
     }
 
-    public static IEnumerable<MemberInfo> GetMembersInOrder (Type type) {
+    public static IEnumerable<MemberInfo> GetMembersInOrder (Type? type) {
         List<MemberInfo> result = new();
         List<Type> types = new();
 
@@ -614,7 +628,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         }
     }
 
-    private static int InheritanceDepth (Type t) {
+    private static int InheritanceDepth (Type? t) {
         int depth = 0;
         while (t != null) {
             depth++;

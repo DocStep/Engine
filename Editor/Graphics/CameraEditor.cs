@@ -118,6 +118,8 @@ public sealed class CameraEditor : Camera {
 
 
     public void Update () {
+        if (SceneManager.ActiveScene is null) return;
+
         float baseSpeed = Inputs.Actions[Shift].pressed ? _cameraSpeedShift : _cameraSpeed;
         Vector3 cameraPosDelta = Vector3.Zero;
         Matrix4x4 cameraRot = GetRotationMatrix();
@@ -295,6 +297,8 @@ public sealed class CameraEditor : Camera {
     }
 
     private void TryFocusOnPoint (float mouseX, float mouseY, int viewportWidth, int viewportHeight) {
+        if (SceneManager.ActiveScene is null) return;
+
         float? bestT = null;
         if (!GetRayMouse(out Ray ray)) return;
 

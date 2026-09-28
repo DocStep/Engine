@@ -21,15 +21,15 @@ public class SceneMaterials : Scene {
 
         /// Reflection
         x = -2;
-        GameObject go_plane2Materials = new GameObject() { Name = "Plane2Materials", };
-        go_plane2Materials.Transform.Position = new Vector3(x, 0, 0);
-        mesh = go_plane2Materials.AddComponent<MeshComponent>();
-        mesh.Mesh = Assets.Load<Mesh>("src/Models/Plane2Materials.obj");
-        mesh.Material = AssetsEngine._mat_LitRed;
-        mesh.MaterialOverrides = new Dictionary<string, Material> {
-            ["Red"] = AssetsEngine._mat_LitRed,
-            ["Blue"] = AssetsEngine._mat_LitBlue,
-        };
+        //GameObject go_plane2Materials = new GameObject() { Name = "Plane2Materials", };
+        //go_plane2Materials.Transform.Position = new Vector3(x, 0, 0);
+        //mesh = go_plane2Materials.AddComponent<MeshComponent>();
+        //mesh.Mesh = Assets.Load<Mesh>("src/Models/Plane2Materials.obj");
+        //mesh.Material = AssetsEngine._mat_LitRed;
+        //mesh.MaterialOverrides = new Dictionary<string, Material> {
+        //    ["Red"] = AssetsEngine._mat_LitRed,
+        //    ["Blue"] = AssetsEngine._mat_LitBlue,
+        //};
 
         /// Reflection
         x = 0;
@@ -83,6 +83,8 @@ public class SceneMaterials : Scene {
         mesh = sphereR.AddComponent<MeshComponent>();
         mesh.Mesh = AssetsEngine._mesh_Sphere;
         mesh.Material = AssetsEngine._mat_LitRed;
+        mesh.Material.SetFloat(Shader.Smoothness, 0);
+        mesh.Material.SetFloat(Shader.Metallic, 0);
 
         GameObject sphereG = new GameObject() { Name = "Sphere G", };
         sphereG.Transform.Position = new Vector3(x, 0, 2);

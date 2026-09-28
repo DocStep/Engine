@@ -15,7 +15,7 @@ public class SceneChunksGrid : Scene {
         go_sun.Transform.RotationEuler = new Vector3(60, -30, 0);
         SunLight sun = go_sun.AddComponent<SunLight>();
 
-        GameObject go_grid;
+        GameObject? go_grid;
 
         //go_grid = new GameObject() { Name = "Chunks Grid", };
         //ChunksGrid grid = go_grid.AddComponent<ChunksGrid>();
@@ -31,7 +31,7 @@ public class SceneChunksGrid : Scene {
 
         //Log.log(go_grid.Name);
 
-        GameObject? go;
+        //GameObject? go;
 
         //go = new GameObject() { Name = "Prefab", };
         //GameObject go_mesh = new GameObject(PrimitiveTypes.Cube) { Name = "Mesh", };

@@ -186,10 +186,10 @@ public class ComponentsManager : Singleton<ComponentsManager> {
                 if (!componentType.IsAssignableFrom(type)) continue;
                 if (type.IsAbstract || type.IsInterface) continue;
 
-                System.Reflection.ConstructorInfo ctor = type.GetConstructor(Type.EmptyTypes);
-                if (ctor == null) continue;
+                System.Reflection.ConstructorInfo? ctor = type.GetConstructor(Type.EmptyTypes);
+                if (ctor is null) continue;
 
-                factories[type] = () => Activator.CreateInstance(type);
+                factories[type] = () => (Component)ctor.Invoke(null);
             }
         }
     }

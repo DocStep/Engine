@@ -1,5 +1,5 @@
 ﻿namespace Engine;
 
 
-[AttributeUsage(AttributeTargets.Method)]
-public class OnLoaded : Attribute { }
+//[AttributeUsage(AttributeTargets.Method)]
+//public class OnLoaded : Attribute { }

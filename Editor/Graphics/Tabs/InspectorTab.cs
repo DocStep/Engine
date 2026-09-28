@@ -29,11 +29,14 @@ public class InspectorTab : IEditorTab {
             selectedGO.Name = name;
             ImGui.Separator();
 
-            EditorUI.DrawComponent(selectedGO.Transform);
+            EditorUI.DrawComponent(selectedGO.Transform); /// Transform's menu item is disabled
 
+            /// removal is deferred until after the loop so the list isn't modified mid-iteration
+            Component? toRemove = null;
             for (int c = 0; c < selectedGO.Components.Count; c++) {
-                EditorUI.DrawComponent(selectedGO.Components[c]);
+                if (EditorUI.DrawComponent(selectedGO.Components[c])) toRemove = selectedGO.Components[c];
             }
+            if (toRemove is not null) selectedGO.RemoveComponent(toRemove); /// adjust to your API
 
             DrawAddComponentButton(selectedGO);
         }

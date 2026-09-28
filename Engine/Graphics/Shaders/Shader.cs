@@ -15,6 +15,7 @@ public class Shader : IAsset<Shader> {
 
         Compile();
     }
+
     public void Compile () {
         string vertexSource = Assets.LoadText(vertexSourcePath);
         string fragmentSource = Assets.LoadText(fragmentSourcePath);
@@ -42,6 +43,7 @@ public class Shader : IAsset<Shader> {
 
         uint oldProgram = _program;
         _program = program;
+        ReflectUniforms();
 
         GL.DeleteProgram(oldProgram);
     }
@@ -80,6 +82,18 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore] private uint _program;
     [JsonIgnore] private int _nextTextureUnit = 0;
 
+    [JsonIgnore, Hide] public Dictionary<string, UniformInfo> ActiveUniforms { get; private set; } = new();
+    /// Uniform names the renderer sets globally per-frame/per-pass (camera, lights, time...).
+    /// FillDefaults must never touch these -- they don't belong to any one material.
+    public static readonly HashSet<string> ReservedUniforms = new() {
+        View, Projection, ViewPos, Model, NormalMatrix, CameraPos, Scene, Depth,
+        SunLightCount, SunLightDir, SunLightColor, SunLightIntensity, 
+        PointLightCount, PointLightColor, PointLightIntensity, PointLightPos, PointLightRange,
+        Skybox, MaxReflectionLod, 
+        Exposure, AmbientColor, AmbientColorIntensity, ReflectionIntensity,
+        SHAr, SHAg, SHAb, SHBr, SHBg, SHBb, SHC,
+    };
+
     [JsonIgnore] public static RendererGLStats Stats = default;
     /*public static void StatsReset () {
         Stats = new RendererGLStats();
@@ -95,7 +109,7 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore] public const string CameraPos = "uCameraPos";
     [JsonIgnore] public const string Scene = "uSceneColor";
     [JsonIgnore] public const string Depth = "uDepth";
-
+    
     [JsonIgnore] public const string SunLightCount = "uSunLightCount";
     [JsonIgnore] public const string SunLightDir = "uSunLightDir";
     [JsonIgnore] public const string SunLightColor = "uSunLightColor";
@@ -107,14 +121,21 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore] public const string PointLightPos = "uPointLightPos";
     [JsonIgnore] public const string PointLightRange = "uPointLightRange";
 
+    [JsonIgnore] public const string Skybox = "uSkybox";
+    [JsonIgnore] public const string MaxReflectionLod = "uMaxReflectionLod";
+
     [JsonIgnore] public const string Exposure = "uExposure";
     [JsonIgnore] public const string AmbientColor = "uAmbientColor";
     [JsonIgnore] public const string AmbientColorIntensity = "uAmbientColorIntensity";
     [JsonIgnore] public const string ReflectionIntensity = "uReflectionIntensity";
 
-
-    [JsonIgnore] public const string MaxReflectionLod = "uMaxReflectionLod";
-    [JsonIgnore] public const string Skybox = "uSkybox";
+    [JsonIgnore] public const string SHAr = "uSHAr";
+    [JsonIgnore] public const string SHAg = "uSHAg";
+    [JsonIgnore] public const string SHAb = "uSHAb";
+    [JsonIgnore] public const string SHBr = "uSHBr";
+    [JsonIgnore] public const string SHBg = "uSHBg";
+    [JsonIgnore] public const string SHBb = "uSHBb";
+    [JsonIgnore] public const string SHC = "uSHC";
 
     [JsonIgnore] public const string Color = "uColor";
     [JsonIgnore] public const string Texture = "uTexture";
@@ -135,6 +156,26 @@ public class Shader : IAsset<Shader> {
         //    Console.WriteLine($"UseProgram({_program}, {Name}) Error: {err}");
     }
 
+    /// Reads back every active uniform from the linked program.
+    /// Call once right after linking, so Material can look up what a shader actually needs.
+    void ReflectUniforms () {
+        ActiveUniforms.Clear();
+        GL.GetProgram(_program, GLEnum.ActiveUniforms, out int count);
+
+        for (uint i = 0; i < count; i++) {
+            string name = GL.GetActiveUniform(_program, i, out int size, out UniformType type);
+            uint index = i;
+            int blockIndex;
+            unsafe {
+                GL.GetActiveUniforms(_program, 1, &index, GLEnum.UniformBlockIndex, &blockIndex);
+            }
+            if (blockIndex != -1) continue; /// belongs to a UBO -- not material-owned, skip
+
+            if (name.Contains('[') && !name.EndsWith("[0]")) continue;
+            string key = name.Contains('[') ? name[..name.IndexOf('[')] : name;
+            ActiveUniforms[key] = new UniformInfo { Name = key, Type = type, Size = size };
+        }
+    }
 
     public void SetInt (string name, int value) {
         int location = GL.GetUniformLocation(_program, name);
@@ -264,7 +305,7 @@ public class Shader : IAsset<Shader> {
     }
 
     public static Shader? Load (string path, int part = 100) {
-        Shader shader = Json.Read<Shader>(path);
+        Shader? shader = Json.Read<Shader>(path);
         return shader;
     }
 

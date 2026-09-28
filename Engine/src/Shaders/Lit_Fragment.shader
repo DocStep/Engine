@@ -26,6 +26,7 @@ const float uExposure = 1.0;
 
 out vec4 FragColor;
 
+
 float D_GGX (float NdH, float a2) {
     float d = NdH*NdH*(a2 - 1.0) + 1.0;
     return a2/(PI*d*d + 1e-4);

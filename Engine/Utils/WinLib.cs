@@ -29,7 +29,7 @@ public static class WinLib {
     private static extern int SetWindowTheme (IntPtr hWnd, string pszSubAppName, string pszSubIdList);
 
     public static void Apply (IntPtr handle) {
-        SetWindowTheme(handle, "DarkMode_Explorer", null);
+        SetWindowTheme(handle, "DarkMode_Explorer", null!);
     }
 
 

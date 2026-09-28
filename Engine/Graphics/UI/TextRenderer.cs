@@ -41,7 +41,7 @@ public class TextRenderer : IDisposable {
         Texts.Add(new (_text));
     }
     public static void AddText (object obj) {
-        Texts.Add(new(obj?.ToString()));
+        Texts.Add(new TextRenderInfo(obj?.ToString()));
     }
 
     private bool _renderF3 = false;

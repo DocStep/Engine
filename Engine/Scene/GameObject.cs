@@ -18,7 +18,7 @@ public enum PrimitiveTypes {
 
 public class GameObject : IDisposable, IAsset<GameObject> {
     public GameObject () {
-        Id = lib.Id;
+        Id = Lib.Id;
         InitTransform();
         SceneManager.ActiveScene?.GameObjectAdd(this);
     }
@@ -39,7 +39,7 @@ public class GameObject : IDisposable, IAsset<GameObject> {
         if (string.IsNullOrEmpty(name)) name = primitive.GetType().Name;
         if (scale.Equals(default)) scale = Vector3.One;
 
-        Id = lib.Id;
+        Id = Lib.Id;
         Transform tr = new Transform();
         TransformHandle = new TransformHandle(tr);
         SetTransform(tr);
@@ -91,7 +91,8 @@ public class GameObject : IDisposable, IAsset<GameObject> {
                 break;
         }
         //mesh.material = AssetsEngine._mat_Lit;
-        SceneManager.ActiveScene.GameObjectAdd(this);
+        if (SceneManager.ActiveScene is null) return;
+        SceneManager.ActiveScene?.GameObjectAdd(this);
     }
 
     [JsonIgnore] public readonly static string typeName = typeof(GameObject).Name;
@@ -105,7 +106,7 @@ public class GameObject : IDisposable, IAsset<GameObject> {
     public Transform Transform => TransformHandle.Current;
 
     public readonly List<Component> Components = new List<Component>();
-    [JsonIgnore, Hide] private bool destroyed = false;
+    //[JsonIgnore, Hide] private bool destroyed = false;
 
     [JsonIgnore] public const string TypeName = nameof(GameObject);
 
@@ -206,7 +207,7 @@ public class GameObject : IDisposable, IAsset<GameObject> {
     }
     public void DestroyImmediate () {
         Transform.Parent = null;
-        destroyed = true;
+        //destroyed = true;
 
         int count = Components.Count;
         for (int i = count - 1; i >= 0; i--) {
@@ -215,6 +216,7 @@ public class GameObject : IDisposable, IAsset<GameObject> {
         Components.Clear();
 
         ComponentsManager.Instance.ComponentUnregister(Transform);
+        if (SceneManager.ActiveScene is null) return;
         SceneManager.ActiveScene.GameObjects.Remove(this);
 
         Dispose();

@@ -200,14 +200,14 @@ public static class Prefab {
         }
     }
 
-    private static MethodInfo? GetOnLoaded (Type type) {
-        if (OnLoadedCache.TryGetValue(type, out MethodInfo? cached)) return cached;
-        MethodInfo? method = type
-            .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-            .FirstOrDefault(m => m.IsDefined(typeof(OnLoaded)) && m.GetParameters().Length == 0);
-        OnLoadedCache[type] = method;
-        return method;
-    }
+    //private static MethodInfo? GetOnLoaded (Type type) {
+    //    if (OnLoadedCache.TryGetValue(type, out MethodInfo? cached)) return cached;
+    //    MethodInfo? method = type
+    //        .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+    //        .FirstOrDefault(m => m.IsDefined(typeof(OnLoaded)) && m.GetParameters().Length == 0);
+    //    OnLoadedCache[type] = method;
+    //    return method;
+    //}
 
 
     private static JObject WriteGameObjectEntry (GameObject go, PrefabContext ctx) {

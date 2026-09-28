@@ -37,9 +37,9 @@ public class SettingsEngine {
 
 
     public virtual SettingsEngine ToSpawnList () {
-        Groups.Add(ControlsEngine);
-        Groups.Add(SoundEngine);
-        Groups.Add(GraphicsEngine);
+        if (ControlsEngine is not null) Groups.Add(ControlsEngine);
+        if (SoundEngine is not null) Groups.Add(SoundEngine);
+        if (GraphicsEngine is not null) Groups.Add(GraphicsEngine);
         return this;
     }
     public void ToSpawnGroupsList () {

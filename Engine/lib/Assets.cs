@@ -62,7 +62,7 @@ public static class Assets {
             asset = T.Load(fullPath);
             if (asset is null) return null;
             asset.Path = relativePath;
-        } catch (Exception e) {
+        } catch (Exception) {
             throw;
             //throw new Exception($"Failed to load {typeof(T).Name} from '{path}': {e.Message}.", e);
         }

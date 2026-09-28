@@ -372,7 +372,7 @@ public static class Inputs {
 
     public static void Save () {
         if (Actions is null) return;
-        lib.DirectoryExists(Engine.savesFolder);
+        Lib.DirectoryExists(Engine.savesFolder);
 
         string text = "";
         Group(Actions, "Keys");

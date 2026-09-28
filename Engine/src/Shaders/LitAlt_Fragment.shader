@@ -9,6 +9,8 @@ in vec3 vFragPos;
 #define MAX_SUN_LIGHTS 32
 #define MAX_POINT_LIGHTS 32
 
+const float PI = 3.14159265;
+ 
 uniform vec3 uColor;
 uniform float uSmoothness;
 uniform float uMetallic;
@@ -26,7 +28,15 @@ uniform float uPointLightRange[MAX_POINT_LIGHTS];
 
 uniform vec3 uViewPos;
 
-// L2 spherical harmonics ambient (7 constants per Unity-style packing)
+uniform float uAmbientColorIntensity;
+
+uniform sampler2D uSkybox; // equirectangular; mip chain = pre-blurred roughness levels
+uniform float uMaxReflectionLod;
+uniform float uReflectionIntensity;
+
+uniform float uExposure;
+
+// L2 spherical harmonics ambient
 uniform vec4 uSHAr;
 uniform vec4 uSHAg;
 uniform vec4 uSHAb;
@@ -34,17 +44,10 @@ uniform vec4 uSHBr;
 uniform vec4 uSHBg;
 uniform vec4 uSHBb;
 uniform vec4 uSHC;
-uniform float uAmbientIntensity;
 
-uniform sampler2D uSkybox;      // equirectangular; mip chain = pre-blurred roughness levels
-uniform float uMaxReflectionLod;
-uniform float uReflectionIntensity;
-
-uniform float uExposure;
-
-const float PI = 3.14159265;
 
 out vec4 FragColor;
+
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -183,7 +186,7 @@ void main()
     vec3 Fr = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
     vec3 kD_ambient = (vec3(1.0) - Fr) * (1.0 - metallic);
 
-    vec3 irradiance = SampleIrradianceSH(N) * uAmbientIntensity;
+    vec3 irradiance = SampleIrradianceSH(N) * uAmbientColorIntensity;
     vec3 ambientDiffuse = irradiance * albedo * kD_ambient;
 
     vec3 R = reflect(-V, N);

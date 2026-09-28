@@ -8,7 +8,7 @@ public static class ComponentsInpector {
 
     private static Transform? _eulerDragTransform = null;
     private static Vector3 _eulerDragValue = Vector3.Zero;
-    private static string _format = "0.##" ;
+    private const string format = "%.2f";
     private static readonly Dictionary<Transform, (Quaternion rotation, Vector3 euler)> _eulerDisplayCache = new();
 
 
@@ -28,7 +28,7 @@ public static class ComponentsInpector {
 
             string label = nameof(transform.LocalEuler);
             Graphics.EditorUI.InvertedOrder(ref label);
-            if (ImGui.DragFloat3(label, ref localEuler, 1f, 0f, 0f, "%.2f"))
+            if (ImGui.DragFloat3(label, ref localEuler, 1f, 0f, 0f, format))
                 transform.LocalEuler = localEuler;
 
             Vector3 localScale = transform.LocalScale;

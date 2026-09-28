@@ -8,6 +8,9 @@ public class HierarchyTab : IEditorTab {
     public string Name { get; set; } = "Hierarchy";
     public bool isActive { get; set; } = true;
 
+    /// removal is deferred until after the draw loop so the collection isn't modified mid-iteration
+    private GameObject? _toRemove = null;
+
 
     public void Draw () {
         ImGui.Begin(Name);
@@ -26,6 +29,12 @@ public class HierarchyTab : IEditorTab {
             }
 
             DrawAddGameObjectContext();
+
+            if (_toRemove is not null) {
+                if (Gizmos._gizmo_Selected.go_selected == _toRemove) Gizmos._gizmo_Selected.UpdateSelected(null); /// needs a nullable param
+                _toRemove.Destroy(); /// adjust to your API
+                _toRemove = null;
+            }
         }
 
         ImGui.End();
@@ -46,6 +55,16 @@ public class HierarchyTab : IEditorTab {
         if (ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen()) {
             /// set selection the same way the gizmo/inspector already reads it
             Gizmos._gizmo_Selected.UpdateSelected(go);
+        }
+
+        /// must come right after the tree node, it attaches to the last item
+        if (ImGui.BeginPopupContextItem("##NodeContext")) {
+            /// RMB also selects, like Unity
+            Gizmos._gizmo_Selected.UpdateSelected(go);
+
+            if (ImGui.MenuItem("Remove")) _toRemove = go;
+
+            ImGui.EndPopup();
         }
 
         if (open && 0 < go.Transform.Children.Count) {

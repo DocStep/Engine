@@ -80,14 +80,14 @@ public static class Lighting {
     }
 
     public static void SetSHAmbient (Shader shader, in SHAmbientProbe probe) {
-        shader.SetVector4("uSHAr", probe.SHAr);
-        shader.SetVector4("uSHAg", probe.SHAg);
-        shader.SetVector4("uSHAb", probe.SHAb);
-        shader.SetVector4("uSHBr", probe.SHBr);
-        shader.SetVector4("uSHBg", probe.SHBg);
-        shader.SetVector4("uSHBb", probe.SHBb);
-        shader.SetVector4("uSHC", probe.SHC);
-        shader.SetFloat("uAmbientIntensity", probe.Intensity);
+        shader.SetVector4(SHAr, probe.SHAr);
+        shader.SetVector4(SHAg, probe.SHAg);
+        shader.SetVector4(SHAb, probe.SHAb);
+        shader.SetVector4(SHBr, probe.SHBr);
+        shader.SetVector4(SHBg, probe.SHBg);
+        shader.SetVector4(SHBb, probe.SHBb);
+        shader.SetVector4(SHC, probe.SHC);
+        shader.SetFloat(AmbientColorIntensity, probe.Intensity);
     }
 
     public static void RegisterLightSource (LightSource lightSource) {

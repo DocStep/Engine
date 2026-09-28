@@ -5,7 +5,7 @@ using System.Threading;
 namespace Engine;
 
 
-public static class lib {
+public static class Lib {
 
     public static Guid Guid => Guid.NewGuid();
     public static string Uuid => Guid.NewGuid().ToString("N");
@@ -69,8 +69,8 @@ public static class lib {
         return false;
     }
 
-    public static T[,] ArrayFill<T> (T[,] array, T value) {
-        if (array == null) return null;
+    public static T[,]? ArrayFill<T> (T[,] array, T value) {
+        if (array is null) return null;
         int length0 = array.GetLength(0);
         int length1 = array.GetLength(1);
         for (int x = 0; x < length0; x++) 
@@ -78,8 +78,8 @@ public static class lib {
                 array[x, y] = value;
         return array;
     }
-    public static T[,,] ArrayFill<T> (T[,,] array, T value) {
-        if (array == null) return null;
+    public static T[,,]? ArrayFill<T> (T[,,] array, T value) {
+        if (array is null) return null;
         int length0 = array.GetLength(0);
         int length1 = array.GetLength(1);
         int length2 = array.GetLength(2);
@@ -92,7 +92,7 @@ public static class lib {
 
 
     public static float ArrayAvg (float[,] array) {
-        if (array == null) return 0;
+        if (array is null) return 0;
         float avg = 0;
         int length0 = array.GetLength(0);
         int length1 = array.GetLength(1);

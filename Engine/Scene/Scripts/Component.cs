@@ -7,7 +7,7 @@ public abstract class Component /*: ISavable*/ {
     public Component () { }
 
     //[Hide] public readonly Guid Guid = lib.Guid;
-    [Hide] public readonly long Id = lib.Id;
+    [Hide] public readonly long Id = Lib.Id;
 
     [Hide] public bool Enabled { get; set; } = true;
 

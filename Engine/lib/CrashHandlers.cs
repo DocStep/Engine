@@ -31,11 +31,11 @@ public static class CrashHandlers {
     //private const string logname = "log";
     private static readonly string folderPath = Path.Combine(Engine.savesFolder, "logs");
     private static readonly string logDefaultFilePath = Path.Combine(folderPath, $"_default.log");
-    private static string logFilePath (string source) => 
+    private static string logFilePath (string? source) => 
         Path.Combine(folderPath, $"crash_{(!string.IsNullOrEmpty(source) ? source : string.Empty)}.log");
 
     private static readonly object _lock = new object();
-    public static void WriteLog (Exception ex, string source = null) {
+    public static void WriteLog (Exception ex, string? source = null) {
         ConsoleColor tempColor = Console.ForegroundColor;
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine($"Error (Log): {source}");
@@ -50,7 +50,7 @@ public static class CrashHandlers {
 
         try {
             lock (_lock) {
-                lib.DirectoryExists(folderPath);
+                Lib.DirectoryExists(folderPath);
                 File.AppendAllText(logDefaultFilePath, log, Encoding.UTF8);
                 File.AppendAllText(logFilePath(source), log, Encoding.UTF8);
             }

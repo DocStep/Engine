@@ -96,8 +96,8 @@ public class MeshData {
         return new MeshData(vertices, indices, Silk.NET.OpenGL.PrimitiveType.Triangles);
     }
 
-    public Vertex[] Vertices;
-    public uint[] Indices;
+    public Vertex[] Vertices = null!;
+    public uint[] Indices = null!;
     public SubMeshRange[] SubMeshes = null!;
     public Silk.NET.OpenGL.PrimitiveType PrimitiveType = Silk.NET.OpenGL.PrimitiveType.Triangles;
 

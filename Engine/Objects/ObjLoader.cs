@@ -14,7 +14,7 @@ public static class ObjLoader {
         List<uint> indices = new List<uint>();
         Dictionary<(int, int, int), uint> cache = new Dictionary<(int, int, int), uint>();
         List<SubMeshRange> subMeshes = new List<SubMeshRange>();
-        bool hasAnyNormal = false;
+        //bool hasAnyNormal = false;
 
         string currentMat = "default";
         int rangeStart = 0;
@@ -60,7 +60,7 @@ public static class ObjLoader {
                 case "vn":
                     normals.Add(new Vector3(
                         ParseFloat(tokens[1]), ParseFloat(tokens[2]), -ParseFloat(tokens[3])));
-                    hasAnyNormal = true;
+                    //hasAnyNormal = true;
                     break;
 
                 case "usemtl":

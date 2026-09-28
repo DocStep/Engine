@@ -11,10 +11,15 @@ public class SceneManager : Singleton<SceneManager> {
     public static Scene? ActiveScene {
         get {
             if (0 < Instance.Scenes.Count) return Instance.Scenes[Instance.sceneActiveID];
-            else return null;
+            else {
+                Log.log(error_NoActiveScene, LogType.warning);
+                return null;
+            }
         }
     }
     public static int ActiveSceneID => Instance.sceneActiveID;
+
+    public const string error_NoActiveScene = "No active scene found.";
 
 
     protected override void Init () {
@@ -46,7 +51,9 @@ public class SceneManager : Singleton<SceneManager> {
 
 
     public void ActiveSceneSave () {
-        Scene activeScene = ActiveScene;
+        Scene? activeScene = ActiveScene;
+        if (activeScene is null) return;
+
         JObj jObj = activeScene.ToJObj();
         string path = Path.Combine(Dirs.Scenes, activeScene.Name + ".json");
 

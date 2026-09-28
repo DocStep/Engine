@@ -140,6 +140,8 @@ public static class Gizmos {
         DrawGizmoAxesWidget();
     }
     public static void SetUniforms (Shader shader, bool depthTest = true, bool depthWrite = true) {
+        if (Renderer.Instance.Camera is null) return;
+
         GL.Enable(EnableCap.Blend);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
@@ -149,7 +151,6 @@ public static class Gizmos {
         else GL.Disable(EnableCap.DepthTest);
 
         GL.DepthMask(depthWrite);
-
 
         Renderer.Instance.SetSceneUniformsUnlit(shader, Renderer.Instance.Camera.CameraPos);
     }

@@ -1,6 +1,6 @@
 ﻿namespace Engine;
 
-public enum directions {
+public enum Directions {
     forward,
     right,
     back,
