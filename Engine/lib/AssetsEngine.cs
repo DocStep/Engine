@@ -158,9 +158,9 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mat_CameraFocus = new MaterialCameraFocus(_sh_CameraFocus) { Name = "CameraFocus", };
         _mat_CameraFocus.Save("src/Materials/CameraFocus.mat");
 
-        Texture tex_Test = Texture.Load("src/Images/RGBA_Test.png");
-        Texture tex_White = Texture.Load("src/Images/white.png");
-        Texture tex_Vignette = Texture.Load("src/Images/vignette.png");
+        tex_Test = Texture.Load("src/Images/RGBA_Test.png");
+        tex_White = Texture.Load("src/Images/white.png");
+        tex_Vignette = Texture.Load("src/Images/vignette.png");
 
     }
 
@@ -208,9 +208,9 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Material _mat_CameraFocus = null!;
 
 
-    public readonly static Texture tex_Test = Texture.Load("src/Images/RGBA_Test.png");
-    public readonly static Texture tex_White = Texture.Load("src/Images/white.png");
-    public readonly static Texture tex_Vignette = Texture.Load("src/Images/vignette.png");
+    public readonly static Texture tex_Test = null!;
+    public readonly static Texture tex_White = null!;
+    public readonly static Texture tex_Vignette = null!;
 
 
     public readonly static Mesh _mesh_Torus = null!;

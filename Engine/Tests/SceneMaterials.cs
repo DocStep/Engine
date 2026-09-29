@@ -32,6 +32,17 @@ public class SceneMaterials : Scene {
             mesh.Materials = MtlToMaterial.Build(mtl, mesh.Mesh, AssetsEngine._mat_Lit);
         }
 
+        x = -4;
+        GameObject go_planeTexture = new GameObject(PrimitiveTypes.Plane, position: new Vector3(x, 0, 0)) { Name = "Plane Texture", };
+        Material mat = new Material(AssetsEngine._mat_Lit);
+        go_planeTexture.GetComponent<MeshComponent>()?.Material = mat;
+        mat.SetTexture(Shader.Texture, AssetsEngine.tex_Test);
+        mat.SetVector3(Shader.Color, Vector3.One);
+        Texture? texture = Assets.Load<Texture>("src/Images/RGBA_Test.png");
+        if (texture is not null) mat.SetTexture(Shader.Texture, texture);
+        else Log.log("texture is not null");
+        mat.SetVector3(Shader.Color, new Vector3(0, 0, 0));
+
         return;
         /// Reflection
         x = 0;

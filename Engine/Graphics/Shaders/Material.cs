@@ -85,8 +85,16 @@ public class Material : IAsset<Material>, IOnLoaded {
 
 
     public void FillDefaults () {
-        foreach (var info in shader.ActiveUniforms.Values) {
+        foreach (UniformInfo info in shader.ActiveUniforms.Values) {
             if (Shader.ReservedUniforms.Contains(info.Name)) continue;
+
+            //if (info.Type == Silk.NET.OpenGL.UniformType.Sampler2D) {
+            //    if (!shader.Name.Contains("Skybox")) {
+            //        Log.log(shader.Name, info.Name);
+            //        textures.TryAdd(info.Name, Texture.White);
+            //        continue;
+            //    }
+            //}
 
             object def = Shader.UniformDefaults.TryGetValue(info.Name, out var over) ? over
                 : Shader.TypeDefaults.TryGetValue(info.Type, out var byType) ? byType
@@ -119,4 +127,5 @@ public class Material : IAsset<Material>, IOnLoaded {
     }
 
     public void Dispose () { }
+
 }

@@ -31,7 +31,6 @@ public sealed class RenderState {
                 GL.Disable(EnableCap.Blend);
                 break;
             case RenderPass.Transparent:
-                Log.log("RenderPass.Transparent", material.floats[Shader.Alpha]);
                 GL.Enable(EnableCap.Blend);
                 GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 break;

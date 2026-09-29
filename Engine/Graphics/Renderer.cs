@@ -234,8 +234,8 @@ public class Renderer {
             idx = runEnd;
         }
         long t2 = System.Diagnostics.Stopwatch.GetTimestamp();
-        Log.log("build ms", System.Diagnostics.Stopwatch.GetElapsedTime(t0, t1).TotalMilliseconds,
-            "draw ms", System.Diagnostics.Stopwatch.GetElapsedTime(t1, t2).TotalMilliseconds);
+        //Log.log("build ms", System.Diagnostics.Stopwatch.GetElapsedTime(t0, t1).TotalMilliseconds,
+        //    "draw ms", System.Diagnostics.Stopwatch.GetElapsedTime(t1, t2).TotalMilliseconds);
     }
 
     /// Applies material GL state, shader, per-pass uniforms and material textures.

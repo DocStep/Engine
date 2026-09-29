@@ -33,10 +33,10 @@ public static class MtlToMaterial {
         mat.Name = name;
         mat.vectors3[Shader.Color] = data.Kd;
         mat.floats[Shader.Alpha] = data.d;
+        //mat.textures.TryAdd(Shader.Texture, Texture.White); /// belt-and-suspenders — don't depend on template state
 
         float roughness = 0f <= data.Pr ? data.Pr : EstimateRoughnessFromNs(data.Ns);
         float metallic = 0f <= data.Pm ? data.Pm : (data.illum == 3 || data.illum == 6 ? 1f : 0f);
-
         mat.floats[Shader.Smoothness] = 1f - roughness;
         mat.floats[Shader.Metallic] = metallic;
 

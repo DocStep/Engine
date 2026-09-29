@@ -52,17 +52,14 @@ public static class ObjLoader {
                     positions.Add(new Vector3(
                         ParseFloat(tokens[1]), ParseFloat(tokens[2]), -ParseFloat(tokens[3])));
                     break;
-
                 case "vt":
-                    uvs.Add(new Vector2(ParseFloat(tokens[1]), ParseFloat(tokens[2])));
+                    uvs.Add(new Vector2(ParseFloat(tokens[1]), 1f - ParseFloat(tokens[2])));
                     break;
-
                 case "vn":
                     normals.Add(new Vector3(
                         ParseFloat(tokens[1]), ParseFloat(tokens[2]), -ParseFloat(tokens[3])));
                     //hasAnyNormal = true;
                     break;
-
                 case "usemtl":
                     if (indices.Count > rangeStart) {
                         subMeshes.Add(new SubMeshRange {
@@ -74,7 +71,6 @@ public static class ObjLoader {
                     }
                     currentMat = tokens[1];
                     break;
-
                 case "f": {
                         uint[] faceIndices = new uint[tokens.Length - 1];
                         for (int i = 1; i < tokens.Length; i++)

@@ -16,16 +16,39 @@ public class Texture : IAsset<Texture> {
     public int Width { get; private set; }
     public int Height { get; private set; }
 
+    [JsonIgnore, Hide]
+    private static Texture? _white;
+    [JsonIgnore, Hide]
+    public static Texture White => _white ??= CreateSolid(255, 255, 255, 255);
+
 
     public void Bind (TextureUnit unit = TextureUnit.Texture0) {
         Renderer.GL.ActiveTexture(unit);
         Renderer.GL.BindTexture(TextureTarget.Texture2D, Handle);
     }
 
+    private static Texture CreateSolid (byte r, byte g, byte b, byte a) {
+        GL gl = Renderer.GL;
+        Texture tex = new Texture { Name = "White", Width = 1, Height = 1 };
+        tex.Handle = gl.GenTexture();
 
-    public void Save (string path) {
+        gl.ActiveTexture(TextureUnit.Texture0);
+        gl.BindTexture(TextureTarget.Texture2D, tex.Handle);
 
+        byte[] pixel = { r, g, b, a };
+        unsafe {
+            fixed (byte* ptr = pixel)
+                gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, 1, 1, 0, PixelFormat.Rgba, PixelType.UnsignedByte, ptr);
+        }
+
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+        gl.BindTexture(TextureTarget.Texture2D, 0);
+
+        return tex;
     }
+
+
 
     /// <summary> Loads a texture from an image file (png/jpg/etc via StbImageSharp) and uploads it to the GPU. </summary>
     public static Texture Load (string path, int part = 100) {
@@ -63,6 +86,9 @@ public class Texture : IAsset<Texture> {
         return tex;
     }
 
+    public void Save (string path) {
+
+    }
 
     public void Dispose () {
         Renderer.GL.DeleteTexture(Handle);
