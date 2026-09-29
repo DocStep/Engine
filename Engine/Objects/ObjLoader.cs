@@ -86,7 +86,7 @@ public static class ObjLoader {
             }
         }
 
-        if (indices.Count > rangeStart) {
+        if (rangeStart < indices.Count) {
             subMeshes.Add(new SubMeshRange {
                 MaterialName = currentMat,
                 IndexStart = rangeStart,

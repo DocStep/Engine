@@ -69,4 +69,5 @@ public static class MtlLoader {
     private static float ParseFloat (string s) {
         return float.Parse(s, System.Globalization.CultureInfo.InvariantCulture);
     }
+
 }

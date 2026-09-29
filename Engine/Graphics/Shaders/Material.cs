@@ -96,17 +96,19 @@ public class Material : IAsset<Material>, IOnLoaded {
             //    }
             //}
 
-            object def = Shader.UniformDefaults.TryGetValue(info.Name, out var over) ? over
+            object defValue = 
+                Shader.UniformDefaults.TryGetValue(info.Name, out var over) ? over
                 : Shader.TypeDefaults.TryGetValue(info.Type, out var byType) ? byType
                 : null!;
-            if (def is null) continue;
+            if (defValue is null) continue;
 
-            switch (def) {
+            switch (defValue) {
+                case int i: ints.TryAdd(info.Name, i); break;
                 case float f: floats.TryAdd(info.Name, f); break;
                 case Vector2 v2: vectors2.TryAdd(info.Name, v2); break;
                 case Vector3 v3: vectors3.TryAdd(info.Name, v3); break;
                 case Vector4 v4: vectors4.TryAdd(info.Name, v4); break;
-                case int i: ints.TryAdd(info.Name, i); break;
+                //case Texture tex: textures.TryAdd(info.Name, tex); break;
             }
         }
     }
@@ -116,7 +118,12 @@ public class Material : IAsset<Material>, IOnLoaded {
     public Material SetVector2 (string name, Vector2 value) { vectors2[name] = value; return this; }
     public Material SetVector3 (string name, Vector3 value) { vectors3[name] = value; return this; }
     public Material SetVector4 (string name, Vector4 value) { vectors4[name] = value; return this; }
-    public Material SetTexture (string name, Texture value) { textures[name] = value; return this; }
+    public Material SetTexture (string name, Texture value) {
+        textures[name] = value;
+        if (name == Shader.Texture) ints[Shader.HasTexture] = 1;
+        return this;
+    }
+
 
     public void Save (string path) {
         Path = path;

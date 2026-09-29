@@ -5,6 +5,7 @@
 
 in vec3 vNormal;
 in vec3 vFragPos;
+in vec2 vUV;
 
 #define MAX_SUN_LIGHTS 32
 #define MAX_POINT_LIGHTS 32
@@ -12,6 +13,8 @@ in vec3 vFragPos;
 const float PI = 3.14159265;
  
 uniform vec3 uColor;
+uniform sampler2D uTexture;
+uniform int uHasTexture;
 uniform float uSmoothness;
 uniform float uMetallic;
 uniform float uAlpha;
@@ -161,11 +164,17 @@ vec3 ComputePointLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 alb
     return (kD * albedo / PI + specular) * radiance * NdotL;
 }
 
-void main()
-{
+void main() {
     vec3 albedo = uColor;
     float metallic = clamp(uMetallic, 0.0, 1.0);
     float roughness = clamp(1.0 - uSmoothness, 0.045, 1.0); // smoothness -> roughness, avoid 0-roughness singularity
+    float alpha = uAlpha;
+    
+    if (uHasTexture == 1) {
+        vec4 texSample = texture(uTexture, vUV);
+        albedo *= texSample.rgb;
+        alpha *= texSample.a;
+    }
 
     vec3 N = normalize(vNormal);
     vec3 V = normalize(uViewPos - vFragPos);
@@ -174,12 +183,10 @@ void main()
 
     // Direct sun lights — Cook-Torrance specular + Lambert diffuse, summed
     vec3 Lo = vec3(0.0);
-    for (int i = 0; i < uSunLightCount; i++)
-    {
+    for (int i = 0; i < uSunLightCount; i++) {
         Lo += ComputeSunLight(i, N, V, F0, roughness, albedo, metallic);
     }
-    for (int i = 0; i < uPointLightCount; i++)
-    {
+    for (int i = 0; i < uPointLightCount; i++) {
         Lo += ComputePointLight(i, N, V, F0, roughness, albedo, metallic);
     }
 
@@ -207,5 +214,5 @@ void main()
 
     color = pow(color, vec3(1.0 / 2.2));
 
-    FragColor = vec4(color, uAlpha);
+    FragColor = vec4(color, alpha);
 }

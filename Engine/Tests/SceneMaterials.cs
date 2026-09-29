@@ -34,16 +34,16 @@ public class SceneMaterials : Scene {
 
         x = -4;
         GameObject go_planeTexture = new GameObject(PrimitiveTypes.Plane, position: new Vector3(x, 0, 0)) { Name = "Plane Texture", };
-        Material mat = new Material(AssetsEngine._mat_Lit);
-        go_planeTexture.GetComponent<MeshComponent>()?.Material = mat;
+        Material mat = new Material(AssetsEngine._sh_LitInstanced);
         mat.SetTexture(Shader.Texture, AssetsEngine.tex_Test);
-        mat.SetVector3(Shader.Color, Vector3.One);
-        Texture? texture = Assets.Load<Texture>("src/Images/RGBA_Test.png");
-        if (texture is not null) mat.SetTexture(Shader.Texture, texture);
-        else Log.log("texture is not null");
-        mat.SetVector3(Shader.Color, new Vector3(0, 0, 0));
+        go_planeTexture.GetComponent<MeshComponent>()?.Material = mat;
+        //mat.SetVector3(Shader.Color, Vector3.One);
+        //Texture? texture = Assets.Load<Texture>("src/Images/RGBA_Test.png");
+        //if (texture is not null) mat.SetTexture(Shader.Texture, texture);
+        //else Log.log("texture is not null");
+        //mat.SetVector3(Shader.Color, new Vector3(0, 0, 0));
 
-        return;
+        //return;
         /// Reflection
         x = 0;
         GameObject reflectionSuzanneHightRes = new GameObject() { Name = "Reflection SuzanneHighRes", };

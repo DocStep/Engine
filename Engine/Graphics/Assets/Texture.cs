@@ -1,7 +1,9 @@
-﻿using Engine.Graphics;
-using Silk.NET.OpenGL;
+﻿using Silk.NET.OpenGL;
 using StbImageSharp;
 using Newtonsoft.Json;
+
+namespace Engine.Graphics;
+
 
 /// <summary>
 /// GPU texture wrapper. Owns an OpenGL texture handle and can load pixel data from an image file on disk.
@@ -20,7 +22,7 @@ public class Texture : IAsset<Texture> {
     private static Texture? _white;
     [JsonIgnore, Hide]
     public static Texture White => _white ??= CreateSolid(255, 255, 255, 255);
-
+    //public const Texture? Empty = null;
 
     public void Bind (TextureUnit unit = TextureUnit.Texture0) {
         Renderer.GL.ActiveTexture(unit);
@@ -28,22 +30,22 @@ public class Texture : IAsset<Texture> {
     }
 
     private static Texture CreateSolid (byte r, byte g, byte b, byte a) {
-        GL gl = Renderer.GL;
+        GL GL = Renderer.GL;
         Texture tex = new Texture { Name = "White", Width = 1, Height = 1 };
-        tex.Handle = gl.GenTexture();
+        tex.Handle = GL.GenTexture();
 
-        gl.ActiveTexture(TextureUnit.Texture0);
-        gl.BindTexture(TextureTarget.Texture2D, tex.Handle);
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2D, tex.Handle);
 
         byte[] pixel = { r, g, b, a };
         unsafe {
             fixed (byte* ptr = pixel)
-                gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, 1, 1, 0, PixelFormat.Rgba, PixelType.UnsignedByte, ptr);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, 1, 1, 0, PixelFormat.Rgba, PixelType.UnsignedByte, ptr);
         }
 
-        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
-        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
-        gl.BindTexture(TextureTarget.Texture2D, 0);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+        GL.BindTexture(TextureTarget.Texture2D, 0);
 
         return tex;
     }
@@ -57,7 +59,6 @@ public class Texture : IAsset<Texture> {
         Texture tex = new Texture();
 
         //StbImage.stbi_set_flip_vertically_on_load(1);
-
         using FileStream stream = File.OpenRead(path);
         ImageResult image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
 

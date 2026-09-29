@@ -20,8 +20,18 @@ public class Shader : IAsset<Shader> {
         string vertexSource = Assets.LoadText(vertexSourcePath);
         string fragmentSource = Assets.LoadText(fragmentSourcePath);
 
-        uint vertex = CompileShader(ShaderType.VertexShader, vertexSource);
-        uint fragment = CompileShader(ShaderType.FragmentShader, fragmentSource);
+        uint vertex;
+        uint fragment;
+        try {
+            vertex = CompileShader(ShaderType.VertexShader, vertexSource);
+        } catch (Exception ex) {
+            throw new Exception($"Failed to compile Shader_Vertex {vertexSourcePath}", ex);
+        }
+        try {
+            fragment = CompileShader(ShaderType.FragmentShader, fragmentSource);
+        } catch (Exception ex) {
+            throw new Exception($"Failed to compile Shader_Fragment {vertexSourcePath}", ex);
+        }
 
         uint program = GL.CreateProgram();
         GL.AttachShader(program, vertex);
@@ -80,7 +90,8 @@ public class Shader : IAsset<Shader> {
 
     [JsonIgnore, Hide] private readonly GL GL;
     [JsonIgnore, Hide] private uint _program;
-    [JsonIgnore, Hide] private int _nextTextureUnit = 0;
+    [JsonIgnore, Hide] private readonly Dictionary<string, int> _textureUnits = new();
+    [JsonIgnore, Hide] private int _nextTextureUnit = 1; /// 0 is reserved for uSkybox, bound directly in SetSceneUniformsSkybox
 
     static int _nextId = 0;
     public readonly int Id_Renderer = System.Threading.Interlocked.Increment(ref _nextId);
@@ -93,26 +104,30 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide]
     public static readonly HashSet<string> ReservedUniforms = new() {
         View, Projection, ViewPos, Model, NormalMatrix, CameraPos, Scene, Depth,
-        SunLightCount, SunLightDir, SunLightColor, SunLightIntensity, 
+        SunLightCount, SunLightDir, SunLightColor, SunLightIntensity,
         PointLightCount, PointLightColor, PointLightIntensity, PointLightPos, PointLightRange,
-        Skybox, MaxReflectionLod, 
+        Skybox, MaxReflectionLod,
         Exposure, AmbientColor, AmbientColorIntensity, ReflectionIntensity,
         SHAr, SHAg, SHAb, SHBr, SHBg, SHBb, SHC,
     };
 
     [JsonIgnore, Hide]
     public readonly static Dictionary<UniformType, object> TypeDefaults = new Dictionary<UniformType, object>() {
+        [UniformType.Int] = 0,
         [UniformType.Float] = 0.5f,
         [UniformType.FloatVec2] = Vector2.Zero,
         [UniformType.FloatVec3] = Vector3.One,
         [UniformType.FloatVec4] = Vector4.One,
-        [UniformType.Int] = 0,
+        //[UniformType.Sampler2D] = Graphics.Texture.White,
     };
     [JsonIgnore, Hide]
     public readonly static Dictionary<string, object> UniformDefaults = new Dictionary<string, object>() {
+        [Shader.Color] = Vector3.One,
+        [Shader.Alpha] = 1f,
         [Shader.Smoothness] = 0.5f,
         [Shader.Metallic] = 0f,
         [Shader.ReflectionIntensity] = 1f,
+        //[Shader.Texture] = Graphics.Texture.White,
     };
 
     [JsonIgnore] public static RendererGLStats Stats = default;
@@ -130,7 +145,7 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore] public const string CameraPos = "uCameraPos";
     [JsonIgnore] public const string Scene = "uSceneColor";
     [JsonIgnore] public const string Depth = "uDepth";
-    
+
     [JsonIgnore] public const string SunLightCount = "uSunLightCount";
     [JsonIgnore] public const string SunLightDir = "uSunLightDir";
     [JsonIgnore] public const string SunLightColor = "uSunLightColor";
@@ -160,6 +175,7 @@ public class Shader : IAsset<Shader> {
 
     [JsonIgnore] public const string Color = "uColor";
     [JsonIgnore] public const string Texture = "uTexture";
+    [JsonIgnore] public const string HasTexture = "uHasTexture";
     [JsonIgnore] public const string Smoothness = "uSmoothness";
     [JsonIgnore] public const string Metallic = "uMetallic";
     [JsonIgnore] public const string Alpha = "uAlpha";
@@ -306,13 +322,16 @@ public class Shader : IAsset<Shader> {
     }
 
     public void SetTexture (string name, Texture texture) {
-        TextureUnit unit = TextureUnit.Texture0 + _nextTextureUnit;
+        if (!_textureUnits.TryGetValue(name, out int unitIndex)) {
+            unitIndex = _nextTextureUnit++;
+            _textureUnits[name] = unitIndex;
+        }
+
+        TextureUnit unit = TextureUnit.Texture0 + unitIndex;
         texture.Bind(unit);
 
         int location = GL.GetUniformLocation(_program, name);
-        GL.Uniform1(location, _nextTextureUnit);
-
-        _nextTextureUnit++;
+        GL.Uniform1(location, unitIndex);
 
         //var err = GL.GetError();
         //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetTexture)} {err}", LogType.warning);

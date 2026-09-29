@@ -158,9 +158,9 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mat_CameraFocus = new MaterialCameraFocus(_sh_CameraFocus) { Name = "CameraFocus", };
         _mat_CameraFocus.Save("src/Materials/CameraFocus.mat");
 
-        tex_Test = Texture.Load("src/Images/RGBA_Test.png");
-        tex_White = Texture.Load("src/Images/white.png");
-        tex_Vignette = Texture.Load("src/Images/vignette.png");
+        tex_Test = Graphics.Texture.Load("src/Images/RGBA_Test.png");
+        tex_White = Graphics.Texture.Load("src/Images/white.png");
+        tex_Vignette = Graphics.Texture.Load("src/Images/vignette.png");
 
     }
 
