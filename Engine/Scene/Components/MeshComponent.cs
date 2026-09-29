@@ -8,36 +8,47 @@ public class MeshComponent : Component, IUpdate, IUpdateAtFreeze {
     [JsonIgnore] public override string Name => nameof(MeshComponent);
 
     public Mesh? Mesh = null;
-    /*[JsonIgnore]*/ public Material? Material = AssetsEngine._mat_Lit;
-    public Dictionary<string, Material>? MaterialOverrides;
-    //[JsonProperty("pass")] public RenderPass pass = RenderPass.Opaque;
+    public Material? Material = AssetsEngine._mat_Lit;
+    public Material[]? Materials;
 
-    [Hide][JsonIgnore] public RenderInfo renderInfo { get; private set; }
-
+    [JsonIgnore, Hide]
+    public RenderInfo RenderInfo;
+    
 
     public void Update () {
-        if (Mesh is null || Material is null) return;
+        if (Renderer.Instance.Camera is null || Mesh is null || Material is null) return;
 
-        //if (mesh?.Name == "SuzanneHighRes") 
-            //Log.log($"[{Guid}] AddRenderInfo {mesh?.Name}");
-        Renderer.Instance.AddRenderInfo(CreateRenderInfo);
-    }
+        Matrix4x4 model = gameObject.Transform.GetWorldMatrix();
+        Silk.NET.OpenGL.PrimitiveType primitiveType = Mesh.Data is not null ? Mesh.Data.PrimitiveType : default;
 
-    [Hide][JsonIgnore] public RenderInfo CreateRenderInfo {
-        get {
-            if (Mesh is null) return default;
-            if (Material is null) return default;
-
-            RenderInfo renderInfo = new RenderInfo() {
-                model = gameObject.Transform.GetWorldMatrix(),
-
+        if (Mesh.SubMeshes.Length <= 1) {
+            RenderInfo info = new RenderInfo() {
+                model = model,
                 mesh = Mesh,
                 material = Material,
-                primitiveType = Mesh.Data is not null ? Mesh.Data.PrimitiveType : default,
+                primitiveType = primitiveType,
             };
+            RenderInfo = info;
+            Renderer.Instance.AddRenderInfo(info);
+            return;
+        }
 
-            this.renderInfo = renderInfo;
-            return renderInfo;
+        /// One RenderInfo per usemtl group — MaterialOverrides maps a submesh's material name
+        /// to the Material to draw it with; falls back to Material when a name has no override.
+        for (int i = 0; i < Mesh.SubMeshes.Length; i++) {
+            Mesh.SubMesh sub = Mesh.SubMeshes[i];
+            Material mat = Materials is not null && i < Materials.Length && Materials[i] is not null ? Materials[i] : Material;
+
+            RenderInfo info = new RenderInfo() {
+                model = model,
+                mesh = Mesh,
+                material = mat,
+                primitiveType = primitiveType,
+                indexOffset = sub.IndexOffset,
+                indexCount = sub.IndexCount,
+            };
+            RenderInfo = info;
+            Renderer.Instance.AddRenderInfo(info);
         }
     }
 

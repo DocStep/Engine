@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Newtonsoft.Json;
 using Silk.NET.OpenGL;
 
 namespace Engine.Graphics;
@@ -8,7 +9,7 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
     public Mesh () {
         GL = Renderer.GL;
     }
-    [Newtonsoft.Json.JsonConstructor]
+    [JsonConstructor]
     public Mesh (bool deserializing) {
         if (Data is null) return;
         GL = Renderer.GL;
@@ -27,17 +28,21 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
     public long Id { get; set; }
     public string? Path { get; set; }
 
-    private readonly GL GL = null!;
-    private uint _vao;
-    private uint _vbo;
-    private uint _ebo;
-    private uint _indexCount;
-
-    static int _nextId = 0;
-    public readonly int Id_Renderer = System.Threading.Interlocked.Increment(ref _nextId);
-
     public MeshData? Data;
     public AABB LocalAABB;
+
+
+    [JsonIgnore, Hide] private readonly GL GL = null!;
+    [JsonIgnore, Hide] private uint _vao;
+    [JsonIgnore, Hide] private uint _vbo;
+    [JsonIgnore, Hide] private uint _ebo;
+    [JsonIgnore, Hide] private uint _indexCount;
+
+    [JsonIgnore, Hide] public uint VAO => _vao;
+    [JsonIgnore, Hide] public uint IndexCount => _indexCount;
+
+    [JsonIgnore, Hide] private static int _nextId = 0;
+    [JsonIgnore, Hide] public readonly int Id_Renderer = System.Threading.Interlocked.Increment(ref _nextId);
 
     public struct SubMesh {
         public string MaterialName;
@@ -45,13 +50,13 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
         public uint IndexCount;
     }
     /// Empty when the OBJ had no usemtl groups — whole-mesh draw is the norm in that case.
-    public SubMesh[] SubMeshes = Array.Empty<SubMesh>();
+    [JsonIgnore, Hide] public SubMesh[] SubMeshes = [];
 
     /// Instancing — set up lazily on first DrawInstanced() call so meshes that are never
     /// instanced don't pay for the extra buffer/attribute setup.
-    private uint _instanceVbo;
-    private int _instanceCapacity = -1; /// -1 = EnsureInstanceBuffer() not yet called
-    private float[] _instanceUploadScratch = []; /// grows, never shrinks — avoids a per-draw heap alloc
+    [JsonIgnore, Hide] private uint _instanceVbo;
+    [JsonIgnore, Hide] private int _instanceCapacity = -1; /// -1 = EnsureInstanceBuffer() not yet called
+    [JsonIgnore, Hide] private float[] _instanceUploadScratch = []; /// grows, never shrinks — avoids a per-draw heap alloc
 
 
     private void Upload (MeshData data) {
@@ -65,7 +70,7 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
                 IndexOffset = (uint)r.IndexStart,
                 IndexCount = (uint)r.IndexCount,
             }).ToArray()
-            : Array.Empty<SubMesh>();
+            : [];
 
         float[] vertices = Flatten(Data.Vertices);
 

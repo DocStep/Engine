@@ -47,9 +47,11 @@ public static class Constants {
     public static bool renderSkybox { get; private set; } = true;
     public static bool renderSkyboxReflection { get; private set; } = true;
     public static float reflectionIntensity = 1f;
+	
+    public static bool useLOD = false;
 
     public static bool drawMaterialsGrid = false;
-    public static bool drawMaterialGrid = true;
+    public static bool drawMaterialGrid = false;
     public static int materialsGridCount = 5;
     public static int materialsGridDensity = 1;
 

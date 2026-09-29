@@ -82,8 +82,8 @@ public class Renderer {
     protected readonly RenderQueue _queue = new RenderQueue();
     protected Frustum _frustum = new Frustum(); /// not readonly — a readonly struct field makes a defensive copy on every call
 
-    protected Matrix4x4[] _instanceModelScratch = Array.Empty<Matrix4x4>();
-    protected Matrix4x4[] _instanceNormalScratch = Array.Empty<Matrix4x4>();
+    protected Matrix4x4[] _instanceModelScratch = [];
+    protected Matrix4x4[] _instanceNormalScratch = [];
 
     public RendererStats Stats = new RendererStats();
     public int Width => (int)MathF.Round(Stats.SceneSize.X);
@@ -240,7 +240,7 @@ public class Renderer {
 
     /// Applies material GL state, shader, per-pass uniforms and material textures.
     /// Shared by DrawRenderInfo and DrawInstancedRun.
-    protected void BindMaterial (Material material) {
+    public void BindMaterial (Material material) {
         Shader shader = _state.Bind(material);
 
         /// Kept outside the shader-changed check on purpose: the skybox binds Texture0,

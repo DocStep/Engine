@@ -190,7 +190,7 @@ public class RendererEditor : Renderer {
     }
     public void DrawMaterialsGrid () => DrawMaterialsGrid(-14f, 0f);
 
-    public static void DrawMaterialGrid (float offsetX, float offsetZ, int testGridCount = 1000, float testGridDensity = 1f) {
+    public static void DrawMaterialGrid (float offsetX, float offsetZ, int testGridCount = 100, float testGridDensity = 1f) {
         if (!Constants.drawMaterialGrid) return;
 
         int total = testGridCount*(int)testGridDensity;

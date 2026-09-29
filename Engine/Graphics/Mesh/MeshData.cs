@@ -2,7 +2,6 @@
 
 
 public class MeshData {
-
     [Newtonsoft.Json.JsonConstructor]
     public MeshData () { }
     public MeshData (Vertex[] vertices, uint[] indices, Silk.NET.OpenGL.PrimitiveType primitiveType) {
@@ -16,6 +15,10 @@ public class MeshData {
 
         Indices = new uint[data.Indices.Length];
         Array.Copy(data.Indices, Indices, data.Indices.Length);
+        
+        SubMeshes = data.SubMeshes is not null
+            ? (SubMeshRange[])data.SubMeshes.Clone()
+            : null!;
 
         PrimitiveType = data.PrimitiveType;
     }
@@ -161,6 +164,65 @@ public class MeshData {
             if (sums.TryGetValue(pos, out Vector3 normal) && normal.LengthSquared() > 0f)
                 Vertices[i].Normal = Vector3.Normalize(normal);
         }
+    }
+
+    /// Vertex clustering: snaps positions onto a grid of `cellSize` and merges every
+    /// vertex that lands in the same cell into one averaged vertex. Triangles that
+    /// collapse to zero area (two or more corners landing in the same cell) are dropped.
+    /// Cheap and robust, but rough at large cell sizes — fine for a distant LOD, not for
+    /// close-up detail. SubMeshes are not preserved; the result draws as one piece.
+    /// Call this at load/import time, not per frame — it allocates and isn't free.
+    public MeshData Simplify (float cellSize) {
+        if (cellSize <= 0f) return new MeshData(this);
+
+        Dictionary<(long, long, long), int> clusterOf = new Dictionary<(long, long, long), int>();
+        List<Vector3> posSum = new List<Vector3>();
+        List<Vector2> uvSum = new List<Vector2>();
+        List<int> counts = new List<int>();
+        int[] remap = new int[Vertices.Length];
+
+        long Cell (float v) => (long)MathF.Floor(v/cellSize);
+
+        for (int i = 0; i < Vertices.Length; i++) {
+            Vector3 p = Vertices[i].Position;
+            (long, long, long) key = (Cell(p.X), Cell(p.Y), Cell(p.Z));
+
+            if (!clusterOf.TryGetValue(key, out int idx)) {
+                idx = posSum.Count;
+                clusterOf[key] = idx;
+                posSum.Add(Vector3.Zero);
+                uvSum.Add(Vector2.Zero);
+                counts.Add(0);
+            }
+
+            posSum[idx] += p;
+            uvSum[idx] += Vertices[i].UV;
+            counts[idx]++;
+            remap[i] = idx;
+        }
+
+        Vertex[] newVerts = new Vertex[posSum.Count];
+        for (int i = 0; i < newVerts.Length; i++) {
+            int n = counts[i];
+            newVerts[i] = new Vertex {
+                Position = posSum[i]/n,
+                UV = uvSum[i]/n,
+                Normal = Vector3.UnitY, /// placeholder — caller should RecalculateNormals() after
+            };
+        }
+
+        List<uint> newIndices = new List<uint>(Indices.Length);
+        for (int i = 0; i < Indices.Length; i += 3) {
+            int a = remap[Indices[i]];
+            int b = remap[Indices[i + 1]];
+            int c = remap[Indices[i + 2]];
+            if (a == b || b == c || a == c) continue; /// collapsed to zero area — drop the triangle
+            newIndices.Add((uint)a);
+            newIndices.Add((uint)b);
+            newIndices.Add((uint)c);
+        }
+
+        return new MeshData(newVerts, newIndices.ToArray(), PrimitiveType);
     }
 
 

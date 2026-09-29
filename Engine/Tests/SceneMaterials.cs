@@ -19,17 +19,19 @@ public class SceneMaterials : Scene {
         go_sun1.Transform.LocalEuler = new Vector3(60, -30, 0);
         SunLight sun1 = go_sun1.AddComponent<SunLight>();
 
-        /// Reflection
+        /// Plane 2 Materials
         x = -2;
-        //GameObject go_plane2Materials = new GameObject() { Name = "Plane2Materials", };
-        //go_plane2Materials.Transform.Position = new Vector3(x, 0, 0);
-        //mesh = go_plane2Materials.AddComponent<MeshComponent>();
-        //mesh.Mesh = Assets.Load<Mesh>("src/Models/Plane2Materials.obj");
-        //mesh.Material = AssetsEngine._mat_LitRed;
-        //mesh.MaterialOverrides = new Dictionary<string, Material> {
-        //    ["Red"] = AssetsEngine._mat_LitRed,
-        //    ["Blue"] = AssetsEngine._mat_LitBlue,
-        //};
+        GameObject go_plane2Materials = new GameObject() { Name = "Plane 2 Materials", };
+        go_plane2Materials.Transform.Position = new Vector3(x, 0, 0);
+        mesh = go_plane2Materials.AddComponent<MeshComponent>();
+        mesh.Mesh = Assets.Load<Mesh>("src/Models/Plane2Materials.obj");
+        mesh.Material = AssetsEngine._mat_Lit;
+        //mesh.Materials = [AssetsEngine._mat_LitRed, AssetsEngine._mat_LitBlue];
+        if (mesh.Mesh is not null) {
+            Log.log("mtl");
+            Dictionary<string, MtlData> mtl = MtlLoader.Load("src/Models/Plane2Materials.mtl");
+            mesh.Materials = MtlToMaterial.Build(mtl, mesh.Mesh, AssetsEngine._mat_Lit);
+        }
 
         /// Reflection
         x = 0;
