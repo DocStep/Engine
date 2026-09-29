@@ -90,4 +90,5 @@ public sealed class RenderQueue {
             | ((ulong)info.material.Id_Renderer & 0xFFFFFUL) << 20
             | ((ulong)info.mesh.Id_Renderer & 0xFFFFFUL);
     }
+
 }

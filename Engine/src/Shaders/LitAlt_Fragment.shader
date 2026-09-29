@@ -14,6 +14,7 @@ const float PI = 3.14159265;
 uniform vec3 uColor;
 uniform float uSmoothness;
 uniform float uMetallic;
+uniform float uAlpha;
 
 uniform int uSunLightCount;
 uniform vec3 uSunLightColor[MAX_SUN_LIGHTS];
@@ -206,5 +207,5 @@ void main()
 
     color = pow(color, vec3(1.0 / 2.2));
 
-    FragColor = vec4(color, 1.0);
+    FragColor = vec4(color, uAlpha);
 }

@@ -21,18 +21,18 @@ public class SceneMaterials : Scene {
 
         /// Plane 2 Materials
         x = -2;
-        GameObject go_plane2Materials = new GameObject() { Name = "Plane 2 Materials", };
+        GameObject go_plane2Materials = new GameObject() { Name = "Plane Materials", };
         go_plane2Materials.Transform.Position = new Vector3(x, 0, 0);
         mesh = go_plane2Materials.AddComponent<MeshComponent>();
-        mesh.Mesh = Assets.Load<Mesh>("src/Models/Plane2Materials.obj");
+        mesh.Mesh = Assets.Load<Mesh>("src/Models/PlaneMaterials.obj");
         mesh.Material = AssetsEngine._mat_Lit;
         //mesh.Materials = [AssetsEngine._mat_LitRed, AssetsEngine._mat_LitBlue];
         if (mesh.Mesh is not null) {
-            Log.log("mtl");
-            Dictionary<string, MtlData> mtl = MtlLoader.Load("src/Models/Plane2Materials.mtl");
+            Dictionary<string, MtlData> mtl = MtlLoader.Load("src/Models/PlaneMaterials.mtl");
             mesh.Materials = MtlToMaterial.Build(mtl, mesh.Mesh, AssetsEngine._mat_Lit);
         }
 
+        return;
         /// Reflection
         x = 0;
         GameObject reflectionSuzanneHightRes = new GameObject() { Name = "Reflection SuzanneHighRes", };

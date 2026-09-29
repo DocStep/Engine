@@ -6,6 +6,7 @@ in vec3 vFragPos;
 uniform vec3 uColor;
 uniform float uSmoothness;
 uniform float uMetallic;
+uniform float uAlpha;
 
 #define MAX_SUN_LIGHTS 32
 uniform int uSunLightCount;
@@ -112,5 +113,5 @@ void main () {
     color = color/(color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));
 
-    FragColor = vec4(color, 1.0);
+    FragColor = vec4(color, uAlpha);
 }

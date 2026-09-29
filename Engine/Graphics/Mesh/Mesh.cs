@@ -30,6 +30,7 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
 
     public MeshData? Data;
     public AABB LocalAABB;
+    [JsonIgnore, Hide] public Material[] DefaultMaterials;
 
 
     [JsonIgnore, Hide] private readonly GL GL = null!;
@@ -240,10 +241,18 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
     }
 
     public static Mesh Load (string path, int part = 100) {
-        return new Mesh(ObjLoader.Load(path)) {
+        Mesh mesh = new Mesh(ObjLoader.Load(path)) {
             Name = System.IO.Path.GetFileNameWithoutExtension(path),
             Path = path,
         };
+
+        string mtlPath = System.IO.Path.ChangeExtension(path, ".mtl");
+        if (File.Exists(mtlPath)) {
+            Dictionary<string, MtlData> mtl = MtlLoader.Load(mtlPath);
+            mesh.DefaultMaterials = MtlToMaterial.Build(mtl, mesh, AssetsEngine._mat_Lit);
+        }
+
+        return mesh;
     }
 
 

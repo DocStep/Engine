@@ -37,7 +37,11 @@ public class MeshComponent : Component, IUpdate, IUpdateAtFreeze {
         /// to the Material to draw it with; falls back to Material when a name has no override.
         for (int i = 0; i < Mesh.SubMeshes.Length; i++) {
             Mesh.SubMesh sub = Mesh.SubMeshes[i];
-            Material mat = Materials is not null && i < Materials.Length && Materials[i] is not null ? Materials[i] : Material;
+            Material mat = Materials is not null && i < Materials.Length && Materials[i] is not null
+                ? Materials[i]
+                : Mesh.DefaultMaterials is not null && i < Mesh.DefaultMaterials.Length
+                    ? Mesh.DefaultMaterials[i]
+                    : Material;
 
             RenderInfo info = new RenderInfo() {
                 model = model,

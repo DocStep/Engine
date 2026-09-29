@@ -10,11 +10,7 @@ public static class MtlToMaterial {
             string name = mesh.SubMeshes[i].MaterialName;
 
             if (mtl.TryGetValue(name, out MtlData? data)) {
-                Material mat = new Material(template);
-                mat.Name = name;
-                mat.vectors3[Shader.Color] = data.Kd; /// <- match your shader's actual uniform name
-                if (1 <= data.d) mat.Pass = RenderPass.Opaque;
-                result[i] = mat;
+                result[i] = SetValue(name, data, template);
             } else {
                 result[i] = template;
             }
@@ -26,14 +22,32 @@ public static class MtlToMaterial {
     public static Dictionary<string, Material> Build_Dict (Dictionary<string, MtlData> mtl, Material template) {
         Dictionary<string, Material> result = new Dictionary<string, Material>();
 
-        foreach (var (name, data) in mtl) {
-            Material material = new Material(template); /// clones shader + existing uniform dicts
-            material.Name = name;
-            material.vectors3[Shader.Color] = data.Kd; /// <- rename "Color" to whatever your shader actually reads
-            result[name] = material;
-        }
+        foreach ((string name, MtlData data) in mtl)
+            result[name] = SetValue(name, data, template);
 
         return result;
+    }
+
+    private static Material SetValue (string name, MtlData data, Material template) {
+        Material mat = new Material(template);
+        mat.Name = name;
+        mat.vectors3[Shader.Color] = data.Kd;
+        mat.floats[Shader.Alpha] = data.d;
+
+        float roughness = 0f <= data.Pr ? data.Pr : EstimateRoughnessFromNs(data.Ns);
+        float metallic = 0f <= data.Pm ? data.Pm : (data.illum == 3 || data.illum == 6 ? 1f : 0f);
+
+        mat.floats[Shader.Smoothness] = 1f - roughness;
+        mat.floats[Shader.Metallic] = metallic;
+
+        bool transparent = data.d < 1f;
+        mat.Pass = transparent ? RenderPass.Transparent : RenderPass.Opaque;
+        mat.DepthWrite = !transparent;
+
+        return mat;
+    }
+    private static float EstimateRoughnessFromNs (float ns) {
+        return 1f - MathF.Sqrt(MathF.Max(ns, 0f)/1000f);
     }
 
     public static Material[] LoadMaterialsFor (Mesh mesh, Material template) {
