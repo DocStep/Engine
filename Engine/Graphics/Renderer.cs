@@ -98,8 +98,7 @@ public class Renderer {
 
 
     public virtual void Render () {
-        /// Clear Frame
-        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
+        ClearFrame();
 
         /// Render
         Camera = MainCamera;
@@ -149,6 +148,9 @@ public class Renderer {
 
         //Log.log("Renderer", Stats.Frame, Windows.Window.Size, Stats.SceneSize);
         //Thread.Sleep(500);
+    }
+    public void ClearFrame () {
+        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
     }
     protected void StatsStart () {
         sw_Latency.Restart();
@@ -250,7 +252,7 @@ public class Renderer {
             case RenderPass.Transparent:
                 SetSceneUniformsUnlit(shader, Camera!.CameraPos);
                 SetSceneUniformsLit(shader);
-                SetSceneUniformsSkybox(shader, Skybox.texture, Skybox.maxLod);
+                SetSceneUniformsSkybox(shader, Skybox.prefilteredHandle, Skybox.maxLod);
                 break;
             case RenderPass.UI:
                 shader.SetMatrix4x4(Projection, m4x4_ProjectionUI);
@@ -324,11 +326,12 @@ public class Renderer {
         if (!shader.isLit) return;
         Lighting.SetSceneUniformsLit(shader);
     }
-    public static void SetSceneUniformsSkybox (Shader shader, HdrTexture? texture, float maxLod) {
+    public static void SetSceneUniformsSkybox (Shader shader, uint prefilteredHandle, float maxLod) {
         if (!Constants.renderSkyboxReflection) return;
-        if (texture is null) return;
+        if (prefilteredHandle == 0) return;
 
-        texture.Bind(TextureUnit.Texture0);
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2D, prefilteredHandle);
         shader.SetInt(Shader.Skybox, 0);
         shader.SetFloat(MaxReflectionLod, maxLod);
     }

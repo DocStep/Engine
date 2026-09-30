@@ -91,7 +91,7 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide] private readonly GL GL;
     [JsonIgnore, Hide] private uint _program;
     [JsonIgnore, Hide] private readonly Dictionary<string, int> _textureUnits = new();
-    [JsonIgnore, Hide] private int _nextTextureUnit = 1; /// 0 is reserved for uSkybox, bound directly in SetSceneUniformsSkybox
+    [JsonIgnore, Hide] private int _nextTextureUnit = 1; /// 0 is permanently reserved for uSkybox
 
     [JsonIgnore, Hide] static int _nextId = 0;
     [JsonIgnore, Hide] public readonly int Id_Renderer = System.Threading.Interlocked.Increment(ref _nextId);
@@ -322,11 +322,17 @@ public class Shader : IAsset<Shader> {
     }
 
     public void SetTexture (string name, Texture texture) {
-        int unitIndex = name switch {
-            Shader.Skybox => SkyboxUnitIndex,
-            Shader.Texture => TextureUnitIndex,
-            _ => throw new Exception($"No texture unit assigned for uniform '{name}' — add it to TextureUnits."),
-        };
+        if (!_textureUnits.TryGetValue(name, out int unitIndex)) {
+            if (name == Shader.Skybox) {
+                unitIndex = 0; /// reserved slot — always 0, never auto-assigned to anything else
+            } else {
+                unitIndex = _nextTextureUnit++;
+                const int maxUnits = 16; /// GL_MAX_TEXTURE_IMAGE_UNITS guaranteed minimum across all GL 3.3+ hardware
+                if (unitIndex >= maxUnits)
+                    throw new Exception($"Shader '{Name}': ran out of texture units assigning '{name}' (unit {unitIndex} >= {maxUnits}).");
+            }
+            _textureUnits[name] = unitIndex;
+        }
 
         TextureUnit unit = TextureUnit.Texture0 + unitIndex;
         texture.Bind(unit);
