@@ -102,11 +102,11 @@ public class Shader : IAsset<Shader> {
     /// Uniform names the renderer sets globally per-frame/per-pass (camera, lights, time...).
     /// FillDefaults must never touch these -- they don't belong to any one material.
     [JsonIgnore, Hide]
-    public static readonly HashSet<string> ReservedUniforms = new() {
+    public static readonly HashSet<string> ReservedGlobalUniforms = new HashSet<string>() {
         View, Projection, ViewPos, Model, NormalMatrix, CameraPos, Scene, Depth,
         SunLightCount, SunLightDir, SunLightColor, SunLightIntensity,
         PointLightCount, PointLightColor, PointLightIntensity, PointLightPos, PointLightRange,
-        Skybox, MaxReflectionLod,
+        Skybox, EnvMap, Roughness, MaxReflectionLod,
         Exposure, AmbientColor, AmbientColorIntensity, ReflectionIntensity,
         SHAr, SHAg, SHAb, SHBr, SHBg, SHBb, SHC,
     };
@@ -158,6 +158,7 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide] public const string PointLightRange = "uPointLightRange";
 
     [JsonIgnore, Hide] public const string Skybox = "uSkybox";
+    [JsonIgnore, Hide] public const string EnvMap = "uEnvMap";
     [JsonIgnore, Hide] public const string MaxReflectionLod = "uMaxReflectionLod";
 
     [JsonIgnore, Hide] public const string Exposure = "uExposure";
@@ -177,6 +178,7 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide] public const string Texture = "uTexture";
     [JsonIgnore, Hide] public const string HasTexture = "uHasTexture";
     [JsonIgnore, Hide] public const string Smoothness = "uSmoothness";
+    [JsonIgnore, Hide] public const string Roughness = "uRoughness";
     [JsonIgnore, Hide] public const string Metallic = "uMetallic";
     [JsonIgnore, Hide] public const string Alpha = "uAlpha";
     [JsonIgnore, Hide] public const string Radius = "uRadius";

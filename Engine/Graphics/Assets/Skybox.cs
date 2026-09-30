@@ -43,7 +43,6 @@ public class Skybox : IDisposable {
         GL.Enable(EnableCap.CullFace);
         GL.CullFace(TriangleFace.Front);
         GL.DepthMask(false);
-        //GL.DepthFunc(DepthFunction.Lequal);
 
         texture.Bind(TextureUnit.Texture0);
         
@@ -53,9 +52,6 @@ public class Skybox : IDisposable {
         GL.BindVertexArray(_emptyVao);
         GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
         Renderer.Instance.Stats.DrawCalls++;
-        //GL.BindVertexArray(0);
-
-        //GL.BindTexture(TextureTarget.TextureCubeMap, skyboxTextureId);
 
         GL.CullFace(TriangleFace.Back);
         GL.DepthMask(true);
@@ -103,12 +99,12 @@ public class Skybox : IDisposable {
 
             prefilterShader.Use();
             source.Bind(TextureUnit.Texture0);
-            prefilterShader.SetInt("uEnvMap", 0);
-            prefilterShader.SetFloat("uRoughness", roughness);
+            prefilterShader.SetInt(Shader.EnvMap, 0);
+            prefilterShader.SetFloat(Shader.Roughness, roughness);
             prefilterShader.SetFloat("uResolutionX", source.Width);
             prefilterShader.SetFloat("uResolutionY", source.Height);
             /// uFireflyClamp tune — lower = smoother but dimmer sun bloom, higher = closer to true brightness but more residual fireflies
-            prefilterShader.SetFloat("uFireflyClamp", 2f);
+            prefilterShader.SetFloat("uFireflyClamp", 16f);
             gl.BindVertexArray(_emptyVao);
             gl.DrawArrays(PrimitiveType.Triangles, 0, 3);
             Renderer.Instance.Stats.DrawCalls++;

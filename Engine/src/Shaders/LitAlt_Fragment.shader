@@ -202,8 +202,8 @@ void main() {
     vec3 prefiltered = textureLod(uSkybox, SampleSphericalMap(R), roughness * uMaxReflectionLod).rgb;
     vec3 ambientSpecular = prefiltered * Fr * uReflectionIntensity;
 
-    // vec3 color = ambientDiffuse + ambientSpecular + Lo;
-    vec3 color = ambientSpecular;
+    vec3 color = ambientDiffuse + ambientSpecular + Lo;
+    // vec3 color = ambientSpecular;
     // vec3 color = albedo;
 
     // Exposure + luminance-preserving Reinhard + gamma.
@@ -217,6 +217,9 @@ void main() {
 
     color = pow(color, vec3(1.0 / 2.2));
 
+    // FragColor = vec4(ambientDiffuse + ambientSpecular + Lo, alpha);
     // FragColor = vec4(ambientSpecular, alpha);
-    FragColor = vec4(prefiltered, 1.0);
+    // FragColor = vec4(prefiltered, 1.0);
+    // FragColor = vec4(color, 1.0);
+    FragColor = vec4(color, alpha);
 }

@@ -5,7 +5,7 @@ namespace Engine;
 
 public interface IAsset : IDisposable {
     public string Name { get; protected set; }
-    public long Id { get; protected set; }
+    [Readonly] public long Id { get; protected set; }
     [Hide] public string? Path { get; set; }
 
     public void Save (string path);

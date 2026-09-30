@@ -1,4 +1,6 @@
-﻿namespace Engine.Graphics;
+﻿using Newtonsoft.Json;
+
+namespace Engine.Graphics;
 
 public enum RenderPass {
     Opaque,
@@ -14,7 +16,7 @@ public enum RenderFace {
 
 
 public class Material : IAsset<Material>, IOnLoaded {
-    [Newtonsoft.Json.JsonConstructor]
+    [JsonConstructor]
     public Material () { }
     public void OnLoaded () {
         FillDefaults();
@@ -48,13 +50,13 @@ public class Material : IAsset<Material>, IOnLoaded {
     }
 
     public string Name { get; set; } = nameof(Material);
-    public long Id { get; set; }
+    [Readonly] public long Id { get; set; }
     public string? Path { get; set; }
 
     [Hide] public Shader shader = null!;
 
-    static int _nextId = 0;
-    public readonly int Id_Renderer = System.Threading.Interlocked.Increment(ref _nextId);
+    [JsonIgnore, Hide] static int _nextId = 0;
+    [JsonIgnore, Readonly] public readonly int Id_Renderer = System.Threading.Interlocked.Increment(ref _nextId);
 
     /// Render State
     public RenderPass Pass = RenderPass.Opaque;
@@ -86,7 +88,7 @@ public class Material : IAsset<Material>, IOnLoaded {
 
     public void FillDefaults () {
         foreach (UniformInfo info in shader.ActiveUniforms.Values) {
-            if (Shader.ReservedUniforms.Contains(info.Name)) continue;
+            if (Shader.ReservedGlobalUniforms.Contains(info.Name)) continue;
 
             //if (info.Type == Silk.NET.OpenGL.UniformType.Sampler2D) {
             //    if (!shader.Name.Contains("Skybox")) {
