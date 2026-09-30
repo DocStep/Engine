@@ -6,6 +6,7 @@
 in vec3 vNormal;
 in vec3 vFragPos;
 in vec2 vUV;
+in vec3 vViewNormal;
 
 #define MAX_SUN_LIGHTS 32
 #define MAX_POINT_LIGHTS 32
@@ -51,6 +52,7 @@ uniform vec4 uSHC;
 
 
 out vec4 FragColor;
+layout (location = 1) out vec4 FragNormal;
 
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -222,4 +224,6 @@ void main() {
     // FragColor = vec4(prefiltered, 1.0);
     // FragColor = vec4(color, 1.0);
     FragColor = vec4(color, alpha);
+    // write view-space normal to MRT attachment 1
+    FragNormal = vec4(normalize(vViewNormal), 1.0);
 }

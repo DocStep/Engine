@@ -11,6 +11,7 @@ uniform mat4 uProjection;
 out vec3 vNormal;
 out vec3 vFragPos;
 out vec2 vUV;
+out vec3 vViewNormal;
 
 
 void main () {
@@ -19,6 +20,7 @@ void main () {
     vFragPos = worldPos.xyz;
     vNormal = mat3(aNormalMatrix)*aNormal;
     vUV = aUV;
+    vViewNormal = mat3(uView) * vNormal;
     // vUV = vec2(aUV.x, 1.0 - aUV.y);
 
     gl_Position = uProjection*uView*worldPos;

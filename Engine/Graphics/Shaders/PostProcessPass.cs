@@ -24,6 +24,12 @@ public class PostProcessPass {
         material.shader.SetInt(Shader.Scene, 0);
         material.shader.SetInt(Shader.Depth, 1);
 
+        // Ensure the scene normal texture is bound to uNormal (texture unit 2).
+        // Some materials/shader texture bindings may reuse units; bind explicitly here to avoid sampling the wrong texture.
+        Renderer.GL.ActiveTexture(TextureUnit.Texture2);
+        Renderer.GL.BindTexture(TextureTarget.Texture2D, Renderer.Instance.PostProcess.SceneNormalTexture);
+        material.shader.SetInt("uNormal", 2);
+
         Renderer.GL.BindVertexArray(PostProcessStack.QuadVAO);
         Renderer.GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
         Renderer.GL.BindVertexArray(0);

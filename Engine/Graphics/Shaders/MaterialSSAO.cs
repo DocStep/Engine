@@ -35,6 +35,13 @@ public class MaterialSSAO : Material {
         shader.SetFloat(Near, Renderer.Instance.Camera.PlaneNear);
         shader.SetFloat(Far, Renderer.Instance.Camera.PlaneFar);
         //shader.SetFloat(FalloffPower, falloffPower);
+
+        // Bind the scene normals (stored as view-space floats in the postprocess stack) to the shader.
+        // Use texture unit 2 to avoid clashing with Scene (0) and Depth (1).
+        Renderer.GL.ActiveTexture(Silk.NET.OpenGL.TextureUnit.Texture2);
+        Renderer.GL.BindTexture(Silk.NET.OpenGL.TextureTarget.Texture2D, Renderer.Instance.PostProcess.SceneNormalTexture);
+        shader.SetInt("uNormal", 2);
+        //Log.log("SceneNormalTexture", Renderer.Instance.PostProcess.SceneNormalTexture);
     }
 
 }

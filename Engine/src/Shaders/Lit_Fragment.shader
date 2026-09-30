@@ -2,6 +2,7 @@
 
 in vec3 vNormal;
 in vec3 vFragPos;
+in vec3 vViewNormal;
 
 uniform vec3 uColor;
 uniform float uSmoothness;
@@ -26,6 +27,7 @@ const float PI = 3.14159265;
 const float uExposure = 1.0;
 
 out vec4 FragColor;
+layout (location = 1) out vec4 FragNormal;
 
 
 float D_GGX (float NdH, float a2) {
@@ -114,4 +116,6 @@ void main () {
     color = pow(color, vec3(1.0/2.2));
 
     FragColor = vec4(color, uAlpha);
+    // Write view-space normal into MRT attachment 1 so postprocess can sample it.
+    FragNormal = vec4(normalize(vViewNormal), 1.0);
 }

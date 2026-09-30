@@ -105,7 +105,17 @@ void main () {
         : 1.0;
 
     // ao = (occlusion/validSamples)*uStrength;
-    
+
+    // Sample scene normal buffer (view-space) and fall back to reconstructed normal when missing.
+    vec3 sampledNormal = texture(uNormal, vUV).xyz;
+    vec3 outNormal;
+    if (length(sampledNormal) < 0.01) {
+        outNormal = ReconstructNormal(vUV, origin);
+    } else {
+        outNormal = normalize(sampledNormal);
+    }
+
+    // Output occlusion to the primary color target and write remapped normals to the normal attachment.
     FragColor = vec4(vec3(ao), 1.0);
-    FragNormal = vec4(normalize(vViewNormal), 1.0);
+    FragNormal = vec4(outNormal * 0.5 + 0.5, 1.0);
 }
