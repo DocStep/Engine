@@ -10,6 +10,7 @@ uniform float uNear;
 uniform float uFar;
 uniform float uDepthThreshold; /// relative, try 0.05
 
+
 float LinearizeDepth (float rawDepth) {
     float z = rawDepth*2.0 - 1.0;
     return (2.0*uNear*uFar)/(uFar + uNear - z*(uFar - uNear));

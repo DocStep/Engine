@@ -20,6 +20,8 @@ public class PostProcessStack : IDisposable {
     public List<PostProcessPass> Effects = new List<PostProcessPass>();
 
     [Hide] int _width, _height;
+    [Hide] uint _sceneNormal;
+    [Hide] public uint SceneNormalTexture => _sceneNormal;
 
     /// Final Result
     [Hide] uint _sceneFbo, _sceneColor, _sceneDepth, _pingDepth0, _pingDepth1;
@@ -48,6 +50,7 @@ public class PostProcessStack : IDisposable {
         _height = height;
 
         _sceneFbo = CreateFbo(width, height, out _sceneColor, out _sceneDepth, withDepth: true);
+        AttachNormal(_sceneFbo, width, height);
         _pingFbo[0] = CreateFbo(width, height, out _pingColor[0], out _pingDepth0, withDepth: true);
         _pingFbo[1] = CreateFbo(width, height, out _pingColor[1], out _pingDepth1, withDepth: true);
 
@@ -96,13 +99,36 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         return fbo;
     }
+    /// View-space normals, written by the geometry pass into ColorAttachment1
+    void AttachNormal (uint fbo, int w, int h) {
+        Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
+
+        _sceneNormal = Renderer.GL.GenTexture();
+        Renderer.GL.BindTexture(TextureTarget.Texture2D, _sceneNormal);
+        unsafe {
+            Renderer.GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba16f,
+                (uint)w, (uint)h, 0, PixelFormat.Rgba, PixelType.Float, null);
+        }
+        Renderer.GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
+        Renderer.GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+        Renderer.GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
+        Renderer.GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
+        Renderer.GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment1,
+            TextureTarget.Texture2D, _sceneNormal, 0);
+
+        var status = Renderer.GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
+        if (status != GLEnum.FramebufferComplete)
+            Log.log($"PostProcess scene FBO (normal) incomplete: {status}");
+
+        Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+    }
 
     /// Call before drawing the scene
     public void BeginScene () {
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, _sceneFbo);
-        SetDrawBuffer(_sceneFbo);
+        //SetDrawBuffer(_sceneFbo);
+        SetSceneDrawBuffers();
         Renderer.GL.Viewport(0, 0, (uint)Renderer.Instance.Width, (uint)Renderer.Instance.Height);
-        //Log.log("PPS Viewport", (uint)Renderer.Instance.Width, (uint)Renderer.Instance.Height);
         Renderer.GL.ColorMask(true, true, true, true);
         Renderer.GL.DepthMask(true);
         Renderer.GL.DepthFunc(DepthFunction.Less);
@@ -110,6 +136,7 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.Disable(EnableCap.Blend);
         Renderer.GL.Enable(EnableCap.DepthTest);
         Renderer.GL.Clear((uint)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
+        Renderer.GL.ClearBuffer(GLEnum.Color, 1, new float[] { 0f, 0f, 0f, 0f });
     }
 
     /// Bind the output FBO so gizmos/text/debug draws land inside the scene texture, not the window
@@ -245,6 +272,14 @@ public class PostProcessStack : IDisposable {
         Renderer.GL.DrawBuffer(fbo == 0 ? GLEnum.Back : GLEnum.ColorAttachment0);
     }
 
+    /// Scene pass writes color (0) and view-space normal (1)
+    void SetSceneDrawBuffers () {
+        Renderer.GL.DrawBuffers(new GLEnum[] { GLEnum.ColorAttachment0, GLEnum.ColorAttachment1 });
+    }
+    /// Call after the opaque pass. Shaders that don't write the normal output
+    /// (transparents, sky, debug lines) would otherwise leave undefined values in attachment 1
+    public void EndNormalOutput () => SetDrawBuffer(_sceneFbo);
+    //public void EndNormalOutput () => Renderer.GL.DrawBuffers(new GLEnum[] { GLEnum.ColorAttachment0 });
 
 
     void DeleteTargets () {
@@ -262,12 +297,14 @@ public class PostProcessStack : IDisposable {
         DeleteFramebuffer(_outputFbo);
         DeleteTexture(_outputColor);
         DeleteTexture(_outputDepth);
+        DeleteTexture(_sceneNormal);
         DeleteTexture(_pingDepth0);
         DeleteTexture(_pingDepth1);
 
         _sceneFbo = 0;
         _sceneColor = 0;
         _sceneDepth = 0;
+        _sceneNormal = 0;
         _outputFbo = 0;
         _outputColor = 0;
         _outputDepth = 0;

@@ -39,11 +39,11 @@ public class Renderer {
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Grayscale));
         PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_Vignette) { Enabled = false });
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_Vignette) { Enabled = false });
 
 
         /// Delegates
@@ -222,8 +222,18 @@ public class Renderer {
         /// UI is the exception: it goes through DrawRenderInfo with uniforms.
         int count = _queue.Count;
         int idx = 0;
+        bool normalsOn = true;
+        //Log.log("Start");
         while (idx < count) {
             RenderInfo first = _queue[idx];
+
+            /// Everything after the opaque pass (transparents, UI) doesn't write FragNormal
+            if (normalsOn && first.material.Pass != RenderPass.Opaque) {
+                PostProcess.EndNormalOutput();
+                //Log.log("EndNormalOutput");
+                normalsOn = false;
+            }
+            //Log.log("RenderInfo", first.material.Pass);
 
             if (first.material.Pass == RenderPass.UI) {
                 DrawRenderInfo(first);

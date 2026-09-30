@@ -1,9 +1,13 @@
 #version 330 core
 
+layout (location = 0) out vec4 FragColor;
+layout (location = 1) out vec4 FragNormal;
+
 in vec2 vUV;
-out vec4 FragColor;
+in vec3 vViewNormal;
 
 uniform sampler2D uDepth;
+uniform sampler2D uNormal;
 uniform mat4 uProjection;
 uniform mat4 uInvProjection;
 uniform vec2 uTexelSize;
@@ -14,8 +18,9 @@ uniform float uNear;
 uniform float uFar;
 // uniform float uFalloffPower;
 
-const int SAMPLE_COUNT = 8;
+const int SAMPLE_COUNT = 32;
 const float GOLDEN_ANGLE = 2.39996323;
+
 
 vec3 ViewPosFromDepth (vec2 uv) {
     float z = texture(uDepth, uv).r*2.0 - 1.0;
@@ -56,7 +61,7 @@ void main () {
     }
 
     vec3 origin = ViewPosFromDepth(vUV);
-    vec3 normal = ReconstructNormal(vUV, origin);
+    vec3 normal = normalize(texture(uNormal, vUV).xyz);
 
     /// view-space radius -> screen-space radius, never below ~1.5 texels
     vec4 offsetClip = uProjection*vec4(origin.xy + vec2(uRadius, 0.0), origin.z, 1.0);
@@ -80,17 +85,18 @@ void main () {
         if (sampleUV.x < 0.0 || sampleUV.x > 1.0 || sampleUV.y < 0.0 || sampleUV.y > 1.0) continue;
         if (LinearizeDepth(texture(uDepth, sampleUV).r) > uFar*0.99) continue;
 
-        vec3 toSample = ViewPosFromDepth(sampleUV) - origin;
+        vec3 samplePos = ViewPosFromDepth(sampleUV);
+        vec3 toSample = samplePos - origin;
         float distSq = dot(toSample, toSample);
-
-        /// height above the tangent plane, bias applied here
+        float distance = sqrt(distSq);
         float height = dot(toSample, normal) - scaledBias;
+        float rangeCheck = 1.0 - smoothstep(uRadius*0.5, uRadius, distance);
 
-        /// fades out samples farther than uRadius (halo / cross-object bleed)
-        float rangeCheck = 1.0 - smoothstep(uRadius*0.75, uRadius*1.5, sqrt(distSq));
-        //rangeCheck = pow(rangeCheck, uFalloffPower); /// sharper falloff between objects
+        if (height > 0.0) {
+            float contribution = height/(distance + 0.001);
+            occlusion += contribution*rangeCheck;
+        }
 
-        occlusion += max(height, 0.0)/(distSq + 0.001)*rangeCheck*uRadius;
         validSamples += 1.0;
     }
 
@@ -98,5 +104,8 @@ void main () {
         ? 1.0 - clamp((occlusion/validSamples)*uStrength, 0.0, 1.0)
         : 1.0;
 
+    // ao = (occlusion/validSamples)*uStrength;
+    
     FragColor = vec4(vec3(ao), 1.0);
+    FragNormal = vec4(normalize(vViewNormal), 1.0);
 }
