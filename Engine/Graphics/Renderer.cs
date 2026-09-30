@@ -39,8 +39,8 @@ public class Renderer {
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Grayscale));
         PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
-        //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
-        //PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Vignette) { Enabled = false });

@@ -7,17 +7,21 @@ public class MaterialSSAO : Material {
     public MaterialSSAO (Shader shader) : base(shader) { }
 
     [Hide] public Matrix4x4 invProjection;
-    public float radius = 0.3f;
-    public float bias = 0.02f;
-    public float strength = 0.6f;
+    public float radius = 0.5f;
+    public float bias = 0.05f;
+    public float strength = 1f;
+    //public float power = 1.5f;
+    public float sampleCount = 32f;
     //public float falloffPower = 10.0f;
 
     [Hide] public const string TexelSize = "uTexelSize";
     [Hide] public const string Radius = "uRadius";
     [Hide] public const string Bias = "uBias";
     [Hide] public const string Strength = "uStrength";
+    //[Hide] public const string Power = "uPower";
     [Hide] public const string Near = "uNear";
     [Hide] public const string Far = "uFar";
+    [Hide] public const string SampleCount = "uSampleCount";
     //public const string FalloffPower = "uFalloffPower";
 
 
@@ -34,6 +38,7 @@ public class MaterialSSAO : Material {
         shader.SetFloat(Strength, strength);
         shader.SetFloat(Near, Renderer.Instance.Camera.PlaneNear);
         shader.SetFloat(Far, Renderer.Instance.Camera.PlaneFar);
+        shader.SetFloat(SampleCount, sampleCount);
         //shader.SetFloat(FalloffPower, falloffPower);
 
         // Bind the scene normals (stored as view-space floats in the postprocess stack) to the shader.

@@ -16,9 +16,9 @@ uniform float uBias;
 uniform float uStrength;
 uniform float uNear;
 uniform float uFar;
+uniform float uSampleCount;
 // uniform float uFalloffPower;
 
-const int SAMPLE_COUNT = 32;
 const float GOLDEN_ANGLE = 2.39996323;
 
 
@@ -76,8 +76,8 @@ void main () {
     float occlusion = 0.0;
     float validSamples = 0.0;
 
-    for (int i = 0; i < SAMPLE_COUNT; i++) {
-        float t = (float(i) + 0.5)/float(SAMPLE_COUNT);
+    for (int i = 0; i < uSampleCount; i++) {
+        float t = (float(i) + 0.5)/float(uSampleCount);
         float angle = baseAngle + float(i)*GOLDEN_ANGLE;
         vec2 dir = vec2(cos(angle), sin(angle));
         vec2 sampleUV = vUV + dir*screenRadius*t;
