@@ -6,19 +6,19 @@ namespace Engine.Graphics;
 public class MaterialSSAO : Material {
     public MaterialSSAO (Shader shader) : base(shader) { }
 
-    public Matrix4x4 invProjection;
+    [Hide] public Matrix4x4 invProjection;
     public float radius = 0.3f;
     public float bias = 0.02f;
     public float strength = 0.6f;
-    public float falloffPower = 10.0f;
+    //public float falloffPower = 10.0f;
 
-    public const string TexelSize = "uTexelSize";
-    public const string Radius = "uRadius";
-    public const string Bias = "uBias";
-    public const string Strength = "uStrength";
-    public const string Near = "uNear";
-    public const string Far = "uFar";
-    public const string FalloffPower = "uFalloffPower";
+    [Hide] public const string TexelSize = "uTexelSize";
+    [Hide] public const string Radius = "uRadius";
+    [Hide] public const string Bias = "uBias";
+    [Hide] public const string Strength = "uStrength";
+    [Hide] public const string Near = "uNear";
+    [Hide] public const string Far = "uFar";
+    //public const string FalloffPower = "uFalloffPower";
 
 
     public override void ApplyCustom () {
@@ -34,7 +34,7 @@ public class MaterialSSAO : Material {
         shader.SetFloat(Strength, strength);
         shader.SetFloat(Near, Renderer.Instance.Camera.PlaneNear);
         shader.SetFloat(Far, Renderer.Instance.Camera.PlaneFar);
-        shader.SetFloat(FalloffPower, falloffPower);
+        //shader.SetFloat(FalloffPower, falloffPower);
     }
 
 }

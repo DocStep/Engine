@@ -14,6 +14,9 @@ uniform float uNear;
 uniform float uFar;
 // uniform float uFalloffPower;
 
+const int SAMPLE_COUNT = 8;
+const float GOLDEN_ANGLE = 2.39996323;
+
 vec3 ViewPosFromDepth (vec2 uv) {
     float z = texture(uDepth, uv).r*2.0 - 1.0;
     vec4 clip = vec4(uv*2.0 - 1.0, z, 1.0);
@@ -40,10 +43,14 @@ vec3 ReconstructNormal (vec2 uv, vec3 origin) {
     return normalize(cross(ddy, ddx));
 }
 
+/// Interleaved gradient noise: smoother pattern than sin-hash, blurs out cleanly
+float Noise (vec2 p) {
+    return fract(52.9829189*fract(dot(p, vec2(0.06711056, 0.00583715))));
+}
+
 void main () {
     float centerRawDepth = texture(uDepth, vUV).r;
-    float centerLinearDepth = LinearizeDepth(centerRawDepth);
-    if (centerLinearDepth > uFar*0.99) {
+    if (LinearizeDepth(centerRawDepth) > uFar*0.99) {
         FragColor = vec4(1.0);
         return;
     }
@@ -51,46 +58,39 @@ void main () {
     vec3 origin = ViewPosFromDepth(vUV);
     vec3 normal = ReconstructNormal(vUV, origin);
 
-    float rand = fract(sin(dot(vUV, vec2(12.9898, 78.233)))*43758.5453);
-    float angle = rand*6.2831853;
-    float c = cos(angle), s = sin(angle);
-    mat2 rot = mat2(c, -s, s, c);
-
-    vec2 offsets[4] = vec2[](
-        vec2(1.0, 0.0), vec2(-1.0, 0.0),
-        vec2(0.0, 1.0), vec2(0.0, -1.0)
-    );
-    float radii[4] = float[](0.5, 0.7, 0.85, 1.0);
-
-    vec4 offsetViewPos = vec4(origin.xy + vec2(uRadius, 0.0), origin.z, 1.0);
-    vec4 offsetClip = uProjection*offsetViewPos;
-    vec2 offsetUV = (offsetClip.xy/offsetClip.w)*0.5 + 0.5;
+    /// view-space radius -> screen-space radius, never below ~1.5 texels
+    vec4 offsetClip = uProjection*vec4(origin.xy + vec2(uRadius, 0.0), origin.z, 1.0);
     vec4 originClip = uProjection*vec4(origin, 1.0);
+    vec2 offsetUV = (offsetClip.xy/offsetClip.w)*0.5 + 0.5;
     vec2 originUV = (originClip.xy/originClip.w)*0.5 + 0.5;
-    float screenRadius = clamp(length(offsetUV - originUV), 0.0001, 0.5);
+    float screenRadius = clamp(length(offsetUV - originUV), uTexelSize.x*1.5, 0.25);
 
     float scaledBias = uBias*max(-origin.z, 1.0)*0.01;
+    float baseAngle = Noise(gl_FragCoord.xy)*6.2831853;
 
     float occlusion = 0.0;
     float validSamples = 0.0;
 
-    for (int i = 0; i < 4; i++) {
-        vec2 rotatedOffset = rot*offsets[i];
-        vec2 sampleUV = vUV + rotatedOffset*screenRadius*radii[i];
+    for (int i = 0; i < SAMPLE_COUNT; i++) {
+        float t = (float(i) + 0.5)/float(SAMPLE_COUNT);
+        float angle = baseAngle + float(i)*GOLDEN_ANGLE;
+        vec2 dir = vec2(cos(angle), sin(angle));
+        vec2 sampleUV = vUV + dir*screenRadius*t;
 
-        float sampleRawDepth = texture(uDepth, sampleUV).r;
-        float sampleLinearDepth = LinearizeDepth(sampleRawDepth);
-        if (sampleLinearDepth > uFar*0.99) continue;
+        if (sampleUV.x < 0.0 || sampleUV.x > 1.0 || sampleUV.y < 0.0 || sampleUV.y > 1.0) continue;
+        if (LinearizeDepth(texture(uDepth, sampleUV).r) > uFar*0.99) continue;
 
-        vec3 samplePos = ViewPosFromDepth(sampleUV);
-        vec3 toSample = samplePos - origin;
-        float dist = length(toSample);
-        float nDotS = max(dot(normal, normalize(toSample)), 0.0);
+        vec3 toSample = ViewPosFromDepth(sampleUV) - origin;
+        float distSq = dot(toSample, toSample);
 
-        float rangeCheck = smoothstep(0.0, 1.0, uRadius/max(dist, 0.0001));
+        /// height above the tangent plane, bias applied here
+        float height = dot(toSample, normal) - scaledBias;
+
+        /// fades out samples farther than uRadius (halo / cross-object bleed)
+        float rangeCheck = 1.0 - smoothstep(uRadius*0.75, uRadius*1.5, sqrt(distSq));
         //rangeCheck = pow(rangeCheck, uFalloffPower); /// sharper falloff between objects
 
-        occlusion += (dist > scaledBias ? nDotS*rangeCheck : 0.0);
+        occlusion += max(height, 0.0)/(distSq + 0.001)*rangeCheck*uRadius;
         validSamples += 1.0;
     }
 
