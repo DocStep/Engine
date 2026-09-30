@@ -171,7 +171,8 @@ void main() {
     float alpha = uAlpha;
     
     if (uHasTexture == 1) {
-        vec4 texSample = texture(uTexture, vUV);
+        // vec4 texSample = texture(uTexture, vUV);
+        vec4 texSample = textureLod(uTexture, vUV, 0.0);
         albedo *= texSample.rgb;
         alpha *= texSample.a;
     }
@@ -201,7 +202,9 @@ void main() {
     vec3 prefiltered = textureLod(uSkybox, SampleSphericalMap(R), roughness * uMaxReflectionLod).rgb;
     vec3 ambientSpecular = prefiltered * Fr * uReflectionIntensity;
 
-    vec3 color = ambientDiffuse + ambientSpecular + Lo;
+    // vec3 color = ambientDiffuse + ambientSpecular + Lo;
+    vec3 color = ambientSpecular;
+    // vec3 color = albedo;
 
     // Exposure + luminance-preserving Reinhard + gamma.
     // Tonemapping luminance (not per-channel) keeps hue/saturation intact at high intensity.
@@ -214,5 +217,6 @@ void main() {
 
     color = pow(color, vec3(1.0 / 2.2));
 
-    FragColor = vec4(color, alpha);
+    // FragColor = vec4(ambientSpecular, alpha);
+    FragColor = vec4(prefiltered, alpha);
 }

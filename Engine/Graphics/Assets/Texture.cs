@@ -22,7 +22,7 @@ public class Texture : IAsset<Texture> {
     private static Texture? _white;
     [JsonIgnore, Hide]
     public static Texture White => _white ??= CreateSolid(255, 255, 255, 255);
-    //public const Texture? Empty = null;
+
 
     public void Bind (TextureUnit unit = TextureUnit.Texture0) {
         Renderer.GL.ActiveTexture(unit);
@@ -78,9 +78,9 @@ public class Texture : IAsset<Texture> {
 
         gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
         gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
-        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.LinearMipmapLinear);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear); /// was LinearMipmapLinear — needs actual mips or the texture is "incomplete" (samples as black)
         gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
-        gl.GenerateMipmap(TextureTarget.Texture2D);
+        //gl.GenerateMipmap(TextureTarget.Texture2D);
 
         gl.BindTexture(TextureTarget.Texture2D, 0);
 

@@ -98,7 +98,7 @@ public class Material : IAsset<Material>, IOnLoaded {
 
             object defValue = 
                 Shader.UniformDefaults.TryGetValue(info.Name, out var over) ? over
-                : Shader.TypeDefaults.TryGetValue(info.Type, out var byType) ? byType
+                : Shader.UniformTypeDefaults.TryGetValue(info.Type, out var byType) ? byType
                 : null!;
             if (defValue is null) continue;
 

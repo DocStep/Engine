@@ -112,7 +112,7 @@ public class Shader : IAsset<Shader> {
     };
 
     [JsonIgnore, Hide]
-    public readonly static Dictionary<UniformType, object> TypeDefaults = new Dictionary<UniformType, object>() {
+    public readonly static Dictionary<UniformType, object> UniformTypeDefaults = new Dictionary<UniformType, object>() {
         [UniformType.Int] = 0,
         [UniformType.Float] = 0.5f,
         [UniformType.FloatVec2] = Vector2.Zero,
@@ -187,7 +187,7 @@ public class Shader : IAsset<Shader> {
 
     public void Use () {
         GL.UseProgram(_program);
-        _nextTextureUnit = 0;
+        //_nextTextureUnit = 0;
         //GLEnum err = GL.GetError();
         //if (err != GLEnum.NoError) 
         //    Console.WriteLine($"UseProgram({_program}, {Name}) Error: {err}");
