@@ -10,27 +10,27 @@ public class Shader : IAsset<Shader> {
         Name = name;
         this.isLit = isLit;
 
-        this.vertexSourcePath = vertexSourcePath;
-        this.fragmentSourcePath = fragmentSourcePath;
+        this.VertexSourcePath = vertexSourcePath;
+        this.FragmentSourcePath = fragmentSourcePath;
 
         Compile();
     }
 
     public void Compile () {
-        string vertexSource = Assets.LoadText(vertexSourcePath);
-        string fragmentSource = Assets.LoadText(fragmentSourcePath);
+        string vertexSource = Assets.LoadText(VertexSourcePath);
+        string fragmentSource = Assets.LoadText(FragmentSourcePath);
 
         uint vertex;
         uint fragment;
         try {
             vertex = CompileShader(ShaderType.VertexShader, vertexSource);
         } catch (Exception ex) {
-            throw new Exception($"Failed to compile Shader_Vertex {vertexSourcePath}", ex);
+            throw new Exception($"Failed to compile Shader_Vertex {VertexSourcePath}", ex);
         }
         try {
             fragment = CompileShader(ShaderType.FragmentShader, fragmentSource);
         } catch (Exception ex) {
-            throw new Exception($"Failed to compile Shader_Fragment {vertexSourcePath}", ex);
+            throw new Exception($"Failed to compile Shader_Fragment {VertexSourcePath}", ex);
         }
 
         uint program = GL.CreateProgram();
@@ -84,8 +84,8 @@ public class Shader : IAsset<Shader> {
     public long Id { get; set; }
     public string? Path { get; set; }
 
-    [JsonProperty] private readonly string vertexSourcePath;
-    [JsonProperty] private readonly string fragmentSourcePath;
+    [JsonProperty] private readonly string VertexSourcePath;
+    [JsonProperty] private readonly string FragmentSourcePath;
     public bool isLit;
 
     [JsonIgnore, Hide] private readonly GL GL;
@@ -93,8 +93,8 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide] private readonly Dictionary<string, int> _textureUnits = new();
     [JsonIgnore, Hide] private int _nextTextureUnit = 1; /// 0 is reserved for uSkybox, bound directly in SetSceneUniformsSkybox
 
-    static int _nextId = 0;
-    public readonly int Id_Renderer = System.Threading.Interlocked.Increment(ref _nextId);
+    [JsonIgnore, Hide] static int _nextId = 0;
+    [JsonIgnore, Hide] public readonly int Id_Renderer = System.Threading.Interlocked.Increment(ref _nextId);
 
     [JsonIgnore, Hide]
     public Dictionary<string, UniformInfo> ActiveUniforms { get; private set; } = new Dictionary<string, UniformInfo>();
@@ -127,61 +127,61 @@ public class Shader : IAsset<Shader> {
         [Shader.Smoothness] = 0.5f,
         [Shader.Metallic] = 0f,
         [Shader.ReflectionIntensity] = 1f,
-        //[Shader.Texture] = Graphics.Texture.White,
     };
 
     [JsonIgnore] public static RendererGLStats Stats = default;
-    /*public static void StatsReset () {
-        Stats = new RendererGLStats();
-    }*/
 
 
-    [JsonIgnore] public const string View = "uView";
-    [JsonIgnore] public const string Projection = "uProjection";
-    [JsonIgnore] public const string InvProjection = "uInvProjection";
-    [JsonIgnore] public const string ViewPos = "uViewPos";
-    [JsonIgnore] public const string Model = "uModel";
-    [JsonIgnore] public const string NormalMatrix = "uNormalMatrix";
-    [JsonIgnore] public const string CameraPos = "uCameraPos";
-    [JsonIgnore] public const string Scene = "uSceneColor";
-    [JsonIgnore] public const string Depth = "uDepth";
+    [JsonIgnore, Hide] public const int SkyboxUnitIndex = 0;
+    [JsonIgnore, Hide] public const int TextureUnitIndex = 10;
 
-    [JsonIgnore] public const string SunLightCount = "uSunLightCount";
-    [JsonIgnore] public const string SunLightDir = "uSunLightDir";
-    [JsonIgnore] public const string SunLightColor = "uSunLightColor";
-    [JsonIgnore] public const string SunLightIntensity = "uSunLightIntensity";
 
-    [JsonIgnore] public const string PointLightCount = "uPointLightCount";
-    [JsonIgnore] public const string PointLightColor = "uPointLightColor";
-    [JsonIgnore] public const string PointLightIntensity = "uPointLightIntensity";
-    [JsonIgnore] public const string PointLightPos = "uPointLightPos";
-    [JsonIgnore] public const string PointLightRange = "uPointLightRange";
+    [JsonIgnore, Hide] public const string View = "uView";
+    [JsonIgnore, Hide] public const string Projection = "uProjection";
+    [JsonIgnore, Hide] public const string InvProjection = "uInvProjection";
+    [JsonIgnore, Hide] public const string ViewPos = "uViewPos";
+    [JsonIgnore, Hide] public const string Model = "uModel";
+    [JsonIgnore, Hide] public const string NormalMatrix = "uNormalMatrix";
+    [JsonIgnore, Hide] public const string CameraPos = "uCameraPos";
+    [JsonIgnore, Hide] public const string Scene = "uSceneColor";
+    [JsonIgnore, Hide] public const string Depth = "uDepth";
 
-    [JsonIgnore] public const string Skybox = "uSkybox";
-    [JsonIgnore] public const string MaxReflectionLod = "uMaxReflectionLod";
+    [JsonIgnore, Hide] public const string SunLightCount = "uSunLightCount";
+    [JsonIgnore, Hide] public const string SunLightDir = "uSunLightDir";
+    [JsonIgnore, Hide] public const string SunLightColor = "uSunLightColor";
+    [JsonIgnore, Hide] public const string SunLightIntensity = "uSunLightIntensity";
 
-    [JsonIgnore] public const string Exposure = "uExposure";
-    [JsonIgnore] public const string AmbientColor = "uAmbientColor";
-    [JsonIgnore] public const string AmbientColorIntensity = "uAmbientColorIntensity";
-    [JsonIgnore] public const string ReflectionIntensity = "uReflectionIntensity";
+    [JsonIgnore, Hide] public const string PointLightCount = "uPointLightCount";
+    [JsonIgnore, Hide] public const string PointLightColor = "uPointLightColor";
+    [JsonIgnore, Hide] public const string PointLightIntensity = "uPointLightIntensity";
+    [JsonIgnore, Hide] public const string PointLightPos = "uPointLightPos";
+    [JsonIgnore, Hide] public const string PointLightRange = "uPointLightRange";
 
-    [JsonIgnore] public const string SHAr = "uSHAr";
-    [JsonIgnore] public const string SHAg = "uSHAg";
-    [JsonIgnore] public const string SHAb = "uSHAb";
-    [JsonIgnore] public const string SHBr = "uSHBr";
-    [JsonIgnore] public const string SHBg = "uSHBg";
-    [JsonIgnore] public const string SHBb = "uSHBb";
-    [JsonIgnore] public const string SHC = "uSHC";
+    [JsonIgnore, Hide] public const string Skybox = "uSkybox";
+    [JsonIgnore, Hide] public const string MaxReflectionLod = "uMaxReflectionLod";
 
-    [JsonIgnore] public const string Color = "uColor";
-    [JsonIgnore] public const string Texture = "uTexture";
-    [JsonIgnore] public const string HasTexture = "uHasTexture";
-    [JsonIgnore] public const string Smoothness = "uSmoothness";
-    [JsonIgnore] public const string Metallic = "uMetallic";
-    [JsonIgnore] public const string Alpha = "uAlpha";
-    [JsonIgnore] public const string Radius = "uRadius";
-    [JsonIgnore] public const string Fade = "uFade";
-    [JsonIgnore] public const string Tint = "uTint";
+    [JsonIgnore, Hide] public const string Exposure = "uExposure";
+    [JsonIgnore, Hide] public const string AmbientColor = "uAmbientColor";
+    [JsonIgnore, Hide] public const string AmbientColorIntensity = "uAmbientColorIntensity";
+    [JsonIgnore, Hide] public const string ReflectionIntensity = "uReflectionIntensity";
+
+    [JsonIgnore, Hide] public const string SHAr = "uSHAr";
+    [JsonIgnore, Hide] public const string SHAg = "uSHAg";
+    [JsonIgnore, Hide] public const string SHAb = "uSHAb";
+    [JsonIgnore, Hide] public const string SHBr = "uSHBr";
+    [JsonIgnore, Hide] public const string SHBg = "uSHBg";
+    [JsonIgnore, Hide] public const string SHBb = "uSHBb";
+    [JsonIgnore, Hide] public const string SHC = "uSHC";
+
+    [JsonIgnore, Hide] public const string Color = "uColor";
+    [JsonIgnore, Hide] public const string Texture = "uTexture";
+    [JsonIgnore, Hide] public const string HasTexture = "uHasTexture";
+    [JsonIgnore, Hide] public const string Smoothness = "uSmoothness";
+    [JsonIgnore, Hide] public const string Metallic = "uMetallic";
+    [JsonIgnore, Hide] public const string Alpha = "uAlpha";
+    [JsonIgnore, Hide] public const string Radius = "uRadius";
+    [JsonIgnore, Hide] public const string Fade = "uFade";
+    [JsonIgnore, Hide] public const string Tint = "uTint";
 
 
 
@@ -322,10 +322,11 @@ public class Shader : IAsset<Shader> {
     }
 
     public void SetTexture (string name, Texture texture) {
-        if (!_textureUnits.TryGetValue(name, out int unitIndex)) {
-            unitIndex = _nextTextureUnit++;
-            _textureUnits[name] = unitIndex;
-        }
+        int unitIndex = name switch {
+            Shader.Skybox => SkyboxUnitIndex,
+            Shader.Texture => TextureUnitIndex,
+            _ => throw new Exception($"No texture unit assigned for uniform '{name}' — add it to TextureUnits."),
+        };
 
         TextureUnit unit = TextureUnit.Texture0 + unitIndex;
         texture.Bind(unit);
