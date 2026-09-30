@@ -15,9 +15,9 @@ public class MaterialSkybox : Material {
         Matrix4x4.Invert(projection, out projection);
 
         shader.Use();
-        shader.SetMatrix4x4(Shader.View, view);
-        shader.SetMatrix4x4(Shader.Projection, projection);
-        shader.SetInt(Shader.Texture, 0);
+        shader.SetMatrix4x4(Shader.uView, view);
+        shader.SetMatrix4x4(Shader.uProjection, projection);
+        shader.SetInt(Shader.uTexture, 0);
         shader.SetFloat(BlurScale, blurScale);
     }
 

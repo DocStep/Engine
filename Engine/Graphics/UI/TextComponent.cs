@@ -159,7 +159,7 @@ public class TextComponent : UIRenderingElement {
 
         Vector2 origin = rect.Min + AlignOffset();
         Vector2 size = rect.ActualSize;
-        _material.SetVector4(Shader.Tint, Color);
+        _material.SetVector4(Shader.uTint, Color);
 
         Renderer.Instance.AddRenderInfo(new RenderInfo {
             //name = "UIText",

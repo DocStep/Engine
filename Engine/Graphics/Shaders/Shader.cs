@@ -20,18 +20,18 @@ public class Shader : IAsset<Shader> {
         string vertexSource = Assets.LoadText(VertexSourcePath);
         string fragmentSource = Assets.LoadText(FragmentSourcePath);
 
-        uint vertex;
-        uint fragment;
-        try {
-            vertex = CompileShader(ShaderType.VertexShader, vertexSource);
-        } catch (Exception ex) {
-            throw new Exception($"Failed to compile Shader_Vertex {VertexSourcePath}", ex);
-        }
-        try {
-            fragment = CompileShader(ShaderType.FragmentShader, fragmentSource);
-        } catch (Exception ex) {
-            throw new Exception($"Failed to compile Shader_Fragment {VertexSourcePath}", ex);
-        }
+        uint vertex = CompileShader(ShaderType.VertexShader, vertexSource);
+        uint fragment = CompileShader(ShaderType.FragmentShader, fragmentSource);
+        //try {
+        //    vertex = CompileShader(ShaderType.VertexShader, vertexSource);
+        //} catch (Exception ex) {
+        //    throw new Exception($"Failed to compile Shader_Vertex {VertexSourcePath}", ex);
+        //}
+        //try {
+        //    fragment = CompileShader(ShaderType.FragmentShader, fragmentSource);
+        //} catch (Exception ex) {
+        //    throw new Exception($"Failed to compile Shader_Fragment {FragmentSourcePath}", ex);
+        //}
 
         uint program = GL.CreateProgram();
         GL.AttachShader(program, vertex);
@@ -53,8 +53,9 @@ public class Shader : IAsset<Shader> {
 
         uint oldProgram = _program;
         _program = program;
+        _locations.Clear(); /// locations belong to the old program
+        Generation++;       /// lets Material know its uniforms must be re-uploaded
         ReflectUniforms();
-
         GL.DeleteProgram(oldProgram);
     }
     uint CompileShader (ShaderType type, string source) {
@@ -64,6 +65,7 @@ public class Shader : IAsset<Shader> {
 
         GL.GetShader(shaderId, ShaderParameterName.CompileStatus, out int status);
         if (status == 0) {
+            GL.DeleteShader(shaderId);
             string log = GL.GetShaderInfoLog(shaderId);
             throw new Exception($"{type} failed to compile: {log}");
         }
@@ -88,12 +90,15 @@ public class Shader : IAsset<Shader> {
     [JsonProperty] private readonly string FragmentSourcePath;
     public bool isLit;
 
+    [JsonIgnore, Hide] private readonly Dictionary<string, int> _locations = new();
+    [JsonIgnore, Hide] public int Generation { get; private set; }
+
     [JsonIgnore, Hide] private readonly GL GL;
     [JsonIgnore, Hide] private uint _program;
     [JsonIgnore, Hide] private readonly Dictionary<string, int> _textureUnits = new();
     [JsonIgnore, Hide] private int _nextTextureUnit = 1; /// 0 is permanently reserved for uSkybox
 
-    [JsonIgnore, Hide] static int _nextId = 0;
+    [JsonIgnore, Hide] private static int _nextId = 0;
     [JsonIgnore, Hide] public readonly int Id_Renderer = System.Threading.Interlocked.Increment(ref _nextId);
 
     [JsonIgnore, Hide]
@@ -103,18 +108,19 @@ public class Shader : IAsset<Shader> {
     /// FillDefaults must never touch these -- they don't belong to any one material.
     [JsonIgnore, Hide]
     public static readonly HashSet<string> ReservedGlobalUniforms = new HashSet<string>() {
-        View, Projection, ViewPos, Model, NormalMatrix, CameraPos, Scene, Depth,
-        SunLightCount, SunLightDir, SunLightColor, SunLightIntensity,
-        PointLightCount, PointLightColor, PointLightIntensity, PointLightPos, PointLightRange,
-        Skybox, EnvMap, Roughness, MaxReflectionLod,
-        Exposure, AmbientColor, AmbientColorIntensity, ReflectionIntensity,
-        SHAr, SHAg, SHAb, SHBr, SHBg, SHBb, SHC,
+        uView, uProjection, uViewPos, uModel, uNormalMatrix, uCameraPos, uScene, uDepth,
+        uSunLightCount, uSunLightDir, uSunLightColor, uSunLightIntensity,
+        uPointLightCount, uPointLightColor, uPointLightIntensity, uPointLightPos, uPointLightRange,
+        uSkybox, uEnvMap, uRoughness, uMaxReflectionLod,
+        uExposure, uAmbientColor, uAmbientColorIntensity, uReflectionIntensity,
+        uSHAr, uSHAg, uSHAb, uSHBr, uSHBg, uSHBb, uSHC,
     };
 
     [JsonIgnore, Hide]
     public readonly static Dictionary<UniformType, object> UniformTypeDefaults = new Dictionary<UniformType, object>() {
         [UniformType.Int] = 0,
         [UniformType.Float] = 0.5f,
+        [UniformType.Bool] = 0,
         [UniformType.FloatVec2] = Vector2.Zero,
         [UniformType.FloatVec3] = Vector3.One,
         [UniformType.FloatVec4] = Vector4.One,
@@ -122,11 +128,11 @@ public class Shader : IAsset<Shader> {
     };
     [JsonIgnore, Hide]
     public readonly static Dictionary<string, object> UniformDefaults = new Dictionary<string, object>() {
-        [Shader.Color] = Vector3.One,
-        [Shader.Alpha] = 1f,
-        [Shader.Smoothness] = 0.5f,
-        [Shader.Metallic] = 0f,
-        [Shader.ReflectionIntensity] = 1f,
+        [Shader.uColor] = Vector3.One,
+        [Shader.uAlpha] = 1f,
+        [Shader.uSmoothness] = 0.5f,
+        [Shader.uMetallic] = 0f,
+        [Shader.uReflectionIntensity] = 1f,
     };
 
     [JsonIgnore] public static RendererGLStats Stats = default;
@@ -136,54 +142,63 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide] public const int TextureUnitIndex = 10;
 
 
-    [JsonIgnore, Hide] public const string View = "uView";
-    [JsonIgnore, Hide] public const string Projection = "uProjection";
-    [JsonIgnore, Hide] public const string InvProjection = "uInvProjection";
-    [JsonIgnore, Hide] public const string ViewPos = "uViewPos";
-    [JsonIgnore, Hide] public const string Model = "uModel";
-    [JsonIgnore, Hide] public const string NormalMatrix = "uNormalMatrix";
-    [JsonIgnore, Hide] public const string CameraPos = "uCameraPos";
-    [JsonIgnore, Hide] public const string Scene = "uSceneColor";
-    [JsonIgnore, Hide] public const string Depth = "uDepth";
+    [JsonIgnore, Hide] public const string uView = "uView";
+    [JsonIgnore, Hide] public const string uProjection = "uProjection";
+    [JsonIgnore, Hide] public const string uInvProjection = "uInvProjection";
+    [JsonIgnore, Hide] public const string uViewPos = "uViewPos";
+    [JsonIgnore, Hide] public const string uModel = "uModel";
+    [JsonIgnore, Hide] public const string uNormalMatrix = "uNormalMatrix";
+    [JsonIgnore, Hide] public const string uCameraPos = "uCameraPos";
+    [JsonIgnore, Hide] public const string uScene = "uSceneColor";
+    [JsonIgnore, Hide] public const string uDepth = "uDepth";
 
-    [JsonIgnore, Hide] public const string SunLightCount = "uSunLightCount";
-    [JsonIgnore, Hide] public const string SunLightDir = "uSunLightDir";
-    [JsonIgnore, Hide] public const string SunLightColor = "uSunLightColor";
-    [JsonIgnore, Hide] public const string SunLightIntensity = "uSunLightIntensity";
+    [JsonIgnore, Hide] public const string uSunLightCount = "uSunLightCount";
+    [JsonIgnore, Hide] public const string uSunLightDir = "uSunLightDir";
+    [JsonIgnore, Hide] public const string uSunLightColor = "uSunLightColor";
+    [JsonIgnore, Hide] public const string uSunLightIntensity = "uSunLightIntensity";
 
-    [JsonIgnore, Hide] public const string PointLightCount = "uPointLightCount";
-    [JsonIgnore, Hide] public const string PointLightColor = "uPointLightColor";
-    [JsonIgnore, Hide] public const string PointLightIntensity = "uPointLightIntensity";
-    [JsonIgnore, Hide] public const string PointLightPos = "uPointLightPos";
-    [JsonIgnore, Hide] public const string PointLightRange = "uPointLightRange";
+    [JsonIgnore, Hide] public const string uPointLightCount = "uPointLightCount";
+    [JsonIgnore, Hide] public const string uPointLightColor = "uPointLightColor";
+    [JsonIgnore, Hide] public const string uPointLightIntensity = "uPointLightIntensity";
+    [JsonIgnore, Hide] public const string uPointLightPos = "uPointLightPos";
+    [JsonIgnore, Hide] public const string uPointLightRange = "uPointLightRange";
 
-    [JsonIgnore, Hide] public const string Skybox = "uSkybox";
-    [JsonIgnore, Hide] public const string EnvMap = "uEnvMap";
-    [JsonIgnore, Hide] public const string MaxReflectionLod = "uMaxReflectionLod";
+    [JsonIgnore, Hide] public const string uSkybox = "uSkybox";
+    [JsonIgnore, Hide] public const string uEnvMap = "uEnvMap";
+    [JsonIgnore, Hide] public const string uMaxReflectionLod = "uMaxReflectionLod";
 
-    [JsonIgnore, Hide] public const string Exposure = "uExposure";
-    [JsonIgnore, Hide] public const string AmbientColor = "uAmbientColor";
-    [JsonIgnore, Hide] public const string AmbientColorIntensity = "uAmbientColorIntensity";
-    [JsonIgnore, Hide] public const string ReflectionIntensity = "uReflectionIntensity";
+    [JsonIgnore, Hide] public const string uExposure = "uExposure";
+    [JsonIgnore, Hide] public const string uAmbientColor = "uAmbientColor";
+    [JsonIgnore, Hide] public const string uAmbientColorIntensity = "uAmbientColorIntensity";
+    [JsonIgnore, Hide] public const string uReflectionIntensity = "uReflectionIntensity";
 
-    [JsonIgnore, Hide] public const string SHAr = "uSHAr";
-    [JsonIgnore, Hide] public const string SHAg = "uSHAg";
-    [JsonIgnore, Hide] public const string SHAb = "uSHAb";
-    [JsonIgnore, Hide] public const string SHBr = "uSHBr";
-    [JsonIgnore, Hide] public const string SHBg = "uSHBg";
-    [JsonIgnore, Hide] public const string SHBb = "uSHBb";
-    [JsonIgnore, Hide] public const string SHC = "uSHC";
+    [JsonIgnore, Hide] public const string uSHAr = "uSHAr";
+    [JsonIgnore, Hide] public const string uSHAg = "uSHAg";
+    [JsonIgnore, Hide] public const string uSHAb = "uSHAb";
+    [JsonIgnore, Hide] public const string uSHBr = "uSHBr";
+    [JsonIgnore, Hide] public const string uSHBg = "uSHBg";
+    [JsonIgnore, Hide] public const string uSHBb = "uSHBb";
+    [JsonIgnore, Hide] public const string uSHC = "uSHC";
 
-    [JsonIgnore, Hide] public const string Color = "uColor";
-    [JsonIgnore, Hide] public const string Texture = "uTexture";
-    [JsonIgnore, Hide] public const string HasTexture = "uHasTexture";
-    [JsonIgnore, Hide] public const string Smoothness = "uSmoothness";
-    [JsonIgnore, Hide] public const string Roughness = "uRoughness";
-    [JsonIgnore, Hide] public const string Metallic = "uMetallic";
-    [JsonIgnore, Hide] public const string Alpha = "uAlpha";
-    [JsonIgnore, Hide] public const string Radius = "uRadius";
-    [JsonIgnore, Hide] public const string Fade = "uFade";
-    [JsonIgnore, Hide] public const string Tint = "uTint";
+    [JsonIgnore, Hide] public const string uColor = "uColor";
+    [JsonIgnore, Hide] public const string uTexture = "uTexture";
+    [JsonIgnore, Hide] public const string uHasTexture = "uHasTexture";
+    [JsonIgnore, Hide] public const string uSmoothness = "uSmoothness";
+    [JsonIgnore, Hide] public const string uRoughness = "uRoughness";
+    [JsonIgnore, Hide] public const string uMetallic = "uMetallic";
+    [JsonIgnore, Hide] public const string uAlpha = "uAlpha";
+    [JsonIgnore, Hide] public const string uRadius = "uRadius";
+    [JsonIgnore, Hide] public const string uBias = "uBias";
+    [JsonIgnore, Hide] public const string uFade = "uFade";
+    [JsonIgnore, Hide] public const string uStrength = "uStrength";
+    [JsonIgnore, Hide] public const string uPower = "uPower";
+    [JsonIgnore, Hide] public const string uTint = "uTint";
+    [JsonIgnore, Hide] public const string uNear = "uNear";
+    [JsonIgnore, Hide] public const string uFar = "uFar";
+    [JsonIgnore, Hide] public const string uNormal = "uNormal";
+    [JsonIgnore, Hide] public const string uSampleCount = "uSampleCount";
+    [JsonIgnore, Hide] public const string uFalloffPower = "uFalloffPower";
+    [JsonIgnore, Hide] public const string uTexelSize = "uTexelSize";
 
 
 
@@ -217,21 +232,21 @@ public class Shader : IAsset<Shader> {
     }
 
     public void SetInt (string name, int value) {
-        int location = GL.GetUniformLocation(_program, name);
+        int location = GetLocation(name);
         GL.Uniform1(location, value);
 
         //var err = GL.GetError();
         //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetInt)} {err}", LogType.warning);
     }
     public void SetFloat (string name, float value) {
-        int location = GL.GetUniformLocation(_program, name);
+        int location = GetLocation(name);
         GL.Uniform1(location, value);
 
         //var err = GL.GetError();
         //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetFloat)} {err}", LogType.warning);
     }
     public void SetFloatArray (string name, float[] values) {
-        int location = GL.GetUniformLocation(_program, name);
+        int location = GetLocation(name);
         GL.Uniform1(location, (uint)values.Length, values);
 
         //var err = GL.GetError();
@@ -239,14 +254,14 @@ public class Shader : IAsset<Shader> {
     }
 
     public void SetVector2 (string name, float x, float y) {
-        int location = GL.GetUniformLocation(_program, name);
+        int location = GetLocation(name);
         GL.Uniform2(location, x, y);
 
         //var err = GL.GetError();
         //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetVector2)} {err}", LogType.warning);
     }
     public void SetVector2 (string name, Vector2 vec2) {
-        int location = GL.GetUniformLocation(_program, name);
+        int location = GetLocation(name);
         GL.Uniform2(location, vec2.X, vec2.Y);
 
         //var err = GL.GetError();
@@ -254,21 +269,21 @@ public class Shader : IAsset<Shader> {
     }
 
     public void SetVector3 (string name, float x, float y, float z) {
-        int location = GL.GetUniformLocation(_program, name);
+        int location = GetLocation(name);
         GL.Uniform3(location, x, y, z);
 
         //var err = GL.GetError();
         //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetVector3)} {err}", LogType.warning);
     }
     public void SetVector3 (string name, Vector3 vec3) {
-        int location = GL.GetUniformLocation(_program, name);
+        int location = GetLocation(name);
         GL.Uniform3(location, vec3.X, vec3.Y, vec3.Z);
 
         //var err = GL.GetError();
         //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetVector3)} {err}", LogType.warning);
     }
     public void SetVector3Array (string name, Vector3[] values) {
-        int location = GL.GetUniformLocation(_program, name);
+        int location = GetLocation(name);
         GL.Uniform3(location, (uint)values.Length, ref values[0].X);
 
         //var err = GL.GetError();
@@ -276,14 +291,14 @@ public class Shader : IAsset<Shader> {
     }
 
     public void SetVector4 (string name, float x, float y, float z, float w) {
-        int location = GL.GetUniformLocation(_program, name);
+        int location = GetLocation(name);
         GL.Uniform4(location, x, y, z, w);
 
         //var err = GL.GetError();
         //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetVector4)} {err}", LogType.warning);
     }
     public void SetVector4 (string name, Vector4 vec4) {
-        int location = GL.GetUniformLocation(_program, name);
+        int location = GetLocation(name);
         GL.Uniform4(location, vec4.X, vec4.Y, vec4.Z, vec4.W);
 
         //var err = GL.GetError();
@@ -291,7 +306,7 @@ public class Shader : IAsset<Shader> {
     }
 
     public void SetBool (string name, bool value) {
-        int location = GL.GetUniformLocation(_program, name);
+        int location = GetLocation(name);
         GL.Uniform1(location, value ? 1 : 0);
 
         //var err = GL.GetError();
@@ -309,12 +324,12 @@ public class Shader : IAsset<Shader> {
         //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetMatrix4)} {err}", LogType.warning);
     }*/
     public void SetMatrix4x4 (string name, Matrix4x4 matrix) {
-        int location = GL.GetUniformLocation(_program, name);
-        if (location == -1) {
-            string message = $"Uniform '{name}' not found in program {Name}!";
-            //Log.log(message, LogType.warning);
-            //throw new Exception(message);
-        }
+        int location = GetLocation(name); ;
+        //if (location == -1) {
+        //    //string message = $"Uniform '{name}' not found in program {Name}!";
+        //    //Log.log(message, LogType.warning);
+        //    //throw new Exception(message);
+        //}
         unsafe {
             GL.UniformMatrix4(location, 1, false, (float*)&matrix);
         }
@@ -325,7 +340,7 @@ public class Shader : IAsset<Shader> {
 
     public void SetTexture (string name, Texture texture) {
         if (!_textureUnits.TryGetValue(name, out int unitIndex)) {
-            if (name == Shader.Skybox) {
+            if (name == Shader.uSkybox) {
                 unitIndex = 0; /// reserved slot — always 0, never auto-assigned to anything else
             } else {
                 unitIndex = _nextTextureUnit++;
@@ -339,11 +354,19 @@ public class Shader : IAsset<Shader> {
         TextureUnit unit = TextureUnit.Texture0 + unitIndex;
         texture.Bind(unit);
 
-        int location = GL.GetUniformLocation(_program, name);
+        int location = GetLocation(name);
         GL.Uniform1(location, unitIndex);
 
         //var err = GL.GetError();
         //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetTexture)} {err}", LogType.warning);
+    }
+
+     private int GetLocation (string name) {
+        if (!_locations.TryGetValue(name, out int location)) {
+            location = GL.GetUniformLocation(_program, name);
+            _locations[name] = location;
+        }
+        return location;
     }
 
 

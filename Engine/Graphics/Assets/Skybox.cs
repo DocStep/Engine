@@ -99,8 +99,8 @@ public class Skybox : IDisposable {
 
             prefilterShader.Use();
             source.Bind(TextureUnit.Texture0);
-            prefilterShader.SetInt(Shader.EnvMap, 0);
-            prefilterShader.SetFloat(Shader.Roughness, roughness);
+            prefilterShader.SetInt(Shader.uEnvMap, 0);
+            prefilterShader.SetFloat(Shader.uRoughness, roughness);
             prefilterShader.SetFloat("uResolutionX", source.Width);
             prefilterShader.SetFloat("uResolutionY", source.Height);
             /// uFireflyClamp tune — lower = smoother but dimmer sun bloom, higher = closer to true brightness but more residual fireflies

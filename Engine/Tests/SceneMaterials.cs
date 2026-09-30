@@ -35,7 +35,7 @@ public class SceneMaterials : Scene {
         x = -4;
         GameObject go_planeTexture = new GameObject(PrimitiveTypes.Plane, position: new Vector3(x, 0, 0)) { Name = "Plane Texture", };
         Material mat = new Material(AssetsEngine._sh_LitInstanced);
-        mat.SetTexture(Shader.Texture, AssetsEngine.tex_Test);
+        mat.SetTexture(Shader.uTexture, AssetsEngine.tex_Test);
         go_planeTexture.GetComponent<MeshComponent>()?.Material = mat;
         //mat.SetVector3(Shader.Color, Vector3.One);
         //Texture? texture = Assets.Load<Texture>("src/Images/RGBA_Test.png");
@@ -96,8 +96,8 @@ public class SceneMaterials : Scene {
         mesh = sphereR.AddComponent<MeshComponent>();
         mesh.Mesh = AssetsEngine._mesh_Sphere;
         mesh.Material = AssetsEngine._mat_LitRed;
-        mesh.Material.SetFloat(Shader.Smoothness, 0);
-        mesh.Material.SetFloat(Shader.Metallic, 0);
+        mesh.Material.SetFloat(Shader.uSmoothness, 0);
+        mesh.Material.SetFloat(Shader.uMetallic, 0);
 
         GameObject sphereG = new GameObject() { Name = "Sphere G", };
         sphereG.Transform.Position = new Vector3(x, 0, 2);

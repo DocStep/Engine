@@ -28,11 +28,11 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _sh_UI.Save("src/Shaders/UI.shader");
 
         _mat_Lit = new Material(_sh_LitInstanced) { Name = "Lit", };
-        _mat_Lit.SetVector3(Color, Constants.white);
+        _mat_Lit.SetVector3(uColor, Constants.white);
         _mat_Lit.Save("src/Materials/Lit.mat");
         ///
         _mat_Unlit = new Material(_sh_Unlit) { Name = "Unlit", };
-        _mat_Unlit.SetVector3(Color, Constants.gray);
+        _mat_Unlit.SetVector3(uColor, Constants.gray);
         _mat_Unlit.Save("src/Materials/Unlit.mat");
         ///
         _mat_UI = new Graphics.UI.MaterialUI(_sh_UI) { Name = "UI", };
@@ -62,53 +62,53 @@ public class AssetsEngine : Singleton<AssetsEngine> {
             "src/Shaders/UI/Text_Fragment.shader", "Text");
         _sh_Text.Save("src/Shaders/UI/Text.shader");
         _mat_Text = new Material(_sh_Text) { Name = "Text", };
-        _mat_Text.SetInt(Shader.Texture, 0);
-        _mat_Text.SetVector3(Color, Constants.textRendererColor);
+        _mat_Text.SetInt(Shader.uTexture, 0);
+        _mat_Text.SetVector3(uColor, Constants.textRendererColor);
         _mat_Text.Save("src/Materials/UI/Text.mat");
         _fontData = File.ReadAllBytes("src/Fonts/FuturaCyrillicMedium.ttf");
 
         /// Editor
         _mat_Smooth = new Material(_mat_Lit) { Name = "Smooth", };
-        _mat_Smooth.SetFloat(Smoothness, 1);
+        _mat_Smooth.SetFloat(uSmoothness, 1);
         _mat_Smooth.Save("src/Materials/Smooth.mat");
         ///
         _mat_Matt = new Material(_mat_Lit) { Name = "Matt", };
-        _mat_Matt.SetFloat(Smoothness, 0);
+        _mat_Matt.SetFloat(uSmoothness, 0);
         _mat_Matt.Save("src/Materials/Matt.mat");
         ///
         _mat_Metallic = new Material(_mat_Lit) { Name = "Metallic", };
-        _mat_Metallic.SetVector3(Color, Constants.gray);
-        _mat_Metallic.SetFloat(Metallic, 1);
+        _mat_Metallic.SetVector3(uColor, Constants.gray);
+        _mat_Metallic.SetFloat(uMetallic, 1);
         _mat_Metallic.Save("src/Materials/Metallic.mat");
         ///
         _mat_MaterialPreview = new Material(_mat_Lit) { Name = "Material Preview", };
-        _mat_MaterialPreview.SetVector3(Color, Constants.white);
-        _mat_MaterialPreview.SetFloat(Smoothness, 1);
-        _mat_MaterialPreview.SetFloat(Metallic, 1);
+        _mat_MaterialPreview.SetVector3(uColor, Constants.white);
+        _mat_MaterialPreview.SetFloat(uSmoothness, 1);
+        _mat_MaterialPreview.SetFloat(uMetallic, 1);
         _mat_MaterialPreview.Save("src/Materials/MaterialPreview.mat");
         ///
         _mat_LitWhite = new Material(_sh_LitInstanced) { Name = "Lit White", };
-        _mat_LitWhite.SetVector3(Color, Constants.white);
+        _mat_LitWhite.SetVector3(uColor, Constants.white);
         _mat_LitWhite.Save("src/Materials/LitWhite.mat");
         ///
         _mat_LitBlack = new Material(_sh_LitInstanced) { Name = "Lit Black", };
-        _mat_LitBlack.SetVector3(Color, Constants.black);
+        _mat_LitBlack.SetVector3(uColor, Constants.black);
         _mat_LitBlack.Save("src/Materials/LitBlack.mat");
         ///
         _mat_LitGray = new Material(_sh_LitInstanced) { Name = "Lit Gray", };
-        _mat_LitGray.SetVector3(Color, Constants.gray);
+        _mat_LitGray.SetVector3(uColor, Constants.gray);
         _mat_LitGray.Save("src/Materials/LitGray.mat");
         ///
         _mat_LitRed = new Material(_sh_LitInstanced) { Name = "Lit Red", };
-        _mat_LitRed.SetVector3(Color, Constants.red);
+        _mat_LitRed.SetVector3(uColor, Constants.red);
         _mat_LitRed.Save("src/Materials/LitRed.mat");
         ///
         _mat_LitGreen = new Material(_sh_LitInstanced) { Name = "Lit Green", };
-        _mat_LitGreen.SetVector3(Color, Constants.green);
+        _mat_LitGreen.SetVector3(uColor, Constants.green);
         _mat_LitGreen.Save("src/Materials/LitGreen.mat");
         ///
         _mat_LitBlue = new Material(_sh_LitInstanced) { Name = "Lit Blue", };
-        _mat_LitBlue.SetVector3(Color, Constants.blue);
+        _mat_LitBlue.SetVector3(uColor, Constants.blue);
         _mat_LitBlue.Save("src/Materials/LitBlue.mat");
 
         _mesh_Torus = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Torus.obj"))!;
@@ -119,54 +119,54 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _sh_Depth = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader", 
             "src/Shaders/PostProcessing/Depth_Fragment.shader", "Depth");
         _sh_Depth.Save("src/Shaders/Depth.shader");
-        _mat_Depth = new Material(_sh_Depth) { Name = "Depth", };
+        _mat_Depth = new Material(_sh_Depth);
         _mat_Depth.Save("src/Materials/Depth.mat");
 
         _sh_Grayscale = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader", 
             "src/Shaders/PostProcessing/Grayscale_Fragment.shader", "Grayscale");
         _sh_Grayscale.Save("src/Shaders/Grayscale.shader");
-        _mat_Grayscale = new Material(_sh_Grayscale) { Name = "Grayscale", };
+        _mat_Grayscale = new Material(_sh_Grayscale);
         _mat_Grayscale.Save("src/Materials/Grayscale.mat");
 
         _sh_Fxaa = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader", 
             "src/Shaders/PostProcessing/Fxaa_Fragment.shader", "FXAA");
         _sh_Fxaa.Save("src/Shaders/Fxaa.shader");
-        _mat_Fxaa = new MaterialFxaa(_sh_Fxaa) { Name = "FXAA", };
+        _mat_Fxaa = new MaterialFxaa(_sh_Fxaa);
         _mat_Fxaa.Save("src/Materials/Fxaa.mat");
 
         _sh_SSAO = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader", 
             "src/Shaders/PostProcessing/SSAO_Fragment.shader", "SSAO");
         _sh_SSAO.Save("src/Shaders/SSAO.shader");
-        _mat_SSAO = new MaterialSSAO(_sh_SSAO) { Name = "SSAO", };
+        _mat_SSAO = new MaterialSSAO(_sh_SSAO);
         _mat_SSAO.Save("src/Materials/SSAO.mat");
 
-        _sh_SSAOBlur = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader", 
-            "src/Shaders/PostProcessing/SSAOBlur_Fragment.shader", "SSAOBlur");
-        _sh_SSAOBlur.Save("src/Shaders/SSAOBlur.shader");
-        _mat_SSAOBlur = new MaterialSSAOBlur(_sh_SSAOBlur) { Name = "SSAO Blur", };
-        _mat_SSAOBlur.Save("src/Materials/SSAOBlur.mat");
+        _sh_SSAO_Blur = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader", 
+            "src/Shaders/PostProcessing/SSAO_Blur_Fragment.shader", "SSAO_Blur");
+        _sh_SSAO_Blur.Save("src/Shaders/SSAO_Blur.shader");
+        _mat_SSAO_Blur = new MaterialSSAOBlur(_sh_SSAO_Blur);
+        _mat_SSAO_Blur.Save("src/Materials/SSAO_Blur.mat");
 
-        _sh_SSAOComposite = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader", 
-            "src/Shaders/PostProcessing/SSAOComposite_Fragment.shader", "SSAOComposite");
-        _sh_SSAOComposite.Save("src/Shaders/SSAOComposite.shader");
-        _mat_SSAOComposite = new MaterialSSAOComposite(_sh_SSAOComposite) { Name = "SSAO Composite", };
-        _mat_SSAOComposite.Save("src/Materials/SSAOComposite.mat");
+        _sh_SSAO_Composite = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader", 
+            "src/Shaders/PostProcessing/SSAO_Composite_Fragment.shader", "SSAO_Composite");
+        _sh_SSAO_Composite.Save("src/Shaders/SSAO_Composite.shader");
+        _mat_SSAO_Composite = new MaterialSSAOComposite(_sh_SSAO_Composite);
+        _mat_SSAO_Composite.Save("src/Materials/SSAO_Composite.mat");
 
         _sh_Vignette = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader", 
-            "src/Shaders/PostProcessing/Vignette_Fragment.shader", "CameraFocus");
+            "src/Shaders/PostProcessing/Vignette_Fragment.shader", "Vignette");
         _sh_Vignette.Save("src/Shaders/Vignette.shader");
-        _mat_Vignette = new MaterialVignette(_sh_Vignette) { Name = "Vignette", };
+        _mat_Vignette = new MaterialVignette(_sh_Vignette);
         _mat_Vignette.Save("src/Materials/Vignette.mat");
 
         _sh_CameraFocus = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader", 
             "src/Shaders/PostProcessing/CameraFocus_Fragment.shader", "CameraFocus");
         _sh_CameraFocus.Save("src/Shaders/CameraFocus.shader");
-        _mat_CameraFocus = new MaterialCameraFocus(_sh_CameraFocus) { Name = "CameraFocus", };
+        _mat_CameraFocus = new MaterialCameraFocus(_sh_CameraFocus);
         _mat_CameraFocus.Save("src/Materials/CameraFocus.mat");
 
-        tex_Test = Graphics.Texture.Load("src/Images/RGBA_Test.png");
-        tex_White = Graphics.Texture.Load("src/Images/white.png");
-        tex_Vignette = Graphics.Texture.Load("src/Images/vignette.png");
+        tex_Test = Texture.Load("src/Images/RGBA_Test.png");
+        tex_White = Texture.Load("src/Images/white.png");
+        tex_Vignette = Texture.Load("src/Images/vignette.png");
 
     }
 
@@ -205,10 +205,10 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Material _mat_Fxaa = null!;
     public readonly static Shader _sh_SSAO = null!;
     public readonly static Material _mat_SSAO = null!;
-    public readonly static Shader _sh_SSAOBlur = null!;
-    public readonly static Material _mat_SSAOBlur = null!;
-    public readonly static Shader _sh_SSAOComposite = null!;
-    public readonly static Material _mat_SSAOComposite = null!;
+    public readonly static Shader _sh_SSAO_Blur = null!;
+    public readonly static Material _mat_SSAO_Blur = null!;
+    public readonly static Shader _sh_SSAO_Composite = null!;
+    public readonly static Material _mat_SSAO_Composite = null!;
     public readonly static Shader _sh_Vignette = null!;
     public readonly static Material _mat_Vignette = null!;
     public readonly static Shader _sh_CameraFocus = null!;
@@ -256,8 +256,8 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _sh_Grayscale.Dispose();
         _sh_Fxaa.Dispose();
         _sh_SSAO.Dispose();
-        _sh_SSAOBlur.Dispose();
-        _sh_SSAOComposite.Dispose();
+        _sh_SSAO_Blur.Dispose();
+        _sh_SSAO_Composite.Dispose();
         _sh_CameraFocus.Dispose();
 
         _sh_Skybox.Dispose();

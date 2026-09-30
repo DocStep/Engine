@@ -55,7 +55,7 @@ public class Image : UIRenderingElement {
 
         Vector2 origin = rect.Min; /// Min already accounts for pivot
         Vector2 size = rect.ActualSize;
-        Material.SetVector4(Shader.Tint, Tint);
+        Material.SetVector4(Shader.uTint, Tint);
         _texture!.Bind();
 
         Renderer.Instance.AddRenderInfo(new RenderInfo {

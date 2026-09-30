@@ -60,8 +60,8 @@ public static class GLDebug {
 
         Matrix4x4 mesh_m4x4 = Matrix4x4.Identity;
         Shader unlit = AssetsEngine._sh_Unlit;
-        unlit.SetMatrix4x4(Shader.Model, mesh_m4x4);
-        unlit.SetVector3(Shader.Color, debugLine.Color);
+        unlit.SetMatrix4x4(Shader.uModel, mesh_m4x4);
+        unlit.SetVector3(Shader.uColor, debugLine.Color);
 
         GL.BindVertexArray(_lineVAO);
         GL.DrawArrays(PrimitiveType.Lines, 0, 2);

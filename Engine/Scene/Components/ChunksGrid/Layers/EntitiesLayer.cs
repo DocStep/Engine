@@ -8,7 +8,7 @@ public sealed class EntitiesLayer : ChunkLayer {
     public EntitiesLayer () {
         Radius = 8f;
         mat = new Material(AssetsEngine._sh_LitInstanced);
-        mat.SetVector3(Shader.Color, new Vector3(1, 0, 0));
+        mat.SetVector3(Shader.uColor, new Vector3(1, 0, 0));
     }
 
     public override string Name { get; protected set; } = "Entities";

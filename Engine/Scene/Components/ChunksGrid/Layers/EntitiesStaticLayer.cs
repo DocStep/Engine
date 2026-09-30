@@ -8,7 +8,7 @@ public sealed class EntitiesStaticLayer : ChunkLayer {
     public EntitiesStaticLayer () {
         Radius = 16f;
         mat = new Material(AssetsEngine._mat_Lit);
-        mat.SetVector3(Shader.Color, new Vector3(0, 1, 0));
+        mat.SetVector3(Shader.uColor, new Vector3(0, 1, 0));
     }
 
     public override string Name { get; protected set; } = "EntitiesStatic";

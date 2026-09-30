@@ -44,11 +44,11 @@ public class RectGizmo : IDisposable {
         GL.Disable(EnableCap.CullFace);
 
         _material.shader.Use();
-        _material.shader.SetMatrix4x4(Engine.Graphics.Shader.Projection, Engine.Graphics.Renderer.Instance.m4x4_ProjectionUI);
-        _material.shader.SetMatrix4x4(Engine.Graphics.Shader.View, Matrix4x4.Identity);
-        _material.shader.SetMatrix4x4(Engine.Graphics.Shader.Model, Matrix4x4.Identity);
-        _material.shader.SetVector3(Engine.Graphics.Shader.Color, color);
-        _material.shader.SetFloat(Engine.Graphics.Shader.Alpha, 1);
+        _material.shader.SetMatrix4x4(Engine.Graphics.Shader.uProjection, Engine.Graphics.Renderer.Instance.m4x4_ProjectionUI);
+        _material.shader.SetMatrix4x4(Engine.Graphics.Shader.uView, Matrix4x4.Identity);
+        _material.shader.SetMatrix4x4(Engine.Graphics.Shader.uModel, Matrix4x4.Identity);
+        _material.shader.SetVector3(Engine.Graphics.Shader.uColor, color);
+        _material.shader.SetFloat(Engine.Graphics.Shader.uAlpha, 1);
 
         GL.BindVertexArray(_vao);
         GL.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);

@@ -287,9 +287,9 @@ public class GizmoSelected : IDisposable {
 
         Shader _sh_Unlit = AssetsEngine._sh_Unlit;
         _sh_Unlit.Use();
-        _sh_Unlit.SetMatrix4x4(View, Renderer.Instance.m4x4_View);
-        _sh_Unlit.SetMatrix4x4(Projection, Renderer.Instance.m4x4_Projection);
-        _sh_Unlit.SetVector3(ViewPos, Renderer.Instance.Camera.CameraPos);
+        _sh_Unlit.SetMatrix4x4(uView, Renderer.Instance.m4x4_View);
+        _sh_Unlit.SetMatrix4x4(uProjection, Renderer.Instance.m4x4_Projection);
+        _sh_Unlit.SetVector3(uViewPos, Renderer.Instance.Camera.CameraPos);
 
         DrawOutline();
         DrawGizmo();
@@ -313,8 +313,8 @@ public class GizmoSelected : IDisposable {
 
         Shader _sh_Unlit = AssetsEngine._sh_Unlit;
         _sh_Unlit.Use();
-        _sh_Unlit.SetMatrix4x4(View, Renderer.Instance.m4x4_View);
-        _sh_Unlit.SetMatrix4x4(Projection, Renderer.Instance.m4x4_Projection);
+        _sh_Unlit.SetMatrix4x4(uView, Renderer.Instance.m4x4_View);
+        _sh_Unlit.SetMatrix4x4(uProjection, Renderer.Instance.m4x4_Projection);
 
         /// Quads
         isColorSelected = selectedPositionMode == SelectedPositionGizmoMode.XY || selectedPositionOverMode == SelectedPositionGizmoMode.XY;
@@ -326,9 +326,9 @@ public class GizmoSelected : IDisposable {
 
         void drawQuad (Vector3 pos, Matrix4x4 basis, Vector3 color) {
             Matrix4x4 m4x4_selected = Matrix4x4.CreateScale(quadScale)*basis*Matrix4x4.CreateTranslation(pos);
-            _sh_Unlit.SetMatrix4x4(Model, m4x4_selected);
-            _sh_Unlit.SetVector3(Color, color);
-            _sh_Unlit.SetFloat(Alpha, 0.5f);
+            _sh_Unlit.SetMatrix4x4(uModel, m4x4_selected);
+            _sh_Unlit.SetVector3(uColor, color);
+            _sh_Unlit.SetFloat(uAlpha, 0.5f);
             AssetsEngine._mesh_PlaneQuad.Draw();
         }
 
@@ -346,9 +346,9 @@ public class GizmoSelected : IDisposable {
 
         void drawArrow (Vector3 rot, Vector3 color) {
             Matrix4x4 m4x4_selected = _m4x4_selectedScale*rot.EulerToMatrix()*gizmoBasis*Matrix4x4.CreateTranslation(pos3);
-            _sh_Unlit.SetMatrix4x4(Model, m4x4_selected);
-            _sh_Unlit.SetVector3(Color, color);
-            _sh_Unlit.SetFloat(Alpha, 0.5f);
+            _sh_Unlit.SetMatrix4x4(uModel, m4x4_selected);
+            _sh_Unlit.SetVector3(uColor, color);
+            _sh_Unlit.SetFloat(uAlpha, 0.5f);
             Gizmos._mesh_Arrow3D.Draw();
         }
     }
@@ -405,12 +405,12 @@ public class GizmoSelected : IDisposable {
             //Matrix4x4 outlineModel = Matrix4x4.CreateFromQuaternion(rotation)*Matrix4x4.CreateTranslation(position);
 
             _sh_Outline.Use();
-            _sh_Outline.SetMatrix4x4(View, Renderer.Instance.m4x4_View);
-            _sh_Outline.SetMatrix4x4(Projection, Renderer.Instance.m4x4_Projection);
-            _sh_Outline.SetMatrix4x4(Model, renderInfo.model);
+            _sh_Outline.SetMatrix4x4(uView, Renderer.Instance.m4x4_View);
+            _sh_Outline.SetMatrix4x4(uProjection, Renderer.Instance.m4x4_Projection);
+            _sh_Outline.SetMatrix4x4(uModel, renderInfo.model);
             _sh_Outline.SetFloat(NormalOffset, 0.01f*dist*_outlineWidth);
-            _sh_Outline.SetVector3(Color, Constants.cyan);
-            _sh_Outline.SetFloat(Alpha, 1f);
+            _sh_Outline.SetVector3(uColor, Constants.cyan);
+            _sh_Outline.SetFloat(uAlpha, 1f);
             mesh_outlined.Draw();
         } finally {
             GL.CullFace(TriangleFace.Back);

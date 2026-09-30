@@ -23,8 +23,8 @@ public sealed class TerrainLayer : ChunkLayer {
         //}
 
         mat = new Material(AssetsEngine._mat_Lit);
-        mat.SetVector3(Shader.Color, new Vector3(0.1f, 0.75f, 0));
-        mat.SetFloat(Shader.Smoothness, 0.2f);
+        mat.SetVector3(Shader.uColor, new Vector3(0.1f, 0.75f, 0));
+        mat.SetFloat(Shader.uSmoothness, 0.2f);
 
         Vector3 pos = ChunksGrid.ChunkSize*new Vector3(chunkPos2Int.X + 0.5f, 0, chunkPos2Int.Y + 0.5f);
         GameObject go_terrain = new GameObject() { Name = chunkPos2Int.ToString() };

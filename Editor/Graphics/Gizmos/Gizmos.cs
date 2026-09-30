@@ -14,21 +14,21 @@ public static class Gizmos {
 
         _sh_Outline = new Shader("src/Shaders/Gizmos/Outline_Vertex.shader", 
             "src/Shaders/Gizmos/Outline_Fragment.shader", "Outline", isLit: false);
-        _sh_Outline.SetVector3(Color, Constants.cyan);
+        _sh_Outline.SetVector3(uColor, Constants.cyan);
         
         //_sh_DepthClear = new Graphics.Shader(Assets.LoadText("src/Shaders/DepthClear_Vertex.shader"),
         //Assets.LoadText("src/Shaders/DepthClear_Fragment.shader"), "DepthClear");
         
         _mat_GizmosGreen = new Material(_sh_Unlit);
-        _mat_GizmosGreen.SetVector3(Color, Constants.green);
-        _mat_GizmosGreen.SetFloat(Alpha, 0.5f);
+        _mat_GizmosGreen.SetVector3(uColor, Constants.green);
+        _mat_GizmosGreen.SetFloat(uAlpha, 0.5f);
         _mat_GizmosGreen.Pass = RenderPass.Transparent;
         _mat_GizmosGreen.Face = RenderFace.Both;
         _mat_GizmosGreen.DepthWrite = false;
 
         _mat_GizmoWireframe = new Material(_sh_Unlit);
-        _mat_GizmoWireframe.SetVector3(Color, Constants.black);
-        _mat_GizmoWireframe.SetFloat(Alpha, 0.1f);
+        _mat_GizmoWireframe.SetVector3(uColor, Constants.black);
+        _mat_GizmoWireframe.SetFloat(uAlpha, 0.1f);
         _mat_GizmoWireframe.Pass = RenderPass.Transparent;
         _mat_GizmoWireframe.Face = RenderFace.Both;
         _mat_GizmoWireframe.DepthWrite = false;
@@ -36,10 +36,10 @@ public static class Gizmos {
         _sh_GizmoGrid = new Shader("src/Shaders/Gizmos/Grid_Vertex.shader", 
             "src/Shaders/Gizmos/Grid_Fragment.shader", "Grid", isLit: false);
         _mat_GizmoGrid = new Material(_sh_GizmoGrid);
-        _mat_GizmoGrid.SetVector3(Color, Constants.lightGray);
-        _mat_GizmoGrid.SetFloat(Alpha, 0.5f);
-        _mat_GizmoGrid.SetFloat(Radius, 100f);
-        _mat_GizmoGrid.SetFloat(Fade, 10f);
+        _mat_GizmoGrid.SetVector3(uColor, Constants.lightGray);
+        _mat_GizmoGrid.SetFloat(uAlpha, 0.5f);
+        _mat_GizmoGrid.SetFloat(uRadius, 100f);
+        _mat_GizmoGrid.SetFloat(uFade, 10f);
         _mat_GizmoGrid.Pass = RenderPass.Transparent;
         _mat_GizmoGrid.Face = RenderFace.Both;
         _mat_GizmoGrid.DepthWrite = false;
@@ -47,9 +47,9 @@ public static class Gizmos {
         _sh_GizmoAxisLine = new Shader("src/Shaders/Gizmos/AxisLine_Vertex.shader", 
             "src/Shaders/Gizmos/AxisLine_Fragment.shader", "AxisLine", isLit: false);
         _mat_GizmoAxisLine = new Material(_sh_GizmoAxisLine);
-        _mat_GizmoAxisLine.SetFloat(Alpha, 0.5f);
-        _mat_GizmoAxisLine.SetFloat(Radius, 100f);
-        _mat_GizmoAxisLine.SetFloat(Fade, 10f);
+        _mat_GizmoAxisLine.SetFloat(uAlpha, 0.5f);
+        _mat_GizmoAxisLine.SetFloat(uRadius, 100f);
+        _mat_GizmoAxisLine.SetFloat(uFade, 10f);
         _mat_GizmoAxisLine.Pass = RenderPass.Transparent;
         _mat_GizmoAxisLine.Face = RenderFace.Both;
         _mat_GizmoAxisLine.DepthWrite = false;
@@ -57,16 +57,16 @@ public static class Gizmos {
         _sh_GizmoAxis = new Shader("src/Shaders/Gizmos/Axis_Vertex.shader", 
             "src/Shaders/Gizmos/Axis_Fragment.shader", "Axis", isLit: false);
         _mat_GizmoAxis = new Material(_sh_GizmoAxis);
-        _mat_GizmoAxis.SetFloat(Alpha, 0.5f);
-        _mat_GizmoAxis.SetFloat(Radius, 100f);
-        _mat_GizmoAxis.SetFloat(Fade, 10f);
+        _mat_GizmoAxis.SetFloat(uAlpha, 0.5f);
+        _mat_GizmoAxis.SetFloat(uRadius, 100f);
+        _mat_GizmoAxis.SetFloat(uFade, 10f);
         _mat_GizmoAxis.Pass = RenderPass.Transparent;
         _mat_GizmoAxis.Face = RenderFace.Both;
         _mat_GizmoAxis.DepthWrite = false;
 
         _mat_GizmoSun = new Material(_sh_Unlit);
-        _mat_GizmoSun.SetVector3(Color, Constants.yellow);
-        _mat_GizmoSun.SetFloat(Alpha, 0.5f);
+        _mat_GizmoSun.SetVector3(uColor, Constants.yellow);
+        _mat_GizmoSun.SetFloat(uAlpha, 0.5f);
         _mat_GizmoSun.Pass = RenderPass.Transparent;
         _mat_GizmoSun.Face = RenderFace.Both;
         _mat_GizmoSun.DepthWrite = false;
@@ -169,9 +169,9 @@ public static class Gizmos {
 
         Matrix4x4 model = Matrix4x4.CreateTranslation(new Vector3(pos.X - pos.X%(1f/Constants._gridDivisionScale),
             0, pos.Z - pos.Z%(1f/Constants._gridDivisionScale)));
-        shader.SetMatrix4x4(Model, model);
+        shader.SetMatrix4x4(uModel, model);
 
-        shader.SetVector3(CameraPos, pos);
+        shader.SetVector3(uCameraPos, pos);
         mesh.Draw(PrimitiveType.Lines);
     }
 
@@ -192,21 +192,21 @@ public static class Gizmos {
         material.Apply();
 
         GL.DepthRange(0, 0.99999f);
-        shader.SetVector3(CameraPos, pos);
+        shader.SetVector3(uCameraPos, pos);
 
         /// X Red
         Matrix4x4 model = Matrix4x4.CreateScale(Constants._gridScale*Vector3.One)*Matrix4x4.CreateRotationY(halfPi);
-        shader.SetMatrix4x4(Model, model);
+        shader.SetMatrix4x4(uModel, model);
         mesh.Draw(PrimitiveType.Lines);
 
         /// Y Green
         model = Matrix4x4.CreateScale(Constants._gridScale*Vector3.One)*Matrix4x4.CreateRotationX(-halfPi);
-        shader.SetMatrix4x4(Model, model);
+        shader.SetMatrix4x4(uModel, model);
         mesh.Draw(PrimitiveType.Lines);
 
         /// Z Blue
         model = Matrix4x4.CreateScale(Constants._gridScale*Vector3.One);
-        shader.SetMatrix4x4(Model, model);
+        shader.SetMatrix4x4(uModel, model);
         mesh.Draw(PrimitiveType.Lines);
 
         GL.DepthRange(0, 1);
@@ -244,9 +244,9 @@ public static class Gizmos {
         GL.Disable(EnableCap.ScissorTest);
 
         _sh_GizmoAxis.Use();
-        _sh_GizmoAxis.SetMatrix4x4(View, gizmoView);
-        _sh_GizmoAxis.SetMatrix4x4(Projection, gizmoProjection);
-        _sh_GizmoAxis.SetMatrix4x4(Model, Matrix4x4.CreateScale(0.002f));
+        _sh_GizmoAxis.SetMatrix4x4(uView, gizmoView);
+        _sh_GizmoAxis.SetMatrix4x4(uProjection, gizmoProjection);
+        _sh_GizmoAxis.SetMatrix4x4(uModel, Matrix4x4.CreateScale(0.002f));
 
         _mesh_AxesWireframe.Draw(PrimitiveType.Lines);
 
@@ -282,8 +282,8 @@ public static class Gizmos {
             material.Apply();
 
             Matrix4x4 model = Mathf.QuaternionToMatrix(sun.Rotation)*Matrix4x4.CreateTranslation(sun.Position);
-            shader.SetMatrix4x4(Model, model);
-            shader.SetVector3(Color, sun.Color);
+            shader.SetMatrix4x4(uModel, model);
+            shader.SetVector3(uColor, sun.Color);
             mesh.Draw(Constants._drawArrowAsMesh ? PrimitiveType.Triangles : PrimitiveType.Lines);
         }
     }

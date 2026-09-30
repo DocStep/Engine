@@ -109,7 +109,7 @@ public class TextRenderer : IDisposable {
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
         _material.shader.Use();
-        _material.shader.SetMatrix4x4(Shader.Projection, ortho);
+        _material.shader.SetMatrix4x4(Shader.uProjection, ortho);
         _material.Apply();
         GL.ActiveTexture(TextureUnit.Texture0);
         GL.BindTexture(TextureTarget.Texture2D, _atlas.TextureId);

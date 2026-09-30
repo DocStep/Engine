@@ -21,26 +21,18 @@ public class Material : IAsset<Material>, IOnLoaded {
     public void OnLoaded () {
         FillDefaults();
     }
-
-    /// Deep clone -- MemberwiseClone alone shares dict references with the
-    /// original, so SetX on the clone would silently mutate the source material.
-    public Material Clone () {
-        var copy = (Material)MemberwiseClone();
-        copy.ints = new Dictionary<string, int>(ints);
-        copy.floats = new Dictionary<string, float>(floats);
-        copy.vectors2 = new Dictionary<string, Vector2>(vectors2);
-        copy.vectors3 = new Dictionary<string, Vector3>(vectors3);
-        copy.vectors4 = new Dictionary<string, Vector4>(vectors4);
-        copy.textures = new Dictionary<string, Texture>(textures);
-        return copy;
-    }
-
     public Material (Shader shader) {
         this.shader = shader;
+        Name = shader.Name;
         FillDefaults();
     }
     public Material (Material material) {
+        Name = material.Name;
         shader = material.shader;
+        Pass = material.Pass;
+        Face = material.Face;
+        DepthTest = material.DepthTest;
+        DepthWrite = material.DepthWrite;
         ints = new Dictionary<string, int>(material.ints);
         floats = new Dictionary<string, float>(material.floats);
         vectors2 = new Dictionary<string, Vector2>(material.vectors2);
@@ -48,6 +40,7 @@ public class Material : IAsset<Material>, IOnLoaded {
         vectors4 = new Dictionary<string, Vector4>(material.vectors4);
         textures = new Dictionary<string, Texture>(material.textures);
     }
+    public Material Clone () => new Material(this);
 
     public string Name { get; set; } = nameof(Material);
     [Readonly] public long Id { get; set; }
@@ -57,6 +50,10 @@ public class Material : IAsset<Material>, IOnLoaded {
 
     [JsonIgnore, Hide] static int _nextId = 0;
     [JsonIgnore, Readonly] public readonly int Id_Renderer = System.Threading.Interlocked.Increment(ref _nextId);
+
+    [JsonIgnore, Hide] public bool Dirty = true;
+    [JsonIgnore, Hide] int _appliedGeneration = -1;
+    [JsonIgnore, Hide] static Material? _lastApplied;
 
     /// Render State
     public RenderPass Pass = RenderPass.Opaque;
@@ -75,11 +72,18 @@ public class Material : IAsset<Material>, IOnLoaded {
 
 
     public void Apply () {
-        foreach (var kv in ints) shader.SetInt(kv.Key, kv.Value);
-        foreach (var kv in floats) shader.SetFloat(kv.Key, kv.Value);
-        foreach (var kv in vectors2) shader.SetVector2(kv.Key, kv.Value);
-        foreach (var kv in vectors3) shader.SetVector3(kv.Key, kv.Value);
-        foreach (var kv in vectors4) shader.SetVector4(kv.Key, kv.Value);
+        bool unchanged = _lastApplied == this && !Dirty && _appliedGeneration == shader.Generation;
+        if (!unchanged) {
+            foreach (var kv in ints) shader.SetInt(kv.Key, kv.Value);
+            foreach (var kv in floats) shader.SetFloat(kv.Key, kv.Value);
+            foreach (var kv in vectors2) shader.SetVector2(kv.Key, kv.Value);
+            foreach (var kv in vectors3) shader.SetVector3(kv.Key, kv.Value);
+            foreach (var kv in vectors4) shader.SetVector4(kv.Key, kv.Value);
+            Dirty = false;
+            _appliedGeneration = shader.Generation;
+            _lastApplied = this;
+        }
+        /// textures always rebind: texture units are global GL state and other passes overwrite them
         foreach (var kv in textures) shader.SetTexture(kv.Key, kv.Value);
         ApplyCustom();
     }
@@ -115,14 +119,35 @@ public class Material : IAsset<Material>, IOnLoaded {
         }
     }
 
-    public Material SetInt (string name, int value) { ints[name] = value; return this; }
-    public Material SetFloat (string name, float value) { floats[name] = value; return this; }
-    public Material SetVector2 (string name, Vector2 value) { vectors2[name] = value; return this; }
-    public Material SetVector3 (string name, Vector3 value) { vectors3[name] = value; return this; }
-    public Material SetVector4 (string name, Vector4 value) { vectors4[name] = value; return this; }
+    public Material SetInt (string name, int value) {
+        ints[name] = value;
+        Dirty = true;
+        return this;
+    }
+    public Material SetFloat (string name, float value) {
+        floats[name] = value;
+        Dirty = true;
+        return this;
+    }
+    public Material SetVector2 (string name, Vector2 value) {
+        vectors2[name] = value;
+        Dirty = true;
+        return this;
+    }
+    public Material SetVector3 (string name, Vector3 value) {
+        vectors3[name] = value;
+        Dirty = true;
+        return this;
+    }
+    public Material SetVector4 (string name, Vector4 value) {
+        vectors4[name] = value;
+        Dirty = true;
+        return this;
+    }
     public Material SetTexture (string name, Texture value) {
         textures[name] = value;
-        if (name == Shader.Texture) ints[Shader.HasTexture] = 1;
+        if (name == Shader.uTexture) ints[Shader.uHasTexture] = 1; /// <> <?>
+        Dirty = true;
         return this;
     }
 

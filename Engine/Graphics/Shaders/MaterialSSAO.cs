@@ -12,17 +12,6 @@ public class MaterialSSAO : Material {
     public float strength = 1f;
     //public float power = 1.5f;
     public float sampleCount = 32f;
-    //public float falloffPower = 10.0f;
-
-    [Hide] public const string TexelSize = "uTexelSize";
-    [Hide] public const string Radius = "uRadius";
-    [Hide] public const string Bias = "uBias";
-    [Hide] public const string Strength = "uStrength";
-    //[Hide] public const string Power = "uPower";
-    [Hide] public const string Near = "uNear";
-    [Hide] public const string Far = "uFar";
-    [Hide] public const string SampleCount = "uSampleCount";
-    //public const string FalloffPower = "uFalloffPower";
 
 
     public override void ApplyCustom () {
@@ -30,23 +19,16 @@ public class MaterialSSAO : Material {
 
         Matrix4x4.Invert(Renderer.Instance.m4x4_Projection, out invProjection);
 
-        shader.SetMatrix4x4(Shader.Projection, Renderer.Instance.m4x4_Projection);
-        shader.SetMatrix4x4(Shader.InvProjection, invProjection);
-        shader.SetVector2(TexelSize, new Vector2(1f/Renderer.Instance.Width, 1f/Renderer.Instance.Height));
-        shader.SetFloat(Radius, radius);
-        shader.SetFloat(Bias, bias);
-        shader.SetFloat(Strength, strength);
-        shader.SetFloat(Near, Renderer.Instance.Camera.PlaneNear);
-        shader.SetFloat(Far, Renderer.Instance.Camera.PlaneFar);
-        shader.SetFloat(SampleCount, sampleCount);
-        //shader.SetFloat(FalloffPower, falloffPower);
-
-        // Bind the scene normals (stored as view-space floats in the postprocess stack) to the shader.
-        // Use texture unit 2 to avoid clashing with Scene (0) and Depth (1).
-        Renderer.GL.ActiveTexture(Silk.NET.OpenGL.TextureUnit.Texture2);
-        Renderer.GL.BindTexture(Silk.NET.OpenGL.TextureTarget.Texture2D, Renderer.Instance.PostProcess.SceneNormalTexture);
-        shader.SetInt("uNormal", 2);
-        //Log.log("SceneNormalTexture", Renderer.Instance.PostProcess.SceneNormalTexture);
+        shader.SetMatrix4x4(Shader.uProjection, Renderer.Instance.m4x4_Projection);
+        shader.SetMatrix4x4(Shader.uInvProjection, invProjection);
+        shader.SetVector2(Shader.uTexelSize, new Vector2(1f/Renderer.Instance.Width, 1f/Renderer.Instance.Height));
+        shader.SetFloat(Shader.uRadius, radius);
+        shader.SetFloat(Shader.uBias, bias);
+        shader.SetFloat(Shader.uStrength, strength);
+        shader.SetFloat(Shader.uNear, Renderer.Instance.Camera.PlaneNear);
+        shader.SetFloat(Shader.uFar, Renderer.Instance.Camera.PlaneFar);
+        shader.SetFloat(Shader.uSampleCount, sampleCount);
+        shader.SetInt(Shader.uNormal, 2);
     }
 
 }

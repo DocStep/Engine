@@ -39,10 +39,10 @@ public class Renderer {
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Grayscale));
         PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOBlur));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAOComposite));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO_Blur));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO_Composite));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
-        //PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
+        PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Vignette) { Enabled = false });
 
 
@@ -265,7 +265,7 @@ public class Renderer {
                 SetSceneUniformsSkybox(shader, Skybox.prefilteredHandle, Skybox.maxLod);
                 break;
             case RenderPass.UI:
-                shader.SetMatrix4x4(Projection, m4x4_ProjectionUI);
+                shader.SetMatrix4x4(uProjection, m4x4_ProjectionUI);
                 break;
         }
 
@@ -280,8 +280,8 @@ public class Renderer {
         BindMaterial(info.material);
 
         Shader shader = info.material.shader;
-        shader.SetMatrix4x4(Model, info.model);
-        shader.SetMatrix4x4(NormalMatrix, info.normal ?? GetNormalMatrix(info.model));
+        shader.SetMatrix4x4(uModel, info.model);
+        shader.SetMatrix4x4(uNormalMatrix, info.normal ?? GetNormalMatrix(info.model));
 
         info.mesh.Draw(info.indexOffset, info.indexCount, info.primitiveType);
     }
@@ -328,9 +328,9 @@ public class Renderer {
 
 
     public void SetSceneUniformsUnlit (Shader shader, Vector3 viewPos) {
-        shader.SetMatrix4x4(View, m4x4_View);
-        shader.SetMatrix4x4(Projection, m4x4_Projection);
-        shader.SetVector3(ViewPos, viewPos);
+        shader.SetMatrix4x4(uView, m4x4_View);
+        shader.SetMatrix4x4(uProjection, m4x4_Projection);
+        shader.SetVector3(uViewPos, viewPos);
     }
     public static void SetSceneUniformsLit (Shader shader) {
         if (!shader.isLit) return;
@@ -342,8 +342,8 @@ public class Renderer {
 
         GL.ActiveTexture(TextureUnit.Texture0);
         GL.BindTexture(TextureTarget.Texture2D, prefilteredHandle);
-        shader.SetInt(Shader.Skybox, 0);
-        shader.SetFloat(MaxReflectionLod, maxLod);
+        shader.SetInt(Shader.uSkybox, 0);
+        shader.SetFloat(uMaxReflectionLod, maxLod);
     }
 
     protected void OnFrameBufferResize (Silk.NET.Maths.Vector2D<int> newSize) {

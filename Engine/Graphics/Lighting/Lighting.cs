@@ -41,11 +41,11 @@ public static class Lighting {
                 intensities[i] = light.Intensity;
             }
 
-            shader.SetVector3Array(SunLightDir, dirs);
-            shader.SetVector3Array(SunLightColor, colors);
-            shader.SetFloatArray(SunLightIntensity, intensities);
+            shader.SetVector3Array(uSunLightDir, dirs);
+            shader.SetVector3Array(uSunLightColor, colors);
+            shader.SetFloatArray(uSunLightIntensity, intensities);
         }
-        shader.SetInt(SunLightCount, count);
+        shader.SetInt(uSunLightCount, count);
 
         List<PointLight> enabledPointLights = PointLights.Where(l => l.Enabled).ToList();
         int pointCount = Math.Min(enabledPointLights.Count, PoinyLights_Max);
@@ -63,31 +63,31 @@ public static class Lighting {
                 ranges[i] = light.Range;
             }
 
-            shader.SetVector3Array(PointLightColor, colors);
-            shader.SetFloatArray(PointLightIntensity, intensities);
-            shader.SetVector3Array(PointLightPos, positions);
-            shader.SetFloatArray(PointLightRange, ranges);
+            shader.SetVector3Array(uPointLightColor, colors);
+            shader.SetFloatArray(uPointLightIntensity, intensities);
+            shader.SetVector3Array(uPointLightPos, positions);
+            shader.SetFloatArray(uPointLightRange, ranges);
         }
-        shader.SetInt(PointLightCount, pointCount);
+        shader.SetInt(uPointLightCount, pointCount);
 
         /// General
-        shader.SetVector3(AmbientColor, Constants.Ambient_Color);
-        shader.SetFloat(AmbientColorIntensity, Constants.Ambient_Intensity);
-        shader.SetFloat(Exposure, Renderer.Instance.Camera.Exposure);
+        shader.SetVector3(uAmbientColor, Constants.Ambient_Color);
+        shader.SetFloat(uAmbientColorIntensity, Constants.Ambient_Intensity);
+        shader.SetFloat(uExposure, Renderer.Instance.Camera.Exposure);
 
         if (Constants.renderSkyboxReflection)
-            shader.SetFloat(ReflectionIntensity, Constants.reflectionIntensity);
+            shader.SetFloat(uReflectionIntensity, Constants.reflectionIntensity);
     }
 
     public static void SetSHAmbient (Shader shader, in SHAmbientProbe probe) {
-        shader.SetVector4(SHAr, probe.SHAr);
-        shader.SetVector4(SHAg, probe.SHAg);
-        shader.SetVector4(SHAb, probe.SHAb);
-        shader.SetVector4(SHBr, probe.SHBr);
-        shader.SetVector4(SHBg, probe.SHBg);
-        shader.SetVector4(SHBb, probe.SHBb);
-        shader.SetVector4(SHC, probe.SHC);
-        shader.SetFloat(AmbientColorIntensity, probe.Intensity);
+        shader.SetVector4(uSHAr, probe.SHAr);
+        shader.SetVector4(uSHAg, probe.SHAg);
+        shader.SetVector4(uSHAb, probe.SHAb);
+        shader.SetVector4(uSHBr, probe.SHBr);
+        shader.SetVector4(uSHBg, probe.SHBg);
+        shader.SetVector4(uSHBb, probe.SHBb);
+        shader.SetVector4(uSHC, probe.SHC);
+        shader.SetFloat(uAmbientColorIntensity, probe.Intensity);
     }
 
     public static void RegisterLightSource (LightSource lightSource) {

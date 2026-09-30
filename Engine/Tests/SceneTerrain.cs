@@ -26,8 +26,8 @@ public class SceneTerrain : Scene {
         }
         terrain_meshComp.Mesh = new Mesh(MeshData.CreateFromArray(heightmap, 1f));
         terrain_meshComp.Material = new Material(AssetsEngine._mat_Lit) { Name = "Terrain", };
-        terrain_meshComp.Material.SetVector3(Shader.Color, Constants.white);
-        terrain_meshComp.Material.SetFloat(Shader.Smoothness, 0f);
+        terrain_meshComp.Material.SetVector3(Shader.uColor, Constants.white);
+        terrain_meshComp.Material.SetFloat(Shader.uSmoothness, 0f);
         MeshColliderComponent terrain_meshColliderComp = go_terrain.AddComponent<MeshColliderComponent>();
         terrain_meshColliderComp.SetMesh(terrain_meshComp.Mesh);
 

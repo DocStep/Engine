@@ -138,7 +138,7 @@ public class RendererEditor : Renderer {
         shader.Use();
         SetSceneUniformsUnlit(shader, Renderer.Instance.Camera.CameraPos);
 
-        shader.SetMatrix4x4(Model, info.model);
+        shader.SetMatrix4x4(uModel, info.model);
         Gizmos._mat_GizmoWireframe.Apply();
 
         info.mesh.Draw(info.primitiveType);
@@ -158,9 +158,9 @@ public class RendererEditor : Renderer {
                 float smoothness = (float)x/(total - 1);
                 float metallic = (float)z/(total - 1);
                 Material mat = new Material(_mat_MaterialPreview);
-                mat.SetVector3(Color, Constants.lightGray);
-                mat.SetFloat(Smoothness, smoothness);
-                mat.SetFloat(Metallic, metallic);
+                mat.SetVector3(uColor, Constants.lightGray);
+                mat.SetFloat(uSmoothness, smoothness);
+                mat.SetFloat(uMetallic, metallic);
                 cache[x*total + z] = mat;
             }
         }

@@ -32,14 +32,14 @@ public static class MtlToMaterial {
         Material mat = new Material(template);
         //mat.textures.TryAdd(Shader.Texture, Texture.White); /// guarantee this regardless of whether template's FillDefaults ran
         mat.Name = name;
-        mat.vectors3[Shader.Color] = data.Kd;
-        mat.floats[Shader.Alpha] = data.d;
+        mat.vectors3[Shader.uColor] = data.Kd;
+        mat.floats[Shader.uAlpha] = data.d;
 
         float roughness = 0f <= data.Pr ? data.Pr : EstimateRoughnessFromNs(data.Ns);
         float metallic = 0f <= data.Pm ? data.Pm : (data.illum == 3 || data.illum == 6 ? 1f : 0f);
 
-        mat.floats[Shader.Smoothness] = 1f - roughness;
-        mat.floats[Shader.Metallic] = metallic;
+        mat.floats[Shader.uSmoothness] = 1f - roughness;
+        mat.floats[Shader.uMetallic] = metallic;
 
         bool transparent = data.d < 1f;
         mat.Pass = transparent ? RenderPass.Transparent : RenderPass.Opaque;

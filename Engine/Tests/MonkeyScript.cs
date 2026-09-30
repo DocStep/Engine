@@ -19,7 +19,7 @@ public class MonkeyScript : Script, IAwake, IUpdate {
     public void Awake () {
         Log.log("MonkeyScript.Awake");
         mat = gameObject.GetComponent<Graphics.MeshComponent>()?.Material;
-        mat?.SetVector3(Graphics.Shader.Color, startColor);
+        mat?.SetVector3(Graphics.Shader.uColor, startColor);
     }
     public void Update () {
         gameObject.Transform.RotateLocalEuler((float)Time.deltaTime*dir);
