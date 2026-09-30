@@ -24,7 +24,8 @@ public class MeshComponent : Component, IUpdate, IUpdateAtFreeze {
         if (Mesh.SubMeshes.Length <= 1) {
             RenderInfo info = new RenderInfo() {
                 model = model,
-                mesh = Mesh,
+                //mesh = Mesh,
+                mesh = LOD.GetLOD(Mesh, Vector3.DistanceSquared(gameObject.Transform.Position, Renderer.Instance.Camera.CameraPos)),
                 material = Material,
                 primitiveType = primitiveType,
             };

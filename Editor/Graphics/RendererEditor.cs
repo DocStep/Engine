@@ -190,25 +190,30 @@ public class RendererEditor : Renderer {
     }
     public void DrawMaterialsGrid () => DrawMaterialsGrid(-14f, 0f);
 
-    public static void DrawMaterialGrid (float offsetX, float offsetZ, int testGridCount = 100, float testGridDensity = 1f) {
-        if (!Constants.drawMaterialGrid) return;
+    public static void DrawMaterialGrid (float offsetX, float offsetZ, int testGridCount = 1000, float testGridDensity = 1f) {
+        if (!Constants.drawMaterialGrid || Renderer.Instance is null || Renderer.Instance.Camera is null) return;
 
+        long t1 = System.Diagnostics.Stopwatch.GetTimestamp();
         int total = testGridCount*(int)testGridDensity;
-
         float speed = 2f;
         for (int x = 0; x < total; x++) {
             for (int z = 0; z < total; z++) {
                 float _x = x/testGridDensity + offsetX;
                 float _z = z/testGridDensity + offsetZ;
                 float y = 0.25f*MathF.Sin(_x + speed*(float)Time.time)*MathF.Cos(_z + speed*(float)Time.time);
+                Vector3 pos = new Vector3(_x, y, _z);
                 RenderInfo info = new RenderInfo() {
-                    model = Matrix4x4.CreateTranslation(new Vector3(_x, y, _z)),
-                    mesh = _mesh_Sphere,
+                    model = Matrix4x4.CreateTranslation(pos),
+                    //mesh = _mesh_Sphere,
+                    mesh = _mesh_PlaneQuad,
+                    //mesh = LOD.GetLOD(_mesh_Sphere, Vector3.DistanceSquared(pos, Renderer.Instance.Camera.CameraPos)),
                     material = AssetsEngine._mat_Lit,
                 };
                 Renderer.Instance.AddRenderInfo(info);
             }
         }
+        long t2 = System.Diagnostics.Stopwatch.GetTimestamp();
+        Log.log(System.Diagnostics.Stopwatch.GetElapsedTime(t1, t2).TotalMilliseconds);
     }
     public void DrawMaterialGrid () => DrawMaterialGrid(0f, 20f);
 

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Linq;
+using Newtonsoft.Json;
 
 namespace Engine.Graphics;
 
@@ -48,12 +49,14 @@ public class Material : IAsset<Material>, IOnLoaded {
 
     [Hide] public Shader shader = null!;
 
-    [JsonIgnore, Hide] static int _nextId = 0;
+    [JsonIgnore, Hide] private static int _nextId = 0;
     [JsonIgnore, Readonly] public readonly int Id_Renderer = System.Threading.Interlocked.Increment(ref _nextId);
 
     [JsonIgnore, Hide] public bool Dirty = true;
-    [JsonIgnore, Hide] int _appliedGeneration = -1;
-    [JsonIgnore, Hide] static Material? _lastApplied;
+    [JsonIgnore, Hide] private int _appliedGeneration = -1;
+    [JsonIgnore, Hide] private static Material? _lastApplied;
+    [JsonIgnore, Hide] private bool IsUpToDate => _lastApplied == this && !Dirty && _appliedGeneration == shader.Generation;
+    [JsonIgnore, Hide] private int _syncedGeneration = -1;
 
     /// Render State
     public RenderPass Pass = RenderPass.Opaque;
@@ -72,27 +75,46 @@ public class Material : IAsset<Material>, IOnLoaded {
 
 
     public void Apply () {
-        bool unchanged = _lastApplied == this && !Dirty && _appliedGeneration == shader.Generation;
-        if (!unchanged) {
-            foreach (var kv in ints) shader.SetInt(kv.Key, kv.Value);
-            foreach (var kv in floats) shader.SetFloat(kv.Key, kv.Value);
-            foreach (var kv in vectors2) shader.SetVector2(kv.Key, kv.Value);
-            foreach (var kv in vectors3) shader.SetVector3(kv.Key, kv.Value);
-            foreach (var kv in vectors4) shader.SetVector4(kv.Key, kv.Value);
+        if (_syncedGeneration != shader.Generation) {
+            FillDefaults();
+            _syncedGeneration = shader.Generation;
+            Dirty = true;
+        }
+        if (!IsUpToDate) {
+            ApplyUniforms();
             Dirty = false;
             _appliedGeneration = shader.Generation;
             _lastApplied = this;
         }
-        /// textures always rebind: texture units are global GL state and other passes overwrite them
-        foreach (var kv in textures) shader.SetTexture(kv.Key, kv.Value);
+        ApplyTextures();
         ApplyCustom();
     }
+
+    /// Scalar and vector uniforms. Skipped when nothing changed.
+    protected virtual void ApplyUniforms () {
+        foreach (var kv in ints) shader.SetInt(kv.Key, kv.Value);
+        foreach (var kv in floats) shader.SetFloat(kv.Key, kv.Value);
+        foreach (var kv in vectors2) shader.SetVector2(kv.Key, kv.Value);
+        foreach (var kv in vectors3) shader.SetVector3(kv.Key, kv.Value);
+        foreach (var kv in vectors4) shader.SetVector4(kv.Key, kv.Value);
+    }
+
+    /// Always runs: texture units are global GL state and other passes overwrite them.
+    protected virtual void ApplyTextures () {
+        foreach (var kv in textures) shader.SetTexture(kv.Key, kv.Value);
+    }
+
+    /// Per-draw hook for subclasses. Always runs, even when uniforms were skipped.
     public virtual void ApplyCustom () { }
 
 
     public void FillDefaults () {
         foreach (UniformInfo info in shader.ActiveUniforms.Values) {
             if (Shader.ReservedGlobalUniforms.Contains(info.Name)) continue;
+            if (info.Size != 1) {
+                Log.log($"Material '{Name}': array uniform '{info.Name}' is not supported", LogType.warning);
+                continue;
+            }
 
             //if (info.Type == Silk.NET.OpenGL.UniformType.Sampler2D) {
             //    if (!shader.Name.Contains("Skybox")) {
@@ -120,45 +142,64 @@ public class Material : IAsset<Material>, IOnLoaded {
     }
 
     public Material SetInt (string name, int value) {
+        //if (CheckUniform(name)) return this;
         ints[name] = value;
         Dirty = true;
         return this;
     }
     public Material SetFloat (string name, float value) {
+        //if (CheckUniform(name)) return this;
         floats[name] = value;
         Dirty = true;
         return this;
     }
     public Material SetVector2 (string name, Vector2 value) {
+        //if (CheckUniform(name)) return this;
         vectors2[name] = value;
         Dirty = true;
         return this;
     }
     public Material SetVector3 (string name, Vector3 value) {
+        //if (CheckUniform(name)) return this;
         vectors3[name] = value;
         Dirty = true;
         return this;
     }
     public Material SetVector4 (string name, Vector4 value) {
+        //if (CheckUniform(name)) return this;
         vectors4[name] = value;
         Dirty = true;
         return this;
     }
     public Material SetTexture (string name, Texture value) {
+        //if (CheckUniform(name)) return this;
         textures[name] = value;
         if (name == Shader.uTexture) ints[Shader.uHasTexture] = 1; /// <> <?>
         Dirty = true;
         return this;
     }
 
+    private bool CheckUniform (string name) {
+        if (shader.ActiveUniforms.ContainsKey(name)) return true;
+        Log.log($"Material '{Name}': shader has no uniform '{name}'", LogType.warning);
+        return false;
+    }
+
 
     public void Save (string path) {
+        Prune(ints); Prune(floats); Prune(vectors2); Prune(vectors3); Prune(vectors4); Prune(textures);
         Path = path;
         Json.Write(path, this);
     }
     public static Material? Load (string path, int part = 100) {
         return Json.Read<Material>(path);
     }
+
+    private void Prune<T> (Dictionary<string, T> dict) {
+        foreach (string key in dict.Keys.ToList())
+            if (!shader.ActiveUniforms.ContainsKey(key)) dict.Remove(key);
+    }
+
 
     public void Dispose () { }
 

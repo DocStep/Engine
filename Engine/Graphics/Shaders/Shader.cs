@@ -65,8 +65,8 @@ public class Shader : IAsset<Shader> {
 
         GL.GetShader(shaderId, ShaderParameterName.CompileStatus, out int status);
         if (status == 0) {
-            GL.DeleteShader(shaderId);
             string log = GL.GetShaderInfoLog(shaderId);
+            GL.DeleteShader(shaderId);
             throw new Exception($"{type} failed to compile: {log}");
         }
 
@@ -124,7 +124,7 @@ public class Shader : IAsset<Shader> {
         [UniformType.FloatVec2] = Vector2.Zero,
         [UniformType.FloatVec3] = Vector3.One,
         [UniformType.FloatVec4] = Vector4.One,
-        //[UniformType.Sampler2D] = Graphics.Texture.White,
+        [UniformType.Sampler2D] = Texture.White,
     };
     [JsonIgnore, Hide]
     public readonly static Dictionary<string, object> UniformDefaults = new Dictionary<string, object>() {

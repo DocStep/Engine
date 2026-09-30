@@ -51,7 +51,7 @@ public static class Constants {
     public static bool useLOD = false;
 
     public static bool drawMaterialsGrid = true;
-    public static bool drawMaterialGrid = false;
+    public static bool drawMaterialGrid = true;
     public static int materialsGridCount = 5;
     public static int materialsGridDensity = 1;
 
