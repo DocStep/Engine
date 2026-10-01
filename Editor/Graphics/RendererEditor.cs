@@ -74,7 +74,7 @@ public class RendererEditor : Renderer {
         /// The queue's raw list is untouched by DrawScene (it only sorts indices), so this
         /// works after it in NormalWireframe mode. Two passes replace the old in-place sort:
         /// scene items as wireframe first, then everything else (UI) the normal way.
-        IReadOnlyList<RenderInfo> items = _queue.Items;
+        IReadOnlyList<RenderInfo> items = queue.Items;
         int count = items.Count;
 
         for (int i = 0; i < count; i++) {
@@ -84,7 +84,7 @@ public class RendererEditor : Renderer {
                 DrawInfoWireframe(info);
         }
 
-        _state.Reset(); /// DrawInfoWireframe bound its own shader, so the cache is stale
+        state.Reset(); /// DrawInfoWireframe bound its own shader, so the cache is stale
 
         for (int i = 0; i < count; i++) {
             RenderInfo info = items[i];
@@ -167,53 +167,103 @@ public class RendererEditor : Renderer {
         cachedTotal = total;
     }
 
-    public static void DrawMaterialsGrid (float offsetX, float offsetZ, int testGridCount = 10, float testGridDensity = 1f) {
+
+    private static float[] _gridSinX = null!;
+    private static float[] _gridCosZ = null!;
+    public static void DrawMaterialsGrid (float offsetX, float offsetZ, int testGridCount = Constants.materialsGridCount, float testGridDensity = 1f) {
         if (!Constants.drawMaterialsGrid) return;
 
         int total = testGridCount*(int)testGridDensity;
         if (total != _gridTotalA) BuildGridMaterials(ref _gridMaterialsA, ref _gridTotalA, total);
 
-        float speed = 2f;
+        /// Reused buffers, only reallocated when the grid grows
+        if (_gridSinX == null || _gridSinX.Length < total) {
+            _gridSinX = new float[total];
+            _gridCosZ = new float[total];
+        }
+
+        float step = 1f/testGridDensity;
+        float t = 2f*(float)Time.time;
+
+        /// Trig depends on one axis only, so compute it once per row/column
+        for (int i = 0; i < total; i++) {
+            _gridSinX[i] = 0.25f*MathF.Sin(i*step + offsetX + t);
+            _gridCosZ[i] = MathF.Cos(i*step + offsetZ + t);
+        }
+
+        Renderer renderer = Renderer.Instance;
+        Matrix4x4 model = Matrix4x4.Identity;
+        Mesh mesh = _mesh_Sphere;
+        Material[] materials = _gridMaterialsA;
+
         for (int x = 0; x < total; x++) {
+            float px = x*step + offsetX;
+            float sx = _gridSinX[x];
+            int row = x*total;
             for (int z = 0; z < total; z++) {
-                float _x = x/testGridDensity + offsetX;
-                float _z = z/testGridDensity + offsetZ;
-                float y = 0.25f*MathF.Sin(_x + speed*(float)Time.time)*MathF.Cos(_z + speed*(float)Time.time);
-                RenderInfo info = new RenderInfo() {
-                    model = Matrix4x4.CreateTranslation(new Vector3(_x, y, _z)),
-                    mesh = _mesh_Sphere,
-                    material = _gridMaterialsA[x*total + z],
-                };
-                Renderer.Instance.AddRenderInfo(info);
+                /// Write translation directly instead of building a new matrix
+                model.M41 = px;
+                model.M42 = sx*_gridCosZ[z];
+                model.M43 = z*step + offsetZ;
+
+                renderer.AddRenderInfo(new RenderInfo() {
+                    model = model,
+                    mesh = mesh,
+                    material = materials[row + z],
+                });
             }
         }
     }
     public void DrawMaterialsGrid () => DrawMaterialsGrid(-14f, 0f);
 
-    public static void DrawMaterialGrid (float offsetX, float offsetZ, int testGridCount = 1000, float testGridDensity = 1f) {
+    private static float[] _matGridSinX = null!;
+    private static float[] _matGridCosZ = null!;
+    public static void DrawMaterialGrid (float offsetX, float offsetZ, int testGridCount = Constants.materialGridCount, float testGridDensity = 1f) {
         if (!Constants.drawMaterialGrid || Renderer.Instance is null || Renderer.Instance.Camera is null) return;
-
+        //return;
         long t1 = System.Diagnostics.Stopwatch.GetTimestamp();
         int total = testGridCount*(int)testGridDensity;
-        float speed = 2f;
+
+        /// Own buffers, only reallocated when the grid grows
+        if (_matGridSinX is null || _matGridSinX.Length < total) {
+            _matGridSinX = new float[total];
+            _matGridCosZ = new float[total];
+        }
+
+        float step = 1f/testGridDensity;
+        float t = 2f*(float)Time.time;
+
+        /// Sin depends on x only, Cos on z only: N calls each instead of N*N
+        for (int i = 0; i < total; i++) {
+            _matGridSinX[i] = 0.25f*MathF.Sin(i*step + offsetX + t);
+            _matGridCosZ[i] = MathF.Cos(i*step + offsetZ + t);
+        }
+
+        Renderer renderer = Renderer.Instance;
+        //Mesh mesh = _mesh_Sphere;
+        Mesh mesh = _mesh_PlaneQuad;
+        Material material = AssetsEngine._mat_Lit;
+        Matrix4x4 model = Matrix4x4.Identity;
+
         for (int x = 0; x < total; x++) {
+            float px = x*step + offsetX;
+            float sx = _matGridSinX[x];
             for (int z = 0; z < total; z++) {
-                float _x = x/testGridDensity + offsetX;
-                float _z = z/testGridDensity + offsetZ;
-                float y = 0.25f*MathF.Sin(_x + speed*(float)Time.time)*MathF.Cos(_z + speed*(float)Time.time);
-                Vector3 pos = new Vector3(_x, y, _z);
-                RenderInfo info = new RenderInfo() {
-                    model = Matrix4x4.CreateTranslation(pos),
-                    //mesh = _mesh_Sphere,
-                    mesh = _mesh_PlaneQuad,
-                    //mesh = LOD.GetLOD(_mesh_Sphere, Vector3.DistanceSquared(pos, Renderer.Instance.Camera.CameraPos)),
-                    material = AssetsEngine._mat_Lit,
-                };
-                Renderer.Instance.AddRenderInfo(info);
+                /// Write translation directly instead of CreateTranslation
+                model.M41 = px;
+                model.M42 = sx*_matGridCosZ[z];
+                model.M43 = z*step + offsetZ;
+
+                //mesh = LOD.GetLOD(_mesh_Sphere, Vector3.DistanceSquared(new Vector3(model.M41, model.M42, model.M43), renderer.Camera.CameraPos)),
+                renderer.AddRenderInfo(new RenderInfo() {
+                    model = model,
+                    mesh = mesh,
+                    material = material,
+                });
             }
         }
         long t2 = System.Diagnostics.Stopwatch.GetTimestamp();
-        Log.log(System.Diagnostics.Stopwatch.GetElapsedTime(t1, t2).TotalMilliseconds);
+        //Log.log(System.Diagnostics.Stopwatch.GetElapsedTime(t1, t2).TotalMilliseconds);
     }
     public void DrawMaterialGrid () => DrawMaterialGrid(0f, 20f);
 

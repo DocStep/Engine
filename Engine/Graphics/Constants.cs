@@ -50,10 +50,11 @@ public static class Constants {
 	
     public static bool useLOD = false;
 
-    public static bool drawMaterialsGrid = true;
-    public static bool drawMaterialGrid = true;
-    public static int materialsGridCount = 5;
-    public static int materialsGridDensity = 1;
+    public const bool drawMaterialsGrid = true;
+    public const int materialsGridCount = 10;
+    public const bool drawMaterialGrid = true;
+    public const int materialGridCount = 100;
+    public const int materialsGridDensity = 1;
 
     public static bool drawGizmos = true;
 

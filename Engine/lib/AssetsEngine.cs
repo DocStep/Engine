@@ -11,20 +11,17 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         //Shader.StatsReset();
 
         //_sh_Lit = new Shader(Assets.LoadText("src/Shaders/Lit_Vertex.shader"), Assets.LoadText("src/Shaders/Lit_Fragment.shader"), "Lit");
-        _sh_LitInstanced = new Shader("src/Shaders/Lit_Vertex.shader", 
-            "src/Shaders/LitAlt_Fragment.shader", "Lit", isLit: true);
+        _sh_LitInstanced = new Shader("src/Shaders/Lit_Vertex.shader", "src/Shaders/Lit_Fragment.shader", "Lit", isLit: true);
         _sh_LitInstanced.Save("src/Shaders/Lit.shader");
         ///
-        _sh_Unlit = new Shader("src/Shaders/Unlit_Vertex.shader", 
-            "src/Shaders/Unlit_Fragment.shader", "Unlit", isLit: false);
+        _sh_Unlit = new Shader("src/Shaders/Unlit_Vertex.shader", "src/Shaders/Unlit_Fragment.shader", "Unlit", isLit: false);
         _sh_Unlit.Save("src/Shaders/Unlit.shader");
         ///
         _sh_UnlitInstanced = new Shader("src/Shaders/Unlit_Instanced_Vertex.shader", 
             "src/Shaders/Unlit_Fragment.shader", "UnlitInstanced", isLit: false);
-        _sh_Unlit.Save("src/Shaders/UnlitInstanced.shader");
+        _sh_UnlitInstanced.Save("src/Shaders/UnlitInstanced.shader");
         ///
-        _sh_UI = new Shader("src/Shaders/UI_Vertex.shader", 
-            "src/Shaders/UI_Fragment.shader", "UI", isLit: false);
+        _sh_UI = new Shader("src/Shaders/UI_Vertex.shader", "src/Shaders/UI_Fragment.shader", "UI", isLit: false);
         _sh_UI.Save("src/Shaders/UI.shader");
 
         _mat_Lit = new Material(_sh_LitInstanced) { Name = "Lit", };

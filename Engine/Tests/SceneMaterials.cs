@@ -19,7 +19,9 @@ public class SceneMaterials : Scene {
         go_sun1.Transform.LocalEuler = new Vector3(60, -30, 0);
         SunLight sun1 = go_sun1.AddComponent<SunLight>();
 
-        /// Plane 2 Materials
+        return;
+
+        /// Plane Materials
         x = -2;
         GameObject go_plane2Materials = new GameObject() { Name = "Plane Materials", };
         go_plane2Materials.Transform.Position = new Vector3(x, 0, 0);

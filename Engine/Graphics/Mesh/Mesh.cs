@@ -156,7 +156,7 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
     /// instanced vertex attributes (location 3 = model mat4, location 7 = normal mat4 — see the
     /// *_instanced shader variants) instead of the uModel/uNormalMatrix uniforms, or every
     /// instance renders with garbage/zeroed transforms.
-    public void DrawInstanced (ReadOnlySpan<Matrix4x4> models, ReadOnlySpan<Matrix4x4> normals, uint indexOffset, uint indexCount, PrimitiveType primitiveType = PrimitiveType.Triangles) {
+    public void DrawInstanced (ReadOnlySpan<Matrix4x4> models, uint indexOffset, uint indexCount, PrimitiveType primitiveType = PrimitiveType.Triangles) {
         int instanceCount = models.Length;
         if (instanceCount == 0) return;
 
@@ -164,14 +164,13 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
 
         EnsureInstanceBuffer();
 
-        const int floatsPerInstance = 32; /// mat4 model (16) + mat4 normal (16)
+        const int floatsPerInstance = 16; /// mat4 model (16) + mat4 normal (16)
         int floatCount = instanceCount*floatsPerInstance;
         if (_instanceUploadScratch.Length < floatCount) _instanceUploadScratch = new float[floatCount];
 
         for (int i = 0; i < instanceCount; i++) {
             int o = i*floatsPerInstance;
             WriteMatrix(_instanceUploadScratch, o, models[i]);
-            WriteMatrix(_instanceUploadScratch, o + 16, normals[i]);
         }
 
         GL.BindVertexArray(_vao);
@@ -194,6 +193,9 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
         GL.BindVertexArray(0);
     }
 
+    const uint mat4Size = 16*sizeof(float);
+    const uint instanceStride = mat4Size;
+
     /// A mat4 vertex attribute consumes 4 consecutive locations (one vec4 per column), so the
     /// model matrix occupies 3-6 and the normal matrix occupies 7-10. Divisor 1 on every column
     /// makes them advance once per instance instead of once per vertex.
@@ -206,9 +208,6 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
         GL.BindVertexArray(_vao);
         GL.BindBuffer(GLEnum.ArrayBuffer, _instanceVbo);
 
-        const uint mat4Size = 16*sizeof(float);
-        const uint instanceStride = mat4Size*2;
-
         unsafe {
             for (uint col = 0; col < 4; col++) {
                 uint loc = 3 + col;
@@ -216,12 +215,12 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
                 GL.EnableVertexAttribArray(loc);
                 GL.VertexAttribDivisor(loc, 1);
             }
-            for (uint col = 0; col < 4; col++) {
-                uint loc = 7 + col;
-                GL.VertexAttribPointer(loc, 4, VertexAttribPointerType.Float, false, instanceStride, (void*)(mat4Size + col*4*sizeof(float)));
-                GL.EnableVertexAttribArray(loc);
-                GL.VertexAttribDivisor(loc, 1);
-            }
+            //for (uint col = 0; col < 4; col++) {
+            //    uint loc = 7 + col;
+            //    GL.VertexAttribPointer(loc, 4, VertexAttribPointerType.Float, false, instanceStride, (void*)(mat4Size + col*4*sizeof(float)));
+            //    GL.EnableVertexAttribArray(loc);
+            //    GL.VertexAttribDivisor(loc, 1);
+            //}
         }
 
         GL.BindVertexArray(0);

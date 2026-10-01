@@ -18,9 +18,9 @@ void main () {
     vec4 worldPos = aModel*vec4(aPosition, 1.0);
 
     vFragPos = worldPos.xyz;
-    vNormal = mat3(aNormalMatrix)*aNormal;
+    vNormal = normalize(transpose(inverse(mat3(aModel)))*aNormal);
     vUV = aUV;
-    vViewNormal = mat3(uView) * vNormal;
+    vViewNormal = mat3(uView)*vNormal;
     // vUV = vec2(aUV.x, 1.0 - aUV.y);
 
     gl_Position = uProjection*uView*worldPos;

@@ -78,12 +78,11 @@ public class Renderer {
     public Matrix4x4 m4x4_Projection = Matrix4x4.Identity;
     public Matrix4x4 m4x4_ProjectionUI = Matrix4x4.Identity;
 
-    protected readonly RenderState _state = new RenderState();
-    protected readonly RenderQueue _queue = new RenderQueue();
-    protected Frustum _frustum = new Frustum(); /// not readonly — a readonly struct field makes a defensive copy on every call
+    protected readonly RenderState state = new RenderState();
+    protected readonly RenderQueue queue = new RenderQueue();
+    protected Frustum frustum = new Frustum(); /// not readonly — a readonly struct field makes a defensive copy on every call
 
-    protected Matrix4x4[] _instanceModelScratch = [];
-    protected Matrix4x4[] _instanceNormalScratch = [];
+    protected Matrix4x4[] instanceModelScratch = [];
 
     public RendererStats Stats = new RendererStats();
     public int Width => (int)MathF.Round(Stats.SceneSize.X);
@@ -92,8 +91,8 @@ public class Renderer {
     protected System.Diagnostics.Stopwatch sw_Latency = new System.Diagnostics.Stopwatch();
 
     /// Cached so UpdateViewProjection only rebuilds the UI ortho matrix when size actually changes
-    protected float _lastProjWidth = -1f;
-    protected float _lastProjHeight = -1f;
+    protected float lastProjWidth = -1f;
+    protected float lastProjHeight = -1f;
 
 
 
@@ -104,7 +103,7 @@ public class Renderer {
         Camera = MainCamera;
         if (Camera is null) {
             Log.log($"No {nameof(Graphics.Camera)} found");
-            _queue.Clear(); /// otherwise the queue grows every frame while there is no camera
+            queue.Clear(); /// otherwise the queue grows every frame while there is no camera
             return;
         }
         StatsStart();
@@ -161,12 +160,12 @@ public class Renderer {
         Stats.WindowSize = new Vector2(Windows.Window.Size.X, Windows.Window.Size.Y);
         Stats.SceneSize = Stats.WindowSize;
 
-        _state.Reset();
+        state.Reset();
     }
     protected void StatsEnd () {
         Stats.Latency = (float)sw_Latency.Elapsed.TotalMilliseconds;
 
-        _queue.Clear();
+        queue.Clear();
     }
     public virtual void SetTargetSize () {
         Stats.SceneSize = new Vector2(Windows.Window.Size.X, Windows.Window.Size.Y);
@@ -176,7 +175,7 @@ public class Renderer {
     }
 
     public void AddRenderInfo (RenderInfo renderInfo) {
-        _queue.Add(renderInfo);
+        queue.Add(renderInfo);
     }
 
     protected void UpdateViewProjection (float width, float height) {
@@ -187,10 +186,10 @@ public class Renderer {
             Camera.FOV*Mathf.Deg2Rad, aspect, Camera.PlaneNear, Camera.PlaneFar);
 
         /// Ortho only depends on width/height, not the camera — skip rebuilding it every frame
-        if (width != _lastProjWidth || height != _lastProjHeight) {
+        if (width != lastProjWidth || height != lastProjHeight) {
             m4x4_ProjectionUI = Matrix4x4.CreateOrthographicOffCenter(0, width, height, 0, -1f, 1f);
-            _lastProjWidth = width;
-            _lastProjHeight = height;
+            lastProjWidth = width;
+            lastProjHeight = height;
         }
     }
     protected virtual Camera? MainCamera => Camera.Main;
@@ -212,20 +211,20 @@ public class Renderer {
         //Log.log("RenderList", RenderList.Count);
         //int s = 0;
 
-        _frustum.Extract(m4x4_View*m4x4_Projection);
+        frustum.Extract(m4x4_View*m4x4_Projection);
         long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
-        _queue.Build(_frustum, Camera!.CameraPos);
+        queue.Build(frustum, Camera!.CameraPos);
         long t1 = System.Diagnostics.Stopwatch.GetTimestamp();
         /// Consecutive runs of the same (mesh, material) — adjacent thanks to the sort key —
         /// get drawn as one instanced call. Every shader used here must read the model/normal
         /// matrix from the instanced attributes (locations 3 and 7) — see Mesh.DrawInstanced.
         /// UI is the exception: it goes through DrawRenderInfo with uniforms.
-        int count = _queue.Count;
+        int count = queue.Count;
         int idx = 0;
         bool normalsOn = true;
         //Log.log("Start");
         while (idx < count) {
-            RenderInfo first = _queue[idx];
+            RenderInfo first = queue[idx];
 
             /// Everything after the opaque pass (transparents, UI) doesn't write FragNormal
             if (normalsOn && first.material.Pass != RenderPass.Opaque) {
@@ -241,19 +240,19 @@ public class Renderer {
                 continue;
             }
 
-            int runEnd = _queue.RunEnd(idx);
+            int runEnd = queue.RunEnd(idx);
             DrawInstancedRun(idx, runEnd);
             idx = runEnd;
         }
         long t2 = System.Diagnostics.Stopwatch.GetTimestamp();
-        Log.log("build ms", System.Diagnostics.Stopwatch.GetElapsedTime(t0, t1).TotalMilliseconds,
-            "draw ms", System.Diagnostics.Stopwatch.GetElapsedTime(t1, t2).TotalMilliseconds);
+        //Log.log("build ms", System.Diagnostics.Stopwatch.GetElapsedTime(t0, t1).TotalMilliseconds,
+        //    "draw ms", System.Diagnostics.Stopwatch.GetElapsedTime(t1, t2).TotalMilliseconds);
     }
 
     /// Applies material GL state, shader, per-pass uniforms and material textures.
     /// Shared by DrawRenderInfo and DrawInstancedRun.
     public void BindMaterial (Material material) {
-        Shader shader = _state.Bind(material);
+        Shader shader = state.Bind(material);
 
         /// Kept outside the shader-changed check on purpose: the skybox binds Texture0,
         /// and material.Apply() may rebind it, so this runs on every bind
@@ -273,57 +272,34 @@ public class Renderer {
     }
 
     public void DrawRenderInfo (RenderInfo info) {
-        if (Camera is null) return;
-        if (info.mesh is null) return;
-        if (info.material is null) return;
+        if (Camera is null || info.mesh is null || info.material is null) return;
 
         BindMaterial(info.material);
 
         Shader shader = info.material.shader;
         shader.SetMatrix4x4(uModel, info.model);
-        shader.SetMatrix4x4(uNormalMatrix, info.normal ?? GetNormalMatrix(info.model));
 
         info.mesh.Draw(info.indexOffset, info.indexCount, info.primitiveType);
     }
 
-    /// Draws queue items [startIndex, endIndexExclusive) as one instanced call
+    /// Draws queue items [startIndex, endIndexExclusive) as one instanced callf
     protected void DrawInstancedRun (int startIndex, int endIndexExclusive) {
         int runLength = endIndexExclusive - startIndex;
-        if (_instanceModelScratch.Length < runLength) {
-            _instanceModelScratch = new Matrix4x4[runLength];
-            _instanceNormalScratch = new Matrix4x4[runLength];
+        if (instanceModelScratch.Length < runLength) {
+            instanceModelScratch = new Matrix4x4[runLength];
         }
 
-        RenderInfo first = _queue[startIndex];
+        RenderInfo first = queue[startIndex];
 
         for (int i = 0; i < runLength; i++) {
-            RenderInfo info = _queue[startIndex + i];
-            _instanceModelScratch[i] = info.model;
-            _instanceNormalScratch[i] = info.normal ?? GetNormalMatrix(info.model);
+            RenderInfo info = queue[startIndex + i];
+            instanceModelScratch[i] = info.model;
         }
 
         BindMaterial(first.material);
 
-        first.mesh.DrawInstanced(
-            new ReadOnlySpan<Matrix4x4>(_instanceModelScratch, 0, runLength),
-            new ReadOnlySpan<Matrix4x4>(_instanceNormalScratch, 0, runLength),
-            first.indexOffset, first.indexCount,
-            first.primitiveType);
-    }
-
-    /// A full inverse-transpose is only needed for non-uniform scale. Uniform scale cancels out,
-    /// so we can skip the Matrix4x4.Invert (the expensive part) in the common case.
-    protected static Matrix4x4 GetNormalMatrix (Matrix4x4 model) {
-        float sx = model.M11*model.M11 + model.M12*model.M12 + model.M13*model.M13;
-        float sy = model.M21*model.M21 + model.M22*model.M22 + model.M23*model.M23;
-        float sz = model.M31*model.M31 + model.M32*model.M32 + model.M33*model.M33;
-
-        bool uniformScale = MathF.Abs(sx - sy) < 0.0001f && MathF.Abs(sy - sz) < 0.0001f;
-        if (uniformScale) return model;
-
-        if (!Matrix4x4.Invert(model, out Matrix4x4 inverseModel))
-            inverseModel = Matrix4x4.Identity; /// fallback — model scale is degenerate, fix at the source (clamp scale.y)
-        return Matrix4x4.Transpose(inverseModel);
+        first.mesh.DrawInstanced(new ReadOnlySpan<Matrix4x4>(instanceModelScratch, 0, runLength),
+            first.indexOffset, first.indexCount, first.primitiveType);
     }
 
 

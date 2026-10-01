@@ -1,121 +1,229 @@
 #version 330 core
 
+// Lit_Fragment.shader — PBR (Cook-Torrance / GGX / Fresnel-Schlick)
+// Multiple directional sun lights + SH ambient (diffuse) + equirect skybox reflection (specular).
+
 in vec3 vNormal;
 in vec3 vFragPos;
+in vec2 vUV;
 in vec3 vViewNormal;
 
+#define MAX_SUN_LIGHTS 32
+#define MAX_POINT_LIGHTS 32
+
+const float PI = 3.14159265;
+ 
 uniform vec3 uColor;
+uniform sampler2D uTexture;
+uniform int uHasTexture;
 uniform float uSmoothness;
 uniform float uMetallic;
 uniform float uAlpha;
 
-#define MAX_SUN_LIGHTS 32
 uniform int uSunLightCount;
 uniform vec3 uSunLightColor[MAX_SUN_LIGHTS];
 uniform float uSunLightIntensity[MAX_SUN_LIGHTS];
-uniform vec3 uSunLightDir[MAX_SUN_LIGHTS];
+uniform vec3 uSunLightDir[MAX_SUN_LIGHTS];      // direction light TRAVELS (sun -> scene)
+
+uniform int uPointLightCount;
+uniform vec3 uPointLightPos[MAX_POINT_LIGHTS];
+uniform vec3 uPointLightColor[MAX_POINT_LIGHTS];
+uniform float uPointLightIntensity[MAX_POINT_LIGHTS];
+uniform float uPointLightRange[MAX_POINT_LIGHTS];
 
 uniform vec3 uViewPos;
 
-uniform vec3 uAmbientColor;
 uniform float uAmbientColorIntensity;
-uniform sampler2D uSkybox;
+
+uniform sampler2D uSkybox; // equirectangular; mip chain = pre-blurred roughness levels
 uniform float uMaxReflectionLod;
 uniform float uReflectionIntensity;
 
-const float PI = 3.14159265;
-const float uExposure = 1.0;
+uniform float uExposure;
 
-out vec4 FragColor;
+// L2 spherical harmonics ambient
+uniform vec4 uSHAr;
+uniform vec4 uSHAg;
+uniform vec4 uSHAb;
+uniform vec4 uSHBr;
+uniform vec4 uSHBg;
+uniform vec4 uSHBb;
+uniform vec4 uSHC;
+
+
+layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec4 FragNormal;
 
 
-float D_GGX (float NdH, float a2) {
-    float d = NdH*NdH*(a2 - 1.0) + 1.0;
-    return a2/(PI*d*d + 1e-4);
-}
-float G1 (float NdX, float k) { return NdX/(NdX*(1.0 - k) + k + 1e-4); }
-float G_Smith (float NdV, float NdL, float rough) {
-    float r = rough + 1.0, k = r*r/8.0;
-    return G1(NdV, k)*G1(NdL, k);
-}
-vec3 F_Schlick (float cosTheta, vec3 F0) {
-    return F0 + (1.0 - F0)*pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
-}
-vec3 F_SchlickSmoothness (float cosTheta, vec3 F0, float Smoothness) {
-    vec3 maxF0 = max(vec3(1.0 - Smoothness), F0);
-    return F0 + (maxF0 - F0)*pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+float DistributionGGX(vec3 N, vec3 H, float roughness)
+{
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float NdotH = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH * NdotH;
+    float denom = NdotH2 * (a2 - 1.0) + 1.0;
+    return a2 / (PI * denom * denom + 1e-7);
 }
 
-float GetSpecularOcclusion (float NdV, float occlusion, float Smoothness) {
-    return clamp(pow(NdV + occlusion, exp2(-16.0*Smoothness - 1.0)) - 1.0 + occlusion, 0.0, 1.0);
+float GeometrySchlickGGX(float NdotV, float roughness)
+{
+    float r = roughness + 1.0;
+    float k = (r * r) / 8.0;
+    return NdotV / (NdotV * (1.0 - k) + k);
 }
 
-vec2 DirToEquirectUV (vec3 dir) {
-    float u = 0.5 + atan(dir.z, dir.x)/(2.0*PI);
-    float v = 0.5 + asin(clamp(dir.y, -1.0, 1.0))/PI;
-    return vec2(u, v);
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+{
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    return GeometrySchlickGGX(NdotV, roughness) * GeometrySchlickGGX(NdotL, roughness);
 }
 
-/// One directional light's contribution, given precomputed view-dependent terms
-vec3 ComputeSunLight (int i, vec3 N, vec3 V, float NdV, vec3 F0, float rough, float a2, float smoothness) {
+vec3 FresnelSchlick(float cosTheta, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+const vec2 invAtan = vec2(0.1591, 0.3183);
+vec2 SampleSphericalMap(vec3 v)
+{
+    vec2 uv = vec2(atan(v.z, v.x), asin(v.y));
+    uv *= invAtan;
+    uv += 0.5;
+    return uv;
+}
+
+// L2 SH irradiance evaluation — N must be normalized.
+// Encodes the pre-integrated Lambertian irradiance environment map
+// (Ramamoorthi & Hanrahan), packed as 7 vec4/vec3 constants per Unity's convention.
+vec3 SampleIrradianceSH(vec3 N)
+{
+    vec4 n = vec4(N, 1.0);
+
+    vec3 x1;
+    x1.r = dot(uSHAr, n);
+    x1.g = dot(uSHAg, n);
+    x1.b = dot(uSHAb, n);
+
+    vec4 vB = n.xyzz * n.yzzx;
+    vec3 x2;
+    x2.r = dot(uSHBr, vB);
+    x2.g = dot(uSHBg, vB);
+    x2.b = dot(uSHBb, vB);
+
+    float vC = N.x * N.x - N.y * N.y;
+    vec3 x3 = uSHC.rgb * vC;
+
+    return max(x1 + x2 + x3, vec3(0.0));
+}
+
+// One directional light's contribution — needs N, V, F0, roughness shared across lights
+vec3 ComputeSunLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 albedo, float metallic)
+{
     vec3 L = normalize(-uSunLightDir[i]);
-    vec3 H = normalize(L + V);
+    vec3 H = normalize(V + L);
 
-    float NdL = max(dot(N, L), 0.0);
-    float NdH = max(dot(N, H), 0.0);
-    float HdV = max(dot(H, V), 0.0);
+    float NDF = DistributionGGX(N, H, roughness);
+    float G = GeometrySmith(N, V, L, roughness);
+    vec3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
 
-    vec3 F = F_Schlick(HdV, F0);
-    float D = D_GGX(NdH, a2);
-    float G = G_Smith(NdV, NdL, rough);
-    vec3 spec = (D*G*F)/(4.0*NdV*NdL + 1e-4);
-    vec3 kD = (1.0 - F)*(1.0 - uMetallic);
+    vec3 specular = (NDF * G * F) /
+        (4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 1e-4);
+    vec3 kD = (vec3(1.0) - F) * (1.0 - metallic);
 
-    return (kD*uColor/PI + spec)*uSunLightColor[i]*uSunLightIntensity[i]*NdL;
+    float NdotL = max(dot(N, L), 0.0);
+    vec3 radiance = uSunLightColor[i] * uSunLightIntensity[i];
+    return (kD * albedo / PI + specular) * radiance * NdotL;
+}
+// One point light's contribution — position-based L, windowed inverse-square falloff
+vec3 ComputePointLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 albedo, float metallic)
+{
+    vec3 toLight = uPointLightPos[i] - vFragPos;
+    float dist = length(toLight);
+    vec3 L = toLight / max(dist, 1e-4);
+    vec3 H = normalize(V + L);
+
+    float NDF = DistributionGGX(N, H, roughness);
+    float G = GeometrySmith(N, V, L, roughness);
+    vec3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
+
+    vec3 specular = (NDF * G * F) /
+        (4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 1e-4);
+    vec3 kD = (vec3(1.0) - F) * (1.0 - metallic);
+
+    // Squared-distance falloff windowed to zero at uPointLightRange[i] (Karis-style)
+    float range = max(uPointLightRange[i], 1e-4);
+    float window = clamp(1.0 - pow(dist / range, 4.0), 0.0, 1.0);
+    float falloff = (window * window) / (dist * dist + 1.0);
+
+    float NdotL = max(dot(N, L), 0.0);
+    vec3 radiance = uPointLightColor[i] * uPointLightIntensity[i] * falloff;
+    return (kD * albedo / PI + specular) * radiance * NdotL;
 }
 
-void main () {
-    vec3 N = normalize(vNormal);
-    vec3 V = normalize(uViewPos - vFragPos);
-    vec3 R = reflect(-V, N);
-
-    float NdV = max(dot(N, V), 1e-4);
-
-    float smoothness = clamp(uSmoothness, 0.0, 1.0);
-    float rough = max(1.0 - smoothness, 0.04);
-    float a = rough*rough;
-    float a2 = max(a*a, 1e-3);
-
-    vec3 F0 = mix(vec3(0.04), uColor, uMetallic);
-
-    /// Direct light — sum over all suns
-    vec3 Lo = vec3(0.0);
-    for (int i = 0; i < uSunLightCount; i++) {
-        Lo += ComputeSunLight(i, N, V, NdV, F0, rough, a2, smoothness);
+void main() {
+    vec3 albedo = uColor;
+    float metallic = clamp(uMetallic, 0.0, 1.0);
+    float roughness = clamp(1.0 - uSmoothness, 0.045, 1.0); // smoothness -> roughness, avoid 0-roughness singularity
+    float alpha = uAlpha;
+    
+    if (uHasTexture == 1) {
+        // vec4 texSample = texture(uTexture, vUV);
+        vec4 texSample = textureLod(uTexture, vUV, 0.0);
+        albedo *= texSample.rgb;
+        alpha *= texSample.a;
     }
 
-    /// --- Ambient diffuse ---
-    vec3 Fambient = F_SchlickSmoothness(NdV, F0, smoothness);
-    vec3 kDambient = (1.0 - Fambient)*(1.0 - uMetallic);
-    vec3 diffuseAmbient = kDambient*uAmbientColorIntensity*uAmbientColor*uColor;
+    vec3 N = normalize(vNormal);
+    vec3 V = normalize(uViewPos - vFragPos);
 
-    /// Ambient specular (IBL)
-    float lod = rough*uMaxReflectionLod;
-    vec2 envUV = DirToEquirectUV(R);
-    vec3 envSpec = textureLod(uSkybox, envUV, lod).rgb*uExposure;
-    vec3 envSpecMixed = mix(uAmbientColor, envSpec, clamp(uReflectionIntensity, 0.0, 1.0));
-    float specOcclusion = GetSpecularOcclusion(NdV, 1.0, smoothness);
-    vec3 specularAmbient = envSpecMixed*Fambient*specOcclusion;
+    vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
-    vec3 ambient = diffuseAmbient + specularAmbient;
-    vec3 color = ambient + Lo;
+    // Direct sun lights — Cook-Torrance specular + Lambert diffuse, summed
+    vec3 Lo = vec3(0.0);
+    for (int i = 0; i < uSunLightCount; i++) {
+        Lo += ComputeSunLight(i, N, V, F0, roughness, albedo, metallic);
+    }
+    for (int i = 0; i < uPointLightCount; i++) {
+        Lo += ComputePointLight(i, N, V, F0, roughness, albedo, metallic);
+    }
 
-    /// Tonemapping
-    color = color/(color + vec3(1.0));
-    color = pow(color, vec3(1.0/2.2));
+    // IBL ambient — SH diffuse (Fresnel-split, energy-conserving) + prefiltered skybox specular
+    vec3 Fr = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+    vec3 kD_ambient = (vec3(1.0) - Fr) * (1.0 - metallic);
 
-    FragColor = vec4(color, uAlpha);
-    // Write view-space normal into MRT attachment 1 so postprocess can sample it.
+    vec3 irradiance = SampleIrradianceSH(N) * uAmbientColorIntensity;
+    vec3 ambientDiffuse = irradiance * albedo * kD_ambient;
+
+    vec3 R = reflect(-V, N);
+    vec3 prefiltered = textureLod(uSkybox, SampleSphericalMap(R), roughness * uMaxReflectionLod).rgb;
+    vec3 ambientSpecular = prefiltered * Fr * uReflectionIntensity;
+
+    vec3 color = ambientDiffuse + ambientSpecular + Lo;
+    // vec3 color = ambientSpecular;
+    // vec3 color = albedo;
+
+    // Exposure + luminance-preserving Reinhard + gamma.
+    // Tonemapping luminance (not per-channel) keeps hue/saturation intact at high intensity.
+    // Skip the final pow() if your framebuffer is sRGB-enabled already, or you'll double-correct.
+    color *= uExposure;
+
+    float luminance = dot(color, vec3(0.2126, 0.7152, 0.0722));
+    float toneMappedLuminance = luminance / (1.0 + luminance);
+    color *= (luminance > 0.0) ? (toneMappedLuminance / luminance) : 0.0;
+
+    color = pow(color, vec3(1.0 / 2.2));
+
+    // FragColor = vec4(ambientDiffuse + ambientSpecular + Lo, alpha);
+    // FragColor = vec4(ambientSpecular, alpha);
+    // FragColor = vec4(prefiltered, 1.0);
+    // FragColor = vec4(color, 1.0);
+    FragColor = vec4(color, alpha);
+    // write view-space normal to MRT attachment 1
     FragNormal = vec4(normalize(vViewNormal), 1.0);
 }
