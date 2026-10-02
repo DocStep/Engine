@@ -32,9 +32,12 @@ uniform vec3 uPointLightColor[MAX_POINT_LIGHTS];
 uniform float uPointLightIntensity[MAX_POINT_LIGHTS];
 uniform float uPointLightRange[MAX_POINT_LIGHTS];
 
-uniform sampler2D uShadowMap;
+// uniform sampler2D uShadowMap;
 uniform mat4 uLightSpace;
 uniform int uShadowLightIndex;   // -1 = no shadow
+uniform sampler2DShadow uShadowMap;   // was sampler2D
+uniform float uShadowTexelWorld;
+uniform float uShadowSoftness;        // 1.0 = default blur radius in texels
 
 uniform vec3 uViewPos;
 
@@ -174,22 +177,24 @@ vec3 ComputePointLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 alb
 // 0 = lit, 1 = fully in shadow. N and L are used only for slope-scaled bias.
 float ShadowFactor(vec3 N, vec3 L)
 {
-    vec4 lp = uLightSpace * vec4(vFragPos, 1.0);
-    vec3 p = lp.xyz / lp.w;
-    p = p * 0.5 + 0.5;
+    // Normal offset: push the lookup point off the surface instead of using a big depth bias
+    float NdotL = clamp(dot(N, L), 0.0, 1.0);
+    vec3 pos = vFragPos + N * uShadowTexelWorld * 1.5 * (1.0 - NdotL);
+
+    vec4 lp = uLightSpace * vec4(pos, 1.0);
+    vec3 p = (lp.xyz / lp.w) * 0.5 + 0.5;
     if (p.z > 1.0) return 0.0;
 
-    float bias = max(0.0015 * (1.0 - dot(N, L)), 0.0005);
-    vec2 texel = 1.0 / vec2(textureSize(uShadowMap, 0));
+    float bias = 0.0003;
+    vec2 texel = uShadowSoftness / vec2(textureSize(uShadowMap, 0));
 
-    float shadow = 0.0;
-    for (int x = -1; x <= 1; x++) {
-        for (int y = -1; y <= 1; y++) {
-            float d = texture(uShadowMap, p.xy + vec2(x, y) * texel).r;
-            shadow += (p.z - bias > d) ? 1.0 : 0.0;
+    float lit = 0.0;
+    for (int x = -2; x <= 2; x++) {
+        for (int y = -2; y <= 2; y++) {
+            lit += texture(uShadowMap, vec3(p.xy + vec2(x, y) * texel, p.z - bias));
         }
     }
-    return shadow / 9.0;
+    return 1.0 - lit / 25.0;   // texture() returns 1 = lit, so invert to keep "1 = shadow"
 }
 
 

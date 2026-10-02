@@ -119,6 +119,8 @@ public static class Lighting {
             shadow.Depth.Bind(TextureUnit.Texture5);
             shader.SetInt(Shader.uShadowMap, 5);
             shader.SetMatrix4x4(Shader.uLightSpace, shadow.LightSpace);
+            shader.SetFloat(Shader.uShadowTexelWorld, shadow.TexelWorld);
+            shader.SetFloat(Shader.uShadowSoftness, 1.0f);
             Renderer.GL.ActiveTexture(TextureUnit.Texture0); /// Texture.Bind leaves unit 5 active; restore so later code is unaffected
         }
 

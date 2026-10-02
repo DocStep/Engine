@@ -36,9 +36,17 @@ public class ShadowMap : IDisposable {
         GL gl = Renderer.GL;
 
         Vector3 dir = Vector3.Normalize(lightDir);
-        Vector3 eye = center - dir*radius;
-        Matrix4x4 view = Matrix4x4.CreateLookAtLeftHanded(eye, center, Vector3.UnitY);
-        Matrix4x4 proj = Matrix4x4.CreateOrthographicLeftHanded(radius*2f, radius*2f, 0.1f, Size/1024*radius*2f);
+        Matrix4x4 view = Matrix4x4.CreateLookAtLeftHanded(center - dir*radius, center, Vector3.UnitY);
+
+        float texel = radius*2f/Size;
+        Vector3 c = Vector3.Transform(center, view);
+        c.X = MathF.Floor(c.X/texel)*texel;
+        c.Y = MathF.Floor(c.Y/texel)*texel;
+        Matrix4x4.Invert(view, out Matrix4x4 inv);
+        center = Vector3.Transform(c, inv);
+
+        view = Matrix4x4.CreateLookAtLeftHanded(center - dir*radius, center, Vector3.UnitY);
+        Matrix4x4 proj = Matrix4x4.CreateOrthographicLeftHanded(radius*2f, radius*2f, 0.1f, radius*2f);
         LightSpace = view*proj;
 
         gl.BindFramebuffer(FramebufferTarget.Framebuffer, Fbo);
