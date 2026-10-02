@@ -19,6 +19,16 @@ public class SceneMaterials : Scene {
         go_sun1.Transform.LocalEuler = new Vector3(60, -30, 0);
         SunLight sun1 = go_sun1.AddComponent<SunLight>();
 
+
+        x = 10;
+        GameObject go_shadowCube1 = new GameObject(PrimitiveTypes.Cube) { Name = "Plane Materials", };
+        go_shadowCube1.Transform.Position = new Vector3(x, 0, -6);
+        go_shadowCube1.Transform.Scale = new Vector3(5);
+
+        GameObject go_shadowCube2 = new GameObject(PrimitiveTypes.Cube) { Name = "Plane Materials", };
+        go_shadowCube2.Transform.Position = new Vector3(x+2, 4, -9);
+        go_shadowCube2.Transform.Scale = new Vector3(5);
+
         return;
 
         /// Plane Materials

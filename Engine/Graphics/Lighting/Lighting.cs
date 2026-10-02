@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Silk.NET.OpenGL;
 using static Engine.Graphics.Shader;
 
 namespace Engine.Graphics;
@@ -16,6 +17,36 @@ public static class Lighting {
     [Range(0, int.MaxValue)] public static int PoinyLights_Max = 32;
 
 
+
+    public static void RegisterLightSource (LightSource lightSource) {
+        LightSources.Add(lightSource);
+        switch (lightSource) {
+            case SunLight sun:
+                SunLights.Add(sun);
+                break;
+            case PointLight point:
+                PointLights.Add(point);
+                break;
+        }
+    }
+    public static void UnregisterLightSource (LightSource lightSource) {
+        LightSources.Remove(lightSource);
+        switch (lightSource) {
+            case SunLight sun:
+                SunLights.Remove(sun);
+                break;
+            case PointLight point:
+                PointLights.Remove(point);
+                break;
+        }
+    }
+
+    /// The sun that casts the shadow. Must be enabled, or the shadow map and the shader would disagree.
+    public static SunLight? GetShadowLight () {
+        SunLight? light = MainLight ?? (0 < SunLights.Count ? SunLights[0] : null);
+        return light is not null && light.Enabled ? light : null;
+    }
+
     public static void SetMainSunLight (SunLight sun) {
         //if (!LightSources.Contains(sun)) return;
         LightSources.Remove(sun);
@@ -25,9 +56,16 @@ public static class Lighting {
 
     public static void SetSceneUniformsLit (Shader shader) {
         if (Renderer.Instance.Camera is null) return;
+        if (!shader.isLit) return;
 
         List<SunLight> enabledLights = SunLights.Where(l => l.Enabled).ToList();
         int count = Math.Min(enabledLights.Count, SunLights_Max);
+
+        SunLight? shadowLight = GetShadowLight();
+        int shadowIndex = shadowLight is null ? -1 : enabledLights.IndexOf(shadowLight);
+        if (count <= shadowIndex) shadowIndex = -1; /// cut off by SunLights_Max
+        shader.SetInt("uShadowLightIndex", shadowIndex);
+
         if (0 < count) {
             Vector3[] dirs = new Vector3[count];
             Vector3[] colors = new Vector3[count];
@@ -75,6 +113,15 @@ public static class Lighting {
         shader.SetFloat(uAmbientColorIntensity, Constants.Ambient_Intensity);
         shader.SetFloat(uExposure, Renderer.Instance.Camera.Exposure);
 
+        /// Shadows
+        ShadowMap? shadow = Renderer.Instance.Shadow;
+        if (shadow is not null) {
+            shadow.Depth.Bind(TextureUnit.Texture5);
+            shader.SetInt(Shader.uShadowMap, 5);
+            shader.SetMatrix4x4(Shader.uLightSpace, shadow.LightSpace);
+            Renderer.GL.ActiveTexture(TextureUnit.Texture0); /// Texture.Bind leaves unit 5 active; restore so later code is unaffected
+        }
+
         if (Constants.renderSkyboxReflection)
             shader.SetFloat(uReflectionIntensity, Constants.reflectionIntensity);
     }
@@ -90,27 +137,5 @@ public static class Lighting {
         shader.SetFloat(uAmbientColorIntensity, probe.Intensity);
     }
 
-    public static void RegisterLightSource (LightSource lightSource) {
-        LightSources.Add(lightSource);
-        switch (lightSource) {
-            case SunLight sun:
-                SunLights.Add(sun);
-                break;
-            case PointLight point:
-                PointLights.Add(point);
-                break;
-        }
-    }
-    public static void UnregisterLightSource (LightSource lightSource) {
-        LightSources.Remove(lightSource);
-        switch (lightSource) {
-            case SunLight sun:
-                SunLights.Remove(sun);
-                break;
-            case PointLight point:
-                PointLights.Remove(point);
-                break;
-        }
-    }
 
 }

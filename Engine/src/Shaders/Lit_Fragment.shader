@@ -32,6 +32,10 @@ uniform vec3 uPointLightColor[MAX_POINT_LIGHTS];
 uniform float uPointLightIntensity[MAX_POINT_LIGHTS];
 uniform float uPointLightRange[MAX_POINT_LIGHTS];
 
+uniform sampler2D uShadowMap;
+uniform mat4 uLightSpace;
+uniform int uShadowLightIndex;   // -1 = no shadow
+
 uniform vec3 uViewPos;
 
 uniform float uAmbientColorIntensity;
@@ -167,6 +171,28 @@ vec3 ComputePointLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 alb
     return (kD * albedo / PI + specular) * radiance * NdotL;
 }
 
+// 0 = lit, 1 = fully in shadow. N and L are used only for slope-scaled bias.
+float ShadowFactor(vec3 N, vec3 L)
+{
+    vec4 lp = uLightSpace * vec4(vFragPos, 1.0);
+    vec3 p = lp.xyz / lp.w;
+    p = p * 0.5 + 0.5;
+    if (p.z > 1.0) return 0.0;
+
+    float bias = max(0.0015 * (1.0 - dot(N, L)), 0.0005);
+    vec2 texel = 1.0 / vec2(textureSize(uShadowMap, 0));
+
+    float shadow = 0.0;
+    for (int x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
+            float d = texture(uShadowMap, p.xy + vec2(x, y) * texel).r;
+            shadow += (p.z - bias > d) ? 1.0 : 0.0;
+        }
+    }
+    return shadow / 9.0;
+}
+
+
 void main() {
     vec3 albedo = uColor;
     float metallic = clamp(uMetallic, 0.0, 1.0);
@@ -188,7 +214,11 @@ void main() {
     // Direct sun lights — Cook-Torrance specular + Lambert diffuse, summed
     vec3 Lo = vec3(0.0);
     for (int i = 0; i < uSunLightCount; i++) {
-        Lo += ComputeSunLight(i, N, V, F0, roughness, albedo, metallic);
+        vec3 sun = ComputeSunLight(i, N, V, F0, roughness, albedo, metallic);
+        if (i == uShadowLightIndex) {
+            sun *= 1.0 - ShadowFactor(N, normalize(-uSunLightDir[i]));
+        }
+        Lo += sun;
     }
     for (int i = 0; i < uPointLightCount; i++) {
         Lo += ComputePointLight(i, N, V, F0, roughness, albedo, metallic);

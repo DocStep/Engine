@@ -51,6 +51,34 @@ public class Texture : IAsset<Texture> {
     }
 
 
+    /// <summary> Creates an empty depth texture to be used as a shadow map render target. </summary>
+    public static Texture CreateDepth (int size) {
+        GL gl = Renderer.GL;
+        Texture tex = new Texture { Name = "ShadowMap", Width = size, Height = size };
+        tex.Handle = gl.GenTexture();
+
+        gl.ActiveTexture(TextureUnit.Texture0);
+        gl.BindTexture(TextureTarget.Texture2D, tex.Handle);
+
+        unsafe {
+            /// null data: the GPU fills it when we render the depth pass
+            gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.DepthComponent24, (uint)size, (uint)size, 0, PixelFormat.DepthComponent, PixelType.Float, null);
+        }
+
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToBorder);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToBorder);
+
+        /// Border depth 1.0 means "far away", so anything outside the shadow map is lit
+        float[] border = { 1f, 1f, 1f, 1f };
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBorderColor, border);
+
+        gl.BindTexture(TextureTarget.Texture2D, 0);
+        return tex;
+    }
+
+
 
     /// <summary> Loads a texture from an image file (png/jpg/etc via StbImageSharp) and uploads it to the GPU. </summary>
     public static Texture Load (string path, int part = 100) {

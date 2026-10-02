@@ -33,7 +33,7 @@ public class Renderer {
 
         //SetTargetSize(Engine.Window.Size.X, Engine.Window.Size.Y);
 
-        TextRenderer = new TextRenderer();
+        Shadow = new ShadowMap(2048);
 
         PostProcess = new PostProcessStack();
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
@@ -44,6 +44,8 @@ public class Renderer {
         //PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
         PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Vignette) { Enabled = false });
+
+        TextRenderer = new TextRenderer();
 
 
         /// Delegates
@@ -69,6 +71,9 @@ public class Renderer {
     public Action? de_Dispose = null;
 
     public readonly Skybox Skybox = null!;
+    public ShadowMap Shadow = null!;
+    protected readonly RenderQueue shadowQueue = new RenderQueue();
+    protected Frustum lightFrustum = new Frustum();
     public readonly PostProcessStack PostProcess = null!;
     public readonly TextRenderer TextRenderer = null!;
 
@@ -104,6 +109,7 @@ public class Renderer {
         if (Camera is null) {
             Log.log($"No {nameof(Graphics.Camera)} found");
             queue.Clear(); /// otherwise the queue grows every frame while there is no camera
+            shadowQueue.Clear(); /// otherwise the queue grows every frame while there is no camera
             return;
         }
         StatsStart();
@@ -116,6 +122,8 @@ public class Renderer {
 
         /// Camera Matrix
         UpdateViewProjection(Width, Height);
+
+        DrawShadowPass();
 
         PostProcess.BeginScene();
 
@@ -166,6 +174,7 @@ public class Renderer {
         Stats.Latency = (float)sw_Latency.Elapsed.TotalMilliseconds;
 
         queue.Clear();
+        shadowQueue.Clear();
     }
     public virtual void SetTargetSize () {
         Stats.SceneSize = new Vector2(Windows.Window.Size.X, Windows.Window.Size.Y);
@@ -176,6 +185,7 @@ public class Renderer {
 
     public void AddRenderInfo (RenderInfo renderInfo) {
         queue.Add(renderInfo);
+        shadowQueue.Add(renderInfo);
     }
 
     protected void UpdateViewProjection (float width, float height) {
@@ -250,28 +260,6 @@ public class Renderer {
         //    "draw ms", System.Diagnostics.Stopwatch.GetElapsedTime(t1, t2).TotalMilliseconds);
     }
 
-    /// Applies material GL state, shader, per-pass uniforms and material textures.
-    /// Shared by DrawRenderInfo and DrawInstancedRun.
-    public void BindMaterial (Material material) {
-        Shader shader = state.Bind(material);
-
-        /// Kept outside the shader-changed check on purpose: the skybox binds Texture0,
-        /// and material.Apply() may rebind it, so this runs on every bind
-        switch (material.Pass) {
-            case RenderPass.Opaque:
-            case RenderPass.Transparent:
-                SetSceneUniformsUnlit(shader, Camera!.CameraPos);
-                SetSceneUniformsLit(shader);
-                SetSceneUniformsSkybox(shader, Skybox.prefilteredHandle, Skybox.maxLod);
-                break;
-            case RenderPass.UI:
-                shader.SetMatrix4x4(uProjection, m4x4_ProjectionUI);
-                break;
-        }
-
-        material.Apply();
-    }
-
     public void DrawRenderInfo (RenderInfo info) {
         if (Camera is null || info.mesh is null || info.material is null) return;
 
@@ -303,15 +291,58 @@ public class Renderer {
             first.indexOffset, first.indexCount, first.primitiveType);
     }
 
+    /// Draws shadowQueue items [startIndex, endIndexExclusive) as one instanced depth-only call
+    protected void DrawShadowRun (int startIndex, int endIndexExclusive) {
+        int runLength = endIndexExclusive - startIndex;
+        if (instanceModelScratch.Length < runLength) {
+            instanceModelScratch = new Matrix4x4[runLength];
+        }
+
+        RenderInfo first = shadowQueue[startIndex];
+
+        for (int i = 0; i < runLength; i++) {
+            instanceModelScratch[i] = shadowQueue[startIndex + i].model;
+        }
+
+        /// Depth material instead of first.material: no scene uniforms, no material textures
+        Shader shader = state.Bind(_mat_ShadowDepth);
+        shader.SetMatrix4x4("uLightSpace", Shadow.LightSpace);
+
+        /// state.Bind may apply the depth material's own cull mode, so force front-face culling after it
+        GL.Enable(EnableCap.CullFace);
+        GL.CullFace(TriangleFace.Front);
+
+        first.mesh.DrawInstanced(new ReadOnlySpan<Matrix4x4>(instanceModelScratch, 0, runLength),
+            first.indexOffset, first.indexCount, first.primitiveType);
+    }
+
+
+    /// Applies material GL state, shader, per-pass uniforms and material textures.
+    /// Shared by DrawRenderInfo and DrawInstancedRun.
+    public void BindMaterial (Material material) {
+        Shader shader = state.Bind(material);
+
+        /// Kept outside the shader-changed check on purpose: the skybox binds Texture0,
+        /// and material.Apply() may rebind it, so this runs on every bind
+        switch (material.Pass) {
+            case RenderPass.Opaque:
+            case RenderPass.Transparent:
+                SetSceneUniformsUnlit(shader, Camera!.CameraPos);
+                Lighting.SetSceneUniformsLit(shader);
+                SetSceneUniformsSkybox(shader, Skybox.prefilteredHandle, Skybox.maxLod);
+                break;
+            case RenderPass.UI:
+                shader.SetMatrix4x4(uProjection, m4x4_ProjectionUI);
+                break;
+        }
+
+        material.Apply();
+    }
 
     public void SetSceneUniformsUnlit (Shader shader, Vector3 viewPos) {
         shader.SetMatrix4x4(uView, m4x4_View);
         shader.SetMatrix4x4(uProjection, m4x4_Projection);
         shader.SetVector3(uViewPos, viewPos);
-    }
-    public static void SetSceneUniformsLit (Shader shader) {
-        if (!shader.isLit) return;
-        Lighting.SetSceneUniformsLit(shader);
     }
     public static void SetSceneUniformsSkybox (Shader shader, uint prefilteredHandle, float maxLod) {
         if (!Constants.renderSkyboxReflection) return;
@@ -323,9 +354,40 @@ public class Renderer {
         shader.SetFloat(uMaxReflectionLod, maxLod);
     }
 
+
+    protected void DrawShadowPass () {
+        SunLight? light = Lighting.GetShadowLight();
+        if (light is null) return;
+
+        Vector3 sunDir = light.gameObject.Transform.Forward;
+        Shadow.Begin(sunDir, Camera!.CameraPos, 50f);
+
+        lightFrustum.Extract(Shadow.LightSpace);
+        shadowQueue.Build(lightFrustum, Camera.CameraPos);
+
+        int count = shadowQueue.Count;
+        int idx = 0;
+        while (idx < count) {
+            RenderInfo first = shadowQueue[idx];
+            int runEnd = shadowQueue.RunEnd(idx);
+
+            if (first.material.Pass == RenderPass.Opaque) {
+                DrawShadowRun(idx, runEnd);
+            }
+            idx = runEnd;
+        }
+
+        GL.CullFace(TriangleFace.Back);
+        Shadow.End();
+        state.Reset();
+    }
+
+
+
     protected void OnFrameBufferResize (Silk.NET.Maths.Vector2D<int> newSize) {
         GL.Viewport(newSize);
     }
+
 
     protected virtual void Dispose () {
         Engine.Instance.de_Render -= Render;

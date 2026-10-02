@@ -48,6 +48,8 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         //_hdr_Skybox = new HdrTexture("src/HDR/overcast_soil_puresky_4k.hdr");
         //_hdr_Skybox = new HdrTexture("src/HDR/qwantani_dusk_2_puresky_4k.hdr");
 
+        _sh_ShadowDepth = new Shader("src/Shaders/ShadowDepth_Vertex.shader", "src/Shaders/ShadowDepth_Fragment.shader", "ShadowDepth", isLit: false);
+        _mat_ShadowDepth = new Material(_sh_ShadowDepth);
 
         _mesh_Cube = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Cube.obj"))!;
         _mesh_Sphere = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Sphere.obj"))!;
@@ -182,6 +184,9 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Shader _shader_IBLPrefilter = null!;
     public readonly static Material _mat_Skybox = null!;
     public readonly static HdrTexture? _hdr_Skybox = null;
+
+    public readonly static Shader _sh_ShadowDepth = null!;
+    public readonly static Material _mat_ShadowDepth = null!;
     
     public readonly static Mesh _mesh_Cube = null!;
     public readonly static Mesh _mesh_Sphere = null!;
