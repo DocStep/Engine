@@ -52,7 +52,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
 
         _sh_Reflection = new Shader("src/Shaders/Lit_Vertex.shader", "src/Shaders/Reflection_Fragment.shader", "Reflection", isLit: false);
         _sh_Reflection.Save("src/Shaders/Reflection.shader");
-        _mat_Reflection = new MaterialReflection(_sh_Reflection);
+        _mat_Reflection = new Material(_sh_Reflection);
         _mat_Reflection.Save("src/Materials/Reflection.mat");
         ///
         _sh_ShadowDepth = new Shader("src/Shaders/ShadowDepth_Vertex.shader", "src/Shaders/ShadowDepth_Fragment.shader", "ShadowDepth", isLit: false);
@@ -195,7 +195,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static HdrTexture? _hdr_Skybox = null;
 
     public readonly static Shader _sh_Reflection = null!;
-    public readonly static MaterialReflection _mat_Reflection = null!;
+    public readonly static Material _mat_Reflection = null!;
 
     public readonly static Shader _sh_ShadowDepth = null!;
     public readonly static Material _mat_ShadowDepth = null!;

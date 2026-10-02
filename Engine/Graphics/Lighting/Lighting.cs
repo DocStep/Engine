@@ -124,7 +124,9 @@ public static class Lighting {
             shader.SetFloat(Shader.uShadowBias, 0.01f);
             shader.SetFloat(Shader.uShadowNormalOffset, 1.5f);
             shader.SetFloat(Shader.uShadowAmbientSpecular, 0.6f);
-            shader.SetFloat(Shader.uShadowAmbientDiffuse, 0.0f);
+            shader.SetFloat(Shader.uShadowAmbientDiffuse, 0.5f);
+            shader.SetFloat(Shader.uShadowBias, 0.001f);
+            shader.SetFloat(Shader.uShadowNormalOffset, 3.0f);
             Renderer.GL.ActiveTexture(TextureUnit.Texture0); /// Texture.Bind leaves unit 5 active; restore so later code is unaffected
         }
 

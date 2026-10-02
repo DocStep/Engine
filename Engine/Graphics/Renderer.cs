@@ -362,7 +362,7 @@ public class Renderer {
         if (light is null) return;
 
         Vector3 sunDir = light.gameObject.Transform.Forward;
-        Shadow.Begin(sunDir, Camera!.CameraPos, 50f);
+        Shadow.Begin(sunDir, Camera!.CameraPos, 35);
 
         lightFrustum.Extract(Shadow.LightSpace);
         shadowQueue.Build(lightFrustum, Camera.CameraPos);

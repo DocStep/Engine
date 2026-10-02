@@ -35,12 +35,25 @@ public class ShadowMap : IDisposable {
     public void Begin (Vector3 lightDir, Vector3 center, float radius) {
         GL gl = Renderer.GL;
 
-        Vector3 dir = Vector3.Normalize(lightDir);
-        Vector3 eye = center - dir*radius;
-        Matrix4x4 view = Matrix4x4.CreateLookAtLeftHanded(eye, center, Vector3.UnitY);
-        Matrix4x4 proj = Matrix4x4.CreateOrthographicLeftHanded(radius*2f, radius*2f, 0.1f, Size/1024*radius*2f);
-        LightSpace = view*proj;
+        float pad = 100f; /// extra distance toward the sun for tall casters
 
+        float texel = radius*2f/Size;
+        Vector3 dir = Vector3.Normalize(lightDir);
+        Vector3 up = MathF.Abs(dir.Y) > 0.99f ? Vector3.UnitZ : Vector3.UnitY;
+
+        /// Fixed light basis at the world origin, independent of the camera
+        Matrix4x4 basis = Matrix4x4.CreateLookAtLeftHanded(Vector3.Zero, dir, up);
+        Vector3 c = Vector3.Transform(center, basis);
+        c.X = MathF.Floor(c.X/texel)*texel;
+        c.Y = MathF.Floor(c.Y/texel)*texel;
+        Matrix4x4.Invert(basis, out Matrix4x4 inv);
+        center = Vector3.Transform(c, inv);
+
+        Matrix4x4 view = Matrix4x4.CreateLookAtLeftHanded(center - dir*(radius + pad), center, up);
+        Matrix4x4 proj = Matrix4x4.CreateOrthographicLeftHanded(radius*2f, radius*2f, 0.1f, radius*2f + pad);
+        LightSpace = view*proj;
+        LightSpace = view*proj;
+        gl.Enable(EnableCap.DepthClamp);
         gl.BindFramebuffer(FramebufferTarget.Framebuffer, Fbo);
         gl.Viewport(0, 0, (uint)Size, (uint)Size);
         gl.Disable(EnableCap.Blend);
@@ -57,6 +70,7 @@ public class ShadowMap : IDisposable {
 
     public void End () {
         GL gl = Renderer.GL;
+        gl.Disable(EnableCap.DepthClamp);
         gl.Disable(EnableCap.PolygonOffsetFill);
         gl.ColorMask(true, true, true, true);
         gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
