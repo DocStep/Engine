@@ -164,7 +164,7 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
 
         EnsureInstanceBuffer();
 
-        const int floatsPerInstance = 16; /// mat4 model (16) + mat4 normal (16)
+        const int floatsPerInstance = 16; /// mat4 model (16)
         int floatCount = instanceCount*floatsPerInstance;
         if (_instanceUploadScratch.Length < floatCount) _instanceUploadScratch = new float[floatCount];
 

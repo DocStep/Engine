@@ -210,6 +210,7 @@ public class Renderer {
         //DrawSame();
         //Log.log("RenderList", RenderList.Count);
         //int s = 0;
+        //Log.log("depth", Renderer.GL.IsEnabled(EnableCap.DepthTest), Renderer.GL.GetBoolean(GetPName.DepthWritemask));
 
         frustum.Extract(m4x4_View*m4x4_Projection);
         long t0 = System.Diagnostics.Stopwatch.GetTimestamp();

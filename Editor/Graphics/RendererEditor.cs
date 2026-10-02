@@ -168,21 +168,46 @@ public class RendererEditor : Renderer {
     }
 
 
-    private static float[] _gridSinX = null!;
-    private static float[] _gridCosZ = null!;
-    public static void DrawMaterialsGrid (float offsetX, float offsetZ, int testGridCount = Constants.materialsGridCount, float testGridDensity = 1f) {
-        if (!Constants.drawMaterialsGrid) return;
+    private static float[] _gridSinX = [];
+    private static float[] _gridCosZ = [];
 
-        int total = testGridCount*(int)testGridDensity;
+    public static void DrawMaterialsGrid (float offsetX, float offsetZ, int testGridCount = Constants.materialsGridCount, float testGridDensity = 1f) {
+        if (!Constants.drawMaterialsGrid || testGridDensity <= 0f) return;
+
+        int total = GridCells(testGridCount, testGridDensity);
         if (total != _gridTotalA) BuildGridMaterials(ref _gridMaterialsA, ref _gridTotalA, total);
 
+        AddWaveGrid(offsetX, offsetZ, total, 1f/testGridDensity, _mesh_Sphere, _gridMaterialsA, 1f);
+    }
+    public void DrawMaterialsGrid () => DrawMaterialsGrid(-14f, 0f);
+
+    public static void DrawMaterialGrid (float offsetX, float offsetZ,
+        int testGridCount = Constants.testMaterialSizeCount, float testGridDensity = 1f, bool autoScale = false) {
+        if (!Constants.drawMaterialGrid || testGridDensity <= 0f) return;
+
+        int total = GridCells(testGridCount, testGridDensity);
+        float step = 1f/testGridDensity;
+
+        /// autoScale: uniform scale = cell size, so neighbors don't overlap at any density
+        AddWaveGrid(offsetX, offsetZ, total, step, _mesh_PlaneQuad, null, autoScale ? step : 1f);
+    }
+    public void DrawMaterialGrid () => DrawMaterialGrid(0f, 20f);
+
+
+    /// cells per side, extent stays ~testGridCount units at any density
+    static int GridCells (int count, float density) => Math.Max(1, (int)MathF.Round(count*density));
+
+    /// Shared core. materials == null -> every cell uses _mat_Lit, otherwise materials[x*total + z]
+    static void AddWaveGrid (float offsetX, float offsetZ, int total, float step, Mesh mesh, Material[]? materials, float scale) {
+        Renderer renderer = Renderer.Instance;
+        if (renderer is null) return;
+
         /// Reused buffers, only reallocated when the grid grows
-        if (_gridSinX == null || _gridSinX.Length < total) {
+        if (_gridSinX.Length < total) {
             _gridSinX = new float[total];
             _gridCosZ = new float[total];
         }
 
-        float step = 1f/testGridDensity;
         float t = 2f*(float)Time.time;
 
         /// Trig depends on one axis only, so compute it once per row/column
@@ -191,10 +216,10 @@ public class RendererEditor : Renderer {
             _gridCosZ[i] = MathF.Cos(i*step + offsetZ + t);
         }
 
-        Renderer renderer = Renderer.Instance;
         Matrix4x4 model = Matrix4x4.Identity;
-        Mesh mesh = _mesh_Sphere;
-        Material[] materials = _gridMaterialsA;
+        model.M11 = scale;
+        model.M22 = scale;
+        model.M33 = scale;
 
         for (int x = 0; x < total; x++) {
             float px = x*step + offsetX;
@@ -209,62 +234,10 @@ public class RendererEditor : Renderer {
                 renderer.AddRenderInfo(new RenderInfo() {
                     model = model,
                     mesh = mesh,
-                    material = materials[row + z],
+                    material = materials is null ? AssetsEngine._mat_Lit : materials[row + z],
                 });
             }
         }
     }
-    public void DrawMaterialsGrid () => DrawMaterialsGrid(-14f, 0f);
-
-    private static float[] _matGridSinX = null!;
-    private static float[] _matGridCosZ = null!;
-    public static void DrawMaterialGrid (float offsetX, float offsetZ, int testGridCount = Constants.materialGridCount, float testGridDensity = 1f) {
-        if (!Constants.drawMaterialGrid || Renderer.Instance is null || Renderer.Instance.Camera is null) return;
-        //return;
-        long t1 = System.Diagnostics.Stopwatch.GetTimestamp();
-        int total = testGridCount*(int)testGridDensity;
-
-        /// Own buffers, only reallocated when the grid grows
-        if (_matGridSinX is null || _matGridSinX.Length < total) {
-            _matGridSinX = new float[total];
-            _matGridCosZ = new float[total];
-        }
-
-        float step = 1f/testGridDensity;
-        float t = 2f*(float)Time.time;
-
-        /// Sin depends on x only, Cos on z only: N calls each instead of N*N
-        for (int i = 0; i < total; i++) {
-            _matGridSinX[i] = 0.25f*MathF.Sin(i*step + offsetX + t);
-            _matGridCosZ[i] = MathF.Cos(i*step + offsetZ + t);
-        }
-
-        Renderer renderer = Renderer.Instance;
-        //Mesh mesh = _mesh_Sphere;
-        Mesh mesh = _mesh_PlaneQuad;
-        Material material = AssetsEngine._mat_Lit;
-        Matrix4x4 model = Matrix4x4.Identity;
-
-        for (int x = 0; x < total; x++) {
-            float px = x*step + offsetX;
-            float sx = _matGridSinX[x];
-            for (int z = 0; z < total; z++) {
-                /// Write translation directly instead of CreateTranslation
-                model.M41 = px;
-                model.M42 = sx*_matGridCosZ[z];
-                model.M43 = z*step + offsetZ;
-
-                //mesh = LOD.GetLOD(_mesh_Sphere, Vector3.DistanceSquared(new Vector3(model.M41, model.M42, model.M43), renderer.Camera.CameraPos)),
-                renderer.AddRenderInfo(new RenderInfo() {
-                    model = model,
-                    mesh = mesh,
-                    material = material,
-                });
-            }
-        }
-        long t2 = System.Diagnostics.Stopwatch.GetTimestamp();
-        //Log.log(System.Diagnostics.Stopwatch.GetElapsedTime(t1, t2).TotalMilliseconds);
-    }
-    public void DrawMaterialGrid () => DrawMaterialGrid(0f, 20f);
 
 }

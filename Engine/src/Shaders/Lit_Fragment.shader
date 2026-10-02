@@ -7,6 +7,7 @@ in vec3 vNormal;
 in vec3 vFragPos;
 in vec2 vUV;
 in vec3 vViewNormal;
+// flat in int vInstanceId;
 
 #define MAX_SUN_LIGHTS 32
 #define MAX_POINT_LIGHTS 32
@@ -223,7 +224,10 @@ void main() {
     // FragColor = vec4(ambientSpecular, alpha);
     // FragColor = vec4(prefiltered, 1.0);
     // FragColor = vec4(color, 1.0);
+    // color = vFragPos;
+    // color = vec3(mod(vFragPos.x, 2.0), 0.0, 1.0 - mod(vFragPos.x, 2.0));
+    // color = ((vInstanceId & 1) == 0) ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
     FragColor = vec4(color, alpha);
     // write view-space normal to MRT attachment 1
-    FragNormal = vec4(normalize(vViewNormal), 1.0);
+    FragNormal = vec4(vViewNormal, 1.0);
 }

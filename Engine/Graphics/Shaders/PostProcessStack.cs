@@ -130,11 +130,11 @@ public class PostProcessStack : IDisposable {
         SetSceneDrawBuffers();
         Renderer.GL.Viewport(0, 0, (uint)Renderer.Instance.Width, (uint)Renderer.Instance.Height);
         Renderer.GL.ColorMask(true, true, true, true);
+        Renderer.GL.Disable(EnableCap.Blend);
+        Renderer.GL.Enable(EnableCap.DepthTest);
         Renderer.GL.DepthMask(true);
         Renderer.GL.DepthFunc(DepthFunction.Less);
         Renderer.GL.Disable(EnableCap.StencilTest);
-        Renderer.GL.Disable(EnableCap.Blend);
-        Renderer.GL.Enable(EnableCap.DepthTest);
         Renderer.GL.Clear((uint)(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit));
         Renderer.GL.ClearBuffer(GLEnum.Color, 1, new float[] { 0f, 0f, 0f, 0f });
     }
