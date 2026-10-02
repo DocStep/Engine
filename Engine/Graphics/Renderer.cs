@@ -310,7 +310,7 @@ public class Renderer {
 
         /// state.Bind may apply the depth material's own cull mode, so force front-face culling after it
         GL.Enable(EnableCap.CullFace);
-        GL.CullFace(TriangleFace.Front);
+        GL.CullFace(TriangleFace.Back);
 
         first.mesh.DrawInstanced(new ReadOnlySpan<Matrix4x4>(instanceModelScratch, 0, runLength),
             first.indexOffset, first.indexCount, first.primitiveType);

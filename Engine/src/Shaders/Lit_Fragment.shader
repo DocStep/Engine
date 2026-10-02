@@ -33,9 +33,9 @@ uniform float uPointLightIntensity[MAX_POINT_LIGHTS];
 uniform float uPointLightRange[MAX_POINT_LIGHTS];
 
 // uniform sampler2D uShadowMap;
+uniform sampler2DShadow uShadowMap;   // was sampler2D
 uniform mat4 uLightSpace;
 uniform int uShadowLightIndex;   // -1 = no shadow
-uniform sampler2DShadow uShadowMap;   // was sampler2D
 uniform float uShadowTexelWorld;
 uniform float uShadowSoftness;        // 1.0 = default blur radius in texels
 
@@ -262,6 +262,10 @@ void main() {
     // color = vFragPos;
     // color = vec3(mod(vFragPos.x, 2.0), 0.0, 1.0 - mod(vFragPos.x, 2.0));
     // color = ((vInstanceId & 1) == 0) ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+    
+    /// Debug Shadow
+    // FragColor = vec4(vec3(1.0 - ShadowFactor(N, normalize(-uSunLightDir[0]))), 1.0);
+    
     FragColor = vec4(color, alpha);
     // write view-space normal to MRT attachment 1
     FragNormal = vec4(vViewNormal, 1.0);
