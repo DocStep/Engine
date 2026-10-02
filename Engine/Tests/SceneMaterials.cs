@@ -29,7 +29,7 @@ public class SceneMaterials : Scene {
         go_shadowCube2.Transform.Position = new Vector3(x+2, 4, -9);
         go_shadowCube2.Transform.Scale = new Vector3(5);
 
-        return;
+        //return;
 
         /// Plane Materials
         x = -2;

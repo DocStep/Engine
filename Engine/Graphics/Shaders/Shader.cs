@@ -177,6 +177,8 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide] public const string uShadowSoftness = "uShadowSoftness";
     [JsonIgnore, Hide] public const string uShadowBias = "uShadowBias";
     [JsonIgnore, Hide] public const string uShadowNormalOffset = "uShadowNormalOffset";
+    [JsonIgnore, Hide] public const string uShadowAmbientSpecular = "uShadowAmbientSpecular";
+    [JsonIgnore, Hide] public const string uShadowAmbientDiffuse = "uShadowAmbientDiffuse";
 
     [JsonIgnore, Hide] public const string uSHAr = "uSHAr";
     [JsonIgnore, Hide] public const string uSHAg = "uSHAg";

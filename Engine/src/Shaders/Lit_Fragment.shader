@@ -38,6 +38,8 @@ uniform mat4 uLightSpace;
 uniform int uShadowLightIndex;   // -1 = no shadow
 uniform float uShadowTexelWorld;
 uniform float uShadowSoftness;        // 1.0 = default blur radius in texels
+uniform float uShadowAmbientSpecular;   // 0 = off, 1 = reflection fully black in shadow
+uniform float uShadowAmbientDiffuse;
 
 uniform vec3 uViewPos;
 
@@ -177,24 +179,30 @@ vec3 ComputePointLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 alb
 // 0 = lit, 1 = fully in shadow. N and L are used only for slope-scaled bias.
 float ShadowFactor(vec3 N, vec3 L)
 {
-    // Normal offset: push the lookup point off the surface instead of using a big depth bias
     float NdotL = clamp(dot(N, L), 0.0, 1.0);
-    vec3 pos = vFragPos + N * uShadowTexelWorld * 1.5 * (1.0 - NdotL);
+    vec3 pos = vFragPos + N*uShadowTexelWorld*1.5*(1.0 - NdotL);
 
-    vec4 lp = uLightSpace * vec4(pos, 1.0);
-    vec3 p = (lp.xyz / lp.w) * 0.5 + 0.5;
-    if (p.z > 1.0) return 0.0;
+    vec4 lp = uLightSpace*vec4(pos, 1.0);
+    vec3 p = (lp.xyz/lp.w)*0.5 + 0.5;
+
+    /// Outside the shadow box: no shadow, and no tiling
+    if (p.z > 1.0 || p.z < 0.0) return 0.0;
+    if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0) return 0.0;
+
+    /// Fade out over the last 10% toward each edge (also hides the 5x5 taps reading past the border)
+    vec2 edge = min(p.xy, 1.0 - p.xy);
+    float fade = smoothstep(0.0, 0.1, min(edge.x, edge.y));
 
     float bias = 0.0003;
-    vec2 texel = uShadowSoftness / vec2(textureSize(uShadowMap, 0));
+    vec2 texel = uShadowSoftness/vec2(textureSize(uShadowMap, 0));
 
     float lit = 0.0;
     for (int x = -2; x <= 2; x++) {
         for (int y = -2; y <= 2; y++) {
-            lit += texture(uShadowMap, vec3(p.xy + vec2(x, y) * texel, p.z - bias));
+            lit += texture(uShadowMap, vec3(p.xy + vec2(x, y)*texel, p.z - bias));
         }
     }
-    return 1.0 - lit / 25.0;   // texture() returns 1 = lit, so invert to keep "1 = shadow"
+    return (1.0 - lit/25.0)*fade;
 }
 
 
@@ -217,11 +225,16 @@ void main() {
     vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
     // Direct sun lights — Cook-Torrance specular + Lambert diffuse, summed
+    float shadow = 0.0;
+    float shadowFacing = 0.0;
     vec3 Lo = vec3(0.0);
     for (int i = 0; i < uSunLightCount; i++) {
         vec3 sun = ComputeSunLight(i, N, V, F0, roughness, albedo, metallic);
         if (i == uShadowLightIndex) {
-            sun *= 1.0 - ShadowFactor(N, normalize(-uSunLightDir[i]));
+            vec3 Ls = normalize(-uSunLightDir[i]);
+            shadow = ShadowFactor(N, Ls);
+            shadowFacing = smoothstep(0.0, 0.25, dot(N, Ls));
+            sun *= 1.0 - shadow;
         }
         Lo += sun;
     }
@@ -237,8 +250,12 @@ void main() {
     vec3 ambientDiffuse = irradiance * albedo * kD_ambient;
 
     vec3 R = reflect(-V, N);
-    vec3 prefiltered = textureLod(uSkybox, SampleSphericalMap(R), roughness * uMaxReflectionLod).rgb;
-    vec3 ambientSpecular = prefiltered * Fr * uReflectionIntensity;
+    vec3 prefiltered = textureLod(uSkybox, SampleSphericalMap(R), roughness*uMaxReflectionLod).rgb;
+    vec3 ambientSpecular = prefiltered*Fr*uReflectionIntensity;
+
+    float ambientShadow = shadow*shadowFacing;
+    ambientSpecular *= 1.0 - ambientShadow*uShadowAmbientSpecular;
+    ambientDiffuse *= 1.0 - ambientShadow*uShadowAmbientDiffuse;
 
     vec3 color = ambientDiffuse + ambientSpecular + Lo;
     // vec3 color = ambientSpecular;
