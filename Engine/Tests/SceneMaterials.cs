@@ -19,13 +19,13 @@ public class SceneMaterials : Scene {
         go_sun1.Transform.LocalEuler = new Vector3(60, -30, 0);
         SunLight sun1 = go_sun1.AddComponent<SunLight>();
 
-
+        /// Shadow
         x = 10;
-        GameObject go_shadowCube1 = new GameObject(PrimitiveTypes.Cube) { Name = "Plane Materials", };
+        GameObject go_shadowCube1 = new GameObject(PrimitiveTypes.Cube) { Name = "Shadow Cube 1", };
         go_shadowCube1.Transform.Position = new Vector3(x, 0, -6);
         go_shadowCube1.Transform.Scale = new Vector3(5);
 
-        GameObject go_shadowCube2 = new GameObject(PrimitiveTypes.Cube) { Name = "Plane Materials", };
+        GameObject go_shadowCube2 = new GameObject(PrimitiveTypes.Cube) { Name = "Shadow Cube 2", };
         go_shadowCube2.Transform.Position = new Vector3(x+2, 4, -9);
         go_shadowCube2.Transform.Scale = new Vector3(5);
 
@@ -49,6 +49,7 @@ public class SceneMaterials : Scene {
         Material mat = new Material(AssetsEngine._sh_LitInstanced);
         mat.SetTexture(Shader.uTexture, AssetsEngine.tex_Test);
         go_planeTexture.GetComponent<MeshComponent>()?.Material = mat;
+        new Transform();
         //mat.SetVector3(Shader.Color, Vector3.One);
         //Texture? texture = Assets.Load<Texture>("src/Images/RGBA_Test.png");
         //if (texture is not null) mat.SetTexture(Shader.Texture, texture);
@@ -63,7 +64,7 @@ public class SceneMaterials : Scene {
         reflectionSuzanneHightRes.Transform.LocalEuler = new Vector3(0, 180, 0);
         mesh = reflectionSuzanneHightRes.AddComponent<MeshComponent>();
         mesh.Mesh = AssetsEngine._mesh_SuzanneHighRes;
-        mesh.Material = AssetsEngine._mat_MaterialPreview;
+        mesh.Material = AssetsEngine._mat_Reflection;
         reflectionSuzanneHightRes.AddComponent<MonkeyScript>();
         //Camera camera = reflectionSuzanneHightRes.AddComponent<Camera>();
         //camera.priority = 0;
@@ -73,14 +74,21 @@ public class SceneMaterials : Scene {
         reflectionSuzanne.Transform.LocalEuler = new Vector3(0, 180, 0);
         mesh = reflectionSuzanne.AddComponent<MeshComponent>();
         mesh.Mesh = AssetsEngine._mesh_Suzanne;
-        mesh.Material = AssetsEngine._mat_MaterialPreview;
+        mesh.Material = AssetsEngine._mat_Reflection;
 
         GameObject reflectionTorus = new GameObject() { Name = "Reflection Torus", };
         reflectionTorus.Transform.Position = new Vector3(x, 0, 8);
         mesh = reflectionTorus.AddComponent<MeshComponent>();
         mesh.Mesh = AssetsEngine._mesh_Torus;
-        mesh.Material = AssetsEngine._mat_MaterialPreview;
+        mesh.Material = AssetsEngine._mat_Reflection;
 
+        GameObject reflectionSphere = new GameObject() { Name = "Reflection Sphere", };
+        reflectionSphere.Transform.Position = new Vector3(0, 0, -8);
+        reflectionSphere.Transform.LocalScale = 2*Vector3.One;
+        mesh = reflectionSphere.AddComponent<MeshComponent>();
+        mesh.Mesh = AssetsEngine._mesh_Sphere;
+        mesh.Material = AssetsEngine._mat_Reflection;
+ 
         ///// Primitives
         x = 4;
         GameObject plane = new GameObject(PrimitiveTypes.Plane, position: new(x, 0, -2)) { Name = "Plane", };
@@ -135,13 +143,6 @@ public class SceneMaterials : Scene {
         mesh = sphereSmooth.AddComponent<MeshComponent>();
         mesh.Mesh = AssetsEngine._mesh_Sphere;
         mesh.Material = AssetsEngine._mat_Smooth;
-
-        GameObject reflectionSphere = new GameObject() { Name = "Reflection Sphere", };
-        reflectionSphere.Transform.Position = new Vector3(0, 0, -8);
-        reflectionSphere.Transform.LocalScale = 2*Vector3.One;
-        mesh = reflectionSphere.AddComponent<MeshComponent>();
-        mesh.Mesh = AssetsEngine._mesh_Sphere;
-        mesh.Material = AssetsEngine._mat_MaterialPreview;
 
         x = 0;
         GameObject ssao1 = new GameObject(PrimitiveTypes.Sphere) { Name = "ssao1", };

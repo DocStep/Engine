@@ -24,6 +24,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _sh_UI = new Shader("src/Shaders/UI_Vertex.shader", "src/Shaders/UI_Fragment.shader", "UI", isLit: false);
         _sh_UI.Save("src/Shaders/UI.shader");
 
+
         _mat_Lit = new Material(_sh_LitInstanced) { Name = "Lit", };
         _mat_Lit.SetVector3(uColor, Constants.white);
         _mat_Lit.Save("src/Materials/Lit.mat");
@@ -38,7 +39,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _sh_Skybox = new Shader("src/Shaders/Skybox_Vertex.shader",
             "src/Shaders/Skybox_Fragment.shader", "Skybox", isLit: false);
         _sh_Skybox.Save("src/Shaders/Skybox.shader");
-        _shader_IBLPrefilter = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader",
+        _sh_IBLPrefilter = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader",
             "src/Shaders/IBLPrefilter_Fragment.shader", "IBLPrefilter", isLit: false);
         _mat_Skybox = new MaterialSkybox(_sh_Skybox);
         _mat_Skybox.Save("src/Materials/Skybox.mat");
@@ -48,8 +49,16 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         //_hdr_Skybox = new HdrTexture("src/HDR/overcast_soil_puresky_4k.hdr");
         //_hdr_Skybox = new HdrTexture("src/HDR/qwantani_dusk_2_puresky_4k.hdr");
 
+
+        _sh_Reflection = new Shader("src/Shaders/Lit_Vertex.shader", "src/Shaders/Reflection_Fragment.shader", "Reflection", isLit: false);
+        _sh_Reflection.Save("src/Shaders/Reflection.shader");
+        _mat_Reflection = new MaterialReflection(_sh_Reflection);
+        _mat_Reflection.Save("src/Materials/Reflection.mat");
+        ///
         _sh_ShadowDepth = new Shader("src/Shaders/ShadowDepth_Vertex.shader", "src/Shaders/ShadowDepth_Fragment.shader", "ShadowDepth", isLit: false);
+        _sh_ShadowDepth.Save("src/Shaders/ShadowDepth.shader");
         _mat_ShadowDepth = new Material(_sh_ShadowDepth);
+        _mat_ShadowDepth.Save("src/Materials/ShadowDepth.mat");
 
         _mesh_Cube = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Cube.obj"))!;
         _mesh_Sphere = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Sphere.obj"))!;
@@ -181,9 +190,12 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Graphics.UI.MaterialUI _mat_UI = null!;
 
     public readonly static Shader _sh_Skybox = null!;
-    public readonly static Shader _shader_IBLPrefilter = null!;
+    public readonly static Shader _sh_IBLPrefilter = null!;
     public readonly static Material _mat_Skybox = null!;
     public readonly static HdrTexture? _hdr_Skybox = null;
+
+    public readonly static Shader _sh_Reflection = null!;
+    public readonly static MaterialReflection _mat_Reflection = null!;
 
     public readonly static Shader _sh_ShadowDepth = null!;
     public readonly static Material _mat_ShadowDepth = null!;

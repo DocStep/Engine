@@ -3,10 +3,7 @@
 
 public struct RenderInfo2D () {
 
-    public string name = string.Empty;
-
     public Matrix4x4 model;
-    public Matrix4x4? normal = null;
 
     public Mesh mesh = null!;
     public Material material = null!;

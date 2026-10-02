@@ -81,7 +81,7 @@ public class Skybox : IDisposable {
         uint fbo = gl.GenFramebuffer();
         gl.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
 
-        Shader prefilterShader = AssetsEngine._shader_IBLPrefilter;
+        Shader prefilterShader = AssetsEngine._sh_IBLPrefilter;
         for (int level = 0; level < mipLevels; level++) {
             int w = Math.Max(1, baseW >> level);
             int h = Math.Max(1, baseH >> level);

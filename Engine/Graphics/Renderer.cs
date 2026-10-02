@@ -24,14 +24,14 @@ public class Renderer {
         Windows.Window.FramebufferResize += OnFrameBufferResize;
         Windows.Window.Closing += Dispose;
 
-        _GL = Windows.Window.CreateOpenGL();
+        gl = Windows.Window.CreateOpenGL();
         GLDebug.Init();
-        GL.FrontFace(FrontFaceDirection.CW);
-        GL.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
+        gl.FrontFace(FrontFaceDirection.CW);
+        gl.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
 
         Skybox = new Skybox(_hdr_Skybox);
 
-        //SetTargetSize(Engine.Window.Size.X, Engine.Window.Size.Y);
+        //SetTargetSize(Windows.Window.Size.X, Windows.Window.Size.Y);
 
         Shadow = new ShadowMap(2048);
 
@@ -65,8 +65,8 @@ public class Renderer {
     public Action? de_PostRender = null;
 
 
-    protected readonly GL _GL = null!; /// set in ctor — don't give this a field initializer, it creates a second throwaway GL context
-    public static GL GL => Instance._GL;
+    protected readonly GL gl = null!; /// set in ctor — don't give this a field initializer, it creates a second throwaway GL context
+    public static GL GL => Instance.gl;
 
     public Action? de_Dispose = null;
 
@@ -108,8 +108,7 @@ public class Renderer {
         Camera = MainCamera;
         if (Camera is null) {
             Log.log($"No {nameof(Graphics.Camera)} found");
-            queue.Clear(); /// otherwise the queue grows every frame while there is no camera
-            shadowQueue.Clear(); /// otherwise the queue grows every frame while there is no camera
+            ClearRenderData();
             return;
         }
         StatsStart();
@@ -151,13 +150,19 @@ public class Renderer {
 
         Stats.Frame++;
 
-        StatsEnd();
+        ClearRenderData();
 
         //Log.log("Renderer", Stats.Frame, Windows.Window.Size, Stats.SceneSize);
         //Thread.Sleep(500);
     }
     public void ClearFrame () {
-        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
+        gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
+    }
+    public void ClearRenderData () {
+        queue.Clear();
+        shadowQueue.Clear();
+
+        StatsEnd();
     }
     protected void StatsStart () {
         sw_Latency.Restart();
@@ -172,9 +177,6 @@ public class Renderer {
     }
     protected void StatsEnd () {
         Stats.Latency = (float)sw_Latency.Elapsed.TotalMilliseconds;
-
-        queue.Clear();
-        shadowQueue.Clear();
     }
     public virtual void SetTargetSize () {
         Stats.SceneSize = new Vector2(Windows.Window.Size.X, Windows.Window.Size.Y);
@@ -306,11 +308,11 @@ public class Renderer {
 
         /// Depth material instead of first.material: no scene uniforms, no material textures
         Shader shader = state.Bind(_mat_ShadowDepth);
-        shader.SetMatrix4x4("uLightSpace", Shadow.LightSpace);
+        shader.SetMatrix4x4(Shader.uLightSpace, Shadow.LightSpace);
 
         /// state.Bind may apply the depth material's own cull mode, so force front-face culling after it
-        GL.Enable(EnableCap.CullFace);
-        GL.CullFace(TriangleFace.Back);
+        gl.Enable(EnableCap.CullFace);
+        gl.CullFace(TriangleFace.Back);
 
         first.mesh.DrawInstanced(new ReadOnlySpan<Matrix4x4>(instanceModelScratch, 0, runLength),
             first.indexOffset, first.indexCount, first.primitiveType);
@@ -377,7 +379,7 @@ public class Renderer {
             idx = runEnd;
         }
 
-        GL.CullFace(TriangleFace.Back);
+        gl.CullFace(TriangleFace.Back);
         Shadow.End();
         state.Reset();
     }
@@ -385,7 +387,7 @@ public class Renderer {
 
 
     protected void OnFrameBufferResize (Silk.NET.Maths.Vector2D<int> newSize) {
-        GL.Viewport(newSize);
+        gl.Viewport(newSize);
     }
 
 

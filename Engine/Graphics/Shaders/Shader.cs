@@ -207,6 +207,7 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide] public const string uSampleCount = "uSampleCount";
     [JsonIgnore, Hide] public const string uFalloffPower = "uFalloffPower";
     [JsonIgnore, Hide] public const string uTexelSize = "uTexelSize";
+    [JsonIgnore, Hide] public const string uInvResolution = "uInvResolution";
 
 
 

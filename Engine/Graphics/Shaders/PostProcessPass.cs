@@ -5,11 +5,11 @@ namespace Engine.Graphics;
 
 public class PostProcessPass {
     public PostProcessPass (Material material) {
-        this.material = material;
+        this.Material = material;
     }
 
-    public bool Enabled = true;
-    protected readonly Material material;
+     public bool Enabled = true;
+    [Newtonsoft.Json.JsonProperty] protected readonly Material Material;
 
 
     public void Apply (uint inputTexture, uint depthTexture) {
@@ -19,16 +19,16 @@ public class PostProcessPass {
         Renderer.GL.ActiveTexture(TextureUnit.Texture1);
         Renderer.GL.BindTexture(TextureTarget.Texture2D, depthTexture);
 
-        material.shader.Use();
-        material.Apply();
-        material.shader.SetInt(Shader.uScene, 0);
-        material.shader.SetInt(Shader.uDepth, 1);
+        Material.shader.Use();
+        Material.Apply();
+        Material.shader.SetInt(Shader.uScene, 0);
+        Material.shader.SetInt(Shader.uDepth, 1);
 
         // Bind scene normal texture only when the shader actually expects it (avoid unit collisions)
-        if (material.shader.ActiveUniforms.ContainsKey("uNormal")) {
+        if (Material.shader.ActiveUniforms.ContainsKey("uNormal")) {
             Renderer.GL.ActiveTexture(TextureUnit.Texture2);
             Renderer.GL.BindTexture(TextureTarget.Texture2D, Renderer.Instance.PostProcess.SceneNormalTexture);
-            material.shader.SetInt("uNormal", 2);
+            Material.shader.SetInt("uNormal", 2);
         }
 
         Renderer.GL.BindVertexArray(PostProcessStack.QuadVAO);
