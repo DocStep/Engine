@@ -7,7 +7,7 @@ namespace Engine.Graphics;
 /// Sorting works on int indices + ulong keys, never on the RenderInfo structs themselves.
 public sealed class RenderQueue {
 
-    private readonly List<RenderInfo> renderInfos = new List<RenderInfo>();
+    private readonly List<RenderData> renderInfos = new List<RenderData>();
     private int[] indices = [];
     private ulong[] keys = [];
 
@@ -15,12 +15,12 @@ public sealed class RenderQueue {
     public int Count { get; private set; }
 
     /// i is the position in the sorted visible list, not in the raw list
-    public ref readonly RenderInfo this[int i] => ref CollectionsMarshal.AsSpan(renderInfos)[indices[i]];
+    public ref readonly RenderData this[int i] => ref CollectionsMarshal.AsSpan(renderInfos)[indices[i]];
 
     /// Raw unsorted, unculled items — for debug passes like wireframe
-    public IReadOnlyList<RenderInfo> Items => renderInfos;
+    public IReadOnlyList<RenderData> Items => renderInfos;
 
-    public void Add (RenderInfo info) {
+    public void Add (RenderData info) {
         renderInfos.Add(info);
     }
 
@@ -37,10 +37,10 @@ public sealed class RenderQueue {
             keys = new ulong[total];
         }
 
-        Span<RenderInfo> items = CollectionsMarshal.AsSpan(renderInfos);
+        Span<RenderData> items = CollectionsMarshal.AsSpan(renderInfos);
         Count = 0;
         for (int i = 0; i < total; i++) {
-            ref readonly RenderInfo info = ref items[i];
+            ref readonly RenderData info = ref items[i];
             if (info.mesh is null || info.material is null) continue;
 
             if (info.material.Pass != RenderPass.UI) {
@@ -63,10 +63,10 @@ public sealed class RenderQueue {
 
     /// End (exclusive) of the run of identical mesh+material that starts at start
     public int RunEnd (int start) {
-        ref readonly RenderInfo first = ref this[start];
+        ref readonly RenderData first = ref this[start];
         int end = start + 1;
         while (end < Count) {
-            ref readonly RenderInfo next = ref this[end];
+            ref readonly RenderData next = ref this[end];
             if (!ReferenceEquals(next.mesh, first.mesh) || !ReferenceEquals(next.material, first.material)) break;
             end++;
         }
@@ -76,7 +76,7 @@ public sealed class RenderQueue {
     /// Opaque/UI: pass 2 bits | shader 22 bits | material 20 bits | mesh 20 bits
     /// Transparent: pass 2 bits | inverted distance 32 bits (back-to-front, required for correct blending)
     /// Relies on RenderPass order Opaque < Transparent < UI and on Id fields in Shader/Material/Mesh
-    static ulong MakeSortKey (in RenderInfo info, Vector3 camPos) {
+    static ulong MakeSortKey (in RenderData info, Vector3 camPos) {
         ulong pass = (ulong)info.material.Pass & 3UL;
 
         if (info.material.Pass == RenderPass.Transparent) {

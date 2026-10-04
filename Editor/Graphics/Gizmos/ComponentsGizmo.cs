@@ -8,14 +8,14 @@ public static class ComponentsGizmo {
     extension(BoxColliderComponent comp) {
         public void DrawGizmo () {
             if (Constants.drawGizmos) {
-                RenderInfo renderInfo = new RenderInfo() {
+                RenderData renderInfo = new RenderData() {
                     model = comp.gameObject.Transform.GetWorldMatrix(),
 
                     mesh = Gizmos._mesh_CubeWireframe,
                     material = Gizmos._mat_GizmosGreen,
                     primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
                 };
-                Renderer.Instance.AddRenderInfo(renderInfo);
+                Renderer.Instance.AddRenderData(renderInfo);
             }
         }
     }
@@ -23,14 +23,14 @@ public static class ComponentsGizmo {
     extension(CapsuleColliderComponent comp) {
         public void DrawGizmo () {
             if (Constants.drawGizmos) {
-                RenderInfo renderInfo = new RenderInfo() {
+                RenderData renderInfo = new RenderData() {
                     model = comp.gameObject.Transform.GetWorldMatrix(),
 
                     mesh = Gizmos._mesh_CapsuleWireframe,
                     material = Gizmos._mat_GizmosGreen,
                     primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
                 };
-                Renderer.Instance.AddRenderInfo(renderInfo);
+                Renderer.Instance.AddRenderData(renderInfo);
             }
         }
     }
@@ -38,14 +38,14 @@ public static class ComponentsGizmo {
     extension(PlaneColliderComponent comp) {
         public void DrawGizmo () {
             if (Constants.drawGizmos) {
-                RenderInfo renderInfo = new RenderInfo() {
+                RenderData renderInfo = new RenderData() {
                     model = comp.gameObject.Transform.GetWorldMatrix(),
 
                     mesh = Gizmos._mesh_PlaneWireframe,
                     material = Gizmos._mat_GizmosGreen,
                     primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
                 };
-                Renderer.Instance.AddRenderInfo(renderInfo);
+                Renderer.Instance.AddRenderData(renderInfo);
             }
         }
     }
@@ -53,14 +53,14 @@ public static class ComponentsGizmo {
     extension(SphereColliderComponent comp) {
         public void DrawGizmo () {
             if (Constants.drawGizmos) {
-                RenderInfo renderInfo = new RenderInfo() {
+                RenderData renderInfo = new RenderData() {
                     model = comp.gameObject.Transform.GetWorldMatrix(),
 
                     mesh = Gizmos._mesh_SphereWireframe,
                     material = Gizmos._mat_GizmosGreen,
                     primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
                 };
-                Renderer.Instance.AddRenderInfo(renderInfo);
+                Renderer.Instance.AddRenderData(renderInfo);
             }
         }
     }

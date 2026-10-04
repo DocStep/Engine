@@ -124,10 +124,8 @@ public class Material : IAsset<Material>, IOnLoaded {
             //    }
             //}
 
-            object defValue = 
-                Shader.UniformDefaults.TryGetValue(info.Name, out var over) ? over
-                : Shader.UniformTypeDefaults.TryGetValue(info.Type, out var byType) ? byType
-                : null!;
+            object defValue = Shader.UniformDefaults.TryGetValue(info.Name, out var over) ? over : 
+                Shader.UniformTypeDefaults.TryGetValue(info.Type, out var byType) ? byType : null!;
             if (defValue is null) continue;
 
             switch (defValue) {
@@ -187,17 +185,23 @@ public class Material : IAsset<Material>, IOnLoaded {
 
 
     public void Save (string path) {
-        Prune(ints); Prune(floats); Prune(vectors2); Prune(vectors3); Prune(vectors4); Prune(textures);
+        Prune(ints);
+        Prune(floats);
+        Prune(vectors2);
+        Prune(vectors3);
+        Prune(vectors4);
+        Prune(textures);
+
         Path = path;
         Json.Write(path, this);
     }
-    public static Material? Load (string path, int part = 100) {
-        return Json.Read<Material>(path);
-    }
-
     private void Prune<T> (Dictionary<string, T> dict) {
         foreach (string key in dict.Keys.ToList())
             if (!shader.ActiveUniforms.ContainsKey(key)) dict.Remove(key);
+    }
+
+    public static Material? Load (string path, int part = 100) {
+        return Json.Read<Material>(path);
     }
 
 

@@ -28,6 +28,13 @@ public static class Windows {
         Title = "Engine",
         VSync = false,
         WindowBorder = Silk.NET.Windowing.WindowBorder.Resizable,
+        /// Request OpenGL 4.0 core (default is 3.3 compatibility)
+        API = new Silk.NET.Windowing.GraphicsAPI(
+            Silk.NET.Windowing.ContextAPI.OpenGL,
+            Silk.NET.Windowing.ContextProfile.Core,
+            Silk.NET.Windowing.ContextFlags.ForwardCompatible,
+            new Silk.NET.Windowing.APIVersion(4, 0)
+        ),
     };
 
 

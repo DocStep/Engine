@@ -11,9 +11,6 @@ public class MeshComponent : Component, IUpdate, IUpdateAtFreeze {
     public Material? Material = AssetsEngine._mat_Lit;
     public Material[]? Materials;
 
-    [JsonIgnore, Hide]
-    public RenderInfo RenderInfo;
-    
 
     public void Update () {
         if (Renderer.Instance.Camera is null || Mesh is null || Material is null) return;
@@ -22,15 +19,13 @@ public class MeshComponent : Component, IUpdate, IUpdateAtFreeze {
         Silk.NET.OpenGL.PrimitiveType primitiveType = Mesh.Data is not null ? Mesh.Data.PrimitiveType : default;
 
         if (Mesh.SubMeshes.Length <= 1) {
-            RenderInfo info = new RenderInfo() {
+            RenderData renderData = new RenderData() {
                 model = model,
-                //mesh = Mesh,
                 mesh = LOD.GetLOD(Mesh, Vector3.DistanceSquared(gameObject.Transform.Position, Renderer.Instance.Camera.CameraPos)),
                 material = Material,
                 primitiveType = primitiveType,
             };
-            RenderInfo = info;
-            Renderer.Instance.AddRenderInfo(info);
+            Renderer.Instance.AddRenderData(renderData);
             return;
         }
 
@@ -44,16 +39,15 @@ public class MeshComponent : Component, IUpdate, IUpdateAtFreeze {
                     ? Mesh.DefaultMaterials[i]
                     : Material;
 
-            RenderInfo info = new RenderInfo() {
+            RenderData renderData = new RenderData() {
                 model = model,
-                mesh = Mesh,
+                mesh = LOD.GetLOD(Mesh, Vector3.DistanceSquared(gameObject.Transform.Position, Renderer.Instance.Camera.CameraPos)),
                 material = mat,
                 primitiveType = primitiveType,
                 indexOffset = sub.IndexOffset,
                 indexCount = sub.IndexCount,
             };
-            RenderInfo = info;
-            Renderer.Instance.AddRenderInfo(info);
+            Renderer.Instance.AddRenderData(renderData);
         }
     }
 

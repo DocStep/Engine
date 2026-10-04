@@ -34,6 +34,7 @@ public class Renderer {
         //SetTargetSize(Windows.Window.Size.X, Windows.Window.Size.Y);
 
         Shadow = new ShadowMap(2048);
+        PointShadows = new PointShadowMap();
 
         PostProcess = new PostProcessStack();
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
@@ -72,6 +73,8 @@ public class Renderer {
 
     public readonly Skybox Skybox = null!;
     public ShadowMap Shadow = null!;
+    public PointShadowMap PointShadows = null!;
+    public SunLight? SunShadowLight; /// the sun the map was actually rendered for this frame
     protected readonly RenderQueue shadowQueue = new RenderQueue();
     protected Frustum lightFrustum = new Frustum();
     public readonly PostProcessStack PostProcess = null!;
@@ -185,9 +188,9 @@ public class Renderer {
         PostProcess.PresentToBackbuffer(); /// blit _outputFbo into fbo 0
     }
 
-    public void AddRenderInfo (RenderInfo renderInfo) {
-        queue.Add(renderInfo);
-        shadowQueue.Add(renderInfo);
+    public void AddRenderData (RenderData data) {
+        queue.Add(data);
+        shadowQueue.Add(data);
     }
 
     protected void UpdateViewProjection (float width, float height) {
@@ -237,7 +240,7 @@ public class Renderer {
         bool normalsOn = true;
         //Log.log("Start");
         while (idx < count) {
-            RenderInfo first = queue[idx];
+            RenderData first = queue[idx];
 
             /// Everything after the opaque pass (transparents, UI) doesn't write FragNormal
             if (normalsOn && first.material.Pass != RenderPass.Opaque) {
@@ -262,7 +265,7 @@ public class Renderer {
         //    "draw ms", System.Diagnostics.Stopwatch.GetElapsedTime(t1, t2).TotalMilliseconds);
     }
 
-    public void DrawRenderInfo (RenderInfo info) {
+    public void DrawRenderInfo (RenderData info) {
         if (Camera is null || info.mesh is null || info.material is null) return;
 
         BindMaterial(info.material);
@@ -273,17 +276,17 @@ public class Renderer {
         info.mesh.Draw(info.indexOffset, info.indexCount, info.primitiveType);
     }
 
-    /// Draws queue items [startIndex, endIndexExclusive) as one instanced callf
+    /// Draws queue items [startIndex, endIndexExclusive) as one instanced call
     protected void DrawInstancedRun (int startIndex, int endIndexExclusive) {
         int runLength = endIndexExclusive - startIndex;
         if (instanceModelScratch.Length < runLength) {
             instanceModelScratch = new Matrix4x4[runLength];
         }
 
-        RenderInfo first = queue[startIndex];
+        RenderData first = queue[startIndex];
 
         for (int i = 0; i < runLength; i++) {
-            RenderInfo info = queue[startIndex + i];
+            RenderData info = queue[startIndex + i];
             instanceModelScratch[i] = info.model;
         }
 
@@ -300,7 +303,7 @@ public class Renderer {
             instanceModelScratch = new Matrix4x4[runLength];
         }
 
-        RenderInfo first = shadowQueue[startIndex];
+        RenderData first = shadowQueue[startIndex];
 
         for (int i = 0; i < runLength; i++) {
             instanceModelScratch[i] = shadowQueue[startIndex + i].model;
@@ -358,31 +361,117 @@ public class Renderer {
 
 
     protected void DrawShadowPass () {
-        SunLight? light = Lighting.GetShadowLight();
+        DrawShadowPasses();
+        PostProcess.BeginScene();
+    }
+
+    void DrawShadowPasses () {
+        SunShadowLight = null;
+        Array.Clear(PointShadows.Slots);
+        if (!Lighting.UseShadow) return;
+
+        SunLight? sun = Lighting.GetShadowSun();
+        if (sun is not null) {
+            Shadow.SetSun(sun.gameObject.Transform.Forward, Camera!.CameraPos, 35f, 100f, 0.05f);
+            lightFrustum.Extract(Shadow.LightSpace);
+            shadowQueue.Build(lightFrustum, Camera.CameraPos);
+
+            Shadow.Begin();
+            Shader shader = BindDepthMaterial(_mat_ShadowDepth, true);
+            shader.SetMatrix4x4("uLightSpace", Shadow.LightSpace);
+            DrawDepthQueue(shadowQueue);
+            Shadow.End();
+            SunShadowLight = sun;
+        }
+
+        DrawPointShadowPass(); /// unchanged
+
+        GL.CullFace(TriangleFace.Back);
+        state.Reset();
+    }
+
+    void DrawSunShadowPass () {
+        SunLight? light = Lighting.GetShadowSun();
         if (light is null) return;
 
         Vector3 sunDir = light.gameObject.Transform.Forward;
-        Shadow.Begin(sunDir, Camera!.CameraPos, 35);
+        Shadow.SetSun(sunDir, Camera!.CameraPos, 35f, 100f, 0.05f);
 
         lightFrustum.Extract(Shadow.LightSpace);
         shadowQueue.Build(lightFrustum, Camera.CameraPos);
 
-        int count = shadowQueue.Count;
+        Shadow.Begin();
+        Shader shader = BindDepthMaterial(_mat_ShadowDepth, true);
+        shader.SetMatrix4x4("uLightSpace", Shadow.LightSpace);
+        DrawDepthQueue(shadowQueue);
+        Shadow.End();
+
+        SunShadowLight = light;
+    }
+
+    void DrawPointShadowPass () {
+        Lighting.PickPointShadowLights(PointShadows.Slots, Camera!.CameraPos);
+        PointShadows.Begin();
+
+        for (int slot = 0; slot < PointShadowMap.MaxLights; slot++) {
+            PointLight? l = PointShadows.Slots[slot];
+            if (l is null) continue;
+
+            for (int face = 0; face < 6; face++) {
+                Matrix4x4 vp = PointShadowMap.FaceMatrix(l.Position, l.Range, face);
+                lightFrustum.Extract(vp);
+                shadowQueue.Build(lightFrustum, l.Position);
+
+                PointShadows.BeginFace(slot, face);
+                Shader shader = BindDepthMaterial(_mat_PointShadowDepth, false); /// RH matrices flip winding, so no culling
+                shader.SetMatrix4x4("uFaceViewProj", vp);
+                shader.SetVector3("uLightPos", l.Position);
+                shader.SetFloat("uLightRange", l.Range);
+                DrawDepthQueue(shadowQueue);
+            }
+        }
+        PointShadows.End();
+    }
+
+    Shader BindDepthMaterial (Material material, bool cullBack) {
+        Shader shader = state.Bind(material);
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthMask(true);
+        GL.ColorMask(false, false, false, false);
+        if (cullBack) {
+            GL.Enable(EnableCap.CullFace);
+            GL.CullFace(TriangleFace.Back);
+        } else {
+            GL.Disable(EnableCap.CullFace);
+        }
+        return shader;
+    }
+
+    void DrawDepthQueue (RenderQueue q) {
+        int count = q.Count;
         int idx = 0;
         while (idx < count) {
-            RenderInfo first = shadowQueue[idx];
-            int runEnd = shadowQueue.RunEnd(idx);
-
-            if (first.material.Pass == RenderPass.Opaque) {
-                DrawShadowRun(idx, runEnd);
-            }
+            RenderData first = q[idx];
+            int runEnd = q.RunEnd(idx);
+            if (first.material.Pass == RenderPass.Opaque) DrawDepthRun(q, idx, runEnd);
             idx = runEnd;
         }
-
-        gl.CullFace(TriangleFace.Back);
-        Shadow.End();
-        state.Reset();
     }
+
+    /// The depth material is already bound by the caller, so a run is only the instanced draw
+    void DrawDepthRun (RenderQueue q, int startIndex, int endIndexExclusive) {
+        int runLength = endIndexExclusive - startIndex;
+        if (instanceModelScratch.Length < runLength) {
+            instanceModelScratch = new Matrix4x4[runLength];
+        }
+        RenderData first = q[startIndex];
+        for (int i = 0; i < runLength; i++) {
+            instanceModelScratch[i] = q[startIndex + i].model;
+        }
+        first.mesh.DrawInstanced(new ReadOnlySpan<Matrix4x4>(instanceModelScratch, 0, runLength),
+            first.indexOffset, first.indexCount, first.primitiveType);
+    }
+
 
 
 

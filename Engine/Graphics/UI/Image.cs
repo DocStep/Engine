@@ -58,7 +58,7 @@ public class Image : UIRenderingElement {
         Material.SetVector4(Shader.uTint, Tint);
         _texture!.Bind();
 
-        Renderer.Instance.AddRenderInfo(new RenderInfo {
+        Renderer.Instance.AddRenderData(new RenderData {
             //name = "UIImage",
             model = Matrix4x4.CreateScale(size.X, size.Y, 1f)
               *Matrix4x4.CreateTranslation(new Vector3(origin.X, origin.Y, 0f))

@@ -12,6 +12,7 @@ public abstract class LightSource : Component {
 
     [DrawColor] public Vector3 Color = Constants.Light_Color;
     public float Intensity = Constants.Light_Intensity;
+    public bool CastShadows = true;
 
 
     public override void OnAdd () {

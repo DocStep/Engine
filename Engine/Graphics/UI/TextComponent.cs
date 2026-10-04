@@ -161,7 +161,7 @@ public class TextComponent : UIRenderingElement {
         Vector2 size = rect.ActualSize;
         _material.SetVector4(Shader.uTint, Color);
 
-        Renderer.Instance.AddRenderInfo(new RenderInfo {
+        Renderer.Instance.AddRenderData(new RenderData {
             //name = "UIText",
             model = Matrix4x4.CreateTranslation(new Vector3(origin.X, origin.Y, 0f)) * rect.RectMatrix,
             mesh = _mesh,

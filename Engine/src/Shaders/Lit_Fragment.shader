@@ -1,7 +1,10 @@
-#version 330 core
+#version 400 core
 
 // Lit_Fragment.shader — PBR (Cook-Torrance / GGX / Fresnel-Schlick)
 // Multiple directional sun lights + SH ambient (diffuse) + equirect skybox reflection (specular).
+
+#define MAX_POINT_SHADOWS 4
+
 
 in vec3 vNormal;
 in vec3 vFragPos;
@@ -24,7 +27,7 @@ uniform float uAlpha;
 uniform int uSunLightCount;
 uniform vec3 uSunLightColor[MAX_SUN_LIGHTS];
 uniform float uSunLightIntensity[MAX_SUN_LIGHTS];
-uniform vec3 uSunLightDir[MAX_SUN_LIGHTS];      // direction light TRAVELS (sun -> scene)
+uniform vec3 uSunLightDir[MAX_SUN_LIGHTS]; // direction light TRAVELS (sun -> scene)
 
 uniform int uPointLightCount;
 uniform vec3 uPointLightPos[MAX_POINT_LIGHTS];
@@ -32,12 +35,17 @@ uniform vec3 uPointLightColor[MAX_POINT_LIGHTS];
 uniform float uPointLightIntensity[MAX_POINT_LIGHTS];
 uniform float uPointLightRange[MAX_POINT_LIGHTS];
 
-// uniform sampler2D uShadowMap;
+const float SUN_SOFTNESS = 1.5;
+const float POINT_SOFTNESS = 0.004;  // jitter relative to distance
+const float POINT_BIAS = 0.001;      // in range-normalized depth
+
+uniform float uSunShadow[MAX_SUN_LIGHTS];         // 0 = off, 1 = full strength (fractions fade it)
+uniform float uPointShadowSlot[MAX_POINT_LIGHTS]; // -1 = off, else cube slot
+uniform samplerCubeArray uPointShadowMap;
+
 uniform sampler2DShadow uShadowMap;   // was sampler2D
 uniform mat4 uLightSpace;
-uniform int uShadowLightIndex;   // -1 = no shadow
 uniform float uShadowTexelWorld;
-uniform float uShadowSoftness;        // 1.0 = default blur radius in texels
 uniform float uShadowAmbientSpecular;   // 0 = off, 1 = reflection fully black in shadow
 uniform float uShadowAmbientDiffuse;
 uniform float uShadowBias;
@@ -179,33 +187,52 @@ vec3 ComputePointLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 alb
 }
 
 // 0 = lit, 1 = fully in shadow. N and L are used only for slope-scaled bias.
-float ShadowFactor(vec3 N, vec3 L)
+float ShadowFactor (vec3 N, vec3 L)
 {
-    float NdotL = dot(N, L);
-    float facing = smoothstep(0.0, 0.2, NdotL);   /// 0 = facing away, 1 = clearly facing the sun
-
-    vec3 pos = vFragPos + N*0.1*3.0*(1.0 - clamp(NdotL, 0.0, 1.0));   
+    float NdotL = clamp(dot(N, L), 0.0, 1.0);
+    vec3 pos = vFragPos + N*uShadowTexelWorld*uShadowNormalOffset*(1.0 - NdotL);
     vec4 lp = uLightSpace*vec4(pos, 1.0);
     vec3 p = (lp.xyz/lp.w)*0.5 + 0.5;
 
-    if (p.z > 1.0 || p.z < 0.0) return 1.0 - facing;
-    if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0) return 1.0 - facing;
-
+    if (p.z < 0.0 || 1.0 < p.z) return 0.0;
     vec2 edge = min(p.xy, 1.0 - p.xy);
-    float fade = smoothstep(0.0, 0.1, min(edge.x, edge.y));
+    float edgeMin = min(edge.x, edge.y);
+    if (edgeMin < 0.0) return 0.0;
+    float fade = smoothstep(0.0, 0.1, edgeMin);
 
-    vec2 texel = 1.5/vec2(textureSize(uShadowMap, 0));
-
+    vec2 texel = SUN_SOFTNESS/vec2(textureSize(uShadowMap, 0));
     float lit = 0.0;
     for (int x = -2; x <= 2; x++) {
         for (int y = -2; y <= 2; y++) {
-            lit += texture(uShadowMap, vec3(p.xy + vec2(x, y)*texel, p.z - 0.001));
+            lit += texture(uShadowMap, vec3(p.xy + vec2(x, y)*texel, p.z - uShadowBias));
         }
     }
-    float mapShadow = (1.0 - lit/25.0)*fade;
+    return (1.0 - lit/25.0)*fade;
+}
 
-    /// Surfaces turning away from the sun blend smoothly into "shadowed"
-    return max(mapShadow, 1.0 - facing);
+const vec3 kDisk[20] = vec3[](
+    vec3(1,1,1), vec3(1,-1,1), vec3(-1,-1,1), vec3(-1,1,1),
+    vec3(1,1,-1), vec3(1,-1,-1), vec3(-1,-1,-1), vec3(-1,1,-1),
+    vec3(1,1,0), vec3(1,-1,0), vec3(-1,-1,0), vec3(-1,1,0),
+    vec3(1,0,1), vec3(-1,0,1), vec3(1,0,-1), vec3(-1,0,-1),
+    vec3(0,1,1), vec3(0,-1,1), vec3(0,-1,-1), vec3(0,1,-1));
+
+float PointShadowFactor (int slot, vec3 lightPos, float range, vec3 N)
+{
+    vec3 toLight = lightPos - vFragPos;
+    float dist = length(toLight);
+    if (range <= dist) return 0.0;
+
+    float NdotL = clamp(dot(N, toLight/dist), 0.0, 1.0);
+    vec3 dir = (vFragPos + N*dist*0.006*(1.0 - NdotL)) - lightPos; /// normal offset grows with distance, like a texel does
+    float current = length(dir)/range;
+
+    float shadow = 0.0;
+    for (int i = 0; i < 20; i++) {
+        float d = texture(uPointShadowMap, vec4(dir + kDisk[i]*dist*POINT_SOFTNESS, float(slot))).r;
+        if (current - POINT_BIAS > d) shadow += 1.0;
+    }
+    return shadow/20.0;
 }
 
 
@@ -233,16 +260,21 @@ void main() {
     vec3 Lo = vec3(0.0);
     for (int i = 0; i < uSunLightCount; i++) {
         vec3 sun = ComputeSunLight(i, N, V, F0, roughness, albedo, metallic);
-        if (i == uShadowLightIndex) {
+        if (0.0 < uSunShadow[i]) {
             vec3 Ls = normalize(-uSunLightDir[i]);
-            shadow = ShadowFactor(N, Ls);
-            shadowFacing = smoothstep(0.0, 0.25, dot(N, Ls));
-            sun *= 1.0 - shadow;
+            float s = ShadowFactor(N, Ls)*uSunShadow[i];
+            sun *= 1.0 - s;
+            shadow = max(shadow, s);
+            shadowFacing = max(shadowFacing, smoothstep(0.0, 0.25, dot(N, Ls)));
         }
         Lo += sun;
     }
     for (int i = 0; i < uPointLightCount; i++) {
-        Lo += ComputePointLight(i, N, V, F0, roughness, albedo, metallic);
+        vec3 pl = ComputePointLight(i, N, V, F0, roughness, albedo, metallic);
+        if (0.0 <= uPointShadowSlot[i]) {
+            pl *= 1.0 - PointShadowFactor(int(uPointShadowSlot[i]), uPointLightPos[i], uPointLightRange[i], N);
+        }
+        Lo += pl;
     }
 
     // IBL ambient — SH diffuse (Fresnel-split, energy-conserving) + prefiltered skybox specular
@@ -275,20 +307,6 @@ void main() {
 
     color = pow(color, vec3(1.0 / 2.2));
 
-    // FragColor = vec4(ambientDiffuse + ambientSpecular + Lo, alpha);
-    // FragColor = vec4(ambientSpecular, alpha);
-    // FragColor = vec4(prefiltered, 1.0);
-    // FragColor = vec4(color, 1.0);
-    // color = vFragPos;
-    // color = vec3(mod(vFragPos.x, 2.0), 0.0, 1.0 - mod(vFragPos.x, 2.0));
-    // color = ((vInstanceId & 1) == 0) ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
-    
-    /// Debug Shadow
-    // FragColor = vec4(vec3(1.0 - ShadowFactor(N, normalize(-uSunLightDir[0]))), 1.0);
-    // vec4 dbg = uLightSpace*vec4(vFragPos, 1.0);
-    // vec3 dp = (dbg.xyz/dbg.w)*0.5 + 0.5;
-    // FragColor = vec4(dp, 1.0);
-    // FragColor = vec4(vec3(1.0 - ShadowFactor(N, normalize(-uSunLightDir[0]))), 1.0);
     FragColor = vec4(color, alpha);
     // write view-space normal to MRT attachment 1
     FragNormal = vec4(vViewNormal, 1.0);

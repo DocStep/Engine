@@ -1,7 +1,7 @@
 ﻿namespace Engine.Graphics;
 
 
-public struct RenderInfo () {
+public struct RenderData () {
 
     public Matrix4x4 model;
 

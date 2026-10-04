@@ -5,80 +5,88 @@ namespace Engine.Graphics;
 
 
 public class ShadowMap : IDisposable {
+
     public ShadowMap (int size = 2048) {
         GL gl = Renderer.GL;
         Size = size;
-        Depth = Texture.CreateDepth(size);
+
+        Depth = gl.GenTexture();
+        gl.BindTexture(TextureTarget.Texture2D, Depth);
+        unsafe {
+            gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.DepthComponent24, (uint)size, (uint)size, 0,
+                PixelFormat.DepthComponent, PixelType.Float, null);
+        }
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureCompareMode, (int)GLEnum.CompareRefToTexture);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureCompareFunc, (int)GLEnum.Lequal);
 
         Fbo = gl.GenFramebuffer();
         gl.BindFramebuffer(FramebufferTarget.Framebuffer, Fbo);
-        gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, Depth.Handle, 0);
+        gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, Depth, 0);
         gl.DrawBuffer(DrawBufferMode.None);
         gl.ReadBuffer(ReadBufferMode.None);
-
-        GLEnum status = gl.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
-        if (status != GLEnum.FramebufferComplete)
-            Log.log($"ShadowMap FBO incomplete: {status}");
-
+        if (gl.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete)
+            Log.log("ShadowMap FBO incomplete");
         gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        gl.BindTexture(TextureTarget.Texture2D, 0);
     }
 
-
-    public Texture Depth = null!;
-    public uint Fbo;
+    public uint Depth, Fbo;
     public int Size;
     public Matrix4x4 LightSpace = Matrix4x4.Identity;
-    public float TexelWorld;
+    public float TexelWorld, Bias;
 
+    public void Bind (TextureUnit unit) {
+        Renderer.GL.ActiveTexture(unit);
+        Renderer.GL.BindTexture(TextureTarget.Texture2D, Depth);
+    }
 
-    /// <summary> Fits an ortho box around a sphere (center, radius), usually around the camera. </summary>
-    public void Begin (Vector3 lightDir, Vector3 center, float radius) {
-        GL gl = Renderer.GL;
-
-        float pad = 100f; /// extra distance toward the sun for tall casters
+    public void SetSun (Vector3 lightDir, Vector3 center, float radius, float pad, float worldBias) {
+        Vector3 d = Vector3.Normalize(lightDir);
+        Vector3 up = 0.99f < MathF.Abs(d.Y) ? Vector3.UnitZ : Vector3.UnitY;
 
         float texel = radius*2f/Size;
-        Vector3 dir = Vector3.Normalize(lightDir);
-        Vector3 up = MathF.Abs(dir.Y) > 0.99f ? Vector3.UnitZ : Vector3.UnitY;
-
-        /// Fixed light basis at the world origin, independent of the camera
-        Matrix4x4 basis = Matrix4x4.CreateLookAtLeftHanded(Vector3.Zero, dir, up);
+        Matrix4x4 basis = Matrix4x4.CreateLookAtLeftHanded(Vector3.Zero, d, up);
         Vector3 c = Vector3.Transform(center, basis);
         c.X = MathF.Floor(c.X/texel)*texel;
         c.Y = MathF.Floor(c.Y/texel)*texel;
         Matrix4x4.Invert(basis, out Matrix4x4 inv);
         center = Vector3.Transform(c, inv);
 
-        Matrix4x4 view = Matrix4x4.CreateLookAtLeftHanded(center - dir*(radius + pad), center, up);
-        Matrix4x4 proj = Matrix4x4.CreateOrthographicLeftHanded(radius*2f, radius*2f, 0.1f, radius*2f + pad);
+        float near = 0.1f, far = radius*2f + pad;
+        Matrix4x4 view = Matrix4x4.CreateLookAtLeftHanded(center - d*(radius + pad), center, up);
+        Matrix4x4 proj = Matrix4x4.CreateOrthographicLeftHanded(radius*2f, radius*2f, near, far);
+
         LightSpace = view*proj;
-        LightSpace = view*proj;
-        gl.Enable(EnableCap.DepthClamp);
+        TexelWorld = texel;
+        Bias = worldBias*0.5f/(far - near); /// metres -> stored depth (z is mapped to 0.5..1)
+    }
+
+    public void Begin () {
+        GL gl = Renderer.GL;
         gl.BindFramebuffer(FramebufferTarget.Framebuffer, Fbo);
         gl.Viewport(0, 0, (uint)Size, (uint)Size);
+        gl.Disable(EnableCap.ScissorTest);
         gl.Disable(EnableCap.Blend);
         gl.Enable(EnableCap.DepthTest);
         gl.DepthMask(true);
         gl.ColorMask(false, false, false, false);
+        gl.Enable(EnableCap.DepthClamp);
         gl.Clear((uint)ClearBufferMask.DepthBufferBit);
-
-        /// Slope-scaled bias here replaces most of the bias in the fragment shader
-        //TexelWorld = radius*2f/Size;
-        //gl.Enable(EnableCap.PolygonOffsetFill);
-        //gl.PolygonOffset(1f, 2f);
     }
 
     public void End () {
         GL gl = Renderer.GL;
         gl.Disable(EnableCap.DepthClamp);
-        gl.Disable(EnableCap.PolygonOffsetFill);
         gl.ColorMask(true, true, true, true);
         gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
     }
 
     public void Dispose () {
         Renderer.GL.DeleteFramebuffer(Fbo);
-        Depth.Dispose();
+        Renderer.GL.DeleteTexture(Depth);
     }
-
 }

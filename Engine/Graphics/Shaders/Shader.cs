@@ -96,7 +96,7 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide] private readonly GL GL;
     [JsonIgnore, Hide] private uint _program;
     [JsonIgnore, Hide] private readonly Dictionary<string, int> _textureUnits = new();
-    [JsonIgnore, Hide] private int _nextTextureUnit = 1; /// 0 is permanently reserved for uSkybox
+    [JsonIgnore, Hide] private int nextTextureUnit = 1; /// 0 is permanently reserved for uSkybox
 
     [JsonIgnore, Hide] private static int _nextId = 0;
     [JsonIgnore, Hide] public readonly int Id_Renderer = System.Threading.Interlocked.Increment(ref _nextId);
@@ -114,6 +114,10 @@ public class Shader : IAsset<Shader> {
         uSkybox, uEnvMap, uRoughness, uMaxReflectionLod,
         uExposure, uAmbientColor, uAmbientColorIntensity, uReflectionIntensity,
         uSHAr, uSHAg, uSHAb, uSHBr, uSHBg, uSHBb, uSHC,
+
+        uSunShadow, uPointShadowSlot,
+        uShadowMap, uLightSpace, uShadowTexelWorld, uShadowBias, uShadowNormalOffset,
+        uShadowAmbientSpecular, uShadowAmbientDiffuse,
     };
 
     [JsonIgnore, Hide]
@@ -171,6 +175,16 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide] public const string uAmbientColor = "uAmbientColor";
     [JsonIgnore, Hide] public const string uAmbientColorIntensity = "uAmbientColorIntensity";
     [JsonIgnore, Hide] public const string uReflectionIntensity = "uReflectionIntensity";
+
+    //[JsonIgnore, Hide] public const string uShadowEnabled = "uShadowEnabled";
+
+    [JsonIgnore, Hide] public const string uSunShadow = "uSunShadow";
+    [JsonIgnore, Hide] public const string uPointShadowSlot = "uPointShadowSlot";
+    [JsonIgnore, Hide] public const string uPointShadowMap = "uPointShadowMap";
+    [JsonIgnore, Hide] public const string uPointShadowMap0 = "uPointShadowMap0";
+    [JsonIgnore, Hide] public const string uPointShadowMap1 = "uPointShadowMap1";
+    [JsonIgnore, Hide] public const string uPointShadowMap2 = "uPointShadowMap2";
+    [JsonIgnore, Hide] public const string uPointShadowMap3 = "uPointShadowMap3";
     [JsonIgnore, Hide] public const string uShadowMap = "uShadowMap";
     [JsonIgnore, Hide] public const string uLightSpace = "uLightSpace";
     [JsonIgnore, Hide] public const string uShadowTexelWorld = "uShadowTexelWorld";
@@ -179,6 +193,7 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide] public const string uShadowNormalOffset = "uShadowNormalOffset";
     [JsonIgnore, Hide] public const string uShadowAmbientSpecular = "uShadowAmbientSpecular";
     [JsonIgnore, Hide] public const string uShadowAmbientDiffuse = "uShadowAmbientDiffuse";
+    [JsonIgnore, Hide] public const string uShadowLightIndex = "uShadowLightIndex";
 
     [JsonIgnore, Hide] public const string uSHAr = "uSHAr";
     [JsonIgnore, Hide] public const string uSHAg = "uSHAg";
@@ -352,7 +367,7 @@ public class Shader : IAsset<Shader> {
             if (name == Shader.uSkybox) {
                 unitIndex = 0; /// reserved slot — always 0, never auto-assigned to anything else
             } else {
-                unitIndex = _nextTextureUnit++;
+                unitIndex = nextTextureUnit++;
                 const int maxUnits = 16; /// GL_MAX_TEXTURE_IMAGE_UNITS guaranteed minimum across all GL 3.3+ hardware
                 if (unitIndex >= maxUnits)
                     throw new Exception($"Shader '{Name}': ran out of texture units assigning '{name}' (unit {unitIndex} >= {maxUnits}).");

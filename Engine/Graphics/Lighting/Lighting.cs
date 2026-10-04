@@ -8,13 +8,25 @@ namespace Engine.Graphics;
 public static class Lighting {
 
     [Hide] public static List<LightSource> LightSources = new List<LightSource>();
+
     [Hide] public static List<SunLight> SunLights = new List<SunLight>();
     [Hide] public static List<PointLight> PointLights = new List<PointLight>();
 
-    [Hide] public static SunLight? MainLight => 0 < SunLights.Count ? SunLights[0] : null;
+    [Hide] public static SunLight? mainLight ;
+    [Hide] public static SunLight? MainLight {
+        get => 0 < SunLights.Count ? SunLights[0] : null;
+        set {
+            LightSources.Remove(value!);
+            LightSources.Insert(0, value!);
+            SunLights.Remove(value!);
+            SunLights.Insert(0, value!);
+        }
+    }
 
+    public static bool UseShadow = true;
+    [Hide, Newtonsoft.Json.JsonIgnore] public static int ShadowLayer = -1; /// set every frame by Lighting.AssignShadowLayers
     [Range(0, int.MaxValue)] public static int SunLights_Max = 32;
-    [Range(0, int.MaxValue)] public static int PoinyLights_Max = 32;
+    [Range(0, int.MaxValue)] public static int PointLights_Max = 32;
 
 
 
@@ -41,10 +53,33 @@ public static class Lighting {
         }
     }
 
-    /// The sun that casts the shadow. Must be enabled, or the shadow map and the shader would disagree.
-    public static SunLight? GetShadowLight () {
-        SunLight? light = MainLight ?? (0 < SunLights.Count ? SunLights[0] : null);
-        return light is not null && light.Enabled ? light : null;
+    /// Lighting
+    public static SunLight? GetShadowSun () {
+        if (!UseShadow) return null;
+        for (int i = 0; i < SunLights.Count; i++) {
+            SunLight l = SunLights[i];
+            if (l.Enabled && l.CastShadows) return l;
+        }
+        return null;
+    }
+
+    /// Fills slots with the nearest shadow-casting point lights (null = unused)
+    public static void PickPointShadowLights (PointLight?[] slots, Vector3 camPos) {
+        Array.Clear(slots);
+        if (!UseShadow) return;
+
+        for (int s = 0; s < slots.Length; s++) {
+            PointLight? best = null;
+            float bestD = float.MaxValue;
+            for (int i = 0; i < PointLights.Count; i++) {
+                PointLight l = PointLights[i];
+                if (!l.Enabled || !l.CastShadows) continue;
+                if (0 <= Array.IndexOf(slots, l)) continue;
+                float d = Vector3.DistanceSquared(l.Position, camPos);
+                if (d < bestD) { bestD = d; best = l; }
+            }
+            slots[s] = best;
+        }
     }
 
     public static void SetMainSunLight (SunLight sun) {
@@ -55,43 +90,41 @@ public static class Lighting {
 
 
     public static void SetSceneUniformsLit (Shader shader) {
-        if (Renderer.Instance.Camera is null) return;
+        Renderer r = Renderer.Instance;
+        if (r.Camera is null) return;
         if (!shader.isLit) return;
 
         List<SunLight> enabledLights = SunLights.Where(l => l.Enabled).ToList();
         int count = Math.Min(enabledLights.Count, SunLights_Max);
-
-        SunLight? shadowLight = GetShadowLight();
-        int shadowIndex = shadowLight is null ? -1 : enabledLights.IndexOf(shadowLight);
-        if (count <= shadowIndex) shadowIndex = -1; /// cut off by SunLights_Max
-        shader.SetInt("uShadowLightIndex", shadowIndex);
-
         if (0 < count) {
             Vector3[] dirs = new Vector3[count];
             Vector3[] colors = new Vector3[count];
             float[] intensities = new float[count];
+            float[] sunShadow = new float[count];
 
             for (int i = 0; i < count; i++) {
-                //Log.log("SetSceneUniformsLit", i);
                 SunLight light = enabledLights[i];
                 dirs[i] = Mathf.QuaternionToDirection(light.Rotation);
                 colors[i] = light.Color;
                 intensities[i] = light.Intensity;
+                sunShadow[i] = light == r.SunShadowLight ? 1f : 0f; /// only the sun that was really rendered
             }
 
             shader.SetVector3Array(uSunLightDir, dirs);
             shader.SetVector3Array(uSunLightColor, colors);
             shader.SetFloatArray(uSunLightIntensity, intensities);
+            shader.SetFloatArray(uSunShadow, sunShadow);
         }
         shader.SetInt(uSunLightCount, count);
 
         List<PointLight> enabledPointLights = PointLights.Where(l => l.Enabled).ToList();
-        int pointCount = Math.Min(enabledPointLights.Count, PoinyLights_Max);
+        int pointCount = Math.Min(enabledPointLights.Count, PointLights_Max);
         if (0 < pointCount) {
             Vector3[] positions = new Vector3[pointCount];
             Vector3[] colors = new Vector3[pointCount];
             float[] intensities = new float[pointCount];
             float[] ranges = new float[pointCount];
+            float[] pointSlot = new float[pointCount];
 
             for (int i = 0; i < pointCount; i++) {
                 PointLight light = enabledPointLights[i];
@@ -99,40 +132,42 @@ public static class Lighting {
                 colors[i] = light.Color;
                 intensities[i] = light.Intensity;
                 ranges[i] = light.Range;
+                pointSlot[i] = Array.IndexOf(r.PointShadows.Slots, light); /// -1 = no cube for this light
             }
 
             shader.SetVector3Array(uPointLightColor, colors);
             shader.SetFloatArray(uPointLightIntensity, intensities);
             shader.SetVector3Array(uPointLightPos, positions);
             shader.SetFloatArray(uPointLightRange, ranges);
+            shader.SetFloatArray(uPointShadowSlot, pointSlot);
         }
         shader.SetInt(uPointLightCount, pointCount);
 
         /// General
         shader.SetVector3(uAmbientColor, Constants.Ambient_Color);
         shader.SetFloat(uAmbientColorIntensity, Constants.Ambient_Intensity);
-        shader.SetFloat(uExposure, Renderer.Instance.Camera.Exposure);
+        shader.SetFloat(uExposure, r.Camera.Exposure);
 
-        /// Shadows
-        ShadowMap? shadow = Renderer.Instance.Shadow;
-        if (shadow is not null) {
-            shadow.Depth.Bind(TextureUnit.Texture5);
-            shader.SetInt(Shader.uShadowMap, 5);
-            shader.SetMatrix4x4(Shader.uLightSpace, shadow.LightSpace);
-            shader.SetFloat(Shader.uShadowTexelWorld, shadow.TexelWorld);
-            shader.SetFloat(Shader.uShadowSoftness, 1.0f);
-            shader.SetFloat(Shader.uShadowBias, 0.01f);
-            shader.SetFloat(Shader.uShadowNormalOffset, 1.5f);
-            shader.SetFloat(Shader.uShadowAmbientSpecular, 0.6f);
-            shader.SetFloat(Shader.uShadowAmbientDiffuse, 0.5f);
-            shader.SetFloat(Shader.uShadowBias, 0.001f);
-            shader.SetFloat(Shader.uShadowNormalOffset, 3.0f);
-            Renderer.GL.ActiveTexture(TextureUnit.Texture0); /// Texture.Bind leaves unit 5 active; restore so later code is unaffected
-        }
+        /// Shadows: always bound, even when off, so the samplers never fall back to unit 0 (skybox)
+        r.Shadow.Bind(TextureUnit.Texture5);
+        shader.SetInt(uShadowMap, 5);
+        shader.SetMatrix4x4(uLightSpace, r.Shadow.LightSpace);
+        shader.SetFloat(uShadowTexelWorld, r.Shadow.TexelWorld);
+        shader.SetFloat(uShadowBias, r.Shadow.Bias);
+        shader.SetFloat(uShadowNormalOffset, 3.0f);
+        shader.SetFloat(uShadowAmbientSpecular, 0.6f);
+        shader.SetFloat(uShadowAmbientDiffuse, 0.1f);
+
+        r.PointShadows.Bind(TextureUnit.Texture6);
+        shader.SetInt(uPointShadowMap, 6);
+        Renderer.GL.ActiveTexture(TextureUnit.Texture0);
 
         if (Constants.renderSkyboxReflection)
             shader.SetFloat(uReflectionIntensity, Constants.reflectionIntensity);
     }
+
+
+
 
     public static void SetSHAmbient (Shader shader, in SHAmbientProbe probe) {
         shader.SetVector4(uSHAr, probe.SHAr);

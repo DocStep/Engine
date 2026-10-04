@@ -74,11 +74,11 @@ public class RendererEditor : Renderer {
         /// The queue's raw list is untouched by DrawScene (it only sorts indices), so this
         /// works after it in NormalWireframe mode. Two passes replace the old in-place sort:
         /// scene items as wireframe first, then everything else (UI) the normal way.
-        IReadOnlyList<RenderInfo> items = queue.Items;
+        IReadOnlyList<RenderData> items = queue.Items;
         int count = items.Count;
 
         for (int i = 0; i < count; i++) {
-            RenderInfo info = items[i];
+            RenderData info = items[i];
             if (info.material is null) continue;
             if (info.material.Pass == RenderPass.Opaque || info.material.Pass == RenderPass.Transparent)
                 DrawInfoWireframe(info);
@@ -87,7 +87,7 @@ public class RendererEditor : Renderer {
         state.Reset(); /// DrawInfoWireframe bound its own shader, so the cache is stale
 
         for (int i = 0; i < count; i++) {
-            RenderInfo info = items[i];
+            RenderData info = items[i];
             if (info.material is null) continue;
             if (info.material.Pass != RenderPass.Opaque && info.material.Pass != RenderPass.Transparent)
                 DrawRenderInfo(info);
@@ -129,7 +129,7 @@ public class RendererEditor : Renderer {
     }*/
 
 
-    protected void DrawInfoWireframe (RenderInfo info) {
+    protected void DrawInfoWireframe (RenderData info) {
         if (Renderer.Instance.Camera is null) return;
         if (info.mesh is null) return;
 
@@ -231,7 +231,7 @@ public class RendererEditor : Renderer {
                 model.M42 = sx*_gridCosZ[z];
                 model.M43 = z*step + offsetZ;
 
-                renderer.AddRenderInfo(new RenderInfo() {
+                renderer.AddRenderData(new RenderData() {
                     model = model,
                     mesh = mesh,
                     material = materials is null ? AssetsEngine._mat_Lit : materials[row + z],

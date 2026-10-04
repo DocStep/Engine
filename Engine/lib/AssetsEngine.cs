@@ -59,6 +59,11 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _sh_ShadowDepth.Save("src/Shaders/ShadowDepth.shader");
         _mat_ShadowDepth = new Material(_sh_ShadowDepth);
         _mat_ShadowDepth.Save("src/Materials/ShadowDepth.mat");
+        ///
+        _sh_PointShadowDepth = new Shader("src/Shaders/PointShadowDepth_Vertex.shader", "src/Shaders/PointShadowDepth_Fragment.shader", "PointShadowDepth", isLit: false);
+        _sh_PointShadowDepth.Save("src/Shaders/PointShadowDepth.shader");
+        _mat_PointShadowDepth = new Material(_sh_PointShadowDepth);
+        _mat_PointShadowDepth.Save("src/Materials/PointShadowDepth.mat");
 
         _mesh_Cube = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Cube.obj"))!;
         _mesh_Sphere = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Sphere.obj"))!;
@@ -199,6 +204,9 @@ public class AssetsEngine : Singleton<AssetsEngine> {
 
     public readonly static Shader _sh_ShadowDepth = null!;
     public readonly static Material _mat_ShadowDepth = null!;
+
+    public readonly static Shader _sh_PointShadowDepth = null!;
+    public readonly static Material _mat_PointShadowDepth = null!;
     
     public readonly static Mesh _mesh_Cube = null!;
     public readonly static Mesh _mesh_Sphere = null!;

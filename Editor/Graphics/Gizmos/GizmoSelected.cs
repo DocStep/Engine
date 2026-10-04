@@ -354,7 +354,9 @@ public class GizmoSelected : IDisposable {
     }
 
     private void DrawOutline () {
+        if (Renderer.Instance.Camera is null) return;
         if (go_selected is null) return;
+
         MeshComponent? meshComp = go_selected.GetComponent<MeshComponent>();
         if (meshComp is null) {
             Engine.Graphics.UI.RectTransform? rect = go_selected.GetComponent<Engine.Graphics.UI.RectTransform>();
@@ -362,10 +364,17 @@ public class GizmoSelected : IDisposable {
                 RectDebugOutline.Draw(rect, Renderer.Instance.Width, Renderer.Instance.Height);
             return;
         }
-        if (meshComp.Mesh is null) return;
+        if (meshComp.Mesh is null || meshComp.Material is null) return;
         if (mesh_outlined is null) return;
 
-        RenderInfo renderInfo = meshComp.RenderInfo;
+        Matrix4x4 model = meshComp.gameObject.Transform.GetWorldMatrix();
+        PrimitiveType primitiveType = meshComp.Mesh.Data is not null ? meshComp.Mesh.Data.PrimitiveType : default;
+        RenderData renderData = new RenderData() {
+            model = model,
+            mesh = LOD.GetLOD(meshComp.Mesh, Vector3.DistanceSquared(meshComp.gameObject.Transform.Position, Renderer.Instance.Camera.CameraPos)),
+            material = meshComp.Material,
+            primitiveType = primitiveType,
+        };
 
         try {
             GL.Enable(EnableCap.StencilTest);
@@ -384,7 +393,7 @@ public class GizmoSelected : IDisposable {
             GL.StencilFunc(StencilFunction.Always, 1, 0xFF);
             GL.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
 
-            Renderer.Instance.DrawRenderInfo(renderInfo);
+            Renderer.Instance.DrawRenderInfo(renderData);
 
 
             /// Pass 2 - outline
@@ -399,7 +408,7 @@ public class GizmoSelected : IDisposable {
             GL.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
 
             Matrix4x4.Invert(Renderer.Instance.m4x4_View, out Matrix4x4 invView);
-            float dist = Vector3.Distance(invView.Translation, renderInfo.model.Translation);
+            float dist = Vector3.Distance(invView.Translation, renderData.model.Translation);
 
             //Matrix4x4.Decompose(renderInfo.model, out _, out Quaternion rotation, out Vector3 position);
             //Matrix4x4 outlineModel = Matrix4x4.CreateFromQuaternion(rotation)*Matrix4x4.CreateTranslation(position);
@@ -407,7 +416,7 @@ public class GizmoSelected : IDisposable {
             _sh_Outline.Use();
             _sh_Outline.SetMatrix4x4(uView, Renderer.Instance.m4x4_View);
             _sh_Outline.SetMatrix4x4(uProjection, Renderer.Instance.m4x4_Projection);
-            _sh_Outline.SetMatrix4x4(uModel, renderInfo.model);
+            _sh_Outline.SetMatrix4x4(uModel, renderData.model);
             _sh_Outline.SetFloat(NormalOffset, 0.01f*dist*_outlineWidth);
             _sh_Outline.SetVector3(uColor, Constants.cyan);
             _sh_Outline.SetFloat(uAlpha, 1f);
