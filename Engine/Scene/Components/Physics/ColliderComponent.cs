@@ -1,16 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using BepuPhysics.Collidables;
+using Newtonsoft.Json;
 
 namespace Engine;
 
 
-public abstract class ColliderComponent : Component, IUpdate {
+public abstract class ColliderComponent : Component {
 
-    
     //public bool isStatic = false;
-
-
-    public abstract void Update ();
-    //public abstract void FixedUpdate ();
 
 
 }

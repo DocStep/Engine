@@ -392,7 +392,7 @@ public class Renderer {
         state.Reset();
     }
 
-    void DrawSunShadowPass () {
+    /*void DrawSunShadowPass () {
         SunLight? light = Lighting.GetShadowSun();
         if (light is null) return;
 
@@ -409,7 +409,7 @@ public class Renderer {
         Shadow.End();
 
         SunShadowLight = light;
-    }
+    }*/
 
     void DrawPointShadowPass () {
         Lighting.PickPointShadowLights(PointShadows.Slots, Camera!.CameraPos);

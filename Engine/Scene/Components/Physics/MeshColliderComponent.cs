@@ -7,6 +7,7 @@ namespace Engine;
 
 
 public class MeshColliderComponent : ColliderComponent {
+
     [JsonIgnore] public override string Name => nameof(MeshColliderComponent);
 
     [Hide] public Graphics.Mesh? Mesh = null;
@@ -23,6 +24,7 @@ public class MeshColliderComponent : ColliderComponent {
     [JsonIgnore] public StaticHandle? StaticHandle { get; private set; }
     [JsonIgnore] public TypedIndex ShapeIndex { get; private set; }
 
+
     public override void OnAdd () {
         if (Mesh is null) return;
 
@@ -32,8 +34,6 @@ public class MeshColliderComponent : ColliderComponent {
     public override void OnRemove () {
         RemoveCollider();
     }
-
-    public override void Update () { }
 
     private void CreateCollider () {
         if (Mesh is null) return;
@@ -97,8 +97,7 @@ public class MeshColliderComponent : ColliderComponent {
     }
 
     public void SetRotation (Quaternion rotation) {
-        if (!StaticHandle.HasValue)
-            return;
+        if (!StaticHandle.HasValue) return;
 
         PhysicsManager.Instance.Simulation.Statics[StaticHandle.Value].Pose.Orientation = rotation;
     }

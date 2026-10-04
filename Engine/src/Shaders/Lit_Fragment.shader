@@ -187,27 +187,33 @@ vec3 ComputePointLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 alb
 }
 
 // 0 = lit, 1 = fully in shadow. N and L are used only for slope-scaled bias.
-float ShadowFactor (vec3 N, vec3 L)
+float ShadowFactor(vec3 N, vec3 L)
 {
-    float NdotL = clamp(dot(N, L), 0.0, 1.0);
-    vec3 pos = vFragPos + N*uShadowTexelWorld*uShadowNormalOffset*(1.0 - NdotL);
+    float NdotL = dot(N, L);
+    float facing = smoothstep(0.0, 0.2, NdotL);   /// 0 = facing away, 1 = clearly facing the sun
+
+    vec3 pos = vFragPos + N*0.1*3.0*(1.0 - clamp(NdotL, 0.0, 1.0));   
     vec4 lp = uLightSpace*vec4(pos, 1.0);
     vec3 p = (lp.xyz/lp.w)*0.5 + 0.5;
 
-    if (p.z < 0.0 || 1.0 < p.z) return 0.0;
-    vec2 edge = min(p.xy, 1.0 - p.xy);
-    float edgeMin = min(edge.x, edge.y);
-    if (edgeMin < 0.0) return 0.0;
-    float fade = smoothstep(0.0, 0.1, edgeMin);
+    if (p.z > 1.0 || p.z < 0.0) return 1.0 - facing;
+    if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0) return 1.0 - facing;
 
-    vec2 texel = SUN_SOFTNESS/vec2(textureSize(uShadowMap, 0));
+    vec2 edge = min(p.xy, 1.0 - p.xy);
+    float fade = smoothstep(0.0, 0.1, min(edge.x, edge.y));
+
+    vec2 texel = 1.5/vec2(textureSize(uShadowMap, 0));
+
     float lit = 0.0;
     for (int x = -2; x <= 2; x++) {
         for (int y = -2; y <= 2; y++) {
-            lit += texture(uShadowMap, vec3(p.xy + vec2(x, y)*texel, p.z - uShadowBias));
+            lit += texture(uShadowMap, vec3(p.xy + vec2(x, y)*texel, p.z - 0.001));
         }
     }
-    return (1.0 - lit/25.0)*fade;
+    float mapShadow = (1.0 - lit/25.0)*fade;
+
+    /// Surfaces turning away from the sun blend smoothly into "shadowed"
+    return max(mapShadow, 1.0 - facing);
 }
 
 // const vec3 kDisk[20] = vec3[](

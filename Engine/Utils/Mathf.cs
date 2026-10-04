@@ -1,7 +1,4 @@
-﻿using JQuaternion = Jitter2.LinearMath.JQuaternion;
-using JVector = Jitter2.LinearMath.JVector;
-
-namespace Engine;
+﻿namespace Engine;
 
 public static class Mathf {
 

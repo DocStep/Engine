@@ -16,9 +16,6 @@ public class BoxColliderComponent : ColliderComponent, IDynamicCollider {
     [Hide][JsonIgnore] public TypedIndex ShapeIndex { get; private set; }
 
 
-    public override void Update () { }
-
-
     public TypedIndex AddShape (Simulation simulation, BufferPool pool) {
         Box box = new Box(Scale.X, Scale.Y, Scale.Z);
         ShapeIndex = simulation.Shapes.Add(box);

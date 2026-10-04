@@ -1,17 +1,10 @@
-﻿using JQuaternion = Jitter2.LinearMath.JQuaternion;
-using JVector = Jitter2.LinearMath.JVector;
-
-namespace Engine;
+﻿namespace Engine;
 
 public enum Axis { XY, XZ, YZ }
 
 
 public static class Utils {
     
-
-    public static string ToString3 (this JVector vec3) {
-        return $"({vec3.X:F3}, {vec3.Y:F3}, {vec3.Z:F3})";
-    }
 
     public static string NameCapital (string text) {
         return char.ToUpper(text[0]) + text.Substring(1);
