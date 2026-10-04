@@ -210,12 +210,16 @@ float ShadowFactor (vec3 N, vec3 L)
     return (1.0 - lit/25.0)*fade;
 }
 
-const vec3 kDisk[20] = vec3[](
+// const vec3 kDisk[20] = vec3[](
+//     vec3(1,1,1), vec3(1,-1,1), vec3(-1,-1,1), vec3(-1,1,1),
+//     vec3(1,1,-1), vec3(1,-1,-1), vec3(-1,-1,-1), vec3(-1,1,-1),
+//     vec3(1,1,0), vec3(1,-1,0), vec3(-1,-1,0), vec3(-1,1,0),
+//     vec3(1,0,1), vec3(-1,0,1), vec3(1,0,-1), vec3(-1,0,-1),
+//     vec3(0,1,1), vec3(0,-1,1), vec3(0,-1,-1), vec3(0,1,-1));
+
+const vec3 kDisk[8] = vec3[](
     vec3(1,1,1), vec3(1,-1,1), vec3(-1,-1,1), vec3(-1,1,1),
-    vec3(1,1,-1), vec3(1,-1,-1), vec3(-1,-1,-1), vec3(-1,1,-1),
-    vec3(1,1,0), vec3(1,-1,0), vec3(-1,-1,0), vec3(-1,1,0),
-    vec3(1,0,1), vec3(-1,0,1), vec3(1,0,-1), vec3(-1,0,-1),
-    vec3(0,1,1), vec3(0,-1,1), vec3(0,-1,-1), vec3(0,1,-1));
+    vec3(1,1,-1), vec3(1,-1,-1), vec3(-1,-1,-1), vec3(-1,1,-1));
 
 float PointShadowFactor (int slot, vec3 lightPos, float range, vec3 N)
 {
@@ -228,11 +232,11 @@ float PointShadowFactor (int slot, vec3 lightPos, float range, vec3 N)
     float current = length(dir)/range;
 
     float shadow = 0.0;
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 8; i++) {
         float d = texture(uPointShadowMap, vec4(dir + kDisk[i]*dist*POINT_SOFTNESS, float(slot))).r;
         if (current - POINT_BIAS > d) shadow += 1.0;
     }
-    return shadow/20.0;
+    return shadow/8.0;
 }
 
 
@@ -260,8 +264,8 @@ void main() {
     vec3 Lo = vec3(0.0);
     for (int i = 0; i < uSunLightCount; i++) {
         vec3 sun = ComputeSunLight(i, N, V, F0, roughness, albedo, metallic);
-        if (0.0 < uSunShadow[i]) {
-            vec3 Ls = normalize(-uSunLightDir[i]);
+        vec3 Ls = normalize(-uSunLightDir[i]);
+        if (0.0 < uSunShadow[i] && 0.0 < dot(N, Ls)) {
             float s = ShadowFactor(N, Ls)*uSunShadow[i];
             sun *= 1.0 - s;
             shadow = max(shadow, s);

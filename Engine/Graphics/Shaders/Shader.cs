@@ -181,10 +181,6 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide] public const string uSunShadow = "uSunShadow";
     [JsonIgnore, Hide] public const string uPointShadowSlot = "uPointShadowSlot";
     [JsonIgnore, Hide] public const string uPointShadowMap = "uPointShadowMap";
-    [JsonIgnore, Hide] public const string uPointShadowMap0 = "uPointShadowMap0";
-    [JsonIgnore, Hide] public const string uPointShadowMap1 = "uPointShadowMap1";
-    [JsonIgnore, Hide] public const string uPointShadowMap2 = "uPointShadowMap2";
-    [JsonIgnore, Hide] public const string uPointShadowMap3 = "uPointShadowMap3";
     [JsonIgnore, Hide] public const string uShadowMap = "uShadowMap";
     [JsonIgnore, Hide] public const string uLightSpace = "uLightSpace";
     [JsonIgnore, Hide] public const string uShadowTexelWorld = "uShadowTexelWorld";

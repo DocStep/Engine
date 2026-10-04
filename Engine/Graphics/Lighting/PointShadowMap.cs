@@ -7,7 +7,7 @@ namespace Engine.Graphics;
 public unsafe class PointShadowMap : IDisposable {
 
     public const int MaxLights = 4;
-    public const int Size = 1024;
+    public const int Size = 128;
 
     [Hide] public uint Depth;
     [Hide] public uint Fbo;
@@ -58,6 +58,7 @@ public unsafe class PointShadowMap : IDisposable {
         gl.Disable(EnableCap.ScissorTest);
         gl.Disable(EnableCap.Blend);
         gl.Disable(EnableCap.PolygonOffsetFill); /// ignored when the shader writes gl_FragDepth
+        //gl.PolygonOffset(1.5f, 3f);
         gl.Enable(EnableCap.DepthTest);
         gl.DepthFunc(DepthFunction.Less);
         gl.DepthMask(true);
@@ -65,14 +66,14 @@ public unsafe class PointShadowMap : IDisposable {
     }
 
     public void BeginFace (int slot, int face) {
-        GL gl = Renderer.GL;
-        gl.FramebufferTextureLayer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, Depth, 0, slot*6 + face);
-        gl.Clear((uint)ClearBufferMask.DepthBufferBit);
+        Renderer.GL.FramebufferTextureLayer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, Depth, 0, slot*6 + face);
+        Renderer.GL.Clear((uint)ClearBufferMask.DepthBufferBit);
     }
 
     public void End () {
         Renderer.GL.ColorMask(true, true, true, true);
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        Renderer.GL.Disable(EnableCap.PolygonOffsetFill);
     }
 
     public void Bind (TextureUnit unit) {

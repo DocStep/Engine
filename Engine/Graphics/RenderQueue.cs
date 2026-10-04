@@ -30,7 +30,7 @@ public sealed class RenderQueue {
     }
 
     /// Cull + build keys + sort
-    public void Build (in Frustum frustum, Vector3 camPos) {
+    public void Build (in Frustum frustum, Vector3 camPos, float minSize = 0f) {
         int total = renderInfos.Count;
         if (indices.Length < total) {
             indices = new int[total];
@@ -46,6 +46,10 @@ public sealed class RenderQueue {
             if (info.material.Pass != RenderPass.UI) {
                 AABB worldAABB = info.mesh.LocalAABB.Transformed(info.model);
                 if (!frustum.Intersects(worldAABB)) continue;
+                if (0f < minSize) {
+                    Vector3 s = worldAABB.Max - worldAABB.Min;
+                    if (MathF.Max(s.X, MathF.Max(s.Y, s.Z)) < minSize) continue;
+                }
             } /// UI is screen-space, so the world-space frustum test doesn't apply
 
             indices[Count] = i;

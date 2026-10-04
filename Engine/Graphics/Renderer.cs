@@ -72,9 +72,11 @@ public class Renderer {
     public Action? de_Dispose = null;
 
     public readonly Skybox Skybox = null!;
+
     public ShadowMap Shadow = null!;
     public PointShadowMap PointShadows = null!;
     public SunLight? SunShadowLight; /// the sun the map was actually rendered for this frame
+
     protected readonly RenderQueue shadowQueue = new RenderQueue();
     protected Frustum lightFrustum = new Frustum();
     public readonly PostProcessStack PostProcess = null!;
