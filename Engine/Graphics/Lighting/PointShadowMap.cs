@@ -7,7 +7,7 @@ namespace Engine.Graphics;
 public unsafe class PointShadowMap : IDisposable {
 
     public const int MaxLights = 4;
-    public const int Size = 128;
+    public const int Size = 512;
 
     [Hide] public uint Depth;
     [Hide] public uint Fbo;

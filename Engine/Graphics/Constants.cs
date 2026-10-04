@@ -52,7 +52,7 @@ public static class Constants {
 
     public const bool drawMaterialsGrid = true;
     public const int materialsGridCount = 10;
-    public const bool drawMaterialGrid = true;
+    public const bool drawMaterialGrid = false;
     public const int testMaterialSizeCount = 100;
     public const int materialsGridDensity = 1;
 

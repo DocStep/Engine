@@ -31,7 +31,8 @@ public class SceneMaterials : Scene {
 
         GameObject go_pointLight = new GameObject() { Name = "Point Light", };
         go_pointLight.Transform.Position = new Vector3(x-1, 3, -7.5f);
-        go_pointLight.AddComponent<PointLight>().Color = Constants.red;
+        go_pointLight.AddComponent<PointLight>().Color = Constants.white;
+        go_pointLight.AddComponent<FlashLightScript>();
 
         //return;
 
