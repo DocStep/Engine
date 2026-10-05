@@ -15,6 +15,7 @@ public class ScenePhysics : Scene {
         ground.Transform.LocalScale = new Vector3(10, 1f, 10);
         ground.AddComponent<Graphics.MeshComponent>().Mesh = AssetsEngine._mesh_PlaneQuad;
         ground.AddComponent<PlaneColliderComponent>();
+        ground.AddComponent<PhysicsComponent>().SetKinematic();
         //ground.AddComponent<PlaneColliderComponent>();
         //ground.AddComponent<PhysicsComponent>().SetKinematic();
         /*

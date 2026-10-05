@@ -14,10 +14,10 @@ uniform vec2 uTexelSize;
 uniform float uRadius;
 uniform float uBias;
 uniform float uStrength;
+//uniform float uPower;
 uniform float uNear;
 uniform float uFar;
 uniform float uSampleCount;
-// uniform float uFalloffPower;
 
 const float GOLDEN_ANGLE = 2.39996323;
 
@@ -56,7 +56,7 @@ float Noise (vec2 p) {
 void main () {
     float centerRawDepth = texture(uDepth, vUV).r;
 
-    if (LinearizeDepth(centerRawDepth) > uFar*0.99) {
+    if (uFar*0.99 < LinearizeDepth(centerRawDepth)) {
         FragColor = vec4(1.0);
         FragNormal = vec4(normalize(vViewNormal)*0.5 + 0.5, 1.0);
         return;
@@ -73,12 +73,12 @@ void main () {
         normal = normalize(sampledNormal);
     }
 
-    /// Make sure the normal points toward the camera.
+    /// Make sure the normal points toward the camera
     if (dot(normal, -normalize(origin)) < 0.0) {
         normal = -normal;
     }
 
-    /// Build a tangent basis around the surface normal.
+    /// Build a tangent basis around the surface normal
     vec3 reference = abs(normal.z) < 0.999
         ? vec3(0.0, 0.0, 1.0)
         : vec3(0.0, 1.0, 0.0);
@@ -97,12 +97,12 @@ void main () {
         float fi = float(i);
         float t = (fi + 0.5)/float(sampleCount);
 
-        /// Uniform-ish hemisphere distribution.
+        /// Uniform-ish hemisphere distribution
         float phi = baseAngle + fi*GOLDEN_ANGLE;
         float cosTheta = 1.0 - t;
         float sinTheta = sqrt(max(1.0 - cosTheta*cosTheta, 0.0));
 
-        /// Slightly concentrate samples toward the origin.
+        /// Slightly concentrate samples toward the origin
         float radius = t*t*uRadius;
 
         vec3 hemisphereDirection =
@@ -112,7 +112,7 @@ void main () {
 
         vec3 samplePosition = origin + hemisphereDirection*radius;
 
-        /// Project the actual 3D sample position.
+        /// Project the actual 3D sample position
         vec4 sampleClip = uProjection*vec4(samplePosition, 1.0);
 
         if (sampleClip.w <= 0.0) {
@@ -122,36 +122,29 @@ void main () {
         vec3 sampleNDC = sampleClip.xyz/sampleClip.w;
         vec2 sampleUV = sampleNDC.xy*0.5 + 0.5;
 
-        if (sampleUV.x < 0.0 || sampleUV.x > 1.0 ||
-            sampleUV.y < 0.0 || sampleUV.y > 1.0) {
+        if (sampleUV.x < 0.0 || 1.0 < sampleUV.x ||
+            sampleUV.y < 0.0 || 1.0 < sampleUV.y) {
             continue;
         }
 
         float sampleDepth = texture(uDepth, sampleUV).r;
-
-        if (sampleDepth >= 1.0) {
-            continue;
-        }
+        if (1.0 <= sampleDepth) continue;
 
         vec3 actualPosition = ViewPosFromDepth(sampleUV);
 
         validSamples += 1.0;
 
-        /// The depth buffer contains geometry at actualPosition.
-        /// The generated hemisphere sample is the position we expected
-        /// to see at this screen coordinate.
+        /// The depth buffer contains geometry at actualPosition
+        /// The generated hemisphere sample is the position we expected to see at this screen coordinate
         float depthDifference = samplePosition.z - actualPosition.z;
 
         /// OpenGL view space looks down -Z.
         /// Actual geometry is in front of our sample when its Z is greater.
-        if (depthDifference > uBias) {
+        if (uBias < depthDifference) {
             float distance = length(actualPosition - origin);
-
             if (distance <= uRadius) {
                 float rangeCheck = 1.0 - smoothstep(0.0, uRadius, distance);
-
                 float contribution = rangeCheck;
-
                 occlusion += contribution;
             }
         }
@@ -159,7 +152,7 @@ void main () {
 
     float ao = 1.0;
 
-    if (validSamples > 0.0) {
+    if (0.0 < validSamples) {
         float rawAO = occlusion/validSamples;
         ao = 1.0 - clamp(rawAO*uStrength, 0.0, 1.0);
     }

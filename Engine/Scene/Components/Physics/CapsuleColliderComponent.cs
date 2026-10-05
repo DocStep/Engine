@@ -18,13 +18,13 @@ public class CapsuleColliderComponent : ColliderComponent, IDynamicCollider {
 
 
     public TypedIndex AddShape (Simulation simulation, BufferPool pool) {
-        Capsule capsule = new Capsule(Radius, Height * 0.5f);
+        Capsule capsule = new Capsule(Radius, Height);
         ShapeIndex = simulation.Shapes.Add(capsule);
         return ShapeIndex;
     }
 
     public BodyInertia ComputeInertia (float mass) {
-        Capsule capsule = new Capsule(Radius, Height * 0.5f);
+        Capsule capsule = new Capsule(Radius, Height);
         return capsule.ComputeInertia(mass);
     }
 
