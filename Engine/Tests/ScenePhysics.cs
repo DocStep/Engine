@@ -17,6 +17,12 @@ public class ScenePhysics : Scene {
         //ground.AddComponent<PlaneColliderComponent>();
         //ground.AddComponent<PhysicsComponent>().SetKinematic();
 
+
+        GameObject capsule = new GameObject(PrimitiveTypes.Capsule) { Name = "Capsule", };
+        capsule.Transform.Position = new Vector3(-2, 10, 0);
+        capsule.AddComponent<CapsuleColliderComponent>();
+        capsule.AddComponent<PhysicsComponent>();
+
         GameObject cube = new GameObject(PrimitiveTypes.Cube) { Name = "Cube 1", };
         cube.Transform.Position = new Vector3(0, 5, 0);
         cube.AddComponent<BoxColliderComponent>();
@@ -37,10 +43,6 @@ public class ScenePhysics : Scene {
         sphere.AddComponent<SphereColliderComponent>();
         sphere.AddComponent<PhysicsComponent>();
 
-        GameObject capsule = new GameObject(PrimitiveTypes.Capsule) { Name = "Capsule", };
-        capsule.Transform.Position = new Vector3(-2, 10, 0);
-        capsule.AddComponent<CapsuleColliderComponent>();
-        capsule.AddComponent<PhysicsComponent>();
     }
 
 }

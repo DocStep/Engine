@@ -31,7 +31,7 @@ public class MeshColliderComponent : ColliderComponent {
 
 
     protected override TypedIndex AddShape (Shapes shapes) {
-        BufferPool pool = PhysicsManager.Instance.BufferPool;
+        BufferPool pool = Physics.Instance.BufferPool;
         if (UseHull) return shapes.Add(BuildHull(pool));
 
         int triangleCount = Indices.Length/3;
@@ -47,7 +47,7 @@ public class MeshColliderComponent : ColliderComponent {
         return shapes.Add(new Mesh(triangles, gameObject.Transform.Scale, pool));
     }
     public override void AddToCompound (ref CompoundBuilder builder, float weight) {
-        builder.Add(BuildHull(PhysicsManager.Instance.BufferPool), LocalPose, weight);
+        builder.Add(BuildHull(Physics.Instance.BufferPool), LocalPose, weight);
     }
 
 

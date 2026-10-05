@@ -18,7 +18,7 @@ public enum ForceMode {
 public class PhysicsComponent : Component, IFixedUpdate {
 
     [Hide][JsonIgnore] public BodyHandle Handle { get; private set; }
-    [Hide][JsonIgnore] public BodyReference Rigidbody => PhysicsManager.Instance.Simulation.Bodies.GetBodyReference(Handle);
+    [Hide][JsonIgnore] public BodyReference Rigidbody => Physics.Instance.Simulation.Bodies.GetBodyReference(Handle);
     [Hide][JsonIgnore] public bool IsValid { get; private set; } = false;
     [Hide][JsonIgnore] public bool isKinematicRequested = false;
 
@@ -46,7 +46,7 @@ public class PhysicsComponent : Component, IFixedUpdate {
         gameObject.Transform.de_ScaleChanged += SetScale;
         gameObject.Transform.de_Stop += Stop;
 
-        PhysicsManager.Instance.RegisterRigidbody(this);
+        Physics.Instance.RegisterRigidbody(this);
     }
     public override void OnRemove () {
         gameObject.Transform.de_RotationChanged -= SetRotation;
@@ -54,7 +54,7 @@ public class PhysicsComponent : Component, IFixedUpdate {
         gameObject.Transform.de_ScaleChanged -= SetScale;
         gameObject.Transform.de_Stop -= Stop;
 
-        PhysicsManager.Instance.UnregisterRigidbody(this);
+        Physics.Instance.UnregisterRigidbody(this);
         DestroyBody();
         isAdded = false;
 
@@ -70,8 +70,8 @@ public class PhysicsComponent : Component, IFixedUpdate {
     public void Rebuild (ColliderComponent? ignore = null) {
         if (!isAdded) return;
 
-        Simulation sim = PhysicsManager.Instance.Simulation;
-        BufferPool pool = PhysicsManager.Instance.BufferPool;
+        Simulation sim = Physics.Instance.Simulation;
+        BufferPool pool = Physics.Instance.BufferPool;
 
         Vector3 linear = Vector3.Zero;
         Vector3 angular = Vector3.Zero;
@@ -100,12 +100,12 @@ public class PhysicsComponent : Component, IFixedUpdate {
         dynamicInertia = inertia;
         shapeIndex = sim.Shapes.Add(new Compound(children));
 
-        var t = gameObject.Transform;
+        Transform t = gameObject.Transform;
         BodyDescription description = BodyDescription.CreateDynamic(
             new RigidPose(t.Position + Vector3.Transform(centerOfMass, t.Rotation), t.Rotation),
             isKinematicRequested ? new BodyInertia() : dynamicInertia,
-            new CollidableDescription(shapeIndex, 0.1f),
-            new BodyActivityDescription(0.01f)
+            new CollidableDescription(shapeIndex, Physics.maximumSpeculativeMargin),
+            new BodyActivityDescription(Physics.VelocitySleepThreshold)
         );
 
         Handle = sim.Bodies.Add(description);
@@ -120,13 +120,13 @@ public class PhysicsComponent : Component, IFixedUpdate {
     void DestroyBody () {
         if (!IsValid) return;
 
-        Simulation sim = PhysicsManager.Instance.Simulation;
+        Simulation sim = Physics.Instance.Simulation;
         sim.Bodies.Remove(Handle);
-        sim.Shapes.RecursivelyRemoveAndDispose(shapeIndex, PhysicsManager.Instance.BufferPool);
+        sim.Shapes.RecursivelyRemoveAndDispose(shapeIndex, Physics.Instance.BufferPool);
         IsValid = false;
     }
     void ApplyMaterial () {
-        PhysicsManager.Instance.BodyMaterials.Allocate(Handle) = new BodyMaterial {
+        Physics.Instance.BodyMaterials.Allocate(Handle) = new BodyMaterial {
             Friction = friction,
             MaximumRecoveryVelocity = maximumRecoveryVelocity,
             SpringSettings = new SpringSettings(frequency, dampingRatio)
@@ -138,7 +138,7 @@ public class PhysicsComponent : Component, IFixedUpdate {
     void ApplyPose (Vector3 position, Quaternion rotation) {
         if (!IsValid) return;
 
-        PhysicsManager.Instance.Simulation.Awakener.AwakenBody(Handle);
+        Physics.Instance.Simulation.Awakener.AwakenBody(Handle);
         Rigidbody.Pose.Position = position + Vector3.Transform(centerOfMass, rotation);
         Rigidbody.Pose.Orientation = rotation;
     }
@@ -195,13 +195,13 @@ public class PhysicsComponent : Component, IFixedUpdate {
         if (!IsValid) return;
 
         Rigidbody.LocalInertia = dynamicInertia;
-        PhysicsManager.Instance.Simulation.Awakener.AwakenBody(Handle);
+        Physics.Instance.Simulation.Awakener.AwakenBody(Handle);
     }
 
     public void AddForce (Vector3 force, ForceMode mode = ForceMode.Force) {
         if (!IsValid || isKinematicRequested) return;
 
-        PhysicsManager.Instance.Simulation.Awakener.AwakenBody(Handle);
+        Physics.Instance.Simulation.Awakener.AwakenBody(Handle);
         switch (mode) {
             case ForceMode.Force:
                 /// continuous, mass-dependent -> force*dt = impulse

@@ -85,7 +85,7 @@ public class Engine : IDisposable {
         Graphics.Renderer? renderer = Activator.CreateInstance(rendererType) as Graphics.Renderer;
         if (renderer is null) throw new Exception("Renderer is null");
 
-        PhysicsManager.CreateSingleton();
+        Physics.CreateSingleton();
         ComponentsManager.CreateSingleton();
         SceneManager.CreateSingleton();
 
@@ -160,7 +160,7 @@ public class Engine : IDisposable {
         DataEngine.global_audio_Mult = 1f;
 
         sw_LatencySystems.Restart();
-        PhysicsManager.Instance.FixedUpdate();
+        Physics.Instance.FixedUpdate();
         Stats.LatencyPhysics = (float)sw_LatencySystems.Elapsed.TotalMilliseconds;
 
         sw_LatencySystems.Restart();

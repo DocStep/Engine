@@ -48,7 +48,7 @@ public abstract class ColliderComponent : Component {
     public void CreateStatic () {
         if (StaticHandle.HasValue || !IsReady) return;
 
-        Simulation sim = PhysicsManager.Instance.Simulation;
+        Simulation sim = Physics.Instance.Simulation;
         var t = gameObject.Transform;
 
         staticShape = AddShape(sim.Shapes);
@@ -60,9 +60,9 @@ public abstract class ColliderComponent : Component {
     public void ReleaseStatic () {
         if (!StaticHandle.HasValue) return;
 
-        Simulation sim = PhysicsManager.Instance.Simulation;
+        Simulation sim = Physics.Instance.Simulation;
         sim.Statics.Remove(StaticHandle.Value);
-        sim.Shapes.RecursivelyRemoveAndDispose(staticShape, PhysicsManager.Instance.BufferPool);
+        sim.Shapes.RecursivelyRemoveAndDispose(staticShape, Physics.Instance.BufferPool);
         StaticHandle = null;
     }
 
