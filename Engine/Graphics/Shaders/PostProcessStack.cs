@@ -24,19 +24,75 @@ public class PostProcessStack : IDisposable {
     [Hide] public uint SceneNormalTexture => _sceneNormal;
 
     /// Final Result
-    [Hide] uint _sceneFbo, _sceneColor, _sceneDepth, _pingDepth0, _pingDepth1;
-    [Hide] uint[] _pingFbo = new uint[2];
-    [Hide] uint[] _pingColor = new uint[2];
+    [Hide] uint _sceneFbo;
+    [Hide] uint _sceneColor, _sceneDepth, _pingDepth0, _pingDepth1, _pingDepth2;
+    [Hide] uint[] _pingFbo = new uint[3];
+    [Hide] uint[] _pingColor = new uint[3];
 
     [Hide] uint _outputFbo, _outputColor, _outputDepth;
 
-    [Hide] public uint SceneColorTexture => _sceneColor;
+    [Hide] public uint SceneColorTexture { get; private set; }
     [Hide] public uint OutputTexture => _outputColor;
+    /// Output of the tonemap pass, kept alive for effects that need it (the AO composite)
+    [Hide] public uint TonemappedTexture { get; private set; }
+
+    [Hide] public PostProcessPass Tonemap = null!; /// set by Renderer, always runs
+    [Hide] readonly List<PostProcessPass> _chain = new List<PostProcessPass>();
 
 
     public void Update () {
         if (Input.Inputs.Actions[Input.Inputs.PP].pressedDown) {
             Enabled = !Enabled;
+        }
+    }
+
+    public void Run () => Run(_outputFbo);
+    private void Run (uint finalTargetFbo) {
+        Renderer.GL.Disable(EnableCap.DepthTest);
+        BuildChain();
+
+        uint currentInput = _sceneColor;
+        TonemappedTexture = 0;
+        int last = _chain.Count - 1;
+
+        for (int i = 0; i <= last; i++) {
+            bool isLast = i == last;
+
+            /// Pick a ping target that is neither the current input nor the held tonemapped image
+            int ping = 0;
+            while (_pingColor[ping] == currentInput || _pingColor[ping] == TonemappedTexture) ping++;
+
+            uint targetFbo = isLast ? finalTargetFbo : _pingFbo[ping];
+
+            Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, targetFbo);
+            SetDrawBuffer(targetFbo);
+            PrepareFullscreenPass();
+
+            _chain[i].Apply(currentInput, _sceneDepth);
+
+            if (!isLast) {
+                currentInput = _pingColor[ping];
+                if (_chain[i] == Tonemap) TonemappedTexture = currentInput;
+            }
+        }
+
+        CopySceneDepth(finalTargetFbo);
+        ForceOpaqueAlpha(finalTargetFbo);
+        Renderer.GL.DepthMask(true);
+    }
+
+    void BuildChain () {
+        _chain.Clear();
+        if (Enabled) {
+            for (int i = 0; i < Effects.Count; i++) {
+                if (Effects[i].Enabled && !Effects[i].Ldr) _chain.Add(Effects[i]);
+            }
+        }
+        _chain.Add(Tonemap); /// forced
+        if (Enabled) {
+            for (int i = 0; i < Effects.Count; i++) {
+                if (Effects[i].Enabled && Effects[i].Ldr) _chain.Add(Effects[i]);
+            }
         }
     }
 
@@ -49,25 +105,28 @@ public class PostProcessStack : IDisposable {
         _width = width;
         _height = height;
 
-        _sceneFbo = CreateFbo(width, height, out _sceneColor, out _sceneDepth, withDepth: true);
+        _sceneFbo = CreateFbo(width, height, out _sceneColor, out _sceneDepth, withDepth: true, hdr: true);
         AttachNormal(_sceneFbo, width, height);
-        _pingFbo[0] = CreateFbo(width, height, out _pingColor[0], out _pingDepth0, withDepth: true);
-        _pingFbo[1] = CreateFbo(width, height, out _pingColor[1], out _pingDepth1, withDepth: true);
-
-        _outputFbo = CreateFbo(width, height, out _outputColor, out _outputDepth, withDepth: true);
+        _pingFbo[0] = CreateFbo(width, height, out _pingColor[0], out _pingDepth0, withDepth: true, hdr: true);
+        _pingFbo[1] = CreateFbo(width, height, out _pingColor[1], out _pingDepth1, withDepth: true, hdr: true);
+        _pingFbo[2] = CreateFbo(width, height, out _pingColor[2], out _pingDepth2, withDepth: true, hdr: false);
+        _outputFbo = CreateFbo(width, height, out _outputColor, out _outputDepth, withDepth: true, hdr: false);
     }
     public void Resize (Silk.NET.Maths.Vector2D<int> newSize) => Resize(newSize.X, newSize.Y);
 
-    uint CreateFbo (int w, int h, out uint colorTex, out uint depthTex, bool withDepth) {
+    uint CreateFbo (int width, int height, out uint colorTex, out uint depthTex, bool withDepth, bool hdr) {
         uint fbo = Renderer.GL.GenFramebuffer();
         Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
         SetDrawBuffer(fbo);
 
+        InternalFormat colorFormat = hdr ? InternalFormat.Rgba16f : InternalFormat.Rgba8;
+        PixelType colorType = hdr ? PixelType.Float : PixelType.UnsignedByte;
+
         colorTex = Renderer.GL.GenTexture();
         Renderer.GL.BindTexture(TextureTarget.Texture2D, colorTex);
         unsafe {
-            Renderer.GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8,
-                (uint)w, (uint)h, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
+            Renderer.GL.TexImage2D(TextureTarget.Texture2D, 0, colorFormat,
+                (uint)width, (uint)height, 0, PixelFormat.Rgba, colorType, null);
         }
         Renderer.GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
         Renderer.GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
@@ -82,7 +141,7 @@ public class PostProcessStack : IDisposable {
             Renderer.GL.BindTexture(TextureTarget.Texture2D, depthTex);
             unsafe {
                 Renderer.GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Depth24Stencil8,
-                    (uint)w, (uint)h, 0, PixelFormat.DepthStencil, PixelType.UnsignedInt248, null);
+                    (uint)width, (uint)height, 0, PixelFormat.DepthStencil, PixelType.UnsignedInt248, null);
             }
             Renderer.GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
             Renderer.GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
@@ -153,51 +212,6 @@ public class PostProcessStack : IDisposable {
         //Renderer.GL.ColorMask(true, true, true, true);
     }
 
-    public void Run () => Run(_outputFbo);
-    public void Run (uint finalTargetFbo) {
-        Renderer.GL.Disable(EnableCap.DepthTest);
-
-        int lastEnabledIndex = -1;
-        if (Enabled) {
-            for (int i = Effects.Count-1; i >= 0; i--) {
-                if (Effects[i].Enabled) {
-                    lastEnabledIndex = i;
-                    break;
-                }
-            }
-        }
-
-        if (0 <= lastEnabledIndex) {
-            uint currentInput = _sceneColor;
-            int pingIndex = 0;
-
-            for (int i = 0; i <= lastEnabledIndex; i++) {
-                if (!Effects[i].Enabled) continue;
-
-                bool isLast = i == lastEnabledIndex;
-                uint targetFbo = isLast ? finalTargetFbo : _pingFbo[pingIndex];
-
-                Renderer.GL.BindFramebuffer(FramebufferTarget.Framebuffer, targetFbo);
-                SetDrawBuffer(targetFbo);
-                PrepareFullscreenPass();
-
-                Effects[i].Apply(currentInput, _sceneDepth);
-
-                if (!isLast) {
-                    currentInput = _pingColor[pingIndex];
-                    pingIndex = 1 - pingIndex;
-                }
-            }
-
-            CopySceneDepth(finalTargetFbo);
-        } else {
-            CopySceneColor(finalTargetFbo);
-            CopySceneDepth(finalTargetFbo);
-        }
-
-        ForceOpaqueAlpha(finalTargetFbo);
-        Renderer.GL.DepthMask(true);
-    }
 
     public void PresentToBackbuffer () {
         Renderer.GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, _outputFbo);

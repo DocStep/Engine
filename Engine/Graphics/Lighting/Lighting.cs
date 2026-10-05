@@ -90,8 +90,8 @@ public static class Lighting {
 
 
     public static void SetSceneUniformsLit (Shader shader) {
-        Renderer r = Renderer.Instance;
-        if (r.Camera is null) return;
+        Renderer renderer = Renderer.Instance;
+        if (renderer.Camera is null) return;
         if (!shader.isLit) return;
 
         List<SunLight> enabledLights = SunLights.Where(l => l.Enabled).ToList();
@@ -107,7 +107,7 @@ public static class Lighting {
                 dirs[i] = Mathf.QuaternionToDirection(light.Rotation);
                 colors[i] = light.Color;
                 intensities[i] = light.Intensity;
-                sunShadow[i] = light == r.SunShadowLight ? 1f : 0f; /// only the sun that was really rendered
+                sunShadow[i] = light == renderer.SunShadowLight ? 1f : 0f; /// only the sun that was really rendered
             }
 
             shader.SetVector3Array(uSunLightDir, dirs);
@@ -132,7 +132,7 @@ public static class Lighting {
                 colors[i] = light.Color;
                 intensities[i] = light.Intensity;
                 ranges[i] = light.Range;
-                pointSlot[i] = Array.IndexOf(r.PointShadows.Slots, light); /// -1 = no cube for this light
+                pointSlot[i] = Array.IndexOf(renderer.PointShadows.Slots, light); /// -1 = no cube for this light
             }
 
             shader.SetVector3Array(uPointLightColor, colors);
@@ -146,19 +146,18 @@ public static class Lighting {
         /// General
         shader.SetVector3(uAmbientColor, Constants.Ambient_Color);
         shader.SetFloat(uAmbientColorIntensity, Constants.Ambient_Intensity);
-        shader.SetFloat(uExposure, r.Camera.Exposure);
 
         /// Shadows: always bound, even when off, so the samplers never fall back to unit 0 (skybox)
-        r.Shadow.Bind(TextureUnit.Texture5);
+        renderer.Shadow.Bind(TextureUnit.Texture5);
         shader.SetInt(uShadowMap, 5);
-        shader.SetMatrix4x4(uLightSpace, r.Shadow.LightSpace);
-        shader.SetFloat(uShadowTexelWorld, r.Shadow.TexelWorld);
-        shader.SetFloat(uShadowBias, r.Shadow.Bias);
-        shader.SetFloat(uShadowNormalOffset, 3.0f);
-        shader.SetFloat(uShadowAmbientSpecular, 0.6f);
-        shader.SetFloat(uShadowAmbientDiffuse, 0.1f);
+        shader.SetMatrix4x4(uLightSpace, renderer.Shadow.LightSpace);
+        shader.SetFloat(uShadowTexelWorld, renderer.Shadow.TexelWorld);
+        shader.SetFloat(uShadowBias, renderer.Shadow.Bias);
+        //shader.SetFloat(uShadowNormalOffset, 3.0f);
+        //shader.SetFloat(uShadowAmbientSpecular, 0.6f);
+        //shader.SetFloat(uShadowAmbientDiffuse, 0.1f);
 
-        r.PointShadows.Bind(TextureUnit.Texture6);
+        renderer.PointShadows.Bind(TextureUnit.Texture6);
         shader.SetInt(uPointShadowMap, 6);
         Renderer.GL.ActiveTexture(TextureUnit.Texture0);
 

@@ -17,8 +17,8 @@ public class MaterialSSAOBlur : Material {
         if (Renderer.Instance is null || Renderer.Instance.Camera is null) return;
 
         shader.SetVector2(Shader.uTexelSize, new Vector2(1f/Renderer.Instance.Width, 1f/Renderer.Instance.Height));
-        shader.SetFloat(Shader.uNear, Renderer.Instance.Camera.PlaneNear);
-        shader.SetFloat(Shader.uFar, Renderer.Instance.Camera.PlaneFar);
+        shader.SetFloat(Shader.uNear, Renderer.Instance.Camera.Near);
+        shader.SetFloat(Shader.uFar, Renderer.Instance.Camera.Far);
         shader.SetFloat(DepthThreshold, depthThreshold);
     }
 

@@ -61,8 +61,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     public const float valueStep = 0.01f;
 
     /// inspector row layout — Unity-style margin instead of an ImGui table
-    private const float labelRatio = 0.4f;
-    private const float minLabelWidth = 90f;
+    private const float labelRatio = 0.5f;
+    private const float minLabelWidth = 100f;
     private const float toolbarHeight = 20f;
 
 

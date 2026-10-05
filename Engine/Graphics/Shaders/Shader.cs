@@ -123,12 +123,12 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide]
     public readonly static Dictionary<UniformType, object> UniformTypeDefaults = new Dictionary<UniformType, object>() {
         [UniformType.Int] = 0,
-        [UniformType.Float] = 0.5f,
-        [UniformType.Bool] = 0,
-        [UniformType.FloatVec2] = Vector2.Zero,
-        [UniformType.FloatVec3] = Vector3.One,
-        [UniformType.FloatVec4] = Vector4.One,
-        [UniformType.Sampler2D] = Texture.White,
+        //[UniformType.Float] = 0.5f,
+        //[UniformType.Bool] = 0,
+        //[UniformType.FloatVec2] = Vector2.Zero,
+        //[UniformType.FloatVec3] = Vector3.One,
+        //[UniformType.FloatVec4] = Vector4.One,
+        //[UniformType.Sampler2D] = Texture.White,
     };
     [JsonIgnore, Hide]
     public readonly static Dictionary<string, object> UniformDefaults = new Dictionary<string, object>() {
@@ -172,6 +172,7 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide] public const string uMaxReflectionLod = "uMaxReflectionLod";
 
     [JsonIgnore, Hide] public const string uExposure = "uExposure";
+    [JsonIgnore, Hide] public const string uTonemapMode = "uTonemapMode";
     [JsonIgnore, Hide] public const string uAmbientColor = "uAmbientColor";
     [JsonIgnore, Hide] public const string uAmbientColorIntensity = "uAmbientColorIntensity";
     [JsonIgnore, Hide] public const string uReflectionIntensity = "uReflectionIntensity";

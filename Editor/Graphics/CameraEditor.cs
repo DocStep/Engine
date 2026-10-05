@@ -12,65 +12,66 @@ public sealed class CameraEditor : Camera {
 
         Engine.Engine.Instance.de_AfterUpdate += Update;
 
+        TonemapMode = TonemapMode.Reinhard;
         //Log.log(GetType(), priority);
     }
 
-    public static CameraEditor? Instance = null;
+    [Hide] public static CameraEditor? Instance = null;
 
-    private float yaw;
-    private float pitch;
+    [Hide] private float yaw;
+    [Hide] private float pitch;
 
-    private Vector3 _cameraPos = new Vector3(-2, 3, -10);
-    private Vector3 _cameraOrbitCenterPos = Vector3.Zero;
+    [Hide] private Vector3 _cameraPos = new Vector3(-2, 3, -10);
+    [Hide] private Vector3 _cameraOrbitCenterPos = Vector3.Zero;
 
-    public Vector3 cameraPos = Vector3.Zero;
-    public override Vector3 CameraPos => cameraPos;
+    [Hide] public Vector3 cameraPos = Vector3.Zero;
+    [Hide] public override Vector3 CameraPos => cameraPos;
 
-    public Vector3 _forward => Vector3.Transform(Vector3.UnitZ, GetRotationMatrix());
-    Vector3 forward;
-    Vector3 position;
-    Vector3 worldUp;
+    [Hide] public Vector3 _forward => Vector3.Transform(Vector3.UnitZ, GetRotationMatrix());
+    [Hide] Vector3 forward;
+    [Hide] Vector3 position;
+    [Hide] Vector3 worldUp;
 
 
     /// Values
-    private const float _sensetivity = 0.1f;
-    private const float _sensetivityMultiplier = 0.01f;
+    [Hide] private const float _sensetivity = 0.1f;
+    [Hide] private const float _sensetivityMultiplier = 0.01f;
 
-    private const float _cameraSpeed = 10f;
-    private const float _cameraSpeedShift = 30f;
+    [Hide] private const float _cameraSpeed = 10f;
+    [Hide] private const float _cameraSpeedShift = 30f;
 
-    private const float _focusGlideSpeed = 10f;
-    private const float _clickDragThresholdPixels = 5f;
-    private const float _snapThreshold = 0.001f;
+    [Hide] private const float _focusGlideSpeed = 10f;
+    [Hide] private const float _clickDragThresholdPixels = 5f;
+    [Hide] private const float _snapThreshold = 0.001f;
 
-    private const float _moveStartSpeedFactor = 1f;
-    private const float _moveRampUpTime = 2f;
-    private const float _moveOvershootSpeedFactor = 5f;
-    private const float _moveMaxHoldTime = 10f;
+    [Hide] private const float _moveStartSpeedFactor = 1f;
+    [Hide] private const float _moveRampUpTime = 2f;
+    [Hide] private const float _moveOvershootSpeedFactor = 5f;
+    [Hide] private const float _moveMaxHoldTime = 10f;
 
-    private const float _zoomSpeed = 0.1f;
+    [Hide] private const float _zoomSpeed = 0.1f;
 
-    private const float _focusTargetDistanceMin = 0f;
-    private const float _focusTargetDistanceMax = 100f;
+    [Hide] private const float _focusTargetDistanceMin = 0f;
+    [Hide] private const float _focusTargetDistanceMax = 100f;
     //private float _focusTargetDistance;
 
-    private const float dragSpeed = 0.001f;
+    [Hide] private const float dragSpeed = 0.001f;
 
-    internal Vector3 cameraOrbitCenterPos = Vector3.Zero;
+    [Hide] internal Vector3 cameraOrbitCenterPos = Vector3.Zero;
 
-    private float cameraDragStartX;
-    private float cameraDragStartY;
-    private bool isCameraDragging;
-    //private bool previousMmb;
+    [Hide] private float cameraDragStartX;
+    [Hide] private float cameraDragStartY;
+    [Hide] private bool isCameraDragging;
 
-    private bool isFocusing;
-    private Vector3 focusTargetCameraPos;
-    private Vector3 focusTargetOrbitCenterPos;
+    [Hide] private bool isFocusing;
+    [Hide] private Vector3 focusTargetCameraPos;
+    [Hide] private Vector3 focusTargetOrbitCenterPos;
 
-    private float moveHoldTime;
+    [Hide] private float moveHoldTime;
 
-    private List<object> mouseBlockingObjects = new List<object>();
-    public bool mouseBlocked => 0 < mouseBlockingObjects.Count;
+    [Hide] private List<object> mouseBlockingObjects = new List<object>();
+    [Hide] public bool mouseBlocked => 0 < mouseBlockingObjects.Count;
+
     public void BlockMouse (object obj) {
         if (!mouseBlockingObjects.Contains(obj))
             mouseBlockingObjects.Add(obj);

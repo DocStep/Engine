@@ -50,17 +50,20 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         //_hdr_Skybox = new HdrTexture("src/HDR/qwantani_dusk_2_puresky_4k.hdr");
 
 
-        _sh_Reflection = new Shader("src/Shaders/Lit_Vertex.shader", "src/Shaders/Reflection_Fragment.shader", "Reflection", isLit: false);
+        _sh_Reflection = new Shader("src/Shaders/Lit_Vertex.shader", 
+            "src/Shaders/Reflection_Fragment.shader", "Reflection", isLit: false);
         _sh_Reflection.Save("src/Shaders/Reflection.shader");
         _mat_Reflection = new Material(_sh_Reflection);
         _mat_Reflection.Save("src/Materials/Reflection.mat");
         ///
-        _sh_ShadowDepth = new Shader("src/Shaders/ShadowDepth_Vertex.shader", "src/Shaders/ShadowDepth_Fragment.shader", "ShadowDepth", isLit: false);
+        _sh_ShadowDepth = new Shader("src/Shaders/ShadowDepth_Vertex.shader", 
+            "src/Shaders/ShadowDepth_Fragment.shader", "ShadowDepth", isLit: false);
         _sh_ShadowDepth.Save("src/Shaders/ShadowDepth.shader");
         _mat_ShadowDepth = new Material(_sh_ShadowDepth);
         _mat_ShadowDepth.Save("src/Materials/ShadowDepth.mat");
         ///
-        _sh_PointShadowDepth = new Shader("src/Shaders/PointShadowDepth_Vertex.shader", "src/Shaders/PointShadowDepth_Fragment.shader", "PointShadowDepth", isLit: false);
+        _sh_PointShadowDepth = new Shader("src/Shaders/PointShadowDepth_Vertex.shader", 
+            "src/Shaders/PointShadowDepth_Fragment.shader", "PointShadowDepth", isLit: false);
         _sh_PointShadowDepth.Save("src/Shaders/PointShadowDepth.shader");
         _mat_PointShadowDepth = new Material(_sh_PointShadowDepth);
         _mat_PointShadowDepth.Save("src/Materials/PointShadowDepth.mat");
@@ -71,14 +74,13 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mesh_Plane = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Plane.obj"))!;
         _mesh_PlaneQuad = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "PlaneQuad.obj"))!;
 
-        _sh_Text = new Shader("src/Shaders/UI/Text_Vertex.shader", 
-            "src/Shaders/UI/Text_Fragment.shader", "Text");
+        _sh_Text = new Shader("src/Shaders/UI/Text_Vertex.shader", "src/Shaders/UI/Text_Fragment.shader", "Text");
         _sh_Text.Save("src/Shaders/UI/Text.shader");
-        _mat_Text = new Material(_sh_Text) { Name = "Text", };
+        _mat_Text = new Material(_sh_Text);
         _mat_Text.SetInt(Shader.uTexture, 0);
         _mat_Text.SetVector3(uColor, Constants.textRendererColor);
         _mat_Text.Save("src/Materials/UI/Text.mat");
-        _fontData = File.ReadAllBytes("src/Fonts/FuturaCyrillicMedium.ttf");
+        _font_Futura = File.ReadAllBytes("src/Fonts/FuturaCyrillicMedium.ttf");
 
         /// Editor
         _mat_Smooth = new Material(_mat_Lit) { Name = "Smooth", };
@@ -94,41 +96,47 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mat_Metallic.SetFloat(uMetallic, 1);
         _mat_Metallic.Save("src/Materials/Metallic.mat");
         ///
-        _mat_MaterialPreview = new Material(_mat_Lit) { Name = "Material Preview", };
+        _mat_MaterialPreview = new Material(_mat_Lit) { Name = "Material_Preview", };
         _mat_MaterialPreview.SetVector3(uColor, Constants.white);
         _mat_MaterialPreview.SetFloat(uSmoothness, 1);
         _mat_MaterialPreview.SetFloat(uMetallic, 1);
-        _mat_MaterialPreview.Save("src/Materials/MaterialPreview.mat");
+        _mat_MaterialPreview.Save("src/Materials/Material_Preview.mat");
         ///
-        _mat_LitWhite = new Material(_sh_Lit_Instanced) { Name = "Lit White", };
+        _mat_LitWhite = new Material(_sh_Lit_Instanced) { Name = "Lit_White", };
         _mat_LitWhite.SetVector3(uColor, Constants.white);
-        _mat_LitWhite.Save("src/Materials/LitWhite.mat");
+        _mat_LitWhite.Save("src/Materials/Lit_White.mat");
         ///
-        _mat_LitBlack = new Material(_sh_Lit_Instanced) { Name = "Lit Black", };
+        _mat_LitBlack = new Material(_sh_Lit_Instanced) { Name = "Lit_Black", };
         _mat_LitBlack.SetVector3(uColor, Constants.black);
-        _mat_LitBlack.Save("src/Materials/LitBlack.mat");
+        _mat_LitBlack.Save("src/Materials/Lit_Black.mat");
         ///
-        _mat_LitGray = new Material(_sh_Lit_Instanced) { Name = "Lit Gray", };
+        _mat_LitGray = new Material(_sh_Lit_Instanced) { Name = "Lit_Gray", };
         _mat_LitGray.SetVector3(uColor, Constants.gray);
-        _mat_LitGray.Save("src/Materials/LitGray.mat");
+        _mat_LitGray.Save("src/Materials/Lit_Gray.mat");
         ///
-        _mat_LitRed = new Material(_sh_Lit_Instanced) { Name = "Lit Red", };
+        _mat_LitRed = new Material(_sh_Lit_Instanced) { Name = "Lit_Red", };
         _mat_LitRed.SetVector3(uColor, Constants.red);
-        _mat_LitRed.Save("src/Materials/LitRed.mat");
+        _mat_LitRed.Save("src/Materials/Lit_Red.mat");
         ///
-        _mat_LitGreen = new Material(_sh_Lit_Instanced) { Name = "Lit Green", };
+        _mat_LitGreen = new Material(_sh_Lit_Instanced) { Name = "Lit_Green", };
         _mat_LitGreen.SetVector3(uColor, Constants.green);
-        _mat_LitGreen.Save("src/Materials/LitGreen.mat");
+        _mat_LitGreen.Save("src/Materials/Lit_Green.mat");
         ///
-        _mat_LitBlue = new Material(_sh_Lit_Instanced) { Name = "Lit Blue", };
+        _mat_LitBlue = new Material(_sh_Lit_Instanced) { Name = "Lit_Blue", };
         _mat_LitBlue.SetVector3(uColor, Constants.blue);
-        _mat_LitBlue.Save("src/Materials/LitBlue.mat");
+        _mat_LitBlue.Save("src/Materials/Lit_Blue.mat");
 
         _mesh_Torus = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Torus.obj"))!;
         _mesh_Suzanne = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Suzanne.obj"))!;
         _mesh_SuzanneHighRes = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "SuzanneHighRes.obj"))!;
 
         /// Post-Process Effects
+        _sh_Tonemap = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader", 
+            "src/Shaders/PostProcessing/Tonemap_Fragment.shader", "Tonemap");
+        _sh_Tonemap.Save("src/Shaders/Tonemap.shader");
+        _mat_Tonemap = new Material(_sh_Tonemap);
+        _mat_Tonemap.Save("src/Materials/Tonemap.mat");
+
         _sh_Depth = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader", 
             "src/Shaders/PostProcessing/Depth_Fragment.shader", "Depth");
         _sh_Depth.Save("src/Shaders/Depth.shader");
@@ -168,13 +176,24 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _sh_Vignette = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader", 
             "src/Shaders/PostProcessing/Vignette_Fragment.shader", "Vignette");
         _sh_Vignette.Save("src/Shaders/Vignette.shader");
-        _mat_Vignette = new MaterialVignette(_sh_Vignette);
+        _mat_Vignette = new Material(_sh_Vignette);
+        _mat_Vignette.SetFloat("uVignetteIntensity", 0.5f);
+        _mat_Vignette.SetFloat("uVignetteRadius", 0.35f);
+        _mat_Vignette.SetFloat("uVignetteSoftness", 1f);
+        _mat_Vignette.SetVector3("uVignetteColor", Vector3.Zero);
         _mat_Vignette.Save("src/Materials/Vignette.mat");
 
         _sh_CameraFocus = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader", 
             "src/Shaders/PostProcessing/CameraFocus_Fragment.shader", "CameraFocus");
         _sh_CameraFocus.Save("src/Shaders/CameraFocus.shader");
         _mat_CameraFocus = new MaterialCameraFocus(_sh_CameraFocus);
+        _mat_CameraFocus.SetInt(Shader.uDepth, 1);
+        //_mat_CameraFocus.SetFloat("uNear", Renderer.Instance.Camera.PlaneNear);
+        //_mat_CameraFocus.SetFloat("uFar", Renderer.Instance.Camera.PlaneFar);
+        _mat_CameraFocus.SetFloat("uFocusDistance", 10f);
+        _mat_CameraFocus.SetFloat("uFocusRange", 5f);
+        _mat_CameraFocus.SetFloat("uBokehRadius", 3f);
+        //_mat_CameraFocus.SetVector2("uTexelSize", new Vector2(1f/Renderer.Instance.Width, 1f/Renderer.Instance.Height));
         _mat_CameraFocus.Save("src/Materials/CameraFocus.mat");
 
         tex_Test = Texture.Load("src/Images/RGBA_Test.png");
@@ -216,9 +235,11 @@ public class AssetsEngine : Singleton<AssetsEngine> {
 
     public readonly static Shader _sh_Text = null!;
     public readonly static Material _mat_Text = null!;
-    public readonly static byte[] _fontData = null!;
+    public readonly static byte[] _font_Futura = null!;
 
     /// Post-Process Effects
+    public readonly static Shader _sh_Tonemap = null!;
+    public readonly static Material _mat_Tonemap = null!;
     public readonly static Shader _sh_Depth = null!;
     public readonly static Material _mat_Depth = null!;
     public readonly static Shader _sh_Grayscale = null!;

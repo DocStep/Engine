@@ -76,6 +76,8 @@ public class ShadowMap : IDisposable {
         gl.ColorMask(false, false, false, false);
         gl.Enable(EnableCap.DepthClamp);
         gl.Clear((uint)ClearBufferMask.DepthBufferBit);
+        gl.Enable(EnableCap.PolygonOffsetFill);
+        gl.PolygonOffset(2f, 4f);
     }
 
     public void End () {
@@ -83,6 +85,7 @@ public class ShadowMap : IDisposable {
         gl.Disable(EnableCap.DepthClamp);
         gl.ColorMask(true, true, true, true);
         gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        gl.Disable(EnableCap.PolygonOffsetFill);
     }
 
     public void Dispose () {

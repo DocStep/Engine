@@ -1,8 +1,12 @@
 ﻿using Engine.Graphics;
 
-//using Engine.Graphics;
-
 namespace Engine.Graphics;
+
+public enum TonemapMode {
+    Clamp = 0,
+    ACES = 1,
+    Reinhard = 2,
+}
 
 
 public class Camera : Component {
@@ -18,23 +22,51 @@ public class Camera : Component {
         get {
             Camera? best = null;
             for (int i = 0; i < Cameras.Count; i++) {
-                if (best == null || best.Priority <= Cameras[i].Priority) best = Cameras[i];
+                if (best == null || best.priority <= Cameras[i].priority) best = Cameras[i];
             }
             return best;
         }
     }
 
 
-    public virtual Vector3 CameraPos => gameObject.Transform.Position;
+    [Hide, Newtonsoft.Json.JsonIgnore] public virtual Vector3 CameraPos => gameObject.Transform.Position;
     //public Matrix4x4 cameraRot = Matrix4x4.Identity;
     //public Vector2 mousePos_Window = Vector2.Zero;
-    public static bool wantWarpPos = false;
+    //[Hide] public static bool wantWarpPos = false;
 
-    public float FOV = 60;
-    public float PlaneNear = 0.1f;
-    public float PlaneFar = 1000f;
+    [Hide, Newtonsoft.Json.JsonIgnore] 
+    public float fov = 75;
+    public float FOV {
+        get => fov;
+        set {
+            if (fov == value) return;
+            fov = Mathf.Clamp(value, 1, 179);
+        }
+    }
+    [Hide, Newtonsoft.Json.JsonIgnore] 
+    private const float minPlane = 0.0001f;
+    [Hide, Newtonsoft.Json.JsonIgnore] 
+    public float near = 0.1f;
+    public float Near {
+        get => near;
+        set {
+            if (near == value) return;
+            near = Mathf.Clamp(value, minPlane, value);
+        }
+    }
+    [Hide, Newtonsoft.Json.JsonIgnore] 
+    public float far = 1000f;
+    public float Far {
+        get => far;
+        set {
+            if (far == value) return;
+            far = Mathf.Clamp(value, MathF.Max(near, minPlane) + minPlane, value);
+        }
+    }
     public float Exposure = 1f;
-    [Newtonsoft.Json.JsonIgnore] protected float priority = 0f;
+    public TonemapMode TonemapMode = TonemapMode.ACES; /// 0 = clamp, 1 = ACES, 2 = Reinhard
+    [Hide, Newtonsoft.Json.JsonIgnore] 
+    protected float priority = 0f;
     public float Priority {
         get => priority;
         set {

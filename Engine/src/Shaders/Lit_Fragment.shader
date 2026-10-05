@@ -19,17 +19,17 @@ const float PI = 3.14159265;
  
 uniform vec3 uColor;
 uniform sampler2D uTexture;
-uniform int uHasTexture;
-uniform float uSmoothness;
-uniform float uMetallic;
-uniform float uAlpha;
+uniform int uHasTexture = 0;
+uniform float uSmoothness = 0.5;
+uniform float uMetallic = 0.0;
+uniform float uAlpha = 1.0;
 
-uniform int uSunLightCount;
+uniform int uSunLightCount = 0;
 uniform vec3 uSunLightColor[MAX_SUN_LIGHTS];
 uniform float uSunLightIntensity[MAX_SUN_LIGHTS];
 uniform vec3 uSunLightDir[MAX_SUN_LIGHTS]; // direction light TRAVELS (sun -> scene)
 
-uniform int uPointLightCount;
+uniform int uPointLightCount = 0;
 uniform vec3 uPointLightPos[MAX_POINT_LIGHTS];
 uniform vec3 uPointLightColor[MAX_POINT_LIGHTS];
 uniform float uPointLightIntensity[MAX_POINT_LIGHTS];
@@ -46,20 +46,18 @@ uniform samplerCubeArray uPointShadowMap;
 uniform sampler2DShadow uShadowMap;   // was sampler2D
 uniform mat4 uLightSpace;
 uniform float uShadowTexelWorld;
-uniform float uShadowAmbientSpecular;   // 0 = off, 1 = reflection fully black in shadow
-uniform float uShadowAmbientDiffuse;
-uniform float uShadowBias;
-uniform float uShadowNormalOffset;
+uniform float uShadowBias = 0.0;
+uniform float uShadowNormalOffset = 3.0;
+uniform float uShadowAmbientSpecular = 0.6;   // 0 = off, 1 = reflection fully black in shadow
+uniform float uShadowAmbientDiffuse = 0.1;
 
 uniform vec3 uViewPos;
 
-uniform float uAmbientColorIntensity;
+uniform float uAmbientColorIntensity = 0.1;
 
 uniform sampler2D uSkybox; // equirectangular; mip chain = pre-blurred roughness levels
-uniform float uMaxReflectionLod;
-uniform float uReflectionIntensity;
-
-uniform float uExposure;
+uniform float uMaxReflectionLod = 1.0;
+uniform float uReflectionIntensity = 1.0;
 
 // L2 spherical harmonics ambient
 uniform vec4 uSHAr;
@@ -187,33 +185,39 @@ vec3 ComputePointLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 alb
 }
 
 // 0 = lit, 1 = fully in shadow. N and L are used only for slope-scaled bias.
-float ShadowFactor(vec3 N, vec3 L)
+float ShadowFactor (vec3 N, vec3 L)
 {
-    float NdotL = dot(N, L);
-    float facing = smoothstep(0.0, 0.2, NdotL);   /// 0 = facing away, 1 = clearly facing the sun
+    float NdotL = clamp(dot(N, L), 0.0, 1.0);
+    float sinT = sqrt(1.0 - NdotL*NdotL);
+    float tanT = min(sinT/max(NdotL, 0.05), 10.0);
 
-    vec3 pos = vFragPos + N*0.1*3.0*(1.0 - clamp(NdotL, 0.0, 1.0));   
+    /// never zero, so sun-facing surfaces are pushed off too
+    vec3 pos = vFragPos + N*uShadowTexelWorld*uShadowNormalOffset*(0.5 + sinT);
     vec4 lp = uLightSpace*vec4(pos, 1.0);
     vec3 p = (lp.xyz/lp.w)*0.5 + 0.5;
 
-    if (p.z > 1.0 || p.z < 0.0) return 1.0 - facing;
-    if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0) return 1.0 - facing;
-
+    if (p.z < 0.0 || 1.0 < p.z) return 0.0;
     vec2 edge = min(p.xy, 1.0 - p.xy);
-    float fade = smoothstep(0.0, 0.1, min(edge.x, edge.y));
+    float edgeMin = min(edge.x, edge.y);
+    if (edgeMin < 0.0) return 0.0;
+    float fade = smoothstep(0.0, 0.1, edgeMin);
 
-    vec2 texel = 1.5/vec2(textureSize(uShadowMap, 0));
+    float z = p.z - uShadowBias*(1.0 + tanT);
+    vec2 t = 2.0/vec2(textureSize(uShadowMap, 0));
 
-    float lit = 0.0;
-    for (int x = -2; x <= 2; x++) {
-        for (int y = -2; y <= 2; y++) {
-            lit += texture(uShadowMap, vec3(p.xy + vec2(x, y)*texel, p.z - 0.001));
-        }
-    }
-    float mapShadow = (1.0 - lit/25.0)*fade;
+    float s = texture(uShadowMap, vec3(p.xy + vec2(-1, -1)*t, z))
+            + texture(uShadowMap, vec3(p.xy + vec2( 1, -1)*t, z))
+            + texture(uShadowMap, vec3(p.xy + vec2(-1,  1)*t, z))
+            + texture(uShadowMap, vec3(p.xy + vec2( 1,  1)*t, z));
+    if (3.99 < s) return 0.0;
+    if (s < 0.01) return fade;
 
-    /// Surfaces turning away from the sun blend smoothly into "shadowed"
-    return max(mapShadow, 1.0 - facing);
+    s += texture(uShadowMap, vec3(p.xy, z))
+       + texture(uShadowMap, vec3(p.xy + vec2( 1, 0)*t, z))
+       + texture(uShadowMap, vec3(p.xy + vec2(-1, 0)*t, z))
+       + texture(uShadowMap, vec3(p.xy + vec2(0,  1)*t, z))
+       + texture(uShadowMap, vec3(p.xy + vec2(0, -1)*t, z));
+    return (1.0 - s/9.0)*fade;
 }
 
 // const vec3 kDisk[20] = vec3[](
@@ -309,15 +313,14 @@ void main() {
     // Exposure + luminance-preserving Reinhard + gamma.
     // Tonemapping luminance (not per-channel) keeps hue/saturation intact at high intensity.
     // Skip the final pow() if your framebuffer is sRGB-enabled already, or you'll double-correct.
-    color *= uExposure;
+    // color *= uExposure;
 
-    float luminance = dot(color, vec3(0.2126, 0.7152, 0.0722));
-    float toneMappedLuminance = luminance / (1.0 + luminance);
-    color *= (luminance > 0.0) ? (toneMappedLuminance / luminance) : 0.0;
+    // float luminance = dot(color, vec3(0.2126, 0.7152, 0.0722));
+    // float toneMappedLuminance = luminance / (1.0 + luminance);
+    // color *= (luminance > 0.0) ? (toneMappedLuminance / luminance) : 0.0;
 
-    color = pow(color, vec3(1.0 / 2.2));
+    // color = pow(color, vec3(1.0 / 2.2));
 
     FragColor = vec4(color, alpha);
-    // write view-space normal to MRT attachment 1
-    FragNormal = vec4(vViewNormal, 1.0);
+    FragNormal = vec4(vViewNormal, 1.0); // write view-space normal to MRT attachment 1
 }

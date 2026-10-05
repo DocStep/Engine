@@ -183,7 +183,6 @@ public class Material : IAsset<Material>, IOnLoaded {
         return false;
     }
 
-
     public void Save (string path) {
         Prune(ints);
         Prune(floats);
@@ -195,6 +194,7 @@ public class Material : IAsset<Material>, IOnLoaded {
         Path = path;
         Json.Write(path, this);
     }
+    public void Save () => Save(Path ?? $"Assets/Materials/{Name}.json");
     private void Prune<T> (Dictionary<string, T> dict) {
         foreach (string key in dict.Keys.ToList())
             if (!shader.ActiveUniforms.ContainsKey(key)) dict.Remove(key);

@@ -15,68 +15,75 @@ public static class Gizmos {
         _sh_Outline = new Shader("src/Shaders/Gizmos/Outline_Vertex.shader", 
             "src/Shaders/Gizmos/Outline_Fragment.shader", "Outline", isLit: false);
         _sh_Outline.SetVector3(uColor, Constants.cyan);
-        
+
         //_sh_DepthClear = new Graphics.Shader(Assets.LoadText("src/Shaders/DepthClear_Vertex.shader"),
         //Assets.LoadText("src/Shaders/DepthClear_Fragment.shader"), "DepthClear");
-        
-        _mat_GizmosGreen = new Material(_sh_Unlit);
+
+        _mat_GizmosGreen = new Material(_sh_Unlit) {
+            Pass = RenderPass.Transparent,
+            Face = RenderFace.Both,
+            DepthWrite = false,
+        };
         _mat_GizmosGreen.SetVector3(uColor, Constants.green);
         _mat_GizmosGreen.SetFloat(uAlpha, 0.5f);
-        _mat_GizmosGreen.Pass = RenderPass.Transparent;
-        _mat_GizmosGreen.Face = RenderFace.Both;
-        _mat_GizmosGreen.DepthWrite = false;
 
-        _mat_GizmosGreen_Instanced = new Material(_sh_Unlit_Instanced);
+        _mat_GizmosGreen_Instanced = new Material(_sh_Unlit_Instanced) {
+            Pass = RenderPass.Transparent,
+            Face = RenderFace.Both,
+            DepthWrite = false,
+        };
         _mat_GizmosGreen_Instanced.SetVector3(uColor, Constants.green);
         _mat_GizmosGreen_Instanced.SetFloat(uAlpha, 0.5f);
-        _mat_GizmosGreen_Instanced.Pass = RenderPass.Transparent;
-        _mat_GizmosGreen_Instanced.Face = RenderFace.Both;
-        _mat_GizmosGreen_Instanced.DepthWrite = false;
 
-        _mat_GizmoWireframe = new Material(_sh_Unlit);
+        _mat_GizmoWireframe = new Material(_sh_Unlit) {
+            Pass = RenderPass.Transparent,
+            Face = RenderFace.Both,
+            DepthWrite = false,
+        };
         _mat_GizmoWireframe.SetVector3(uColor, Constants.black);
         _mat_GizmoWireframe.SetFloat(uAlpha, 0.1f);
-        _mat_GizmoWireframe.Pass = RenderPass.Transparent;
-        _mat_GizmoWireframe.Face = RenderFace.Both;
-        _mat_GizmoWireframe.DepthWrite = false;
 
         _sh_GizmoGrid = new Shader("src/Shaders/Gizmos/Grid_Vertex.shader", 
             "src/Shaders/Gizmos/Grid_Fragment.shader", "Grid", isLit: false);
-        _mat_GizmoGrid = new Material(_sh_GizmoGrid);
+        _mat_GizmoGrid = new Material(_sh_GizmoGrid) {
+            Pass = RenderPass.Transparent,
+            Face = RenderFace.Both,
+            DepthWrite = false,
+        };
         _mat_GizmoGrid.SetVector3(uColor, Constants.lightGray);
         _mat_GizmoGrid.SetFloat(uAlpha, 0.5f);
         _mat_GizmoGrid.SetFloat(uRadius, 100f);
         _mat_GizmoGrid.SetFloat(uFade, 10f);
-        _mat_GizmoGrid.Pass = RenderPass.Transparent;
-        _mat_GizmoGrid.Face = RenderFace.Both;
-        _mat_GizmoGrid.DepthWrite = false;
 
         _sh_GizmoAxisLine = new Shader("src/Shaders/Gizmos/AxisLine_Vertex.shader", 
             "src/Shaders/Gizmos/AxisLine_Fragment.shader", "AxisLine", isLit: false);
-        _mat_GizmoAxisLine = new Material(_sh_GizmoAxisLine);
+        _mat_GizmoAxisLine = new Material(_sh_GizmoAxisLine) {
+            Pass = RenderPass.Transparent,
+            Face = RenderFace.Both,
+            DepthWrite = false,
+        };
         _mat_GizmoAxisLine.SetFloat(uAlpha, 0.5f);
         _mat_GizmoAxisLine.SetFloat(uRadius, 100f);
         _mat_GizmoAxisLine.SetFloat(uFade, 10f);
-        _mat_GizmoAxisLine.Pass = RenderPass.Transparent;
-        _mat_GizmoAxisLine.Face = RenderFace.Both;
-        _mat_GizmoAxisLine.DepthWrite = false;
 
         _sh_GizmoAxis = new Shader("src/Shaders/Gizmos/Axis_Vertex.shader", 
             "src/Shaders/Gizmos/Axis_Fragment.shader", "Axis", isLit: false);
-        _mat_GizmoAxis = new Material(_sh_GizmoAxis);
+        _mat_GizmoAxis = new Material(_sh_GizmoAxis) {
+            Pass = RenderPass.Transparent,
+            Face = RenderFace.Both,
+            DepthWrite = false,
+        };
         _mat_GizmoAxis.SetFloat(uAlpha, 0.5f);
         _mat_GizmoAxis.SetFloat(uRadius, 100f);
         _mat_GizmoAxis.SetFloat(uFade, 10f);
-        _mat_GizmoAxis.Pass = RenderPass.Transparent;
-        _mat_GizmoAxis.Face = RenderFace.Both;
-        _mat_GizmoAxis.DepthWrite = false;
 
-        _mat_GizmoSun = new Material(_sh_Unlit);
+        _mat_GizmoSun = new Material(_sh_Unlit) {
+            Pass = RenderPass.Transparent,
+            Face = RenderFace.Both,
+            DepthWrite = false,
+        };
         _mat_GizmoSun.SetVector3(uColor, Constants.yellow);
         _mat_GizmoSun.SetFloat(uAlpha, 0.5f);
-        _mat_GizmoSun.Pass = RenderPass.Transparent;
-        _mat_GizmoSun.Face = RenderFace.Both;
-        _mat_GizmoSun.DepthWrite = false;
 
         _mesh_CubeWireframe = new Mesh(Cube.GenerateWireframe());
         _mesh_SphereWireframe = new Mesh(Sphere.GenerateWireframe());
@@ -240,7 +247,7 @@ public static class Gizmos {
         Matrix4x4 gizmoView = Matrix4x4.CreateLookAtLeftHanded(gizmoCamPos, Vector3.Zero, up);
         float aspect = Windows.Window.Size.X/(float)Windows.Window.Size.Y;
         Matrix4x4 gizmoProjection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
-            camera.FOV/180*MathF.PI, aspect, camera.PlaneNear, camera.PlaneFar);
+            camera.FOV/180*MathF.PI, aspect, camera.Near, camera.Far);
 
 
         GL.Viewport(gizmoX, gizmoY, (uint)gizmoSize, (uint)gizmoSize);

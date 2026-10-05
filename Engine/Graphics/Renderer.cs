@@ -36,15 +36,23 @@ public class Renderer {
         Shadow = new ShadowMap(2048);
         PointShadows = new PointShadowMap();
 
-        PostProcess = new PostProcessStack();
+        PostProcess = new PostProcessStack() {
+            Tonemap = new PostProcessPass(_mat_Tonemap) {
+                OnApply = shader => {
+                    shader.SetFloat(uExposure, Camera!.Exposure);
+                    shader.SetInt(uTonemapMode, (int)Camera!.TonemapMode);
+                }
+            },
+        };
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Grayscale));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO_Blur));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO_Composite));
-        //PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa));
-        //PostProcess.Effects.Add(new PostProcessPass(_mat_Vignette) { Enabled = false });
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO) { Ldr = true, });
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO_Blur) { Ldr = true, });
+        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO_Composite) { Ldr = true, });
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus) { Ldr = true, });
+        PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa) { Ldr = true, });
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_Vignette) { Ldr = true, });
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_Vignette) { Enabled = false, Ldr = true, });
 
         TextRenderer = new TextRenderer();
 
@@ -200,7 +208,7 @@ public class Renderer {
 
         float aspect = width/height;
         m4x4_Projection = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
-            Camera.FOV*Mathf.Deg2Rad, aspect, Camera.PlaneNear, Camera.PlaneFar);
+            Camera.FOV*Mathf.Deg2Rad, aspect, Camera.Near, Camera.Far);
 
         /// Ortho only depends on width/height, not the camera — skip rebuilding it every frame
         if (width != lastProjWidth || height != lastProjHeight) {
@@ -374,13 +382,13 @@ public class Renderer {
 
         SunLight? sun = Lighting.GetShadowSun();
         if (sun is not null) {
-            Shadow.SetSun(sun.gameObject.Transform.Forward, Camera!.CameraPos, 35f, 100f, 0.05f);
+            Shadow.SetSun(sun.gameObject.Transform.Forward, Camera!.CameraPos, 50f, 100f, 0.05f);
             lightFrustum.Extract(Shadow.LightSpace);
             shadowQueue.Build(lightFrustum, Camera.CameraPos);
 
             Shadow.Begin();
             Shader shader = BindDepthMaterial(_mat_ShadowDepth, true);
-            shader.SetMatrix4x4("uLightSpace", Shadow.LightSpace);
+            shader.SetMatrix4x4(Shader.uLightSpace, Shadow.LightSpace);
             DrawDepthQueue(shadowQueue);
             Shadow.End();
             SunShadowLight = sun;

@@ -14,7 +14,6 @@ uniform vec2 uTexelSize;
 uniform float uRadius;
 uniform float uBias;
 uniform float uStrength;
-//uniform float uPower;
 uniform float uNear;
 uniform float uFar;
 uniform float uSampleCount;
@@ -66,16 +65,15 @@ void main () {
 
     vec3 sampledNormal = texture(uNormal, vUV).xyz;
     vec3 normal;
-
+    
+    /// Make sure the normal points toward the camera
     if (length(sampledNormal) < 0.01) {
         normal = ReconstructNormal(vUV, origin);
+        if (dot(normal, -normalize(origin)) < 0.0) {
+            normal = -normal;
+        }
     } else {
         normal = normalize(sampledNormal);
-    }
-
-    /// Make sure the normal points toward the camera
-    if (dot(normal, -normalize(origin)) < 0.0) {
-        normal = -normal;
     }
 
     /// Build a tangent basis around the surface normal
@@ -97,9 +95,9 @@ void main () {
         float fi = float(i);
         float t = (fi + 0.5)/float(sampleCount);
 
-        /// Uniform-ish hemisphere distribution
+        /// Hemisphere distribution
         float phi = baseAngle + fi*GOLDEN_ANGLE;
-        float cosTheta = 1.0 - t;
+        float cosTheta = 1.0 - t*0.85; /// minimum elevation, no samples in the tangent plane
         float sinTheta = sqrt(max(1.0 - cosTheta*cosTheta, 0.0));
 
         /// Slightly concentrate samples toward the origin
@@ -134,18 +132,14 @@ void main () {
 
         validSamples += 1.0;
 
-        /// The depth buffer contains geometry at actualPosition
-        /// The generated hemisphere sample is the position we expected to see at this screen coordinate
         float depthDifference = samplePosition.z - actualPosition.z;
 
-        /// OpenGL view space looks down -Z.
-        /// Actual geometry is in front of our sample when its Z is greater.
-        if (uBias < depthDifference) {
+        /// Bias grows with the sample distance, so far samples don't self-occlude on curved surfaces
+        if (uBias + radius*0.02 < depthDifference) {
             float distance = length(actualPosition - origin);
             if (distance <= uRadius) {
                 float rangeCheck = 1.0 - smoothstep(0.0, uRadius, distance);
-                float contribution = rangeCheck;
-                occlusion += contribution;
+                occlusion += rangeCheck;
             }
         }
     }

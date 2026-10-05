@@ -16,6 +16,8 @@ public class RenderingTab : IEditorTab {
 
         EditorUI.DrawObject(typeof(Engine.Graphics.Lighting));
         ImGui.Separator();
+        EditorUI.DrawObject(CameraEditor.Instance!);
+        ImGui.Separator();
         EditorUI.DrawObject(Engine.Graphics.Renderer.Instance.PostProcess, 
             [new InspectorName(nameof(Engine.Graphics.Renderer.Instance.PostProcess.Effects))]);
 

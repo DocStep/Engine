@@ -5,11 +5,14 @@ namespace Engine.Graphics;
 
 public class PostProcessPass {
     public PostProcessPass (Material material) {
-        this.Material = material;
+        Material = material;
     }
 
-     public bool Enabled = true;
+    public bool Enabled = true;
+
+    public bool Ldr = false; /// true = runs after tonemap
     [Newtonsoft.Json.JsonProperty] protected readonly Material Material;
+    public Action<Shader>? OnApply = null; /// per-frame uniforms, called after the shader is bound
 
 
     public void Apply (uint inputTexture, uint depthTexture) {
@@ -30,6 +33,8 @@ public class PostProcessPass {
             Renderer.GL.BindTexture(TextureTarget.Texture2D, Renderer.Instance.PostProcess.SceneNormalTexture);
             Material.shader.SetInt("uNormal", 2);
         }
+
+        OnApply?.Invoke(Material.shader);
 
         Renderer.GL.BindVertexArray(PostProcessStack.QuadVAO);
         Renderer.GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
