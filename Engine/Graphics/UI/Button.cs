@@ -5,8 +5,6 @@ namespace Engine.Graphics.UI;
 
 public class Button : Component, IUpdate {
 
-    public override string Name => nameof(Button);
-
     [Hide][JsonIgnore] public Action? de_Clicked = null;
 
     [DrawColor] public Vector4 TintNormal { get; set; } = new Vector4(1f, 1f, 1f, 1f);

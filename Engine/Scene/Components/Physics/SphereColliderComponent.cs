@@ -1,30 +1,24 @@
 ﻿using BepuPhysics;
 using BepuPhysics.Collidables;
-using BepuUtilities.Memory;
-using Newtonsoft.Json;
 
 namespace Engine;
 
 
-public class SphereColliderComponent : ColliderComponent, IDynamicCollider {
-
-    [JsonIgnore] public override string Name => nameof(SphereColliderComponent);
-
-    [Hide][JsonIgnore] public Vector3 Position = Vector3.Zero;
+public class SphereColliderComponent : ColliderComponent {
     public float Radius = 0.5f;
 
-    [Hide][JsonIgnore] public TypedIndex ShapeIndex { get; private set; }
-
-
-    public TypedIndex AddShape (Simulation simulation, BufferPool pool) {
-        Sphere sphere = new Sphere(Radius);
-        ShapeIndex = simulation.Shapes.Add(sphere);
-        return ShapeIndex;
+    Sphere Shape {
+        get {
+            Vector3 s = gameObject.Transform.Scale;
+            /// a sphere can't be stretched, so use the largest axis (same as Unity)
+            return new Sphere(Radius*MathF.Max(MathF.Abs(s.X), MathF.Max(MathF.Abs(s.Y), MathF.Abs(s.Z))));
+        }
     }
 
-    public BodyInertia ComputeInertia (float mass) {
-        Sphere sphere = new Sphere(Radius);
-        return sphere.ComputeInertia(mass);
+    protected override TypedIndex AddShape (Shapes shapes) {
+        return shapes.Add(Shape);
     }
-
+    public override void AddToCompound (ref CompoundBuilder builder, float weight) {
+        builder.Add(Shape, LocalPose, weight);
+    }
 }

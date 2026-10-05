@@ -8,8 +8,6 @@ public enum TextAlignV { Top, Center, Bottom }
 
 public class TextComponent : UIRenderingElement {
 
-    public override string Name => nameof(TextComponent);
-
     public string Text { get; set; } = "";
     public int FontSize { get; set; } = 24;
     public Vector4 Color { get; set; } = new Vector4(0f, 0f, 0f, 1f);

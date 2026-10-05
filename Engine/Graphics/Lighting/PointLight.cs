@@ -6,7 +6,6 @@ namespace Engine.Graphics;
 
 
 public class PointLight : LightSource {
-    public override string Name => nameof(PointLight);
 
     public float Range = Constants.PointLight_Radius;
 

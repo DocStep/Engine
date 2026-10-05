@@ -5,8 +5,6 @@ namespace Engine.Graphics.UI;
 
 public class Canvas : Component, IUpdate {
 
-    public override string Name => nameof(Canvas);
-
     [Hide][JsonIgnore] private RectTransform rect = null!;
     [Hide][JsonIgnore] public RectTransform Rect => rect;
 

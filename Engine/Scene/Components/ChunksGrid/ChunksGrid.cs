@@ -15,8 +15,6 @@ public enum ChunkTaskType { Load, Save, Unload }
 
 public class ChunksGrid : Component, IUpdate, ICustomLoad<ChunksGrid> {
 
-    public override string Name => nameof(ChunksGrid);
-
     /// Events
     public event Action<ChunkLayer, Vector2Int>? de_ChunkLoaded;
     public event Action<ChunkLayer, Vector2Int>? de_ChunkUnloaded;

@@ -17,8 +17,6 @@ public sealed class CameraEditor : Camera {
 
     public static CameraEditor? Instance = null;
 
-    public override string Name { get; } = nameof(CameraEditor);
-
     private float yaw;
     private float pitch;
 

@@ -9,8 +9,6 @@ public class Transform : Component {
     [Hide] public bool Enabled { get; set; } = true;
 #pragma warning restore CS0108
 
-    public override string Name => nameof(Transform);
-
     [Hide, JsonIgnore] public Action<Vector3>? de_PositionChanged = null;
     [Hide, JsonIgnore] public Action<Quaternion>? de_RotationChanged = null;
     [Hide, JsonIgnore] public Action<Vector3>? de_ScaleChanged = null;

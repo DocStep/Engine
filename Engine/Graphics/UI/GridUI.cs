@@ -10,8 +10,6 @@ public enum GridAlignment { UpperLeft, UpperCenter, UpperRight, MiddleLeft, Midd
 
 public class GridUI : UIRenderingElement, IUpdate {
 
-    public override string Name => nameof(GridUI);
-
     public Vector2 CellSize { get; set; } = new Vector2(200f, 50f);
     public Vector2 Spacing { get; set; } = new Vector2(10f, 10f);
     public Vector2 PaddingMin { get; set; } = Vector2.Zero; /// left, top

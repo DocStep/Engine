@@ -1,30 +1,25 @@
 ﻿using BepuPhysics;
 using BepuPhysics.Collidables;
-using BepuUtilities.Memory;
-using Newtonsoft.Json;
 
 namespace Engine;
 
 
-public class BoxColliderComponent : ColliderComponent, IDynamicCollider {
-
-    [JsonIgnore] public override string Name => nameof(BoxColliderComponent);
-
-    [Hide][JsonIgnore] public Vector3 Position => gameObject.Transform.Position;
-    [Hide][JsonIgnore] public Vector3 Scale => gameObject.Transform.Scale;
-
-    [Hide][JsonIgnore] public TypedIndex ShapeIndex { get; private set; }
+public class BoxColliderComponent : ColliderComponent {
 
 
-    public TypedIndex AddShape (Simulation simulation, BufferPool pool) {
-        Box box = new Box(Scale.X, Scale.Y, Scale.Z);
-        ShapeIndex = simulation.Shapes.Add(box);
-        return ShapeIndex;
+    public Vector3 Size = Vector3.One;
+
+    Box Shape {
+        get {
+            Vector3 s = Size*gameObject.Transform.Scale;
+            return new Box(s.X, s.Y, s.Z);
+        }
     }
 
-    public BodyInertia ComputeInertia (float mass) {
-        Box box = new Box(Scale.X, Scale.Y, Scale.Z);
-        return box.ComputeInertia(mass);
+    protected override TypedIndex AddShape (Shapes shapes) {
+        return shapes.Add(Shape);
     }
-
+    public override void AddToCompound (ref CompoundBuilder builder, float weight) {
+        builder.Add(Shape, LocalPose, weight);
+    }
 }

@@ -3,17 +3,15 @@
 namespace Engine;
 
 
-public abstract class Component /*: ISavable*/ {
-    public Component () { }
+public abstract class Component {
 
-    //[Hide] public readonly Guid Guid = lib.Guid;
-    [Hide] public readonly long Id = Lib.Id;
+    [Hide][Readonly][JsonIgnore] public virtual string Name => GetType().Name;
 
     [Hide] public bool Enabled { get; set; } = true;
 
+    [Hide, Readonly] public readonly long Id = Lib.Id;
+
     [JsonIgnore, Hide] public GameObject gameObject = null!;
-    //[JsonIgnore, Hide] public Guid? ownerGuid = null;
-    [Hide][Readonly] public abstract string Name { get; }
 
 
     public virtual void SetParent (GameObject gameObject) {

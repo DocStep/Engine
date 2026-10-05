@@ -43,10 +43,10 @@ public class PhysicsManager : Singleton<PhysicsManager> {
     public void RegisterRigidbody (PhysicsComponent physicsComponent) {
         PhysicsComponents.Add(physicsComponent);
     }
-    public void RemoveRigidbody (PhysicsComponent physicsComponent) {
+    public void UnregisterRigidbody (PhysicsComponent physicsComponent) {
         PhysicsComponents.Remove(physicsComponent);
-        Simulation.Bodies.Remove(physicsComponent.Handle);
     }
+
 }
 
 

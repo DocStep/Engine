@@ -4,8 +4,6 @@ namespace Engine.Graphics.UI;
 
 public class RectTransform : Transform {
 
-    public override string Name => nameof(RectTransform);
-
     /// Size on a stretched axis (AnchorMin != AnchorMax) is a delta from the anchor-driven size; 0 = exact fill
     [ChangeStep(1f)] public Vector2 Size { get; set; } = new Vector2(0, 0);
     public Vector2 Pivot { get; set; } = new Vector2(0.5f, 0.5f);

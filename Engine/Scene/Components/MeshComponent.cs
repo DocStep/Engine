@@ -5,8 +5,6 @@ namespace Engine.Graphics;
 
 public class MeshComponent : Component, IUpdate, IUpdateAtFreeze {
 
-    [JsonIgnore] public override string Name => nameof(MeshComponent);
-
     public Mesh? Mesh = null;
     public Material? Material = AssetsEngine._mat_Lit;
     public Material[]? Materials;

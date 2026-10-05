@@ -120,6 +120,21 @@ public class GameObject : IDisposable, IAsset<GameObject> {
         //throw new Exception($"Component of type {typeof(T)} not found in GameObject {Name}");
         return null;
     }
+    public List<T> GetComponents<T> () where T : Component {
+        List<T> result = new List<T>();
+        GetComponents(result);
+        return result;
+    }
+    /// Fills an existing list, so hot paths can reuse it and avoid allocations.
+    public void GetComponents<T> (List<T> result) where T : Component {
+        result.Clear();
+        if (Transform is T transform) result.Add(transform);
+
+        foreach (Component component in Components) {
+            if (component is T match) result.Add(match);
+        }
+    }
+
     public T AddComponent<T> () where T : Component, new() => AddComponentInternal(new T());
     public T AddComponentInternal<T> (T component) where T : Component {
         if (component is Transform transform) {

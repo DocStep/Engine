@@ -6,8 +6,6 @@ namespace Engine.Graphics.UI;
 
 public class Image : UIRenderingElement {
 
-    public override string Name => nameof(Image);
-
     public Vector4 Tint { get; set; } = new Vector4(1f, 1f, 1f, 1f);
     [Hide] public float Alpha {
         set {

@@ -12,8 +12,6 @@ public class Camera : Component {
         //Log.log(GetType(), priority);
     }
 
-    public override string Name { get; } = nameof(Camera);
-
     public readonly static List<Camera> Cameras = new List<Camera>();
 
     public static Camera? Main {

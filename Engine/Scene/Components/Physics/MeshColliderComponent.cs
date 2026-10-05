@@ -1,111 +1,68 @@
 ﻿using BepuPhysics;
 using BepuPhysics.Collidables;
-using Newtonsoft.Json;
 using BepuUtilities.Memory;
+using Newtonsoft.Json;
 
 namespace Engine;
 
 
 public class MeshColliderComponent : ColliderComponent {
+    /// Convex = one convex hull around the mesh, works on a rigidbody.
+    /// Not convex = exact triangles, static only (same limit as Unity).
+    public bool Convex = false;
 
-    [JsonIgnore] public override string Name => nameof(MeshColliderComponent);
+    [Hide][JsonIgnore] public Graphics.Vertex[] Vertices = null!;
+    [Hide][JsonIgnore] public uint[] Indices = null!;
+    [Hide][JsonIgnore] Vector3 hullCenter;
 
-    [Hide] public Graphics.Mesh? Mesh = null;
+    public override bool IsReady => Vertices != null && Indices != null && Indices.Length >= 3;
 
-    public Vector3 Position => gameObject.Transform.Position;
-    public Quaternion Rotation => gameObject.Transform.Rotation;
-    public Vector3 Scale => gameObject.Transform.Scale;
-
-    [JsonIgnore] float friction = 1f;
-    [Hide][JsonIgnore] float maximumRecoveryVelocity = 1f;
-    [Hide][JsonIgnore] float frequency = 30f;
-    [Hide][JsonIgnore] float dampingRation = 1f;
-
-    [JsonIgnore] public StaticHandle? StaticHandle { get; private set; }
-    [JsonIgnore] public TypedIndex ShapeIndex { get; private set; }
+    /// Hull shapes are recentered around their own center, so the pose has to add it back.
+    protected override RigidPose LocalPose => new RigidPose(ScaledCenter + (Convex ? hullCenter : Vector3.Zero));
 
 
-    public override void OnAdd () {
-        if (Mesh is null) return;
+    public void SetMesh (Graphics.Mesh mesh) {
+        if (mesh is null || mesh.Data is null) return;
 
-        CreateCollider();
+        Vertices = mesh.Data.Vertices;
+        Indices = mesh.Data.Indices;
+        if (gameObject != null) Refresh();
     }
 
-    public override void OnRemove () {
-        RemoveCollider();
-    }
 
-    private void CreateCollider () {
-        if (Mesh is null) return;
-
-        RemoveCollider();
-
-        Simulation simulation = PhysicsManager.Instance.Simulation;
-        Graphics.MeshData data = Mesh.Data!;
-
+    protected override TypedIndex AddShape (Shapes shapes) {
         BufferPool pool = PhysicsManager.Instance.BufferPool;
-        int triangleCount = data.Indices.Length/3;
+        if (Convex) return shapes.Add(BuildHull(pool));
+
+        int triangleCount = Indices.Length/3;
         pool.Take(triangleCount, out Buffer<Triangle> triangles);
-
         for (int i = 0; i < triangleCount; i++) {
-            uint i0 = data.Indices[i*3 + 0];
-            uint i1 = data.Indices[i*3 + 1];
-            uint i2 = data.Indices[i*3 + 2];
+            triangles[i] = new Triangle(
+                Vertices[Indices[i*3]].Position,
+                Vertices[Indices[i*3 + 1]].Position,
+                Vertices[Indices[i*3 + 2]].Position
+            );
+        }
+        /// the mesh takes ownership of the triangle buffer and applies the scale itself
+        return shapes.Add(new Mesh(triangles, gameObject.Transform.Scale, pool));
+    }
+    public override void AddToCompound (ref CompoundBuilder builder, float weight) {
+        if (!Convex) {
+            Log.log($"{gameObject.Name}: non-convex MeshCollider can't be used with a PhysicsComponent. Enable Convex.", LogType.warning);
+            return;
+        }
+        builder.Add(BuildHull(PhysicsManager.Instance.BufferPool), LocalPose, weight);
+    }
 
-            Vector3 a = data.Vertices[i0].Position*Scale;
-            Vector3 b = data.Vertices[i1].Position*Scale;
-            Vector3 c = data.Vertices[i2].Position*Scale;
 
-            triangles[i] = new Triangle(a, c, b); /// swapped b/c — flips winding if source mesh is backwards for Bepu
+    ConvexHull BuildHull (BufferPool pool) {
+        Vector3 scale = gameObject.Transform.Scale;
+        Vector3[] points = new Vector3[Vertices.Length];
+        for (int i = 0; i < points.Length; i++) {
+            points[i] = Vertices[i].Position*scale;
         }
 
-        Mesh physicsMesh = new Mesh(triangles, new Vector3(1f), pool);
-
-        ShapeIndex = simulation.Shapes.Add(physicsMesh);
-        StaticHandle = simulation.Statics.Add(new StaticDescription(Position, Rotation, ShapeIndex));
-
-        PhysicsManager.Instance.BodyMaterials.Allocate(StaticHandle.Value) = new BodyMaterial {
-            Friction = friction,
-            MaximumRecoveryVelocity = maximumRecoveryVelocity,
-            SpringSettings = new BepuPhysics.Constraints.SpringSettings(frequency, dampingRation)
-        };
+        ConvexHullHelper.CreateShape(points, pool, out hullCenter, out ConvexHull hull);
+        return hull;
     }
-
-    private void RemoveCollider () {
-        Simulation simulation = PhysicsManager.Instance.Simulation;
-
-        if (StaticHandle.HasValue) {
-            simulation.Statics.Remove(StaticHandle.Value);
-            StaticHandle = null;
-        }
-
-        if (ShapeIndex.Exists) {
-            simulation.Shapes.RemoveAndDispose(ShapeIndex, PhysicsManager.Instance.BufferPool);
-            ShapeIndex = default;
-        }
-    }
-
-    public void SetMesh (Graphics.Mesh? mesh) {
-        this.Mesh = mesh;
-        if (gameObject is not null) CreateCollider();
-    }
-
-    public void SetPosition (Vector3 position) {
-        if (!StaticHandle.HasValue) return;
-
-        PhysicsManager.Instance.Simulation.Statics[StaticHandle.Value].Pose.Position = position;
-    }
-
-    public void SetRotation (Quaternion rotation) {
-        if (!StaticHandle.HasValue) return;
-
-        PhysicsManager.Instance.Simulation.Statics[StaticHandle.Value].Pose.Orientation = rotation;
-    }
-
-    public void SetScale (Vector3 scale) {
-        // Bepu Mesh geometry is baked when the shape is created.
-        // Therefore scaling requires rebuilding the shape.
-        if (Mesh is not null) CreateCollider();
-    }
-
 }

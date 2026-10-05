@@ -6,7 +6,6 @@ namespace Engine.Graphics;
 
 
 public abstract class LightSource : Component {
-    public override string Name => nameof(SunLight);
 
     [Hide] public Vector3 Position => gameObject.Transform.Position;
 
