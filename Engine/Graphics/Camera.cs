@@ -57,7 +57,7 @@ public class Camera : Component {
     public override void OnAdd () {
         Cameras.Add(this);
     }
-    override public void OnRemove () {
+    public override void OnRemove () {
         Cameras.Remove(this);
     }
 

@@ -14,7 +14,7 @@ public abstract class Component {
     [JsonIgnore, Hide] public GameObject gameObject = null!;
 
 
-    public virtual void SetParent (GameObject gameObject) {
+    public virtual void SetGameObject (GameObject gameObject) {
         this.gameObject = gameObject;
     }
 

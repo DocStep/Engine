@@ -157,7 +157,6 @@ public class ComponentsManager : Singleton<ComponentsManager> {
         if (component is IFixedUpdate iComponentFixedUpdate) {
             componentsFixedUpdate.Remove(iComponentFixedUpdate);
         }
-        
 
         component.OnRemove();
         //Log.log("ComponentManager.ComponentUnregister", component);

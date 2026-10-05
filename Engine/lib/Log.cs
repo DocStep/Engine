@@ -80,7 +80,7 @@ public static class Log {
     public static void log (params object[] args) {
         string text = string.Empty;
         for (int i = 0; i < args.Length; i++) {
-            text += args[i]?.ToString() + " ";
+            text += (args[i] is null ? "null" : args[i].ToString()) + " ";
         }
         log(text);
     }

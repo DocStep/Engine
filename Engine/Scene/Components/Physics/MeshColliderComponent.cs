@@ -17,7 +17,7 @@ public class MeshColliderComponent : ColliderComponent {
 
     public override bool IsReady => Vertices != null && Indices != null && Indices.Length >= 3;
 
-    bool UseHull => Convex || gameObject.GetComponent<PhysicsComponent>() != null;
+    bool UseHull => Convex || gameObject.GetComponent<PhysicsComponent>() is not null;
 
     /// Hull shapes are recentered around their own center, so the pose has to add it back.
     protected override RigidPose LocalPose => new RigidPose(ScaledCenter + (UseHull ? hullCenter : Vector3.Zero));

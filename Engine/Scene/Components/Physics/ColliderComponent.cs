@@ -29,6 +29,7 @@ public abstract class ColliderComponent : Component {
     }
     public override void OnRemove () {
         ReleaseStatic();
+        Log.log("OnRemove", gameObject);
         if (gameObject.GetComponent<PhysicsComponent>() is PhysicsComponent rb) {
             rb.Rebuild(ignore: this);
         }

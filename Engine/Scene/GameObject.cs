@@ -143,7 +143,7 @@ public class GameObject : IDisposable, IAsset<GameObject> {
         }
 
         Components.Add(component);
-        component.SetParent(this);
+        component.SetGameObject(this);
         ComponentsManager.Instance.ComponentRegister(component);
         return component;
     }
@@ -165,39 +165,37 @@ public class GameObject : IDisposable, IAsset<GameObject> {
         }
 
         Components.Add(component);
-        component.SetParent(this);
+        component.SetGameObject(this);
         return component;
     }
 
-    public void RemoveComponent<T> () where T : Component, new() {
-        T? component = null;
+    public void RemoveComponent<T> () where T : Component {
         foreach (Component comp in Components) {
             if (comp is T match) {
-                component = match;
-                break;
+                RemoveComponent(match);
+                return;
             }
         }
-        if (component is not null) 
-            ComponentsManager.Instance.ComponentUnregister(component);
     }
     public void RemoveComponent (Component component) {
         if (component is Transform) return;
+        if (!Components.Remove(component)) return;
 
+        ComponentsManager.Instance.ComponentUnregister(component); /// OnRemove runs here, gameObject still valid
         component.gameObject = null!;
-        Components.Remove(component);
-        ComponentsManager.Instance.ComponentUnregister(component);
     }
 
     /// Used only by the deserializer, after all fields on this GameObject's components
     /// have been read — brings every attached component live.
     internal void RegisterComponentsInternal () {
-        foreach (Component component in Components) ComponentsManager.Instance.ComponentRegister(component);
+        foreach (Component component in Components) 
+            ComponentsManager.Instance.ComponentRegister(component);
     }
 
 
     internal void SetTransform (Transform transform) {
         Transform? previous = TransformHandle.Current;
-        transform.SetParent(this);
+        transform.SetGameObject(this);
 
         if (previous is not null)
             transform.CopyFrom(previous);
