@@ -7,7 +7,7 @@ namespace Engine;
 public sealed class EntitiesLayer : ChunkLayer {
     public EntitiesLayer () {
         Radius = 8f;
-        mat = new Material(AssetsEngine._sh_LitInstanced);
+        mat = new Material(AssetsEngine._sh_Lit_Instanced);
         mat.SetVector3(Shader.uColor, new Vector3(1, 0, 0));
     }
 

@@ -26,6 +26,13 @@ public static class Gizmos {
         _mat_GizmosGreen.Face = RenderFace.Both;
         _mat_GizmosGreen.DepthWrite = false;
 
+        _mat_GizmosGreen_Instanced = new Material(_sh_Unlit_Instanced);
+        _mat_GizmosGreen_Instanced.SetVector3(uColor, Constants.green);
+        _mat_GizmosGreen_Instanced.SetFloat(uAlpha, 0.5f);
+        _mat_GizmosGreen_Instanced.Pass = RenderPass.Transparent;
+        _mat_GizmosGreen_Instanced.Face = RenderFace.Both;
+        _mat_GizmosGreen_Instanced.DepthWrite = false;
+
         _mat_GizmoWireframe = new Material(_sh_Unlit);
         _mat_GizmoWireframe.SetVector3(uColor, Constants.black);
         _mat_GizmoWireframe.SetFloat(uAlpha, 0.1f);
@@ -110,6 +117,7 @@ public static class Gizmos {
     public readonly static Material _mat_GizmoAxis = null!;
     public readonly static Material _mat_GizmoAxisLine = null!;
     public readonly static Material _mat_GizmosGreen = null!;
+    public readonly static Material _mat_GizmosGreen_Instanced = null!;
     public readonly static Material _mat_GizmoWireframe = null!;
     public readonly static Material _mat_GizmoSun = null!;
 
@@ -129,7 +137,6 @@ public static class Gizmos {
 
         GLDebug.DrawAll();
 
-        //GizmoCameraOrbitCenter();
         _gizmo_Selected.Draw();
 
         GizmoGrid();
@@ -138,6 +145,8 @@ public static class Gizmos {
 
         /// UI Layer — separate camera/viewport
         DrawGizmoAxesWidget();
+
+
     }
     public static void SetUniforms (Shader shader, bool depthTest = true, bool depthWrite = true) {
         if (Renderer.Instance.Camera is null) return;

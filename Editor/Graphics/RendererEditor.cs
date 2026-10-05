@@ -17,14 +17,13 @@ namespace Editor.Graphics;
 
 public class RendererEditor : Renderer {
     public RendererEditor () : base() {
-        //Engine.Engine.Instance.de_Update_Engine += EngineUpdate;
-
         Engine.Engine.Instance.de_AfterUpdate += DrawMaterialsGrid;
         Engine.Engine.Instance.de_AfterUpdate += DrawMaterialGrid;
-        //de_DrawPostScene += DrawGizmos;
+        de_PreRender += DrawComponentGizmos;
         de_DrawAfterPostProcess += Gizmos.Draw;
     }
 
+    void DrawComponentGizmos () => ComponentsGizmo.DrawAll(ComponentsManager.Instance.Components);
 
     /*public void EngineUpdate () {
         List<IComponentUpdate> list = ComponentManager.Instance.ComponentsUpdate;
