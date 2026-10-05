@@ -1,4 +1,6 @@
-﻿using Silk.NET.OpenGL;
+﻿using System.Globalization;
+using System.Text.RegularExpressions;
+using Silk.NET.OpenGL;
 using Newtonsoft.Json;
 
 namespace Engine.Graphics;
@@ -56,6 +58,7 @@ public class Shader : IAsset<Shader> {
         _locations.Clear(); /// locations belong to the old program
         Generation++;       /// lets Material know its uniforms must be re-uploaded
         ReflectUniforms();
+        BuildDefaults(vertexSource, fragmentSource);
         GL.DeleteProgram(oldProgram);
     }
     uint CompileShader (ShaderType type, string source) {
@@ -120,31 +123,19 @@ public class Shader : IAsset<Shader> {
         uShadowAmbientSpecular, uShadowAmbientDiffuse,
     };
 
-    [JsonIgnore, Hide]
-    public readonly static Dictionary<UniformType, object> UniformTypeDefaults = new Dictionary<UniformType, object>() {
-        [UniformType.Int] = 0,
-        //[UniformType.Float] = 0.5f,
-        //[UniformType.Bool] = 0,
-        //[UniformType.FloatVec2] = Vector2.Zero,
-        //[UniformType.FloatVec3] = Vector3.One,
-        //[UniformType.FloatVec4] = Vector4.One,
-        //[UniformType.Sampler2D] = Texture.White,
-    };
-    [JsonIgnore, Hide]
-    public readonly static Dictionary<string, object> UniformDefaults = new Dictionary<string, object>() {
-        [Shader.uColor] = Vector3.One,
-        [Shader.uAlpha] = 1f,
-        [Shader.uSmoothness] = 0.5f,
-        [Shader.uMetallic] = 0f,
-        [Shader.uReflectionIntensity] = 1f,
-    };
+
+    [JsonIgnore, Hide] 
+    public Dictionary<string, object> Defaults { get; private set; } = new();
+
+    //[JsonIgnore, Hide]
+    //public readonly static Dictionary<UniformType, object> UniformTypeDefaults = new Dictionary<UniformType, object>();
+    //[JsonIgnore, Hide]
+    //public readonly static Dictionary<string, object> UniformDefaults = new Dictionary<string, object>();
 
     [JsonIgnore] public static RendererGLStats Stats = default;
 
-
     [JsonIgnore, Hide] public const int SkyboxUnitIndex = 0;
     [JsonIgnore, Hide] public const int TextureUnitIndex = 10;
-
 
     [JsonIgnore, Hide] public const string uView = "uView";
     [JsonIgnore, Hide] public const string uProjection = "uProjection";
@@ -222,6 +213,9 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide] public const string uInvResolution = "uInvResolution";
 
 
+    static readonly Regex CommentRx = new(@"//.*?$|/\*.*?\*/", RegexOptions.Singleline | RegexOptions.Multiline | RegexOptions.Compiled);
+    static readonly Regex UniformDeclRx = new(@"\buniform\s+(?:(?:highp|mediump|lowp)\s+)?(\w+)\s+([^;]+);", RegexOptions.Compiled);
+
 
     public void Use () {
         GL.UseProgram(_program);
@@ -229,6 +223,123 @@ public class Shader : IAsset<Shader> {
         //GLEnum err = GL.GetError();
         //if (err != GLEnum.NoError) 
         //    Console.WriteLine($"UseProgram({_program}, {Name}) Error: {err}");
+    }
+
+
+
+    void BuildDefaults (string vertexSource, string fragmentSource) {
+        Defaults.Clear();
+
+        Dictionary<string, object> shaderDefaults = ParseUniformDefaults(vertexSource);
+        foreach (KeyValuePair<string, object> pair in ParseUniformDefaults(fragmentSource))
+            shaderDefaults[pair.Key] = pair.Value;
+
+        foreach (UniformInfo info in ActiveUniforms.Values) {
+            if (ReservedGlobalUniforms.Contains(info.Name)) continue;
+            if (info.Size != 1) {
+                Log.log($"Shader '{Name}': array uniform '{info.Name}' is not supported", LogType.warning);
+                continue;
+            }
+
+            if (shaderDefaults.TryGetValue(info.Name, out object? shaderValue))
+                Defaults[info.Name] = shaderValue;
+        }
+    }
+
+
+    Dictionary<string, object> ParseUniformDefaults (string source) {
+        Dictionary<string, object> defaults = new();
+        string clean = CommentRx.Replace(source, " ");
+
+        foreach (Match m in UniformDeclRx.Matches(clean)) {
+            string type = m.Groups[1].Value;
+
+            /// handles `uniform float a = 1.0, b = 2.0;`
+            foreach (string decl in SplitTopLevel(m.Groups[2].Value)) {
+                int eq = decl.IndexOf('=');
+                if (eq < 0) continue;
+
+                string name = decl[..eq].Trim();
+                if (name.Contains('[')) continue; /// arrays unsupported
+
+                if (TryParseGlslValue(type, decl[(eq + 1)..].Trim(), out object? value))
+                    defaults[name] = value!;
+                else
+                    Log.log($"Shader '{Name}': can't parse default for '{name}' ({type}): {decl[(eq + 1)..].Trim()}", LogType.warning);
+            }
+        }
+        return defaults;
+    }
+    /// Splits on commas that are not inside (), [] -- so "vec3(1,2,3), b = 2" splits correctly.
+    static List<string> SplitTopLevel (string s) {
+        List<string> parts = new();
+        int depth = 0, start = 0;
+        for (int i = 0; i < s.Length; i++) {
+            char c = s[i];
+            if (c == '(' || c == '[') depth++;
+            else if (c == ')' || c == ']') depth--;
+            else if (c == ',' && depth == 0) {
+                parts.Add(s[start..i].Trim());
+                start = i + 1;
+            }
+        }
+        parts.Add(s[start..].Trim());
+        return parts;
+    }
+
+    static bool TryParseFloat (string s, out float f) {
+        s = s.Trim().TrimEnd('f', 'F');
+        return float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out f);
+    }
+
+    static bool TryParseGlslValue (string type, string expr, out object? value) {
+        value = null;
+        switch (type) {
+            case "float":
+                if (TryParseFloat(expr, out float f)) { value = f; return true; }
+                return false;
+            case "int":
+                if (int.TryParse(expr, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out int i)) { value = i; return true; }
+                return false;
+            case "uint":
+                if (uint.TryParse(expr.TrimEnd('u', 'U'), NumberStyles.None, CultureInfo.InvariantCulture, out uint u)) { value = u; return true; }
+                return false;
+            case "bool":
+                if (bool.TryParse(expr, out bool b)) { value = b; return true; }
+                return false;
+            case "vec2":
+            case "vec3":
+            case "vec4":
+                return TryParseVec(type, expr, out value);
+        }
+        return false;
+    }
+
+    static bool TryParseVec (string type, string expr, out object? value) {
+        value = null;
+        int n = type[3] - '0';
+
+        if (!expr.StartsWith(type) || !expr.EndsWith(')')) return false;
+        int open = expr.IndexOf('(');
+        if (open < 0) return false;
+
+        List<string> args = SplitTopLevel(expr[(open + 1)..^1]);
+        float[] v = new float[n];
+
+        if (args.Count == 1) {                       /// vec3(0.5) -> broadcast
+            if (!TryParseFloat(args[0], out float s)) return false;
+            Array.Fill(v, s);
+        } else if (args.Count == n) {
+            for (int k = 0; k < n; k++)
+                if (!TryParseFloat(args[k], out v[k])) return false;
+        } else return false;
+
+        value = n switch {
+            2 => new Vector2(v[0], v[1]),
+            3 => new Vector3(v[0], v[1], v[2]),
+            _ => new Vector4(v[0], v[1], v[2], v[3]),
+        };
+        return true;
     }
 
     /// Reads back every active uniform from the linked program.
@@ -382,7 +493,7 @@ public class Shader : IAsset<Shader> {
         //if (err != GLEnum.NoError) Log.log($"GL error {nameof(SetTexture)} {err}", LogType.warning);
     }
 
-     private int GetLocation (string name) {
+    private int GetLocation (string name) {
         if (!_locations.TryGetValue(name, out int location)) {
             location = GL.GetUniformLocation(_program, name);
             _locations[name] = location;

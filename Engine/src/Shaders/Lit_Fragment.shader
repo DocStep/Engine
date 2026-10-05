@@ -17,7 +17,7 @@ in vec3 vViewNormal;
 
 const float PI = 3.14159265;
  
-uniform vec3 uColor;
+uniform vec3 uColor = vec3(1.0);
 uniform sampler2D uTexture;
 uniform int uHasTexture = 0;
 uniform float uSmoothness = 0.5;
