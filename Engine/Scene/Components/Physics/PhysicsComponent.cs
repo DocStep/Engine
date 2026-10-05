@@ -113,6 +113,9 @@ public class PhysicsComponent : Component, IFixedUpdate {
         Rigidbody.Velocity.Angular = angular;
         ApplyMaterial();
         IsValid = true;
+
+        if (isKinematicRequested) SetKinematic();
+        else SetDynamic();
     }
     void DestroyBody () {
         if (!IsValid) return;

@@ -7,8 +7,8 @@ namespace Engine;
 
 
 public class MeshColliderComponent : ColliderComponent {
-    /// Convex = one convex hull around the mesh, works on a rigidbody.
-    /// Not convex = exact triangles, static only (same limit as Unity).
+    /// Force a convex hull even without a rigidbody.
+    /// A mesh with a PhysicsComponent is always a hull, so leave this off for level geometry.
     public bool Convex = false;
 
     [Hide][JsonIgnore] public Graphics.Vertex[] Vertices = null!;
@@ -17,13 +17,13 @@ public class MeshColliderComponent : ColliderComponent {
 
     public override bool IsReady => Vertices != null && Indices != null && Indices.Length >= 3;
 
+    bool UseHull => Convex || gameObject.GetComponent<PhysicsComponent>() != null;
+
     /// Hull shapes are recentered around their own center, so the pose has to add it back.
-    protected override RigidPose LocalPose => new RigidPose(ScaledCenter + (Convex ? hullCenter : Vector3.Zero));
+    protected override RigidPose LocalPose => new RigidPose(ScaledCenter + (UseHull ? hullCenter : Vector3.Zero));
 
 
     public void SetMesh (Graphics.Mesh mesh) {
-        if (mesh is null || mesh.Data is null) return;
-
         Vertices = mesh.Data.Vertices;
         Indices = mesh.Data.Indices;
         if (gameObject != null) Refresh();
@@ -32,7 +32,7 @@ public class MeshColliderComponent : ColliderComponent {
 
     protected override TypedIndex AddShape (Shapes shapes) {
         BufferPool pool = PhysicsManager.Instance.BufferPool;
-        if (Convex) return shapes.Add(BuildHull(pool));
+        if (UseHull) return shapes.Add(BuildHull(pool));
 
         int triangleCount = Indices.Length/3;
         pool.Take(triangleCount, out Buffer<Triangle> triangles);
@@ -47,10 +47,6 @@ public class MeshColliderComponent : ColliderComponent {
         return shapes.Add(new Mesh(triangles, gameObject.Transform.Scale, pool));
     }
     public override void AddToCompound (ref CompoundBuilder builder, float weight) {
-        if (!Convex) {
-            Log.log($"{gameObject.Name}: non-convex MeshCollider can't be used with a PhysicsComponent. Enable Convex.", LogType.warning);
-            return;
-        }
         builder.Add(BuildHull(PhysicsManager.Instance.BufferPool), LocalPose, weight);
     }
 

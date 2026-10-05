@@ -35,7 +35,8 @@ public class PhysicsManager : Singleton<PhysicsManager> {
 
         int count = PhysicsComponents.Count;
         for (int i = 0; i < count; i++) {
-            PhysicsComponents[i].UpdateTransform();
+            if (PhysicsComponents[i].IsValid) 
+                PhysicsComponents[i].UpdateTransform();
         }
     }
 

@@ -18,30 +18,29 @@ public class ScenePhysics : Scene {
         //ground.AddComponent<PhysicsComponent>().SetKinematic();
 
         GameObject cube = new GameObject(PrimitiveTypes.Cube) { Name = "Cube 1", };
-        cube.Transform.Position = new Vector3(0, 10, 0);
+        cube.Transform.Position = new Vector3(0, 5, 0);
         cube.AddComponent<BoxColliderComponent>();
-        cube.AddComponent<PhysicsComponent>().SetDynamic();
+        cube.AddComponent<PhysicsComponent>();
 
         cube = new GameObject(PrimitiveTypes.Cube) { Name = "Cube 2", };
-        cube.Transform.Position = new Vector3(0, 15, 0);
+        cube.Transform.Position = new Vector3(0, 10, 0);
         cube.AddComponent<BoxColliderComponent>();
-        cube.AddComponent<PhysicsComponent>().SetDynamic();
+        cube.AddComponent<PhysicsComponent>();
 
         cube = new GameObject(PrimitiveTypes.Cube) { Name = "Cube Ground", };
         cube.Transform.LocalScale = new Vector3(10, 1, 10);
         cube.AddComponent<BoxColliderComponent>();
-        //cube.AddComponent<PhysicsComponent>();
         cube.AddComponent<PhysicsComponent>().SetKinematic();
 
         GameObject sphere = new GameObject(PrimitiveTypes.Sphere) { Name = "Sphere", };
         sphere.Transform.Position = new Vector3(2, 10, 0);
         sphere.AddComponent<SphereColliderComponent>();
-        sphere.AddComponent<PhysicsComponent>().SetDynamic();
+        sphere.AddComponent<PhysicsComponent>();
 
         GameObject capsule = new GameObject(PrimitiveTypes.Capsule) { Name = "Capsule", };
         capsule.Transform.Position = new Vector3(-2, 10, 0);
         capsule.AddComponent<CapsuleColliderComponent>();
-        capsule.AddComponent<PhysicsComponent>().SetDynamic();
+        capsule.AddComponent<PhysicsComponent>();
     }
 
 }
