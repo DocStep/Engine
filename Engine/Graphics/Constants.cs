@@ -35,7 +35,7 @@ public static class Constants {
 
     public static bool _drawArrowAsMesh = true;
 
-    public static Vector3 Ambient_Color = new Vector3(1f, 0f, 0f);
+    public static Vector3 Ambient_Color = new Vector3(1f, 1f, 1f);
     public static float Ambient_Intensity = 0.1f;
 
     public static Vector3 Light_Color = new Vector3(1f, 1f, 1f);

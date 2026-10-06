@@ -96,6 +96,7 @@ public static class Lighting {
 
         List<SunLight> enabledLights = SunLights.Where(l => l.Enabled).ToList();
         int count = Math.Min(enabledLights.Count, SunLights_Max);
+        float sunLightIntensityAvg = 0;
         if (0 < count) {
             Vector3[] dirs = new Vector3[count];
             Vector3[] colors = new Vector3[count];
@@ -108,7 +109,9 @@ public static class Lighting {
                 colors[i] = light.Color;
                 intensities[i] = light.Intensity;
                 sunShadow[i] = light == renderer.SunShadowLight ? 1f : 0f; /// only the sun that was really rendered
+                sunLightIntensityAvg += light.Intensity;
             }
+            sunLightIntensityAvg /= Math.Max(1, count);
 
             shader.SetVector3Array(uSunLightDir, dirs);
             shader.SetVector3Array(uSunLightColor, colors);
@@ -144,8 +147,9 @@ public static class Lighting {
         shader.SetInt(uPointLightCount, pointCount);
 
         /// General
-        shader.SetVector3(uAmbientColor, Constants.Ambient_Color);
-        shader.SetFloat(uAmbientColorIntensity, Constants.Ambient_Intensity);
+        shader.SetFloat(uEnvIntensity, sunLightIntensityAvg);
+        //shader.SetVector3(uAmbientColor, Constants.Ambient_Color);
+        //shader.SetFloat(uAmbientColorIntensity, Constants.Ambient_Intensity);
 
         /// Shadows: always bound, even when off, so the samplers never fall back to unit 0 (skybox)
         renderer.Shadow.Bind(TextureUnit.Texture5);
@@ -161,8 +165,9 @@ public static class Lighting {
         shader.SetInt(uPointShadowMap, 6);
         Renderer.GL.ActiveTexture(TextureUnit.Texture0);
 
-        if (Constants.renderSkyboxReflection)
-            shader.SetFloat(uReflectionIntensity, Constants.reflectionIntensity);
+        /// metal reflection: 0 with no sun, capped at 1 (test hack, replace with time of day later)
+        float envReflection = Math.Clamp(sunLightIntensityAvg, 0f, 1f);
+        shader.SetFloat(uReflectionIntensity, Constants.renderSkyboxReflection ? Constants.reflectionIntensity*envReflection : 0f);
     }
 
 

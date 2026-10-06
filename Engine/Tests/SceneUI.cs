@@ -14,6 +14,11 @@ public class SceneUI : Scene {
     public override void OnGenerate () {
         Image image;
 
+        GameObject go_sun1 = new GameObject() { Name = "Sun", };
+        go_sun1.Transform.LocalPosition = new Vector3(0, 5, 0);
+        go_sun1.Transform.LocalEuler = new Vector3(60, -30, 0);
+        SunLight sun1 = go_sun1.AddComponent<SunLight>();
+
         GameObject go_camera = new GameObject() { Name = "Camera", };
         go_camera.Transform.Position = new Vector3(-2, 3, -10);
         Camera camera = go_camera.AddComponent<Camera>();

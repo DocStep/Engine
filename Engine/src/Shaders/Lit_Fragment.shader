@@ -16,7 +16,7 @@ in vec3 vViewNormal;
 #define MAX_POINT_LIGHTS 32
 
 const float PI = 3.14159265;
- 
+
 uniform vec3 uColor = vec3(1.0);
 uniform sampler2D uTexture;
 uniform int uHasTexture = 0;
@@ -53,7 +53,7 @@ uniform float uShadowAmbientDiffuse = 0.1;
 
 uniform vec3 uViewPos;
 
-uniform float uAmbientColorIntensity = 0.1;
+uniform float uEnvIntensity = 0.05;
 
 uniform sampler2D uSkybox; // equirectangular; mip chain = pre-blurred roughness levels
 uniform float uMaxReflectionLod = 1.0;
@@ -295,7 +295,7 @@ void main() {
     vec3 Fr = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
     vec3 kD_ambient = (vec3(1.0) - Fr) * (1.0 - metallic);
 
-    vec3 irradiance = SampleIrradianceSH(N) * uAmbientColorIntensity;
+    vec3 irradiance = SampleIrradianceSH(N)*uEnvIntensity;
     vec3 ambientDiffuse = irradiance * albedo * kD_ambient;
 
     vec3 R = reflect(-V, N);
@@ -322,5 +322,6 @@ void main() {
     // color = pow(color, vec3(1.0 / 2.2));
 
     FragColor = vec4(color, alpha);
+    // FragColor = vec4(vec3(uEnvIntensity), 1.0);
     FragNormal = vec4(vViewNormal, 1.0); // write view-space normal to MRT attachment 1
 }
