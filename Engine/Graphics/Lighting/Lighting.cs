@@ -149,7 +149,8 @@ public static class Lighting {
         shader.SetInt(uPointLightCount, pointCount);
 
         /// General
-        shader.SetFloat(uEnvIntensity, sunLightIntensityAvg/5);
+        //shader.SetFloat(uEnvIntensity, sunLightIntensityAvg/Constants.Light_Intensity);
+        shader.SetFloat(uEnvIntensity, sunLightIntensityAvg);
         //if (sunLightIntensityAvg != 5) 
             //Log.log("sunLightIntensityAvg", sunLightIntensityAvg);
         //shader.SetVector3(uAmbientColor, Constants.Ambient_Color);

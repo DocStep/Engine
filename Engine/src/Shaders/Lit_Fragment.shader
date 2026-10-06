@@ -295,11 +295,11 @@ void main() {
     vec3 Fr = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
     vec3 kD_ambient = (vec3(1.0) - Fr) * (1.0 - metallic);
 
-    vec3 irradiance = SampleIrradianceSH(N)*uEnvIntensity;
+    vec3 irradiance = SampleIrradianceSH(N)*clamp(uEnvIntensity, 0.0, 1.0);
     vec3 ambientDiffuse = irradiance * albedo * kD_ambient;
 
     vec3 R = reflect(-V, N);
-    vec3 prefiltered = textureLod(uSkybox, SampleSphericalMap(R), roughness*uMaxReflectionLod).rgb;
+    vec3 prefiltered = textureLod(uSkybox, SampleSphericalMap(R), roughness*5).rgb;
     vec3 ambientSpecular = prefiltered*Fr*uReflectionIntensity;
 
     float ambientShadow = shadow*shadowFacing;
@@ -321,7 +321,7 @@ void main() {
 
     // color = pow(color, vec3(1.0 / 2.2));
     // FragColor = vec4(SampleIrradianceSH(N), 1.0);
-    // FragColor = vec4(vec3(uEnvIntensity), alpha);
+    // FragColor = vec4(SampleIrradianceSH(N), alpha);
     FragColor = vec4(color, alpha);
     // FragColor = vec4(vec3(uEnvIntensity), 1.0);
     // FragColor = vec4(SampleIrradianceSH(N), alpha);

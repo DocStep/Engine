@@ -1,23 +1,23 @@
 #version 330 core
 
-// GGX importance-sampled convolution of an equirectangular env map, evaluated
-// at a fixed roughness (one call per destination mip level). N=V=R split-sum
-// assumption — standard Karis 2013 approach, adapted to equirect instead of cubemap.
+// GGX importance-sampled convolution of an equirect env map, one call per dest mip.
+// N=V=R split-sum, filtered importance sampling (GPU Gems 3 ch.20) with per-pixel rotation.
 
 in vec2 vUV;
 out vec4 FragColor;
 
-uniform sampler2D uEnvMap; /// source — the ORIGINAL sharp equirect, never a previous mip
+uniform sampler2D uEnvMap;   // ORIGINAL sharp equirect with full mip chain
 uniform float uRoughness;
 uniform float uResolutionX;
 uniform float uResolutionY;
-uniform float uFireflyClamp;
+uniform float uFireflyClamp; // set very high (1000+) or disable
+uniform int uSampleCount;  // e.g. 128 low roughness, 512-1024 high
 
 const float PI = 3.14159265359;
-const uint SAMPLE_COUNT = 256u; /// one-time bake cost, not per-frame — safe to push higher for quality
+const float MIP_BIAS = 1.0;
+const float MIN_COS_LAT = 0.1;
 
-/// Must be the exact inverse of whatever DirToUV/SampleSphericalMap your Lit_Fragment uses,
-/// or prefiltered samples land at the wrong spot on the source image.
+// Must be the exact inverse of DirToUV/SampleSphericalMap in your Lit shader.
 vec3 UVToDir (vec2 uv) {
     float phi = (uv.x - 0.5)*2.0*PI;
     float theta = (uv.y - 0.5)*PI;
@@ -42,17 +42,18 @@ vec2 Hammersley (uint i, uint N) {
     return vec2(float(i)/float(N), RadicalInverse_VdC(i));
 }
 
-vec3 ImportanceSampleGGX (vec2 Xi, vec3 N, float roughness) {
-    float a = roughness*roughness;
+// Interleaved gradient noise (Jimenez)
+float IGN (vec2 p) {
+    return fract(52.9829189*fract(dot(p, vec2(0.06711056, 0.00583715))));
+}
 
+vec3 ImportanceSampleGGX (vec2 Xi, vec3 N, float a) {
     float phi = 2.0*PI*Xi.x;
     float cosTheta = sqrt((1.0 - Xi.y)/(1.0 + (a*a - 1.0)*Xi.y));
-    float sinTheta = sqrt(1.0 - cosTheta*cosTheta);
+    float sinTheta = sqrt(max(1.0 - cosTheta*cosTheta, 0.0));
 
     vec3 H = vec3(cos(phi)*sinTheta, sin(phi)*sinTheta, cosTheta);
 
-    /// Smooth, continuous choice of reference axis instead of a hard N.z threshold —
-    /// avoids a visible seam/discontinuity in the tangent basis across the sphere.
     vec3 up = abs(N.y) < 0.999 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
     vec3 tangent = normalize(cross(up, N));
     vec3 bitangent = cross(N, tangent);
@@ -66,17 +67,29 @@ float DistributionGGX_D (float NdotH, float a2) {
 }
 
 void main () {
+    // Mirror-sharp level: straight copy
+    if (uRoughness <= 0.0) {
+        FragColor = vec4(textureLod(uEnvMap, vUV, 0.0).rgb, 1.0);
+        return;
+    }
+
     vec3 N = UVToDir(vUV);
     vec3 V = N;
+
+    float a = uRoughness*uRoughness;
+    float a2 = a*a;
+
+    float rot = IGN(gl_FragCoord.xy);
+    float invN = 1.0/float(uSampleCount);
 
     vec3 prefiltered = vec3(0.0);
     float totalWeight = 0.0;
 
-    float a2 = uRoughness*uRoughness*uRoughness*uRoughness;
+    for (int i = 0; i < uSampleCount; i++) {
+        vec2 Xi = Hammersley(uint(i), uint(uSampleCount));
+        Xi.x = fract(Xi.x + rot);
 
-    for (uint i = 0u; i < SAMPLE_COUNT; i++) {
-        vec2 Xi = Hammersley(i, SAMPLE_COUNT);
-        vec3 H = ImportanceSampleGGX(Xi, N, uRoughness);
+        vec3 H = ImportanceSampleGGX(Xi, N, a);
         vec3 L = normalize(2.0*dot(V, H)*H - V);
 
         float NdotL = max(dot(N, L), 0.0);
@@ -84,25 +97,21 @@ void main () {
             float NdotH = max(dot(N, H), 0.0);
             float HdotV = max(dot(H, V), 0.0);
             float D = DistributionGGX_D(NdotH, a2);
-            float pdf = D*NdotH/(4.0*HdotV) + 1e-5;
+            float pdf = D*NdotH/(4.0*HdotV + 1e-5) + 1e-5;
 
-            /// Equirect texel solid angle shrinks toward the poles (cos(latitude)) — L.y is
-            /// this sample's latitude (matches UVToDir's sin(theta) = v.y convention).
-            /// Without this, pole-region samples get an under-blurred mip and show raw
-            /// projection distortion as warping, worse at high roughness where more samples
-            /// wander toward the poles.
-            float cosLat = max(abs(cos(asin(clamp(L.y, -1.0, 1.0)))), 1e-3);
+            // Equirect texel solid angle, capped near poles (mips are isotropic)
+            float cosLat = max(sqrt(max(1.0 - L.y*L.y, 0.0)), MIN_COS_LAT);
             float saTexel = (2.0*PI/uResolutionX)*(PI/uResolutionY)*cosLat;
 
-            float saSample = 1.0/(float(SAMPLE_COUNT)*pdf + 1e-5);
-            float mipLevel = uRoughness == 0.0 ? 0.0 : 0.5*log2(saSample/saTexel);
+            float saSample = invN/pdf;
+            float mipLevel = max(0.5*log2(saSample/saTexel) + MIP_BIAS, 0.0);
 
-            vec3 sampleColor = textureLod(uEnvMap, DirToUV(L), mipLevel).rgb;
+            vec3 c = textureLod(uEnvMap, DirToUV(L), mipLevel).rgb;
 
-            float luminance = dot(sampleColor, vec3(0.2126, 0.7152, 0.0722));
-            if (luminance > uFireflyClamp) sampleColor *= uFireflyClamp/luminance;
+            float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
+            if (lum > uFireflyClamp) c *= uFireflyClamp/lum;
 
-            prefiltered += sampleColor*NdotL;
+            prefiltered += c*NdotL;
             totalWeight += NdotL;
         }
     }

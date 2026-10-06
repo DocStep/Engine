@@ -34,7 +34,6 @@ public class Skybox : IDisposable {
         HdrTexture = hdrTexture;
 
         PrefilterSkybox(hdrTexture, out uint handle, out int mipMaxLod);
-        Log.log("mipMaxLod", mipMaxLod);
         PrefilteredHandle = handle;
         MaxLod = mipMaxLod;
 
@@ -112,8 +111,9 @@ public class Skybox : IDisposable {
             prefilterShader.SetFloat(Shader.uRoughness, roughness);
             prefilterShader.SetFloat("uResolutionX", source.Width);
             prefilterShader.SetFloat("uResolutionY", source.Height);
-            /// uFireflyClamp tune — lower = smoother but dimmer sun bloom, higher = closer to true brightness but more residual fireflies
-            prefilterShader.SetFloat("uFireflyClamp", 16f);
+            int samples = roughness < 0.3f ? 128 : roughness < 0.6f ? 512 : 1024;
+            prefilterShader.SetInt("uSampleCount", samples); // or SetInt if you have no uint setter
+            prefilterShader.SetFloat("uFireflyClamp", 1000f);
             gl.BindVertexArray(_emptyVao);
             gl.DrawArrays(PrimitiveType.Triangles, 0, 3);
             Renderer.Instance.Stats.DrawCalls++;

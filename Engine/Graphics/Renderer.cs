@@ -343,8 +343,8 @@ public class Renderer {
             case RenderPass.Opaque:
             case RenderPass.Transparent:
                 SetSceneUniformsUnlit(shader, Camera!.CameraPos);
-                Lighting.SetSceneUniformsLit(shader);
                 SetSceneUniformsSkybox(shader, Skybox.PrefilteredHandle, Skybox.MaxLod);
+                Lighting.SetSceneUniformsLit(shader);
                 break;
             case RenderPass.UI:
                 shader.SetMatrix4x4(uProjection, m4x4_ProjectionUI);
