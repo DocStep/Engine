@@ -90,10 +90,12 @@ public static class Lighting {
 
 
     public static void SetSceneUniformsLit (Shader shader) {
-        Renderer renderer = Renderer.Instance;
-        if (renderer.Camera is null) return;
         if (!shader.isLit) return;
 
+        Renderer renderer = Renderer.Instance;
+        if (renderer.Camera is null) return;
+
+        //Log.log(shader.Name, shader.Id_Renderer);
         List<SunLight> enabledLights = SunLights.Where(l => l.Enabled).ToList();
         int count = Math.Min(enabledLights.Count, SunLights_Max);
         float sunLightIntensityAvg = 0;
@@ -108,7 +110,7 @@ public static class Lighting {
                 dirs[i] = Mathf.QuaternionToDirection(light.Rotation);
                 colors[i] = light.Color;
                 intensities[i] = light.Intensity;
-                sunShadow[i] = light == renderer.SunShadowLight ? 1f : 0f; /// only the sun that was really rendered
+                sunShadow[i] = light == renderer.SunShadowLight ? light.ShadowStrength : 0f; /// only the sun that was really rendered
                 sunLightIntensityAvg += light.Intensity;
             }
             sunLightIntensityAvg /= Math.Max(1, count);
@@ -147,7 +149,9 @@ public static class Lighting {
         shader.SetInt(uPointLightCount, pointCount);
 
         /// General
-        shader.SetFloat(uEnvIntensity, sunLightIntensityAvg);
+        shader.SetFloat(uEnvIntensity, sunLightIntensityAvg/5);
+        //if (sunLightIntensityAvg != 5) 
+            //Log.log("sunLightIntensityAvg", sunLightIntensityAvg);
         //shader.SetVector3(uAmbientColor, Constants.Ambient_Color);
         //shader.SetFloat(uAmbientColorIntensity, Constants.Ambient_Intensity);
 
@@ -168,10 +172,11 @@ public static class Lighting {
         /// metal reflection: 0 with no sun, capped at 1 (test hack, replace with time of day later)
         float envReflection = Math.Clamp(sunLightIntensityAvg, 0f, 1f);
         shader.SetFloat(uReflectionIntensity, Constants.renderSkyboxReflection ? Constants.reflectionIntensity*envReflection : 0f);
+
+        if (Renderer.Instance.Skybox.HdrTexture is not null) {
+            SetSHAmbient(shader, renderer.Skybox.Probe);
+        }
     }
-
-
-
 
     public static void SetSHAmbient (Shader shader, in SHAmbientProbe probe) {
         shader.SetVector4(uSHAr, probe.SHAr);
@@ -181,8 +186,6 @@ public static class Lighting {
         shader.SetVector4(uSHBg, probe.SHBg);
         shader.SetVector4(uSHBb, probe.SHBb);
         shader.SetVector4(uSHC, probe.SHC);
-        shader.SetFloat(uAmbientColorIntensity, probe.Intensity);
     }
-
 
 }

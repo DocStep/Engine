@@ -53,7 +53,7 @@ uniform float uShadowAmbientDiffuse = 0.1;
 
 uniform vec3 uViewPos;
 
-uniform float uEnvIntensity = 0.05;
+uniform float uEnvIntensity = 1.0;
 
 uniform sampler2D uSkybox; // equirectangular; mip chain = pre-blurred roughness levels
 uniform float uMaxReflectionLod = 1.0;
@@ -320,8 +320,11 @@ void main() {
     // color *= (luminance > 0.0) ? (toneMappedLuminance / luminance) : 0.0;
 
     // color = pow(color, vec3(1.0 / 2.2));
-
+    // FragColor = vec4(SampleIrradianceSH(N), 1.0);
+    // FragColor = vec4(vec3(uEnvIntensity), alpha);
     FragColor = vec4(color, alpha);
+    // FragColor = vec4(vec3(uEnvIntensity), 1.0);
+    // FragColor = vec4(SampleIrradianceSH(N), alpha);
     // FragColor = vec4(vec3(uEnvIntensity), 1.0);
     FragNormal = vec4(vViewNormal, 1.0); // write view-space normal to MRT attachment 1
 }

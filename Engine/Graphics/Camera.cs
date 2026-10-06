@@ -4,8 +4,12 @@ namespace Engine.Graphics;
 
 public enum TonemapMode {
     Clamp = 0,
-    ACES = 1,
-    Reinhard = 2,
+    PBRNeutral = 1,
+    ACES = 2,
+    Reinhard = 3,
+    ReinhardExt = 4,
+    Hable = 5,
+    HableMap = 6,
 }
 
 
@@ -64,7 +68,7 @@ public class Camera : Component {
         }
     }
     public float Exposure = 1f;
-    public TonemapMode TonemapMode = TonemapMode.ACES; /// 0 = clamp, 1 = ACES, 2 = Reinhard
+    public TonemapMode TonemapMode = TonemapMode.PBRNeutral;
     [Hide, Newtonsoft.Json.JsonIgnore] 
     protected float priority = 0f;
     public float Priority {

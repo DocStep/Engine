@@ -5,15 +5,51 @@ out vec4 FragColor;
 
 uniform sampler2D uSceneColor;
 uniform float uExposure = 1.0;
+uniform float uSkyExposure = 10.0;
 uniform int uTonemapMode = 1; /// 0 = clamp, 1 = ACES, 2 = Reinhard (luminance)
 
 vec3 ACESFilm (vec3 x) {
     return clamp((x*(2.51*x + 0.03))/(x*(2.43*x + 0.59) + 0.14), 0.0, 1.0);
 }
 
-vec3 ReinhardLum (vec3 c) {
-    float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-    return c*(1.0/(1.0 + l));
+vec3 ReinhardLum (vec3 color) {
+    float l = dot(color, vec3(0.2126, 0.7152, 0.0722));
+    return color*(1.0/(1.0 + l));
+}
+
+/// Reinhard extended: white point makes bright values reach pure white
+vec3 ReinhardExt (vec3 color) {
+    const float W = 8.0;
+    float l = dot(color, vec3(0.2126, 0.7152, 0.0722));
+    float lm = l*(1.0 + l/(W*W))/(1.0 + l);
+    return color*(lm/max(l, 1e-5));
+}
+
+/// Uncharted 2 (Hable): strong filmic contrast, warm highlights
+vec3 Hable (vec3 x) {
+    const float A = 0.15, B = 0.50, C = 0.10, D = 0.20, E = 0.02, F = 0.30;
+    return ((x*(A*x + C*B) + D*E)/(x*(A*x + B) + D*F)) - E/F;
+}
+vec3 HableMap (vec3 color) {
+    const float W = 11.2;
+    return Hable(color*2.0)/Hable(vec3(W));
+}
+
+
+/// Khronos PBR Neutral: keeps albedo colors almost unchanged, good for a game
+vec3 PBRNeutral (vec3 color) {
+    const float startCompression = 0.8 - 0.04;
+    const float desaturation = 0.15;
+    float x = min(color.r, min(color.g, color.b));
+    float offset = x < 0.08 ? x - 6.25*x*x : 0.04;
+    color -= offset;
+    float peak = max(color.r, max(color.g, color.b));
+    if (peak < startCompression) return color;
+    float d = 1.0 - startCompression;
+    float newPeak = 1.0 - d*d/(peak + d - startCompression);
+    color *= newPeak/peak;
+    float g = 1.0 - 1.0/(desaturation*(peak - newPeak) + 1.0);
+    return mix(color, vec3(newPeak), g);
 }
 
 float IGN (vec2 p) {
@@ -21,15 +57,19 @@ float IGN (vec2 p) {
 }
 
 void main () {
-    vec4 src = texture(uSceneColor, vUV);
-    vec3 c = src.rgb*uExposure;
+    vec4 sceneColor = texture(uSceneColor, vUV);
+    vec3 color = sceneColor.rgb*uExposure;
 
-    if (uTonemapMode == 1) c = ACESFilm(c);
-    else if (uTonemapMode == 2) c = ReinhardLum(c);
-    else c = clamp(c, 0.0, 1.0);
+    if (uTonemapMode == 1) color = PBRNeutral(color);
+    else if (uTonemapMode == 2) color = ACESFilm(color);
+    else if (uTonemapMode == 3) color = ReinhardLum(color);
+    else if (uTonemapMode == 4) color = ReinhardExt(color);
+    else if (uTonemapMode == 5) color = Hable(color);
+    else if (uTonemapMode == 6) color = HableMap(color);
+    else color = clamp(color, 0.0, 1.0);
 
-    c = pow(c, vec3(1.0/2.2)); /// or the exact sRGB curve
-    c += (IGN(gl_FragCoord.xy) - 0.5)/255.0; /// dither, hides 8-bit banding
+    color = pow(color, vec3(1.0/2.2)); /// or the exact sRGB curve
+    color += (IGN(gl_FragCoord.xy) - 0.5)/255.0; /// dither, hides 8-bit banding
 
-    FragColor = vec4(c, src.a);
+    FragColor = vec4(color, sceneColor.a);
 }

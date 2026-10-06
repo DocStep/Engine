@@ -344,7 +344,7 @@ public class Renderer {
             case RenderPass.Transparent:
                 SetSceneUniformsUnlit(shader, Camera!.CameraPos);
                 Lighting.SetSceneUniformsLit(shader);
-                SetSceneUniformsSkybox(shader, Skybox.prefilteredHandle, Skybox.maxLod);
+                SetSceneUniformsSkybox(shader, Skybox.PrefilteredHandle, Skybox.MaxLod);
                 break;
             case RenderPass.UI:
                 shader.SetMatrix4x4(uProjection, m4x4_ProjectionUI);
@@ -352,6 +352,10 @@ public class Renderer {
         }
 
         material.Apply();
+
+        //int loc = GL.GetUniformLocation(shader._program, uEnvIntensity);
+        //GL.GetUniform(shader._program, loc, out float v);
+        //Log.log(material.Name, shader.Name, uEnvIntensity, v);
     }
 
     public void SetSceneUniformsUnlit (Shader shader, Vector3 viewPos) {

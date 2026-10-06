@@ -157,7 +157,7 @@ public class RendererEditor : Renderer {
                 float smoothness = (float)x/(total - 1);
                 float metallic = (float)z/(total - 1);
                 Material mat = new Material(_mat_MaterialPreview);
-                mat.SetVector3(uColor, Constants.lightGray);
+                mat.SetVector3(uColor, Constants.white);
                 mat.SetFloat(uSmoothness, smoothness);
                 mat.SetFloat(uMetallic, metallic);
                 cache[x*total + z] = mat;

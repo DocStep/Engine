@@ -12,25 +12,34 @@ public class Skybox : IDisposable {
 
 
     private readonly GL GL;
-    //private readonly Shader _shader;
 
-    public HdrTexture? texture { get; private set; }
-    public float maxLod { get; private set; }
-    public uint prefilteredHandle { get; private set; }
+    public HdrTexture? hdrTexture { get; private set; }
+    public HdrTexture? HdrTexture {
+        get => hdrTexture;
+        private set {
+            hdrTexture = value;
+        }
+    }
+    public SHAmbientProbe Probe { get; private set; }
+    public float MaxLod { get; private set; }
+    public uint PrefilteredHandle { get; private set; }
     private uint _emptyVao;
 
     public Material? material = null;
 
 
-    public void SetTexture (HdrTexture? texture) {
-        if (texture is null) return;
+    public void SetTexture (HdrTexture? hdrTexture) {
+        if (hdrTexture is null) return;
 
-        this.texture = texture;
+        HdrTexture = hdrTexture;
 
-        PrefilterSkybox(texture, out uint handle, out int mipMaxLod);
+        PrefilterSkybox(hdrTexture, out uint handle, out int mipMaxLod);
         Log.log("mipMaxLod", mipMaxLod);
-        prefilteredHandle = handle;
-        maxLod = mipMaxLod;
+        PrefilteredHandle = handle;
+        MaxLod = mipMaxLod;
+
+        Vector3[] pixels = ReadPixels(handle, mipMaxLod, out int w, out int h);
+        Probe = BuildProbe(pixels, w, h);
     }
 
     public void Draw () {
@@ -38,13 +47,13 @@ public class Skybox : IDisposable {
 
         material = AssetsEngine._mat_Skybox;
         if (material is null) return;
-        if (texture is null) return;
+        if (HdrTexture is null) return;
 
         GL.Enable(EnableCap.CullFace);
         GL.CullFace(TriangleFace.Front);
         GL.DepthMask(false);
 
-        texture.Bind(TextureUnit.Texture0);
+        HdrTexture.Bind(TextureUnit.Texture0);
         
         material.shader.Use();
         material.Apply();
@@ -114,6 +123,71 @@ public class Skybox : IDisposable {
         gl.DeleteFramebuffer(fbo);
 
         maxLod = mipLevels - 1;
+    }
+
+
+    public static unsafe Vector3[] ReadPixels (uint handle, int level, out int w, out int h) {
+        GL gl = Renderer.GL;
+        gl.BindTexture(TextureTarget.Texture2D, handle);
+        gl.GetTexLevelParameter(TextureTarget.Texture2D, level, GetTextureParameter.TextureWidth, out w);
+        gl.GetTexLevelParameter(TextureTarget.Texture2D, level, GetTextureParameter.TextureHeight, out h);
+
+        float[] data = new float[w*h*4];
+        fixed (float* p = data) {
+            gl.GetTexImage(TextureTarget.Texture2D, level, PixelFormat.Rgba, PixelType.Float, p);
+        }
+
+        Vector3[] pixels = new Vector3[w*h];
+        for (int i = 0; i < pixels.Length; i++) {
+            pixels[i] = new Vector3(data[i*4], data[i*4 + 1], data[i*4 + 2]);
+        }
+        return pixels;
+    }
+
+    public static SHAmbientProbe BuildProbe (Vector3[] pixels, int w, int h) {
+        ProjectSH(pixels, w, h, out var Ar, out var Br, out var Cr, 0);
+        ProjectSH(pixels, w, h, out var Ag, out var Bg, out var Cg, 1);
+        ProjectSH(pixels, w, h, out var Ab, out var Bb, out var Cb, 2);
+        return new SHAmbientProbe {
+            SHAr = Ar,
+            SHAg = Ag,
+            SHAb = Ab,
+            SHBr = Br,
+            SHBg = Bg,
+            SHBb = Bb,
+            SHC = new Vector4(Cr.X, Cg.X, Cb.X, 1f),
+            Intensity = 1f
+        };
+    }
+
+    /// pixels: equirect RGB (use a low mip, e.g. 64x32), y is up, same mapping as SampleSphericalMap
+    public static void ProjectSH (Vector3[] pixels, int w, int h, out Vector4 A, out Vector4 B, out Vector3 C, int channel) {
+        Span<float> L = stackalloc float[9];
+        L.Clear();
+        for (int j = 0; j < h; j++) {
+            float lat = ((j + 0.5f)/h - 0.5f)*MathF.PI;
+            float dOmega = MathF.Cos(lat)*(MathF.PI/h)*(2f*MathF.PI/w);
+            for (int i = 0; i < w; i++) {
+                float phi = ((i + 0.5f)/w - 0.5f)*2f*MathF.PI;
+                float x = MathF.Cos(lat)*MathF.Cos(phi), y = MathF.Sin(lat), z = MathF.Cos(lat)*MathF.Sin(phi);
+                Vector3 p = pixels[j*w + i];
+                float c = channel == 0 ? p.X : channel == 1 ? p.Y : p.Z;
+                float wgt = c*dOmega;
+                L[0] += wgt*0.282095f;
+                L[1] += wgt*0.488603f*y;
+                L[2] += wgt*0.488603f*z;
+                L[3] += wgt*0.488603f*x;
+                L[4] += wgt*1.092548f*x*y;
+                L[5] += wgt*1.092548f*y*z;
+                L[6] += wgt*0.315392f*(3f*z*z - 1f);
+                L[7] += wgt*1.092548f*x*z;
+                L[8] += wgt*0.546274f*(x*x - y*y);
+            }
+        }
+        const float a1 = 2f/3f, a2 = 0.25f;   /// cosine lobe factors divided by PI
+        A = new Vector4(a1*L[3]*0.488603f, a1*L[1]*0.488603f, a1*L[2]*0.488603f, L[0]*0.282095f - a2*L[6]*0.315392f);
+        B = new Vector4(a2*L[4]*1.092548f, a2*L[5]*1.092548f, a2*L[6]*0.315392f*3f, a2*L[7]*1.092548f);
+        C = new Vector3(a2*L[8]*0.546274f);
     }
 
 

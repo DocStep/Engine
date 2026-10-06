@@ -97,7 +97,7 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide] public int Generation { get; private set; }
 
     [JsonIgnore, Hide] private readonly GL GL;
-    [JsonIgnore, Hide] private uint _program;
+    [JsonIgnore, Hide] public uint _program { get; private set; }
     [JsonIgnore, Hide] private readonly Dictionary<string, int> _textureUnits = new();
     [JsonIgnore, Hide] private int nextTextureUnit = 1; /// 0 is permanently reserved for uSkybox
 
@@ -115,12 +115,15 @@ public class Shader : IAsset<Shader> {
         uSunLightCount, uSunLightDir, uSunLightColor, uSunLightIntensity,
         uPointLightCount, uPointLightColor, uPointLightIntensity, uPointLightPos, uPointLightRange,
         uSkybox, uEnvMap, uRoughness, uMaxReflectionLod,
-        uExposure, uAmbientColor, uAmbientColorIntensity, uReflectionIntensity,
+        uEnvIntensity,
+        uAmbientColor, uAmbientColorIntensity, uReflectionIntensity,
         uSHAr, uSHAg, uSHAb, uSHBr, uSHBg, uSHBb, uSHC,
 
         uSunShadow, uPointShadowSlot,
         uShadowMap, uLightSpace, uShadowTexelWorld, uShadowBias, uShadowNormalOffset,
         uShadowAmbientSpecular, uShadowAmbientDiffuse,
+
+        uExposure,
     };
 
 

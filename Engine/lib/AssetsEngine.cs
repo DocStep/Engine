@@ -30,7 +30,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mat_Lit.Save("src/Materials/Lit.mat");
         ///
         _mat_Unlit = new Material(_sh_Unlit) { Name = "Unlit", };
-        _mat_Unlit.SetVector3(uColor, Constants.gray);
+        _mat_Unlit.SetVector3(uColor, Constants.white);
         _mat_Unlit.Save("src/Materials/Unlit.mat");
         ///
         _mat_UI = new Graphics.UI.MaterialUI(_sh_UI) { Name = "UI", };

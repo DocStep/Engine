@@ -107,6 +107,7 @@ public class Material : IAsset<Material>, IOnLoaded {
 
     public void FillDefaults () {
         foreach (var kv in shader.Defaults) uniforms.TryAdd(kv.Key, kv.Value);
+        //foreach (string key in Shader.ReservedGlobalUniforms) uniforms.Remove(key);
     }
 
 

@@ -11,9 +11,6 @@ public sealed class CameraEditor : Camera {
         SetTransformDefault();
 
         Engine.Engine.Instance.de_AfterUpdate += Update;
-
-        TonemapMode = TonemapMode.Reinhard;
-        //Log.log(GetType(), priority);
     }
 
     [Hide] public static CameraEditor? Instance = null;
