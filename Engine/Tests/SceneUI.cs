@@ -6,6 +6,11 @@ namespace Engine;
 
 public class SceneUI : Scene {
 
+    Audio.AudioManager audio = new Audio.AudioManager();
+    Audio.AudioClip? click = Audio.AudioClip.Load("src/Sounds/UI/click.wav");
+    Audio.AudioClip? ambient = Audio.AudioClip.Load("src/Sounds/ambient.wav");
+
+
     public override void OnGenerate () {
         Image image;
 
@@ -45,7 +50,11 @@ public class SceneUI : Scene {
         image.Texture = AssetsEngine.tex_Test;
         image.Rect.AnchoredPosition = new Vector2(100, 0);
         Button button = go_button.AddComponent<Button>();
-        button.de_Clicked += () => Log.log("clicked");
+        button.de_Clicked += () => {
+            Log.log("clicked");
+            audio.PlayOneShot(click, Renderer.Instance.Camera.CameraPos, 0.8f, Random.Shared.NextSingle()*0.2f + 0.9f);
+            audio.PlayOneShot(ambient, Renderer.Instance.Camera.CameraPos, 0.8f, Random.Shared.NextSingle()*0.2f + 0.9f);
+        };
 
         GameObject go_text = new GameObject() { Name = "Text" };
         go_text.Transform.Parent = go_canvas.Transform;

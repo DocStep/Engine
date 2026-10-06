@@ -30,10 +30,10 @@ public class SceneManager : Singleton<SceneManager> {
 
     public void Awake () {
         Scene scene;
-        scene = new SceneMaterials() { Name = "Scene Materials", };
+        //scene = new SceneMaterials() { Name = "Scene Materials", };
         //scene = new ScenePhysics() { Name = "Scene Physics", };
         //scene = new SceneTerrain() { Name = "Scene Terrain", };
-        //scene = new SceneUI() { Name = "Scene UI", };
+        scene = new SceneUI() { Name = "Scene UI", };
         //scene = new SceneChunksGrid() { Name = "Scene Chunks Grid", };
         //scene.Save("src/Scenes/SceneChunksGrid.json");
         //scene = Assets.Load<Scene>("src/Scenes/SceneChunksGrid.json");

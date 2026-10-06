@@ -1,3 +1,4 @@
+using Engine.Graphics;
 using Engine.Input;
 
 namespace Engine;
@@ -34,10 +35,13 @@ public class Engine : IDisposable {
     public Action? de_Render = null;
     public Action? de_LateUpdate = null;
 
+    public Action? de_Focus = null;
+    public Action? de_Unfocus = null;
+
     public Action? de_Closing = null;
 
     /// Debug
-    public EngineStates engineState = EngineStates.Loading;
+    public EngineStates EngineState = EngineStates.Loading;
     public bool debug = false;
     public double sessionTime = 0f;
 
@@ -94,13 +98,18 @@ public class Engine : IDisposable {
         de_Init?.Invoke();
         //ReflectionActionScripts.CreateSingleton();
 
-        engineState = EngineStates.Ready;
+        EngineState = EngineStates.Ready;
         Log.log($"========== Init Finish ==========", LogType.system);
 
         SceneManager.Instance.Awake();
+
+        //audio = new Audio.AudioManager();
+        //step = Audio.AudioClip.LoadWav("Assets/Audio/step_sand.wav");
         //Engine.SetFPSMax(144);
     }
 
+    //Audio.AudioManager audio;
+    //Audio.AudioClip step;
 
     private void OnUpdate (double dt) {
         de_StateReset?.Invoke();
@@ -110,14 +119,14 @@ public class Engine : IDisposable {
         Inputs.Update();
 
         if (Inputs.Actions[Inputs.EditorPause].pressedDown) {
-            if (engineState != EngineStates.Paused) engineState = EngineStates.Paused;
-            else if (engineState == EngineStates.Paused) engineState = EngineStates.Ready;
+            if (EngineState != EngineStates.Paused) EngineState = EngineStates.Paused;
+            else if (EngineState == EngineStates.Paused) EngineState = EngineStates.Ready;
         }
 
-        Time.isPaused = engineState == EngineStates.Paused;
+        Time.isPaused = EngineState == EngineStates.Paused;
         Time.Update(dt);
 
-        if (engineState == EngineStates.Ready) {
+        if (EngineState == EngineStates.Ready) {
             Time.accumulator += Time.deltaTime;
 
             Update();
@@ -149,6 +158,11 @@ public class Engine : IDisposable {
         de_Update?.Invoke();
         ReflectionActionScripts.Instance?.de_Actions_Update?.Invoke();
         de_UpdateAlways?.Invoke();
+
+        //if (Renderer.Instance.Camera is not null) {
+        //    Transform tr = Renderer.Instance.Camera.gameObject.Transform;
+        //    audio.UpdateListener(Renderer.Instance.Camera.CameraPos, Vector3.UnitZ, Vector3.UnitY);
+        //}
 
         de_AfterUpdate?.Invoke();
 

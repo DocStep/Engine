@@ -11,18 +11,15 @@ public abstract class Component {
 
     [Hide, Readonly] public readonly long Id = Lib.Id;
 
-    [JsonIgnore, Hide] public GameObject gameObject = null!;
-
-
-    public virtual void SetGameObject (GameObject gameObject) {
-        this.gameObject = gameObject;
+    [JsonIgnore, Hide] protected GameObject _gameObject = null!;
+    public GameObject gameObject {
+        get => _gameObject;
+        set => _gameObject = value;
     }
+
+
 
     public virtual void OnAdd () { }
     public virtual void OnRemove () { }
-
-
-    //public void PreSave () { }
-    //public virtual void PostLoad () { }
 
 }

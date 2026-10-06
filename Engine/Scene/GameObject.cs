@@ -143,7 +143,7 @@ public class GameObject : IDisposable, IAsset<GameObject> {
         }
 
         Components.Add(component);
-        component.SetGameObject(this);
+        component.gameObject = this;
         ComponentsManager.Instance.ComponentRegister(component);
         return component;
     }
@@ -165,7 +165,7 @@ public class GameObject : IDisposable, IAsset<GameObject> {
         }
 
         Components.Add(component);
-        component.SetGameObject(this);
+        component.gameObject = this;
         return component;
     }
 
@@ -195,7 +195,7 @@ public class GameObject : IDisposable, IAsset<GameObject> {
 
     internal void SetTransform (Transform transform) {
         Transform? previous = TransformHandle.Current;
-        transform.SetGameObject(this);
+        transform.gameObject = this;
 
         if (previous is not null)
             transform.CopyFrom(previous);

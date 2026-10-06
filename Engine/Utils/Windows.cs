@@ -19,6 +19,8 @@ public static class Windows {
         Silk.NET.Maths.Vector2D<int> screenSize = monitor.VideoMode.Resolution ?? new Silk.NET.Maths.Vector2D<int>(1920, 1080);
         Window.Position = new Silk.NET.Maths.Vector2D<int>((screenSize.X - options.Size.X)/2, (screenSize.Y - options.Size.Y)/2);
 
+        Window.FocusChanged += de_Focus;
+
         Engine.Instance.de_Update += Update;
         return Window;
     }
@@ -36,6 +38,11 @@ public static class Windows {
             new Silk.NET.Windowing.APIVersion(4, 0)
         ),
     };
+
+    private static void de_Focus (bool focused) {
+        if (focused) Engine.Instance.de_Focus?.Invoke();
+        else Engine.Instance.de_Unfocus?.Invoke();
+    }
 
 
     private static void Update () {
