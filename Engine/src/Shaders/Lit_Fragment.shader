@@ -48,8 +48,8 @@ uniform mat4 uLightSpace;
 uniform float uShadowTexelWorld;
 uniform float uShadowBias = 0.0;
 uniform float uShadowNormalOffset = 3.0;
-uniform float uShadowAmbientSpecular = 0.6;   // 0 = off, 1 = reflection fully black in shadow
-uniform float uShadowAmbientDiffuse = 0.1;
+uniform float uShadowAmbientDiffuse = 0.6;
+uniform float uShadowAmbientSpecular = 0.8; // 0 = off, 1 = reflection fully black in shadow
 
 uniform vec3 uViewPos;
 
@@ -299,7 +299,7 @@ void main() {
     vec3 ambientDiffuse = irradiance * albedo * kD_ambient;
 
     vec3 R = reflect(-V, N);
-    vec3 prefiltered = textureLod(uSkybox, SampleSphericalMap(R), roughness*5).rgb;
+    vec3 prefiltered = textureLod(uSkybox, SampleSphericalMap(R), roughness*uMaxReflectionLod).rgb;
     vec3 ambientSpecular = prefiltered*Fr*uReflectionIntensity;
 
     float ambientShadow = shadow*shadowFacing;
@@ -322,7 +322,9 @@ void main() {
     // color = pow(color, vec3(1.0 / 2.2));
     // FragColor = vec4(SampleIrradianceSH(N), 1.0);
     // FragColor = vec4(SampleIrradianceSH(N), alpha);
+    // FragColor = vec4(ambientDiffuse + ambientSpecular + Lo, alpha);
     FragColor = vec4(color, alpha);
+    // FragColor = vec4(vec3(1.0 - shadow), 1.0); 
     // FragColor = vec4(vec3(uEnvIntensity), 1.0);
     // FragColor = vec4(SampleIrradianceSH(N), alpha);
     // FragColor = vec4(vec3(uEnvIntensity), 1.0);
