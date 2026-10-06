@@ -32,7 +32,9 @@ public class PostProcessStack : IDisposable {
     [Hide] uint _outputFbo, _outputColor, _outputDepth;
 
     [Hide] public uint SceneColorTexture { get; private set; }
+    [Hide] public uint SceneFbo => _sceneFbo;
     [Hide] public uint OutputTexture => _outputColor;
+    [Hide] public uint OutputDepth => _outputDepth;
     /// Output of the tonemap pass, kept alive for effects that need it (the AO composite)
     [Hide] public uint TonemappedTexture { get; private set; }
 
@@ -301,7 +303,7 @@ public class PostProcessStack : IDisposable {
         DeleteTexture(_sceneColor);
         DeleteTexture(_sceneDepth);
 
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 3; i++) {
             DeleteFramebuffer(_pingFbo[i]);
             DeleteTexture(_pingColor[i]);
             _pingFbo[i] = 0;
@@ -314,6 +316,7 @@ public class PostProcessStack : IDisposable {
         DeleteTexture(_sceneNormal);
         DeleteTexture(_pingDepth0);
         DeleteTexture(_pingDepth1);
+        DeleteTexture(_pingDepth2);
 
         _sceneFbo = 0;
         _sceneColor = 0;
@@ -324,6 +327,7 @@ public class PostProcessStack : IDisposable {
         _outputDepth = 0;
         _pingDepth0 = 0;
         _pingDepth1 = 0;
+        _pingDepth2 = 0;
     }
 
     static void DeleteFramebuffer (uint id) {

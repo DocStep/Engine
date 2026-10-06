@@ -28,10 +28,10 @@ public class PostProcessPass {
         Material.shader.SetInt(Shader.uDepth, 1);
 
         // Bind scene normal texture only when the shader actually expects it (avoid unit collisions)
-        if (Material.shader.ActiveUniforms.ContainsKey("uNormal")) {
+        if (Material.shader.ActiveUniforms.ContainsKey(Shader.uNormal)) {
             Renderer.GL.ActiveTexture(TextureUnit.Texture2);
             Renderer.GL.BindTexture(TextureTarget.Texture2D, Renderer.Instance.PostProcess.SceneNormalTexture);
-            Material.shader.SetInt("uNormal", 2);
+            Material.shader.SetInt(Shader.uNormal, 2);
         }
 
         OnApply?.Invoke(Material.shader);
