@@ -65,8 +65,11 @@ public class ShadowMap : IDisposable {
         Bias = worldBias*0.5f/(far - near); /// metres -> stored depth (z is mapped to 0.5..1)
     }
 
+    int _prevFbo;
+
     public void Begin () {
         GL gl = Renderer.GL;
+        gl.GetInteger(GLEnum.DrawFramebufferBinding, out _prevFbo);
         gl.BindFramebuffer(FramebufferTarget.Framebuffer, Fbo);
         gl.Viewport(0, 0, (uint)Size, (uint)Size);
         gl.Disable(EnableCap.ScissorTest);
@@ -83,9 +86,10 @@ public class ShadowMap : IDisposable {
     public void End () {
         GL gl = Renderer.GL;
         gl.Disable(EnableCap.DepthClamp);
-        gl.ColorMask(true, true, true, true);
-        gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         gl.Disable(EnableCap.PolygonOffsetFill);
+        gl.ColorMask(true, true, true, true);
+        gl.BindFramebuffer(FramebufferTarget.Framebuffer, (uint)_prevFbo);
+        gl.Viewport(0, 0, (uint)Renderer.Instance.Width, (uint)Renderer.Instance.Height);
     }
 
     public void Dispose () {

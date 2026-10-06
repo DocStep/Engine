@@ -171,7 +171,7 @@ public static class Lighting {
         Renderer.GL.ActiveTexture(TextureUnit.Texture0);
 
         /// metal reflection: 0 with no sun, capped at 1 (test hack, replace with time of day later)
-        float envReflection = Math.Clamp(sunLightIntensityAvg, 0f, 1f);
+        float envReflection = sunLightIntensityAvg;
         shader.SetFloat(uReflectionIntensity, Constants.renderSkyboxReflection ? Constants.reflectionIntensity*envReflection : 0f);
 
         if (Renderer.Instance.Skybox.HdrTexture is not null) {

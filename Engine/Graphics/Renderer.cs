@@ -38,6 +38,7 @@ public class Renderer {
 
         PostProcess = new PostProcessStack() {
             Tonemap = new PostProcessPass(_mat_Tonemap) {
+                //Ldr = true,
                 OnApply = shader => {
                     shader.SetFloat(uExposure, Camera!.Exposure);
                     shader.SetInt(uTonemapMode, (int)Camera!.TonemapMode);
@@ -46,6 +47,7 @@ public class Renderer {
         };
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Grayscale));
+        //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
         PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO) { Ldr = true, });
         PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO_Blur) { Ldr = true, });
         PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO_Composite) { Ldr = true, });
@@ -257,6 +259,8 @@ public class Renderer {
                 PostProcess.EndNormalOutput();
                 //Log.log("EndNormalOutput");
                 normalsOn = false;
+
+                //PostProcess.DebugReadDepth(PostProcess.SceneFbo, Width/2, Height/2);
             }
             //Log.log("RenderInfo", first.material.Pass);
 
