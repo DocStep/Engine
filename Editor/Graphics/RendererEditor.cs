@@ -211,8 +211,10 @@ public class RendererEditor : Renderer {
 
         /// Trig depends on one axis only, so compute it once per row/column
         for (int i = 0; i < total; i++) {
-            _gridSinX[i] = 0.25f*MathF.Sin(i*step + offsetX + t);
-            _gridCosZ[i] = MathF.Cos(i*step + offsetZ + t);
+            //_gridSinX[i] = 0.25f*MathF.Sin(i*step + offsetX + t);
+            //_gridCosZ[i] = MathF.Cos(i*step + offsetZ + t);
+            _gridSinX[i] = 0;
+            _gridCosZ[i] = 0;
         }
 
         Matrix4x4 model = Matrix4x4.Identity;

@@ -43,11 +43,11 @@ public class AssetsEngine : Singleton<AssetsEngine> {
             "src/Shaders/IBLPrefilter_Fragment.shader", "IBLPrefilter", isLit: false);
         _mat_Skybox = new MaterialSkybox(_sh_Skybox);
         _mat_Skybox.Save("src/Materials/Skybox.mat");
-        _hdr_Skybox = Assets.Load<HdrTexture>("src/HDR/autumn_field_puresky_4k.hdr");
-        //_hdr_Skybox = new HdrTexture("src/HDR/rogland_clear_night_4k.hdr");
-        //_hdr_Skybox = new HdrTexture("src/HDR/grasslands_sunset_4k.hdr");
-        //_hdr_Skybox = new HdrTexture("src/HDR/overcast_soil_puresky_4k.hdr");
-        //_hdr_Skybox = new HdrTexture("src/HDR/qwantani_dusk_2_puresky_4k.hdr");
+        //_hdr_Skybox = Assets.Load<HdrTexture>("src/HDR/autumn_field_puresky_4k.hdr");
+        //_hdr_Skybox = Assets.Load<HdrTexture>("src/HDR/qwantani_dusk_2_puresky_4k.hdr");
+        _hdr_Skybox = Assets.Load<HdrTexture>("src/HDR/rogland_clear_night_4k.hdr");
+        //_hdr_Skybox = Assets.Load<HdrTexture>("src/HDR/grasslands_sunset_4k.hdr");
+        //_hdr_Skybox = Assets.Load<HdrTexture>("src/HDR/overcast_soil_puresky_4k.hdr");
 
 
         _sh_Reflection = new Shader("src/Shaders/Lit_Vertex.shader", 

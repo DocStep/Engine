@@ -39,7 +39,7 @@ public static class Constants {
     public static float Ambient_Intensity = 0.1f;
 
     public static Vector3 Light_Color = new Vector3(1f, 1f, 1f);
-    public static float Light_Intensity = 2f;
+    public static float Light_Intensity = 1f;
 
     public static Vector3 SunLight_Euler = new Vector3(60f, -30f, 0);
     public static float PointLight_Radius = 5f;

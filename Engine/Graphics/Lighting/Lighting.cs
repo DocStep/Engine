@@ -4,6 +4,8 @@ using static Engine.Graphics.Shader;
 
 namespace Engine.Graphics;
 
+public enum AmbientMode { Color, Gradient, Skybox }
+
 
 public static class Lighting {
 
@@ -28,6 +30,12 @@ public static class Lighting {
     [Range(0, int.MaxValue)] public static int SunLights_Max = 32;
     [Range(0, int.MaxValue)] public static int PointLights_Max = 32;
 
+    public static AmbientMode Ambient = AmbientMode.Color;
+    public static Vector3 AmbientColor = new Vector3(0.2f, 0.225f, 0.25f);
+    public static Vector3 AmbientTop = new Vector3(0.5f, 0.7f, 1f);
+    public static Vector3 AmbientMiddle = new Vector3(0.4f, 0.4f, 0.4f);
+    public static Vector3 AmbientBottom = new Vector3(0.15f, 0.12f, 0.1f);
+    [Range(0, 1)] public static float AmbientIntensity = 1f;
 
 
     public static void RegisterLightSource (LightSource lightSource) {
@@ -152,9 +160,25 @@ public static class Lighting {
         //shader.SetFloat(uEnvIntensity, sunLightIntensityAvg/Constants.Light_Intensity);
         shader.SetFloat(uEnvIntensity, sunLightIntensityAvg);
         //if (sunLightIntensityAvg != 5) 
-            //Log.log("sunLightIntensityAvg", sunLightIntensityAvg);
+        //Log.log("sunLightIntensityAvg", sunLightIntensityAvg);
         //shader.SetVector3(uAmbientColor, Constants.Ambient_Color);
         //shader.SetFloat(uAmbientColorIntensity, Constants.Ambient_Intensity);
+
+        shader.SetInt(uAmbientMode, (int)Ambient);
+        shader.SetVector3(uAmbientColor, AmbientColor);
+        shader.SetVector3(uAmbientTop, AmbientTop);
+        shader.SetVector3(uAmbientMiddle, AmbientMiddle);
+        shader.SetVector3(uAmbientBottom, AmbientBottom);
+        shader.SetFloat(uAmbientIntensity, AmbientIntensity*sunLightIntensityAvg);
+
+        /// metal reflection: 0 with no sun, capped at 1 (test hack, replace with time of day later)
+        float envReflection = sunLightIntensityAvg;
+        shader.SetFloat(uReflectionIntensity, Constants.renderSkyboxReflection ? Constants.reflectionIntensity*envReflection : 0f);
+
+        if (Ambient == AmbientMode.Skybox && Renderer.Instance.Skybox.HdrTexture is not null) {
+            SetSHAmbient(shader, renderer.Skybox.Probe);
+        }
+
 
         /// Shadows: always bound, even when off, so the samplers never fall back to unit 0 (skybox)
         renderer.Shadow.Bind(TextureUnit.Texture5);
@@ -169,14 +193,6 @@ public static class Lighting {
         renderer.PointShadows.Bind(TextureUnit.Texture6);
         shader.SetInt(uPointShadowMap, 6);
         Renderer.GL.ActiveTexture(TextureUnit.Texture0);
-
-        /// metal reflection: 0 with no sun, capped at 1 (test hack, replace with time of day later)
-        float envReflection = sunLightIntensityAvg;
-        shader.SetFloat(uReflectionIntensity, Constants.renderSkyboxReflection ? Constants.reflectionIntensity*envReflection : 0f);
-
-        if (Renderer.Instance.Skybox.HdrTexture is not null) {
-            SetSHAmbient(shader, renderer.Skybox.Probe);
-        }
     }
 
     public static void SetSHAmbient (Shader shader, in SHAmbientProbe probe) {

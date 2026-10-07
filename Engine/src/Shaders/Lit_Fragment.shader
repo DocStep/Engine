@@ -59,6 +59,13 @@ uniform sampler2D uSkybox; // equirectangular; mip chain = pre-blurred roughness
 uniform float uMaxReflectionLod = 1.0;
 uniform float uReflectionIntensity = 1.0;
 
+uniform int uAmbientMode = 2; // 0 = color, 1 = gradient, 2 = skybox (SH)
+uniform vec3 uAmbientColor = vec3(0.2);
+uniform vec3 uAmbientTop = vec3(0.5, 0.7, 1.0);
+uniform vec3 uAmbientMiddle = vec3(0.4);
+uniform vec3 uAmbientBottom = vec3(0.15);
+uniform float uAmbientIntensity = 1.0;
+
 // L2 spherical harmonics ambient
 uniform vec4 uSHAr;
 uniform vec4 uSHAg;
@@ -140,6 +147,16 @@ vec3 SampleIrradianceSH(vec3 N)
     return max(x1 + x2 + x3, vec3(0.0));
 }
 
+vec3 SampleAmbient(vec3 N)
+{
+    if (uAmbientMode == 0) return uAmbientColor*uAmbientIntensity;
+    if (uAmbientMode == 1) {
+        vec3 g = 0.0 < N.y ? mix(uAmbientMiddle, uAmbientTop, N.y) : mix(uAmbientMiddle, uAmbientBottom, -N.y);
+        return g*uAmbientIntensity;
+    }
+    return SampleIrradianceSH(N)*clamp(uEnvIntensity, 0.0, 1.0)*uAmbientIntensity;
+}
+
 // One directional light's contribution — needs N, V, F0, roughness shared across lights
 vec3 ComputeSunLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 albedo, float metallic)
 {
@@ -156,7 +173,7 @@ vec3 ComputeSunLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 albed
 
     float NdotL = max(dot(N, L), 0.0);
     vec3 radiance = uSunLightColor[i] * uSunLightIntensity[i];
-    return (kD * albedo / PI + specular) * radiance * NdotL;
+    return (kD * albedo + specular) * radiance * NdotL;
 }
 // One point light's contribution — position-based L, windowed inverse-square falloff
 vec3 ComputePointLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 albedo, float metallic)
@@ -181,7 +198,7 @@ vec3 ComputePointLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 alb
 
     float NdotL = max(dot(N, L), 0.0);
     vec3 radiance = uPointLightColor[i] * uPointLightIntensity[i] * falloff;
-    return (kD * albedo / PI + specular) * radiance * NdotL;
+    return (kD * albedo + specular) * radiance * NdotL;
 }
 
 // 0 = lit, 1 = fully in shadow. N and L are used only for slope-scaled bias.
@@ -295,7 +312,7 @@ void main() {
     vec3 Fr = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
     vec3 kD_ambient = (vec3(1.0) - Fr) * (1.0 - metallic);
 
-    vec3 irradiance = SampleIrradianceSH(N)*clamp(uEnvIntensity, 0.0, 1.0);
+    vec3 irradiance = SampleAmbient(N);
     vec3 ambientDiffuse = irradiance * albedo * kD_ambient;
 
     vec3 R = reflect(-V, N);
@@ -307,26 +324,8 @@ void main() {
     ambientDiffuse *= 1.0 - ambientShadow*uShadowAmbientDiffuse;
 
     vec3 color = ambientDiffuse + ambientSpecular + Lo;
-    // vec3 color = ambientSpecular;
-    // vec3 color = albedo;
-
-    // Exposure + luminance-preserving Reinhard + gamma.
-    // Tonemapping luminance (not per-channel) keeps hue/saturation intact at high intensity.
-    // Skip the final pow() if your framebuffer is sRGB-enabled already, or you'll double-correct.
-    // color *= uExposure;
-
-    // float luminance = dot(color, vec3(0.2126, 0.7152, 0.0722));
-    // float toneMappedLuminance = luminance / (1.0 + luminance);
-    // color *= (luminance > 0.0) ? (toneMappedLuminance / luminance) : 0.0;
-
-    // color = pow(color, vec3(1.0 / 2.2));
-    // FragColor = vec4(SampleIrradianceSH(N), 1.0);
-    // FragColor = vec4(SampleIrradianceSH(N), alpha);
-    // FragColor = vec4(ambientDiffuse + ambientSpecular + Lo, alpha);
+    
+    color = pow(color, vec3(1.0 / 2.2));
     FragColor = vec4(color, alpha);
-    // FragColor = vec4(vec3(1.0 - shadow), 1.0); 
-    // FragColor = vec4(vec3(uEnvIntensity), 1.0);
-    // FragColor = vec4(SampleIrradianceSH(N), alpha);
-    // FragColor = vec4(vec3(uEnvIntensity), 1.0);
     FragNormal = vec4(vViewNormal, 1.0); // write view-space normal to MRT attachment 1
 }
