@@ -48,8 +48,8 @@ uniform mat4 uLightSpace;
 uniform float uShadowTexelWorld;
 uniform float uShadowBias = 0.0;
 uniform float uShadowNormalOffset = 3.0;
-uniform float uShadowAmbientDiffuse = 0.6;
-uniform float uShadowAmbientSpecular = 0.8; // 0 = off, 1 = reflection fully black in shadow
+//uniform float uShadowAmbientDiffuse = 0.0;
+//uniform float uShadowAmbientSpecular = 0.0; // 0 = off, 1 = reflection fully black in shadow
 
 uniform vec3 uViewPos;
 
@@ -290,16 +290,22 @@ void main() {
     float shadowFacing = 0.0;
     vec3 Lo = vec3(0.0);
     for (int i = 0; i < uSunLightCount; i++) {
-        vec3 sun = ComputeSunLight(i, N, V, F0, roughness, albedo, metallic);
-        vec3 Ls = normalize(-uSunLightDir[i]);
-        if (0.0 < uSunShadow[i] && 0.0 < dot(N, Ls)) {
+    vec3 sun = ComputeSunLight(i, N, V, F0, roughness, albedo, metallic);
+    vec3 Ls = normalize(-uSunLightDir[i]);
+    float facing = dot(N, Ls);
+    if (0.0 < uSunShadow[i]) {
+        if (0.0 < facing) {
             float s = ShadowFactor(N, Ls)*uSunShadow[i];
             sun *= 1.0 - s;
             shadow = max(shadow, s);
-            shadowFacing = max(shadowFacing, smoothstep(0.0, 0.25, dot(N, Ls)));
+            shadowFacing = max(shadowFacing, smoothstep(0.0, 0.25, facing));
+        } else {
+            shadow = max(shadow, uSunShadow[i]);
+            shadowFacing = 1.0;
         }
-        Lo += sun;
     }
+    Lo += sun;
+}
     for (int i = 0; i < uPointLightCount; i++) {
         vec3 pl = ComputePointLight(i, N, V, F0, roughness, albedo, metallic);
         if (0.0 <= uPointShadowSlot[i]) {
@@ -320,12 +326,13 @@ void main() {
     vec3 ambientSpecular = prefiltered*Fr*uReflectionIntensity;
 
     float ambientShadow = shadow*shadowFacing;
-    ambientSpecular *= 1.0 - ambientShadow*uShadowAmbientSpecular;
-    ambientDiffuse *= 1.0 - ambientShadow*uShadowAmbientDiffuse;
+    // ambientSpecular *= 1.0 - ambientShadow*uShadowAmbientSpecular;
+    // ambientDiffuse *= 1.0 - ambientShadow*uShadowAmbientDiffuse;
 
     vec3 color = ambientDiffuse + ambientSpecular + Lo;
     
     color = pow(color, vec3(1.0 / 2.2));
     FragColor = vec4(color, alpha);
+    // FragColor = vec4(vec3(Lo), alpha);
     FragNormal = vec4(vViewNormal, 1.0); // write view-space normal to MRT attachment 1
 }

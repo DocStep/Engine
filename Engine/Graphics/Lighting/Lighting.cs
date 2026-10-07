@@ -35,7 +35,7 @@ public static class Lighting {
     public static Vector3 AmbientTop = new Vector3(0.5f, 0.7f, 1f);
     public static Vector3 AmbientMiddle = new Vector3(0.4f, 0.4f, 0.4f);
     public static Vector3 AmbientBottom = new Vector3(0.15f, 0.12f, 0.1f);
-    [Range(0, 1)] public static float AmbientIntensity = 1f;
+    [Range(0, 1)] public static float AmbientIntensity = 1.0f;
 
 
     public static void RegisterLightSource (LightSource lightSource) {
