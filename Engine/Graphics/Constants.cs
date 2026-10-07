@@ -46,7 +46,6 @@ public static class Constants {
 
     public static bool renderSkybox { get; private set; } = true;
     public static bool renderSkyboxReflection { get; private set; } = true;
-    public static float reflectionIntensity = 1f;
 	
     public static bool useLOD = false;
 

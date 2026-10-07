@@ -113,7 +113,7 @@ public class Skybox : IDisposable {
             prefilterShader.SetFloat("uResolutionY", source.Height);
             int samples = roughness < 0.3f ? 128 : roughness < 0.6f ? 512 : 1024;
             prefilterShader.SetInt("uSampleCount", samples); // or SetInt if you have no uint setter
-            prefilterShader.SetFloat("uFireflyClamp", 1000f);
+            //prefilterShader.SetFloat("uFireflyClamp", 1000000f);
             gl.BindVertexArray(_emptyVao);
             gl.DrawArrays(PrimitiveType.Triangles, 0, 3);
             Renderer.Instance.Stats.DrawCalls++;

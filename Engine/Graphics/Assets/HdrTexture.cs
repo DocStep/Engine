@@ -32,6 +32,14 @@ public class HdrTexture : IAsset<HdrTexture> {
             Height = height,
             Path = path,
         };
+        //float max = 0f; double sum = 0; int over = 0;
+        //for (int i = 0; i < data.Length; i += 3) {
+        //    float l = data[i]*0.2126f + data[i + 1]*0.7152f + data[i + 2]*0.0722f;
+        //    if (max < l) max = l;
+        //    if (1000f < l) over++;
+        //    sum += l;
+        //}
+        //Log.log($"{tex.Name}: maxLum={max}, meanLum={sum/(width*height)}, texels>1000={over}", LogType.info);
 
         tex.Handle = gl.GenTexture();
         gl.BindTexture(TextureTarget.Texture2D, tex.Handle);

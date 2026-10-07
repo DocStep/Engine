@@ -36,7 +36,7 @@ public static class Lighting {
     public static Vector3 AmbientMiddle = new Vector3(0.4f, 0.4f, 0.4f);
     public static Vector3 AmbientBottom = new Vector3(0.15f, 0.12f, 0.1f);
     [Range(0, 1)] public static float AmbientIntensity = 1.0f;
-
+    [Range(0, 1)] public static float ReflectionIntensity = 1f;
 
     public static void RegisterLightSource (LightSource lightSource) {
         LightSources.Add(lightSource);
@@ -169,11 +169,11 @@ public static class Lighting {
         shader.SetVector3(uAmbientTop, AmbientTop);
         shader.SetVector3(uAmbientMiddle, AmbientMiddle);
         shader.SetVector3(uAmbientBottom, AmbientBottom);
-        shader.SetFloat(uAmbientIntensity, AmbientIntensity*sunLightIntensityAvg);
+        shader.SetFloat(uAmbientIntensity, AmbientIntensity);
 
         /// metal reflection: 0 with no sun, capped at 1 (test hack, replace with time of day later)
         float envReflection = sunLightIntensityAvg;
-        shader.SetFloat(uReflectionIntensity, Constants.renderSkyboxReflection ? Constants.reflectionIntensity*envReflection : 0f);
+        shader.SetFloat(uReflectionIntensity, Constants.renderSkyboxReflection ? ReflectionIntensity*envReflection : 0f);
 
         if (Ambient == AmbientMode.Skybox && Renderer.Instance.Skybox.HdrTexture is not null) {
             SetSHAmbient(shader, renderer.Skybox.Probe);
