@@ -116,10 +116,13 @@ public class Shader : IAsset<Shader> {
         uPointLightCount, uPointLightColor, uPointLightIntensity, uPointLightPos, uPointLightRange,
         uSkybox, uEnvMap, uRoughness, uMaxReflectionLod,
         uEnvIntensity,
-        uAmbientColor, uAmbientColorIntensity, uReflectionIntensity,
+        uAmbientMode, 
+        uAmbientColor, uAmbientColorIntensity, 
+        uAmbientTop, uAmbientMiddle, uAmbientBottom, uAmbientIntensity, 
+        uReflectionIntensity,
         uSHAr, uSHAg, uSHAb, uSHBr, uSHBg, uSHBb, uSHC,
 
-        uSunShadow, uPointShadowSlot,
+        uSunShadow, uPointShadowSlot, uPointShadowMap,
         uShadowMap, uLightSpace, uShadowTexelWorld, uShadowBias, uShadowNormalOffset,
         uShadowAmbientSpecular, uShadowAmbientDiffuse,
 

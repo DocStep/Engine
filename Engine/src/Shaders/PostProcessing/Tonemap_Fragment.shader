@@ -82,7 +82,7 @@ void main () {
 
     const float saturation = 0.9;
     float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
-    color = mix(vec3(luma), color, saturation); /// 1.0 = original, 0.0 = grayscale
+    // color = mix(vec3(luma), color, saturation);
 
     FragColor = vec4(color, sceneColor.a);
 }
