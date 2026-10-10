@@ -16,6 +16,8 @@ in vec3 vViewNormal;
 #define MAX_POINT_LIGHTS 32
 
 const float PI = 3.14159265;
+const float uSunAngularRadius = 0.0047; /// radians, smallest highlight size (real sun is ~0.0047)
+const float uPointLightSourceRadius = 0.05; /// world units, smallest highlight size (bigger = bigger, softer highlight)
 
 uniform vec3 uColor = vec3(1.0);
 uniform sampler2D uTexture;
@@ -48,8 +50,6 @@ uniform mat4 uLightSpace;
 uniform float uShadowTexelWorld;
 uniform float uShadowBias = 0.0;
 uniform float uShadowNormalOffset = 3.0;
-//uniform float uShadowAmbientDiffuse = 0.0;
-//uniform float uShadowAmbientSpecular = 0.0; // 0 = off, 1 = reflection fully black in shadow
 
 uniform vec3 uViewPos;
 
@@ -77,7 +77,7 @@ uniform vec4 uSHC;
 
 
 layout (location = 0) out vec4 FragColor;
-layout (location = 1) out vec4 FragNormal;
+layout (location = 1) out vec3 FragNormal;
 
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -88,6 +88,15 @@ float DistributionGGX(vec3 N, vec3 H, float roughness)
     float NdotH2 = NdotH * NdotH;
     float denom = NdotH2 * (a2 - 1.0) + 1.0;
     return a2 / (PI * denom * denom + 1e-7);
+}
+
+/// GGX, precise cross-product form, alpha = roughness*roughness
+float DistributionGGXSun(vec3 N, vec3 H, float alpha)
+{
+    float NdotH = clamp(dot(N, H), 0.0, 1.0);
+    vec3 NxH = cross(N, H);
+    float k = alpha / (dot(NxH, NxH) + NdotH*NdotH*alpha*alpha);
+    return k*k / PI;
 }
 
 float GeometrySchlickGGX(float NdotV, float roughness)
@@ -163,7 +172,10 @@ vec3 ComputeSunLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 albed
     vec3 L = normalize(-uSunLightDir[i]);
     vec3 H = normalize(V + L);
 
-    float NDF = DistributionGGX(N, H, roughness);
+    /// sun is a disc, not a point: widen the lobe by its size so the highlight stops shrinking
+    float alpha = clamp(roughness*roughness + 0.5*uSunAngularRadius, 0.0, 1.0);
+
+    float NDF = DistributionGGXSun(N, H, alpha);
     float G = GeometrySmith(N, V, L, roughness);
     vec3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
 
@@ -173,6 +185,7 @@ vec3 ComputeSunLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 albed
 
     float NdotL = max(dot(N, L), 0.0);
     vec3 radiance = uSunLightColor[i] * uSunLightIntensity[i];
+    // return (kD * albedo + specular) * radiance * NdotL;
     return (kD * albedo + specular) * radiance * NdotL;
 }
 // One point light's contribution — position-based L, windowed inverse-square falloff
@@ -180,25 +193,29 @@ vec3 ComputePointLight(int i, vec3 N, vec3 V, vec3 F0, float roughness, vec3 alb
 {
     vec3 toLight = uPointLightPos[i] - vFragPos;
     float dist = length(toLight);
-    vec3 L = toLight / max(dist, 1e-4);
+    vec3 L = toLight/max(dist, 1e-4);
     vec3 H = normalize(V + L);
 
-    float NDF = DistributionGGX(N, H, roughness);
+    /// light is a small sphere, not a point: widen the lobe by its angular size so the highlight stops shrinking
+    float angularRadius = uPointLightSourceRadius/max(dist, 1e-4);
+    float alpha = clamp(roughness*roughness + 0.5*angularRadius, 0.0, 1.0);
+
+    float NDF = DistributionGGXSun(N, H, alpha);
     float G = GeometrySmith(N, V, L, roughness);
     vec3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
 
-    vec3 specular = (NDF * G * F) /
-        (4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 1e-4);
-    vec3 kD = (vec3(1.0) - F) * (1.0 - metallic);
+    vec3 specular = (NDF*G*F) /
+        (4.0*max(dot(N, V), 0.0)*max(dot(N, L), 0.0) + 1e-4);
+    vec3 kD = (vec3(1.0) - F)*(1.0 - metallic);
 
-    // Squared-distance falloff windowed to zero at uPointLightRange[i] (Karis-style)
+    /// Squared-distance falloff windowed to zero at uPointLightRange[i] (Karis-style)
     float range = max(uPointLightRange[i], 1e-4);
-    float window = clamp(1.0 - pow(dist / range, 4.0), 0.0, 1.0);
-    float falloff = (window * window) / (dist * dist + 1.0);
+    float window = clamp(1.0 - pow(dist/range, 4.0), 0.0, 1.0);
+    float falloff = (window*window)/(dist*dist + 1.0);
 
     float NdotL = max(dot(N, L), 0.0);
-    vec3 radiance = uPointLightColor[i] * uPointLightIntensity[i] * falloff;
-    return (kD * albedo + specular) * radiance * NdotL;
+    vec3 radiance = uPointLightColor[i]*uPointLightIntensity[i]*falloff;
+    return (kD*albedo + specular)*radiance*NdotL;
 }
 
 // 0 = lit, 1 = fully in shadow. N and L are used only for slope-scaled bias.
@@ -333,5 +350,5 @@ void main() {
     
     // FragColor = vec4(vNormal01, 1);
     FragColor = vec4(color, alpha);
-    FragNormal = vec4(vViewNormal, 1.0); // write view-space normal to MRT attachment 1
+    FragNormal = vViewNormal; // write view-space normal to MRT attachment 1
 }

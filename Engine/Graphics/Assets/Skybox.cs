@@ -69,7 +69,7 @@ public class Skybox : IDisposable {
         float[] data;
         int w, h;
         try {
-            HdrLoader.Load(HdrTexture.Path, out data, out w, out h);
+            HdrLoader.Load(HdrTexture.Path, out data, out w, out h, mirrorX: true, maxValue: 0f);
         } catch (Exception e) {
             Log.log($"BakeSky failed for \"{HdrTexture.Path}\": {e.Message}", LogType.warning);
             return;
@@ -240,7 +240,9 @@ public class Skybox : IDisposable {
             float dOmega = MathF.Cos(lat)*(MathF.PI/h)*(2f*MathF.PI/w);
             for (int i = 0; i < w; i++) {
                 float phi = ((i + 0.5f)/w - 0.5f)*2f*MathF.PI;
-                float x = MathF.Cos(lat)*MathF.Cos(phi), y = MathF.Sin(lat), z = MathF.Cos(lat)*MathF.Sin(phi);
+                float x = MathF.Cos(lat)*MathF.Cos(phi);
+                float y = MathF.Sin(lat);
+                float z = -MathF.Cos(lat)*MathF.Sin(phi);
                 Vector3 p = pixels[j*w + i];
                 float c = channel == 0 ? p.X : channel == 1 ? p.Y : p.Z;
                 float wgt = c*dOmega;

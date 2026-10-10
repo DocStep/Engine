@@ -8,7 +8,7 @@ const float knee = 1.0;
 uniform mat4 uView;
 uniform mat4 uProjection;
 uniform sampler2D uTexture;
-uniform float uExposure = 0.5; /// tune per HDR
+uniform float uExposure = 1.0; /// tune per HDR
 uniform float uBlurScale = 0.0;
 
 out vec4 FragColor;

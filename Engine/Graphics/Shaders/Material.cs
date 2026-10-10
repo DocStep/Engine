@@ -129,9 +129,10 @@ public class Material : IAsset<Material>, IOnLoaded {
         return this;
     }
 
-
     public T Get<T> (string name, T fallback = default!) =>
         uniforms.TryGetValue(name, out object? v) && v is T t ? t : fallback;
+
+    public bool Has (string name) => uniforms.ContainsKey(name);
 
     /// Newtonsoft reads object values back as long/double/JObject.
     /// Convert each one to the type the shader declares.
@@ -153,6 +154,7 @@ public class Material : IAsset<Material>, IOnLoaded {
     private bool CheckUniform (string name) {
         if (shader.ActiveUniforms.ContainsKey(name)) return true;
         Log.log($"Material '{Name}': shader has no uniform '{name}'", LogType.warning);
+        Log.log(new System.Diagnostics.StackTrace());
         return false;
     }
 

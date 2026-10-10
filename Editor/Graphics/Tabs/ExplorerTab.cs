@@ -14,7 +14,11 @@ public class ExplorerTab : IEditorTab {
 
     public void Draw () {
         ImGui.Begin("Explorer");
+
+        EditorUI.DrawTabContext(this);
+
         DrawDirectory(Dirs.AssetsPath);
+
         ImGui.End();
     }
 

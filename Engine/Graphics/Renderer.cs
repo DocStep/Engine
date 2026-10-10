@@ -30,8 +30,7 @@ public class Renderer {
         gl.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
 
         Skybox = new Skybox(_tex_Skybox);
-
-        //SetTargetSize(Windows.Window.Size.X, Windows.Window.Size.Y);
+        //Skybox = new Skybox(_hdr_Skybox);
 
         Shadow = new ShadowMap(2048);
         PointShadows = new PointShadowMap();
@@ -81,7 +80,7 @@ public class Renderer {
 
     public Action? de_Dispose = null;
 
-    public readonly Skybox Skybox = null!;
+    public readonly Skybox? Skybox = null!;
 
     public ShadowMap Shadow = null!;
     public PointShadowMap PointShadows = null!;
@@ -141,7 +140,7 @@ public class Renderer {
 
         PostProcess.BeginScene();
 
-        Skybox.Draw();
+        Skybox?.Draw();
 
         DrawSceneAll();
 
@@ -347,7 +346,8 @@ public class Renderer {
             case RenderPass.Opaque:
             case RenderPass.Transparent:
                 SetSceneUniformsUnlit(shader, Camera!.CameraPos);
-                SetSceneUniformsSkybox(shader, Skybox.PrefilteredHandle, Skybox.MaxLod);
+                if (Skybox is not null) 
+                    SetSceneUniformsSkybox(shader, Skybox.PrefilteredHandle, Skybox.MaxLod);
                 Lighting.SetSceneUniformsLit(shader);
                 break;
             case RenderPass.UI:
@@ -505,7 +505,7 @@ public class Renderer {
 
         TextRenderer.Dispose();
 
-        Skybox.Dispose();
+        Skybox?.Dispose();
         PostProcess.Dispose();
 
         de_Dispose?.Invoke();

@@ -23,7 +23,9 @@ void main() {
     vec3 R = reflect(-V, N);
 
     /// linear HDR out, tonemap pass does exposure, tonemap and gamma
-    vec3 color = textureLod(uSkybox, SampleSphericalMap(R), 0.0).rgb;
+    // vec3 color = textureLod(uSkybox, SampleSphericalMap(R), 0.0).rgb;
+    vec2 uv = SampleSphericalMap(R);
+    vec3 color = textureLod(uSkybox, uv, 0.0).rgb;
 
     FragColor = vec4(color, 1.0);
     FragNormal = vec4(vViewNormal, 1.0);

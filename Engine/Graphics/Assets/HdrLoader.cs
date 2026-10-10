@@ -8,7 +8,7 @@ namespace Engine.Graphics;
 /// ready to upload as a GL texture; no cubemap conversion happens here,
 /// the image stays equirectangular.
 public static class HdrLoader {
-    public static void Load (string path, out float[] Data, out int Width, out int Height) {
+    public static void Load (string path, out float[] Data, out int Width, out int Height, bool mirrorX = true, float maxValue = 64f) {
         using FileStream stream = File.OpenRead(path);
 
         Width = Height = 0;

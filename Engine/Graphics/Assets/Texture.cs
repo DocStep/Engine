@@ -1,6 +1,9 @@
-﻿using Silk.NET.OpenGL;
+﻿using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using Silk.NET.OpenGL;
 using StbImageSharp;
 using Newtonsoft.Json;
+using System.Diagnostics;
 
 namespace Engine.Graphics;
 
@@ -84,15 +87,28 @@ public class Texture : IAsset<Texture> {
     public static Texture Load (string path, int part = 100) => LoadImage(path);
     
     /// Loads an image with options: sRGB decode, vertical flip, mipmaps.
-    public static Texture LoadImage (string path, bool srgb = false, bool flipY = false, bool mips = false) {
+    public static Texture LoadImage (string path, bool srgb = false, bool flipY = false, bool mips = false, bool mirrorX = false) {
         GL gl = Renderer.GL;
 
         Texture tex = new Texture { Name = System.IO.Path.GetFileName(path), Path = path };
+
+        //long ms1 = Stopwatch.GetTimestamp();
 
         StbImage.stbi_set_flip_vertically_on_load(flipY ? 1 : 0); /// static flag, always set it explicitly
         using FileStream stream = File.OpenRead(path);
         ImageResult image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
         StbImage.stbi_set_flip_vertically_on_load(0);
+
+        //long ms2 = Stopwatch.GetTimestamp();
+
+        //if (mirrorX) {
+        //    int w = image.Width, h = image.Height;
+        //    byte[] bytes = image.Data;
+        //    Parallel.For(0, h, y => {
+        //        Span<uint> row = MemoryMarshal.Cast<byte, uint>(bytes.AsSpan(y*w*4, w*4));
+        //        row.Reverse();
+        //    });
+        //}
 
         tex.Handle = gl.GenTexture();
         tex.Width = image.Width;
@@ -116,6 +132,10 @@ public class Texture : IAsset<Texture> {
         if (mips) gl.GenerateMipmap(TextureTarget.Texture2D);
 
         gl.BindTexture(TextureTarget.Texture2D, 0);
+
+        //long ms3 = Stopwatch.GetTimestamp();
+        //Log.log("LoadImage", path, Stopwatch.GetElapsedTime(ms1, ms2).TotalMilliseconds, Stopwatch.GetElapsedTime(ms2, ms3).TotalMilliseconds);
+
         return tex;
     }
 
