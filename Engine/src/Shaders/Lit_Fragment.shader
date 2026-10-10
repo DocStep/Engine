@@ -331,15 +331,7 @@ void main() {
 
     vec3 color = ambientDiffuse + ambientSpecular + Lo;
     
-    // color = pow(color, vec3(1.0 / 2.2));
-    // color = textureLod(uSkybox, SampleSphericalMap(-V), 0.0).rgb;
-    // FragColor = vec4(normalize(vec3(0.5*vNormal + vec3(0.5, 0.5, 0.5))), 1);
-    // FragColor = vec4(color, 1);
-    vec3 vNormal01 = vNormal*0.5 + 0.5;
-    // FragColor = vec4(pow(vNormal01, vec3(2.2)), 1);
     // FragColor = vec4(vNormal01, 1);
-    FragColor = vec4(vNormal, 1);
-    // FragColor = vec4(ambientSpecular, alpha);
-    // FragColor = vec4(vec3(Lo), alpha);
+    FragColor = vec4(color, 1);
     FragNormal = vec4(vViewNormal, 1.0); // write view-space normal to MRT attachment 1
 }

@@ -41,16 +41,18 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _sh_Skybox.Save("src/Shaders/Skybox.shader");
         _sh_IBLPrefilter = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader",
             "src/Shaders/IBLPrefilter_Fragment.shader", "IBLPrefilter", isLit: false);
+        _tex_Skybox = Assets.Load<Texture>("src/Textures/autumn_field_puresky.jpg");
+        _hdr_Skybox = Assets.Load<HdrTexture>("src/Textures/HDR/autumn_field_puresky_4k.hdr")!;
+        //_hdr_Skybox = Assets.Load<HdrTexture>("src/Textures/HDR/qwantani_dusk_2_puresky_4k.hdr");
+        //_hdr_Skybox = Assets.Load<HdrTexture>("src/Textures/HDR/rogland_clear_night_4k.hdr");
+        //_hdr_Skybox = Assets.Load<HdrTexture>("src/Textures/HDR/grasslands_sunset_4k.hdr");
+        //_hdr_Skybox = Assets.Load<HdrTexture>("src/Textures/HDR/overcast_soil_puresky_4k.hdr");
+        _hdr_Skybox.Exposure = 0.5f;
+        _hdr_Skybox.Save("src/Textures/HDR/Skybox.hdrf");
         _mat_Skybox = new MaterialSkybox(_sh_Skybox);
         _mat_Skybox.Save("src/Materials/Skybox.mat");
-        _tex_Skybox = Assets.Load<Texture>("src/Images/autumn_field_puresky.jpg");
-        _hdr_Skybox = Assets.Load<HdrTexture>("src/HDR/autumn_field_puresky_4k.hdr");
-        //_hdr_Skybox = Assets.Load<HdrTexture>("src/HDR/qwantani_dusk_2_puresky_4k.hdr");
-        //_hdr_Skybox = Assets.Load<HdrTexture>("src/HDR/rogland_clear_night_4k.hdr");
-        //_hdr_Skybox = Assets.Load<HdrTexture>("src/HDR/grasslands_sunset_4k.hdr");
-        //_hdr_Skybox = Assets.Load<HdrTexture>("src/HDR/overcast_soil_puresky_4k.hdr");
-        _hdr_Skybox.Exposure = 0.5f;
-        _hdr_Skybox.Save("src/HDR/Skybox.hdr");
+        _mat_SkyboxHdr = new MaterialSkybox(_sh_Skybox);
+        _mat_SkyboxHdr.Save("src/Materials/SkyboxHdr.mat");
 
         _sh_Reflection = new Shader("src/Shaders/Lit_Vertex.shader", 
             "src/Shaders/Reflection_Fragment.shader", "Reflection", isLit: false);
@@ -198,9 +200,9 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         //_mat_CameraFocus.SetVector2("uTexelSize", new Vector2(1f/Renderer.Instance.Width, 1f/Renderer.Instance.Height));
         _mat_CameraFocus.Save("src/Materials/CameraFocus.mat");
 
-        _tex_Test = Texture.Load("src/Images/RGBA_Test.png");
-        _tex_White = Texture.Load("src/Images/white.png");
-        _tex_Vignette = Texture.Load("src/Images/vignette.png");
+        _tex_Test = Texture.Load("src/Textures/RGBA_Test.png");
+        _tex_White = Texture.Load("src/Textures/white.png");
+        _tex_Vignette = Texture.Load("src/Textures/vignette.png");
 
     }
 
@@ -218,6 +220,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
     public readonly static Shader _sh_Skybox = null!;
     public readonly static Shader _sh_IBLPrefilter = null!;
     public readonly static Material _mat_Skybox = null!;
+    public readonly static Material _mat_SkyboxHdr = null!;
     public readonly static Texture? _tex_Skybox = null;
     public readonly static HdrTexture? _hdr_Skybox = null;
 

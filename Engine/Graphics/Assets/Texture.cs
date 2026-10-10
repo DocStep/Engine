@@ -80,15 +80,19 @@ public class Texture : IAsset<Texture> {
 
 
 
-    /// <summary> Loads a texture from an image file (png/jpg/etc via StbImageSharp) and uploads it to the GPU. </summary>
-    public static Texture Load (string path, int part = 100) {
+    /// Interface entry point, plain RGBA8 upload.
+    public static Texture Load (string path, int part = 100) => LoadImage(path);
+    
+    /// Loads an image with options: sRGB decode, vertical flip, mipmaps.
+    public static Texture LoadImage (string path, bool srgb = false, bool flipY = false, bool mips = false) {
         GL gl = Renderer.GL;
 
-        Texture tex = new Texture();
+        Texture tex = new Texture { Name = System.IO.Path.GetFileName(path), Path = path };
 
-        //StbImage.stbi_set_flip_vertically_on_load(1);
+        StbImage.stbi_set_flip_vertically_on_load(flipY ? 1 : 0); /// static flag, always set it explicitly
         using FileStream stream = File.OpenRead(path);
         ImageResult image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
+        StbImage.stbi_set_flip_vertically_on_load(0);
 
         tex.Handle = gl.GenTexture();
         tex.Width = image.Width;
@@ -97,27 +101,26 @@ public class Texture : IAsset<Texture> {
         gl.ActiveTexture(TextureUnit.Texture0);
         gl.BindTexture(TextureTarget.Texture2D, tex.Handle);
 
+        InternalFormat format = srgb ? InternalFormat.Srgb8Alpha8 : InternalFormat.Rgba8;
         unsafe {
             fixed (byte* ptr = image.Data) {
-                gl.TexImage2D(TextureTarget.Texture2D, level: 0, InternalFormat.Rgba8, (uint)image.Width, (uint)image.Height,
+                gl.TexImage2D(TextureTarget.Texture2D, level: 0, format, (uint)image.Width, (uint)image.Height,
                     border: 0, PixelFormat.Rgba, PixelType.UnsignedByte, ptr);
             }
         }
 
         gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
-        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
-        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear); /// was LinearMipmapLinear — needs actual mips or the texture is "incomplete" (samples as black)
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)(srgb ? GLEnum.ClampToEdge : GLEnum.Repeat));
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)(mips ? GLEnum.LinearMipmapLinear : GLEnum.Linear));
         gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
-        //gl.GenerateMipmap(TextureTarget.Texture2D);
+        if (mips) gl.GenerateMipmap(TextureTarget.Texture2D);
 
         gl.BindTexture(TextureTarget.Texture2D, 0);
-
         return tex;
     }
 
-    public void Save (string path) {
+    public void Save (string path) { }
 
-    }
 
     public void Dispose () {
         Renderer.GL.DeleteTexture(Handle);

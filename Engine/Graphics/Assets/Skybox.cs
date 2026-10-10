@@ -2,15 +2,26 @@
 
 namespace Engine.Graphics;
 
+public enum SkyMode {
+    Texture = 0,
+    Hdr = 1,
+    Baked = 2,
+}
+
 
 public class Skybox : IDisposable {
-    public Skybox (HdrTexture? texture) {
+    public Skybox (Texture? texture) {
         _emptyVao = Renderer.GL.GenVertexArray();
         SetTexture(texture);
     }
+    public Skybox (HdrTexture? texture) {
+        _emptyVao = Renderer.GL.GenVertexArray();
+        SetTextureHdr(texture);
+    }
 
+    public SkyMode mode = SkyMode.Texture;
 
-    [Hide] public HdrTexture? Texture { get; private set; } = null;
+    [Hide] public Texture? Texture { get; private set; } = null;
     [Hide] public HdrTexture? HdrTexture { get; private set; } = null;
     [Hide] public SHAmbientProbe Probe { get; private set; }
     [Readonly] public float MaxLod { get; private set; }
@@ -21,8 +32,14 @@ public class Skybox : IDisposable {
 
     [Hide, Newtonsoft.Json.JsonIgnore] public uint skyLdrHandle;
 
-
-    public void SetTexture (HdrTexture? hdrTexture) {
+    /// Sets an LDR equirect texture (png/jpg) as the display sky. Lighting still comes from the HDR.
+    /// The texture is owned by the caller (asset system), so Skybox doesn't dispose it.
+    public void SetTexture (Texture? texture) {
+        Texture = texture;
+        //mode = texture is null ? SkyMode.Baked : SkyMode.Texture;
+        mode = SkyMode.Texture;
+    }
+    public void SetTextureHdr (HdrTexture? hdrTexture) {
         if (hdrTexture is null) return;
 
         HdrTexture = hdrTexture;
@@ -73,24 +90,30 @@ public class Skybox : IDisposable {
 
     public void Draw () {
         if (!Constants.renderSkybox) return;
+        if (HdrTexture is null) return;
 
-        material = AssetsEngine._mat_Skybox;
-        if (material is null || HdrTexture is null) return;
+        /// fall back if the chosen source doesn't exist
+        SkyMode m = mode;
+        if (m == SkyMode.Texture && Texture is null) m = SkyMode.Baked;
+        if (m == SkyMode.Baked && skyLdrHandle == 0) m = SkyMode.Hdr;
+
+        material = m == SkyMode.Hdr ? AssetsEngine._mat_SkyboxHdr : AssetsEngine._mat_Skybox;
+        if (material is null) return;
 
         GL gl = Renderer.GL;
         gl.Enable(EnableCap.CullFace);
         gl.CullFace(TriangleFace.Front);
         gl.DepthMask(false);
 
-        if (skyLdrHandle != 0) {
+        if (m == SkyMode.Texture) Texture!.Bind(TextureUnit.Texture0);
+        else if (m == SkyMode.Baked) {
             gl.ActiveTexture(TextureUnit.Texture0);
             gl.BindTexture(TextureTarget.Texture2D, skyLdrHandle);
         } else HdrTexture.Bind(TextureUnit.Texture0);
 
         material.shader.Use();
         material.Apply();
-
-        //material.shader.SetFloat(Shader.uExposure, HdrTexture.Exposure);
+        if (m == SkyMode.Hdr) material.shader.SetFloat(Shader.uExposure, HdrTexture.Exposure);
 
         gl.BindVertexArray(_emptyVao);
         gl.DrawArrays(PrimitiveType.Triangles, 0, 3);

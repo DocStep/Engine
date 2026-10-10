@@ -29,7 +29,7 @@ public class Renderer {
         gl.FrontFace(FrontFaceDirection.CW);
         gl.ClearColor(Constants.clearColor.X, Constants.clearColor.Y, Constants.clearColor.Z, 1f);
 
-        Skybox = new Skybox(_hdr_Skybox);
+        Skybox = new Skybox(_tex_Skybox);
 
         //SetTargetSize(Windows.Window.Size.X, Windows.Window.Size.Y);
 
