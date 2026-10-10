@@ -41,7 +41,8 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _sh_Skybox.Save("src/Shaders/Skybox.shader");
         _sh_IBLPrefilter = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader",
             "src/Shaders/IBLPrefilter_Fragment.shader", "IBLPrefilter", isLit: false);
-        _tex_Skybox = Assets.Load<Texture>("src/Textures/autumn_field_puresky.jpg");
+        //_tex_Skybox = Assets.Load<Texture>("src/Textures/autumn_field_puresky.jpg");
+        _tex_Skybox = Texture.LoadImage("src/Textures/autumn_field_puresky.jpg", srgb: true, flipY: true, mips: true); ;
         _hdr_Skybox = Assets.Load<HdrTexture>("src/Textures/HDR/autumn_field_puresky_4k.hdr")!;
         //_hdr_Skybox = Assets.Load<HdrTexture>("src/Textures/HDR/qwantani_dusk_2_puresky_4k.hdr");
         //_hdr_Skybox = Assets.Load<HdrTexture>("src/Textures/HDR/rogland_clear_night_4k.hdr");

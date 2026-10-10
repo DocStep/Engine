@@ -11,8 +11,8 @@ public abstract class Component {
 
     [Hide, Readonly] public readonly long Id = Lib.Id;
 
-    [JsonIgnore, Hide] protected GameObject _gameObject = null!;
-    public GameObject gameObject {
+    [Hide, JsonIgnore] protected GameObject _gameObject = null!;
+    [Hide] public GameObject gameObject {
         get => _gameObject;
         set => _gameObject = value;
     }

@@ -332,6 +332,6 @@ void main() {
     vec3 color = ambientDiffuse + ambientSpecular + Lo;
     
     // FragColor = vec4(vNormal01, 1);
-    FragColor = vec4(color, 1);
+    FragColor = vec4(color, alpha);
     FragNormal = vec4(vViewNormal, 1.0); // write view-space normal to MRT attachment 1
 }

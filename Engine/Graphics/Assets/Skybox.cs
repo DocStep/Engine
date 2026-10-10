@@ -36,22 +36,28 @@ public class Skybox : IDisposable {
     /// The texture is owned by the caller (asset system), so Skybox doesn't dispose it.
     public void SetTexture (Texture? texture) {
         Texture = texture;
-        //mode = texture is null ? SkyMode.Baked : SkyMode.Texture;
+        if (texture is null) { mode = HdrTexture is null ? SkyMode.Hdr : SkyMode.Baked; return; }
+
         mode = SkyMode.Texture;
+        if (HdrTexture is null) BuildIbl(texture.Handle, texture.Width, texture.Height); /// no HDR: light from the LDR sky
     }
     public void SetTextureHdr (HdrTexture? hdrTexture) {
         if (hdrTexture is null) return;
-
         HdrTexture = hdrTexture;
+        BuildIbl(hdrTexture.Handle, hdrTexture.Width, hdrTexture.Height);
+        BakeSky();
+    }
 
+    /// Builds reflections and ambient probe from any equirect GL texture (sRGB8 or float).
+    private void BuildIbl (uint sourceHandle, int srcW, int srcH) {
         if (PrefilteredHandle != 0) Renderer.GL.DeleteTexture(PrefilteredHandle);
-        PrefilterSkybox(hdrTexture, out uint handle, out int mipMaxLod);
+
+        PrefilterSkybox(sourceHandle, srcW, srcH, out uint handle, out int mipMaxLod);
         PrefilteredHandle = handle;
         MaxLod = mipMaxLod;
 
         Vector3[] pixels = ReadPixels(handle, mipMaxLod, out int w, out int h);
         Probe = BuildProbe(pixels, w, h);
-        BakeSky();
     }
 
     /// Bakes the display sky from the .hdr on disk: exposure + PBR Neutral + sRGB 8-bit.
@@ -90,12 +96,14 @@ public class Skybox : IDisposable {
 
     public void Draw () {
         if (!Constants.renderSkybox) return;
-        if (HdrTexture is null) return;
+        if (HdrTexture is null && Texture is null) return;
 
         /// fall back if the chosen source doesn't exist
         SkyMode m = mode;
         if (m == SkyMode.Texture && Texture is null) m = SkyMode.Baked;
         if (m == SkyMode.Baked && skyLdrHandle == 0) m = SkyMode.Hdr;
+        if (m == SkyMode.Hdr && HdrTexture is null) m = SkyMode.Texture;
+        if (m == SkyMode.Texture && Texture is null) return;
 
         material = m == SkyMode.Hdr ? AssetsEngine._mat_SkyboxHdr : AssetsEngine._mat_Skybox;
         if (material is null) return;
@@ -125,10 +133,10 @@ public class Skybox : IDisposable {
     }
 
 
-    public void PrefilterSkybox (HdrTexture source, out uint prefilteredHandle, out int maxLod) {
+    public void PrefilterSkybox (uint sourceHandle, int srcW, int srcH, out uint prefilteredHandle, out int maxLod) {
         GL gl = Renderer.GL;
 
-        int baseW = source.Width, baseH = source.Height;
+        int baseW = srcW, baseH = srcH;
         int mipLevels = Math.Min((int)MathF.Floor(MathF.Log2(baseW)) + 1, 6);
 
         prefilteredHandle = gl.GenTexture();
@@ -136,13 +144,17 @@ public class Skybox : IDisposable {
         for (int level = 0; level < mipLevels; level++) {
             int w = Math.Max(1, baseW >> level);
             int h = Math.Max(1, baseH >> level);
-            unsafe { gl.TexImage2D(TextureTarget.Texture2D, level, InternalFormat.Rgba16f, (uint)w, (uint)h, 0, PixelFormat.Rgba, PixelType.Float, null); }
+            unsafe {
+                gl.TexImage2D(TextureTarget.Texture2D, level, InternalFormat.Rgba16f, 
+                    (uint)w, (uint)h, 0, PixelFormat.Rgba, PixelType.Float, null);
+            }
         }
         gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.LinearMipmapLinear);
         gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
         gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
         gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
-        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, mipLevels - 1); /// tells the driver exactly how many levels exist — avoids relying on implicit chain-completeness rules
+        /// tells the driver exactly how many levels exist — avoids relying on implicit chain-completeness rules
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, mipLevels - 1); 
 
         uint fbo = gl.GenFramebuffer();
         gl.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
@@ -164,11 +176,12 @@ public class Skybox : IDisposable {
             float roughness = mipLevels <= 1 ? 0f : (float)level/(mipLevels - 1);
 
             prefilterShader.Use();
-            source.Bind(TextureUnit.Texture0);
+            gl.ActiveTexture(TextureUnit.Texture0);
+            gl.BindTexture(TextureTarget.Texture2D, sourceHandle);
             prefilterShader.SetInt(Shader.uEnvMap, 0);
             prefilterShader.SetFloat(Shader.uRoughness, roughness);
-            prefilterShader.SetFloat("uResolutionX", source.Width);
-            prefilterShader.SetFloat("uResolutionY", source.Height);
+            prefilterShader.SetFloat("uResolutionX", srcW);
+            prefilterShader.SetFloat("uResolutionY", srcH);
             int samples = roughness < 0.3f ? 128 : roughness < 0.6f ? 512 : 1024;
             prefilterShader.SetInt("uSampleCount", samples); // or SetInt if you have no uint setter
             //prefilterShader.SetFloat("uFireflyClamp", 1000000f);
