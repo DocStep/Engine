@@ -48,7 +48,10 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         //_hdr_Skybox = Assets.Load<HdrTexture>("src/HDR/rogland_clear_night_4k.hdr");
         //_hdr_Skybox = Assets.Load<HdrTexture>("src/HDR/grasslands_sunset_4k.hdr");
         //_hdr_Skybox = Assets.Load<HdrTexture>("src/HDR/overcast_soil_puresky_4k.hdr");
-
+        //if (_hdr_Skybox is not null) {
+            _hdr_Skybox.Exposure = 0.5f;
+            _hdr_Skybox.Save("src/HDR/Skybox.hdr");
+        //}
 
         _sh_Reflection = new Shader("src/Shaders/Lit_Vertex.shader", 
             "src/Shaders/Reflection_Fragment.shader", "Reflection", isLit: false);

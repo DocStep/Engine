@@ -80,9 +80,10 @@ void main () {
     //    color = pow(max(color, vec3(0.0)), vec3(1.0/2.2));
     //}
 
-    const float saturation = 0.9;
-    float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
+    // const float saturation = 0.9;
+    // float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
     // color = mix(vec3(luma), color, saturation);
 
+    // FragColor = vec4(sceneColor.rgb*uExposure, sceneColor.a);
     FragColor = vec4(color, sceneColor.a);
 }

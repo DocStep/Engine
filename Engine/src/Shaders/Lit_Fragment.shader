@@ -154,7 +154,7 @@ vec3 SampleAmbient(vec3 N)
         vec3 g = 0.0 < N.y ? mix(uAmbientMiddle, uAmbientTop, N.y) : mix(uAmbientMiddle, uAmbientBottom, -N.y);
         return g*uAmbientIntensity;
     }
-    return SampleIrradianceSH(N)*clamp(uEnvIntensity, 0.0, 1.0)*uAmbientIntensity;
+    return SampleIrradianceSH(N)*uAmbientIntensity;
 }
 
 // One directional light's contribution — needs N, V, F0, roughness shared across lights
@@ -285,27 +285,29 @@ void main() {
 
     vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
+    vec3 R = reflect(-V, N);
+
     // Direct sun lights — Cook-Torrance specular + Lambert diffuse, summed
     float shadow = 0.0;
     float shadowFacing = 0.0;
     vec3 Lo = vec3(0.0);
     for (int i = 0; i < uSunLightCount; i++) {
-    vec3 sun = ComputeSunLight(i, N, V, F0, roughness, albedo, metallic);
-    vec3 Ls = normalize(-uSunLightDir[i]);
-    float facing = dot(N, Ls);
-    if (0.0 < uSunShadow[i]) {
-        if (0.0 < facing) {
-            float s = ShadowFactor(N, Ls)*uSunShadow[i];
-            sun *= 1.0 - s;
-            shadow = max(shadow, s);
-            shadowFacing = max(shadowFacing, smoothstep(0.0, 0.25, facing));
-        } else {
-            shadow = max(shadow, uSunShadow[i]);
-            shadowFacing = 1.0;
+        vec3 sun = ComputeSunLight(i, N, V, F0, roughness, albedo, metallic);
+        vec3 Ls = normalize(-uSunLightDir[i]);
+        float facing = dot(N, Ls);
+        if (0.0 < uSunShadow[i]) {
+            if (0.0 < facing) {
+                float s = ShadowFactor(N, Ls)*uSunShadow[i];
+                sun *= 1.0 - s;
+                shadow = max(shadow, s);
+                shadowFacing = max(shadowFacing, smoothstep(0.0, 0.25, facing));
+            } else {
+                shadow = max(shadow, uSunShadow[i]);
+                shadowFacing = 1.0;
+            }
         }
+        Lo += sun;
     }
-    Lo += sun;
-}
     for (int i = 0; i < uPointLightCount; i++) {
         vec3 pl = ComputePointLight(i, N, V, F0, roughness, albedo, metallic);
         if (0.0 <= uPointShadowSlot[i]) {
@@ -314,6 +316,8 @@ void main() {
         Lo += pl;
     }
 
+    float ambientShadow = shadow*shadowFacing;
+
     // IBL ambient — SH diffuse (Fresnel-split, energy-conserving) + prefiltered skybox specular
     vec3 Fr = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
     vec3 kD_ambient = (vec3(1.0) - Fr) * (1.0 - metallic);
@@ -321,18 +325,21 @@ void main() {
     vec3 irradiance = SampleAmbient(N);
     vec3 ambientDiffuse = irradiance * albedo * kD_ambient;
 
-    vec3 R = reflect(-V, N);
     vec3 prefiltered = textureLod(uSkybox, SampleSphericalMap(R), roughness*uMaxReflectionLod).rgb;
     vec3 ambientSpecular = prefiltered*Fr*uReflectionIntensity;
-
-    float ambientShadow = shadow*shadowFacing;
-    // ambientSpecular *= 1.0 - ambientShadow*uShadowAmbientSpecular;
-    // ambientDiffuse *= 1.0 - ambientShadow*uShadowAmbientDiffuse;
+    // ambientSpecular = (1.0 - shadow)*ambientSpecular;
 
     vec3 color = ambientDiffuse + ambientSpecular + Lo;
     
-    color = pow(color, vec3(1.0 / 2.2));
-    FragColor = vec4(color, alpha);
+    // color = pow(color, vec3(1.0 / 2.2));
+    // color = textureLod(uSkybox, SampleSphericalMap(-V), 0.0).rgb;
+    // FragColor = vec4(normalize(vec3(0.5*vNormal + vec3(0.5, 0.5, 0.5))), 1);
+    // FragColor = vec4(color, 1);
+    vec3 vNormal01 = vNormal*0.5 + 0.5;
+    // FragColor = vec4(pow(vNormal01, vec3(2.2)), 1);
+    // FragColor = vec4(vNormal01, 1);
+    FragColor = vec4(vNormal, 1);
+    // FragColor = vec4(ambientSpecular, alpha);
     // FragColor = vec4(vec3(Lo), alpha);
     FragNormal = vec4(vViewNormal, 1.0); // write view-space normal to MRT attachment 1
 }

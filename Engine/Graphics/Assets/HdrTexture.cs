@@ -1,4 +1,5 @@
-﻿using Silk.NET.OpenGL;
+﻿using Newtonsoft.Json;
+using Silk.NET.OpenGL;
 
 namespace Engine.Graphics;
 
@@ -7,12 +8,15 @@ namespace Engine.Graphics;
 public class HdrTexture : IAsset<HdrTexture> {
 
     public string Name { get; set; } = string.Empty;
-    public long Id { get; set; }
-    public string? Path { get; set; }
+    [Readonly] public long Id { get; set; }
+    [Hide] public string? Path { get; set; }
 
-    public uint Handle { get; private set; }
-    public int Width { get; private set; }
-    public int Height { get; private set; }
+    public float Exposure = 1f;
+
+    
+    [JsonIgnore] public uint Handle { get; private set; }
+    [JsonIgnore] public int Width { get; private set; }
+    [JsonIgnore] public int Height { get; private set; }
 
     public void Bind (TextureUnit unit = TextureUnit.Texture0) {
         Renderer.GL.ActiveTexture(unit);
@@ -20,7 +24,10 @@ public class HdrTexture : IAsset<HdrTexture> {
     }
 
 
-    public void Save (string path) { }
+    public void Save (string path) {
+        Path = path;
+        Json.Write(path, this);
+    }
 
     public static HdrTexture Load (string path, int part = 100) {
         GL gl = Renderer.GL;

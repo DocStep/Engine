@@ -13,6 +13,10 @@ public sealed class CameraEditor : Camera {
         Engine.Engine.Instance.de_AfterUpdate += Update;
     }
 
+    [Hide] new public GameObject gameObject {
+        get => _gameObject;
+        set => _gameObject = value;
+    }
     [Hide] public static CameraEditor? Instance = null;
 
     [Hide] private float yaw;

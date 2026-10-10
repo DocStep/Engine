@@ -30,6 +30,8 @@ public static class Lighting {
     [Range(0, int.MaxValue)] public static int SunLights_Max = 32;
     [Range(0, int.MaxValue)] public static int PointLights_Max = 32;
 
+    public static Skybox? Skybox => Renderer.Instance?.Skybox;
+
     public static AmbientMode Ambient = AmbientMode.Color;
     public static Vector3 AmbientColor = new Vector3(0.2f, 0.225f, 0.25f);
     public static Vector3 AmbientTop = new Vector3(0.5f, 0.7f, 1f);

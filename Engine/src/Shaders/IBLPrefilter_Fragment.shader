@@ -8,7 +8,7 @@ uniform float uRoughness;
 uniform float uResolutionX;
 uniform float uResolutionY;
 uniform int uSampleCount;
-// uniform float uFireflyClamp;
+uniform float uFireflyClamp = 1.0;
 
 const float PI = 3.14159265359;
 
@@ -55,7 +55,7 @@ void main() {
     /// stays under the half-float max (65504).
     if (uRoughness < 0.001) {
         vec3 c = textureLod(uEnvMap, vUV, 0.0).rgb;
-        FragColor = vec4(min(c, vec3(60000.0)), 1.0);
+        FragColor = vec4(min(c, vec3(uFireflyClamp)), 1.0);
         return;
     }
 
@@ -92,12 +92,12 @@ void main() {
         float mip = max(0.5*log2(saSample/saTexel) + 1.0, 0.0);
 
         vec3 c = textureLod(uEnvMap, SampleSphericalMap(L), mip).rgb;
-        // c = min(c, vec3(uFireflyClamp));
+        c = min(c, vec3(uFireflyClamp));
 
         sum += c*NdotL;
         weight += NdotL;
     }
 
     vec3 result = weight < 0.0001 ? textureLod(uEnvMap, vUV, 0.0).rgb : sum/weight;
-    FragColor = vec4(min(result, vec3(60000.0)), 1.0);
+    FragColor = vec4(min(result, vec3(uFireflyClamp)), 1.0);
 }

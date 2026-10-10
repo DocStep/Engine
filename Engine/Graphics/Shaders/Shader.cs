@@ -214,6 +214,7 @@ public class Shader : IAsset<Shader> {
     [JsonIgnore, Hide] public const string uRadius = "uRadius";
     [JsonIgnore, Hide] public const string uBias = "uBias";
     [JsonIgnore, Hide] public const string uFade = "uFade";
+    [JsonIgnore, Hide] public const string uBlurScale = "uBlurScale";
     [JsonIgnore, Hide] public const string uStrength = "uStrength";
     [JsonIgnore, Hide] public const string uPower = "uPower";
     [JsonIgnore, Hide] public const string uTint = "uTint";

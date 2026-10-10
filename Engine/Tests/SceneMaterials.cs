@@ -29,10 +29,10 @@ public class SceneMaterials : Scene {
         go_shadowCube2.Transform.Position = new Vector3(x+2, 4, -9);
         go_shadowCube2.Transform.Scale = new Vector3(5);
 
-        GameObject go_pointLight = new GameObject() { Name = "Point Light", };
-        go_pointLight.Transform.Position = new Vector3(x-1, 3, -7.5f);
-        go_pointLight.AddComponent<PointLight>().Color = Constants.white;
-        go_pointLight.AddComponent<FlashLightScript>();
+        //GameObject go_pointLight = new GameObject() { Name = "Point Light", };
+        //go_pointLight.Transform.Position = new Vector3(x-1, 3, -7.5f);
+        //go_pointLight.AddComponent<PointLight>().Color = Constants.white;
+        //go_pointLight.AddComponent<FlashLightScript>();
 
         //return;
 

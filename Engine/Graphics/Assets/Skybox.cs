@@ -5,25 +5,22 @@ namespace Engine.Graphics;
 
 public class Skybox : IDisposable {
     public Skybox (HdrTexture? texture) {
-        GL = Renderer.GL;
-        _emptyVao = GL.GenVertexArray();
+        _emptyVao = Renderer.GL.GenVertexArray();
         SetTexture(texture);
     }
 
 
-    private readonly GL GL;
-
-    public HdrTexture? hdrTexture { get; private set; }
+    [Hide] private HdrTexture? hdrTexture = null;
     public HdrTexture? HdrTexture {
         get => hdrTexture;
         private set {
             hdrTexture = value;
         }
     }
-    public SHAmbientProbe Probe { get; private set; }
-    public float MaxLod { get; private set; }
-    public uint PrefilteredHandle { get; private set; }
-    private uint _emptyVao;
+    [Hide] public SHAmbientProbe Probe { get; private set; }
+    [Readonly] public float MaxLod { get; private set; }
+    [Hide] public uint PrefilteredHandle { get; private set; }
+    [Hide] private uint _emptyVao;
 
     public Material? material = null;
 
@@ -45,25 +42,27 @@ public class Skybox : IDisposable {
         if (!Constants.renderSkybox) return;
 
         material = AssetsEngine._mat_Skybox;
-        if (material is null) return;
-        if (HdrTexture is null) return;
+        if (material is null || HdrTexture is null) return;
 
-        GL.Enable(EnableCap.CullFace);
-        GL.CullFace(TriangleFace.Front);
-        GL.DepthMask(false);
+        GL gl = Renderer.GL;
+        gl.Enable(EnableCap.CullFace);
+        gl.CullFace(TriangleFace.Front);
+        gl.DepthMask(false);
 
         HdrTexture.Bind(TextureUnit.Texture0);
         
         material.shader.Use();
         material.Apply();
 
-        GL.BindVertexArray(_emptyVao);
-        GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+        material.shader.SetFloat(Shader.uExposure, HdrTexture.Exposure);
+
+        gl.BindVertexArray(_emptyVao);
+        gl.DrawArrays(PrimitiveType.Triangles, 0, 3);
         Renderer.Instance.Stats.DrawCalls++;
 
-        GL.CullFace(TriangleFace.Back);
-        GL.DepthMask(true);
-        GL.DepthFunc(DepthFunction.Less);
+        gl.CullFace(TriangleFace.Back);
+        gl.DepthMask(true);
+        gl.DepthFunc(DepthFunction.Less);
     }
 
 
@@ -192,7 +191,7 @@ public class Skybox : IDisposable {
 
 
     public void Dispose () {
-        GL.DeleteVertexArray(_emptyVao);
+        Renderer.GL.DeleteVertexArray(_emptyVao);
     }
 
 }
