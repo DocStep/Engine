@@ -1,4 +1,6 @@
-﻿namespace Engine.Graphics;
+﻿using System.Threading.Tasks;
+
+namespace Engine.Graphics;
 
 
 /// Loads Radiance (.hdr) images — the de-facto standard format for HDR
@@ -133,6 +135,99 @@ public static class HdrLoader {
         int b = stream.ReadByte();
         if (b == -1) throw new EndOfStreamException("Unexpected end of HDR file.");
         return (byte)b;
+    }
+
+
+
+    /// Bakes linear HDR floats (RGB) into 8-bit sRGB RGBA: exposure, then PBR Neutral, then sRGB encode.
+    public static byte[] BakeLdrAces (float[] data, int width, int height, float exposure) {
+        byte[] result = new byte[width*height*4];
+        Parallel.For(0, height, y => {
+            for (int x = 0; x < width; x++) {
+                int i = (y*width + x)*3;
+                int o = (y*width + x)*4;
+
+                /// dither in the 8-bit domain, hides banding in the sun falloff
+                float n = Hash(x, y) - 0.5f;
+
+                result[o] = ToSrgb8(Aces(data[i]*exposure), n);
+                result[o + 1] = ToSrgb8(Aces(data[i + 1]*exposure), n);
+                result[o + 2] = ToSrgb8(Aces(data[i + 2]*exposure), n);
+                result[o + 3] = 255;
+            }
+        });
+        return result;
+    }
+
+    /// per-channel ACES (Narkowicz): bright warm values clip toward white like the Poly Haven JPGs
+    private static float Aces (float x) {
+        return Math.Clamp((x*(2.51f*x + 0.03f))/(x*(2.43f*x + 0.59f) + 0.14f), 0f, 1f);
+    }
+
+    private static float Hash (int x, int y) {
+        uint h = (uint)(x*73856093 ^ y*19349663);
+        h = (h ^ (h >> 13))*1274126177u;
+        return ((h ^ (h >> 16)) & 0xFFFFFF)/(float)0x1000000;
+    }
+
+    private static byte ToSrgb8 (float c, float dither) {
+        c = Math.Clamp(c, 0f, 1f);
+        c = c <= 0.0031308f ? 12.92f*c : 1.055f*MathF.Pow(c, 1f/2.4f) - 0.055f;
+        return (byte)Math.Clamp(c*255f + 0.5f + dither, 0f, 255f);
+    }
+
+
+    /// Bakes linear HDR floats (RGB) into 8-bit sRGB RGBA: exposure, then PBR Neutral, then sRGB encode.
+    public static byte[] BakeLdrNeutral (float[] data, int width, int height, float exposure) {
+        byte[] result = new byte[width*height*4];
+        Parallel.For(0, height, y => {
+            for (int x = 0; x < width; x++) {
+                int i = (y*width + x)*3;
+                float r = data[i]*exposure;
+                float g = data[i + 1]*exposure;
+                float b = data[i + 2]*exposure;
+                PbrNeutral(ref r, ref g, ref b);
+
+                int o = (y*width + x)*4;
+                result[o] = ToSrgb8(r);
+                result[o + 1] = ToSrgb8(g);
+                result[o + 2] = ToSrgb8(b);
+                result[o + 3] = 255;
+            }
+        });
+        return result;
+    }
+
+    /// Same curve as the PBRNeutral in the resolve shader.
+    private static void PbrNeutral (ref float r, ref float g, ref float b) {
+        const float startCompression = 0.8f - 0.04f;
+        const float desaturation = 0.15f;
+        float x = MathF.Min(r, MathF.Min(g, b));
+        float offset = x < 0.08f ? x - 6.25f*x*x : 0.04f;
+        r -= offset;
+        g -= offset;
+        b -= offset;
+
+        float peak = MathF.Max(r, MathF.Max(g, b));
+        if (peak < startCompression) return;
+
+        const float d = 1f - startCompression;
+        float newPeak = 1f - d*d/(peak + d - startCompression);
+        float s = newPeak/peak;
+        r *= s;
+        g *= s;
+        b *= s;
+
+        float k = 1f - 1f/(desaturation*(peak - newPeak) + 1f);
+        r += (newPeak - r)*k;
+        g += (newPeak - g)*k;
+        b += (newPeak - b)*k;
+    }
+
+    private static byte ToSrgb8 (float c) {
+        c = Math.Clamp(c, 0f, 1f);
+        c = c <= 0.0031308f ? 12.92f*c : 1.055f*MathF.Pow(c, 1f/2.4f) - 0.055f;
+        return (byte)(c*255f + 0.5f);
     }
 
 }

@@ -10,13 +10,8 @@ public class Skybox : IDisposable {
     }
 
 
-    [Hide] private HdrTexture? hdrTexture = null;
-    public HdrTexture? HdrTexture {
-        get => hdrTexture;
-        private set {
-            hdrTexture = value;
-        }
-    }
+    [Hide] public HdrTexture? Texture { get; private set; } = null;
+    [Hide] public HdrTexture? HdrTexture { get; private set; } = null;
     [Hide] public SHAmbientProbe Probe { get; private set; }
     [Readonly] public float MaxLod { get; private set; }
     [Hide] public uint PrefilteredHandle { get; private set; }
@@ -24,19 +19,57 @@ public class Skybox : IDisposable {
 
     public Material? material = null;
 
+    [Hide, Newtonsoft.Json.JsonIgnore] public uint skyLdrHandle;
+
 
     public void SetTexture (HdrTexture? hdrTexture) {
         if (hdrTexture is null) return;
 
         HdrTexture = hdrTexture;
 
+        if (PrefilteredHandle != 0) Renderer.GL.DeleteTexture(PrefilteredHandle);
         PrefilterSkybox(hdrTexture, out uint handle, out int mipMaxLod);
         PrefilteredHandle = handle;
         MaxLod = mipMaxLod;
 
         Vector3[] pixels = ReadPixels(handle, mipMaxLod, out int w, out int h);
         Probe = BuildProbe(pixels, w, h);
+        BakeSky();
     }
+
+    /// Bakes the display sky from the .hdr on disk: exposure + PBR Neutral + sRGB 8-bit.
+    /// Call again whenever HdrTexture.Exposure changes.
+    public void BakeSky () {
+        if (HdrTexture?.Path is null || !File.Exists(HdrTexture.Path)) return;
+        GL gl = Renderer.GL;
+
+        float[] data;
+        int w, h;
+        try {
+            HdrLoader.Load(HdrTexture.Path, out data, out w, out h);
+        } catch (Exception e) {
+            Log.log($"BakeSky failed for \"{HdrTexture.Path}\": {e.Message}", LogType.warning);
+            return;
+        }
+
+        byte[] pixels = HdrLoader.BakeLdrAces(data, w, h, HdrTexture.Exposure);
+
+        if (skyLdrHandle != 0) gl.DeleteTexture(skyLdrHandle);
+        skyLdrHandle = gl.GenTexture();
+        gl.BindTexture(TextureTarget.Texture2D, skyLdrHandle);
+        unsafe {
+            fixed (byte* p = pixels) {
+                gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Srgb8Alpha8, (uint)w, (uint)h, 0, PixelFormat.Rgba, PixelType.UnsignedByte, p);
+            }
+        }
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.LinearMipmapLinear);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
+        gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
+        gl.GenerateMipmap(TextureTarget.Texture2D);
+        gl.BindTexture(TextureTarget.Texture2D, 0);
+    }
+
 
     public void Draw () {
         if (!Constants.renderSkybox) return;
@@ -49,12 +82,15 @@ public class Skybox : IDisposable {
         gl.CullFace(TriangleFace.Front);
         gl.DepthMask(false);
 
-        HdrTexture.Bind(TextureUnit.Texture0);
-        
+        if (skyLdrHandle != 0) {
+            gl.ActiveTexture(TextureUnit.Texture0);
+            gl.BindTexture(TextureTarget.Texture2D, skyLdrHandle);
+        } else HdrTexture.Bind(TextureUnit.Texture0);
+
         material.shader.Use();
         material.Apply();
 
-        material.shader.SetFloat(Shader.uExposure, HdrTexture.Exposure);
+        //material.shader.SetFloat(Shader.uExposure, HdrTexture.Exposure);
 
         gl.BindVertexArray(_emptyVao);
         gl.DrawArrays(PrimitiveType.Triangles, 0, 3);
@@ -191,6 +227,8 @@ public class Skybox : IDisposable {
 
 
     public void Dispose () {
+        if (PrefilteredHandle != 0) Renderer.GL.DeleteTexture(PrefilteredHandle);
+        if (skyLdrHandle != 0) Renderer.GL.DeleteTexture(skyLdrHandle);
         Renderer.GL.DeleteVertexArray(_emptyVao);
     }
 

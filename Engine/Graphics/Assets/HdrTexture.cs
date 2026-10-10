@@ -14,9 +14,9 @@ public class HdrTexture : IAsset<HdrTexture> {
     public float Exposure = 1f;
 
     
-    [JsonIgnore] public uint Handle { get; private set; }
-    [JsonIgnore] public int Width { get; private set; }
-    [JsonIgnore] public int Height { get; private set; }
+    [Readonly, JsonIgnore] public uint Handle { get; private set; }
+    [Readonly, JsonIgnore] public int Width { get; private set; }
+    [Readonly, JsonIgnore] public int Height { get; private set; }
 
     public void Bind (TextureUnit unit = TextureUnit.Texture0) {
         Renderer.GL.ActiveTexture(unit);
@@ -25,7 +25,7 @@ public class HdrTexture : IAsset<HdrTexture> {
 
 
     public void Save (string path) {
-        Path = path;
+        //Path = path;
         Json.Write(path, this);
     }
 

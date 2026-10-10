@@ -52,7 +52,7 @@ public class SceneMaterials : Scene {
         x = -4;
         GameObject go_planeTexture = new GameObject(PrimitiveTypes.Plane, position: new Vector3(x, 0, 0)) { Name = "Plane Texture", };
         Material mat = new Material(AssetsEngine._sh_Lit_Instanced);
-        mat.SetTexture(Shader.uTexture, AssetsEngine.tex_Test);
+        mat.SetTexture(Shader.uTexture, AssetsEngine._tex_Test);
         go_planeTexture.GetComponent<MeshComponent>()?.Material = mat;
         new Transform();
         //mat.SetVector3(Shader.Color, Vector3.One);

@@ -33,7 +33,7 @@ public class SceneUI : Scene {
         GameObject go_bg = new GameObject() { Name = "Background" };
         go_bg.Transform.Parent = go_canvas.Transform;
         image = go_bg.AddComponent<Image>();
-        image.Texture = AssetsEngine.tex_White;
+        image.Texture = AssetsEngine._tex_White;
         image.Rect.Pivot = new Vector2(0.5f, 0.5f);
         image.Rect.SetAnchor(AnchorPreset.StretchAll);
         image.Alpha = 0.2f;
@@ -44,7 +44,7 @@ public class SceneUI : Scene {
         image.Rect.Pivot = new Vector2(0, 0);
         image.Rect.SetAnchor(AnchorPreset.TopLeft);
         image.Rect.Size = new Vector2(100, 100);
-        image.Texture = AssetsEngine.tex_Test;
+        image.Texture = AssetsEngine._tex_Test;
 
         GameObject go_button = new GameObject() { Name = "Button" };
         go_button.Transform.Parent = go_canvas.Transform;
@@ -52,7 +52,7 @@ public class SceneUI : Scene {
         image.Rect.Pivot = new Vector2(0, 0);
         image.Rect.SetAnchor(AnchorPreset.TopLeft);
         image.Rect.Size = new Vector2(100, 100);
-        image.Texture = AssetsEngine.tex_Test;
+        image.Texture = AssetsEngine._tex_Test;
         image.Rect.AnchoredPosition = new Vector2(100, 0);
         Button button = go_button.AddComponent<Button>();
         button.de_Clicked += () => {
