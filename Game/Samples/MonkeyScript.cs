@@ -1,6 +1,7 @@
-﻿using Newtonsoft.Json;
+using Engine;
+using Engine.Graphics;
 
-namespace Engine;
+namespace Game.Samples;
 
 
 public class MonkeyScript : Script, IAwake, IUpdate {
@@ -12,16 +13,16 @@ public class MonkeyScript : Script, IAwake, IUpdate {
     public Transform tr1 = null!;
     public Transform tr2 = null!;
 
-    Graphics.Material? mat;
+    Material? mat;
     public Vector3 color;
 
 
     public void Awake () {
         Log.log("MonkeyScript.Awake");
-        mat = gameObject.GetComponent<Graphics.MeshComponent>()?.Material;
+        mat = gameObject.GetComponent<MeshComponent>()?.Material;
         if (mat is null) return;
-        if (mat.Has(Graphics.Shader.uColor))
-            mat?.SetVector3(Graphics.Shader.uColor, startColor);
+        if (mat.Has(Shader.uColor))
+            mat?.SetVector3(Shader.uColor, startColor);
     }
     public void Update () {
         gameObject.Transform.RotateLocalEuler((float)Time.deltaTime*dir);
@@ -31,7 +32,7 @@ public class MonkeyScript : Script, IAwake, IUpdate {
         //color.X = Mathf.Remap01(MathF.Sin(3f*time), -1, 1);
         //color.Y = Mathf.Remap01(MathF.Cos(5f*time), -1, 1);
         //color.Z = Mathf.Remap01(MathF.Sin(7f*time), -1, 1);
-        //mat.SetVector3(Graphics.Shader.Color, color);
+        //mat.SetVector3(Shader.Color, color);
 
         return;
     }

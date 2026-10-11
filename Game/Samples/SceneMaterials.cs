@@ -1,6 +1,7 @@
-﻿using Engine.Graphics;
+using Engine;
+using Engine.Graphics;
 
-namespace Engine;
+namespace Game.Samples;
 
 
 public class SceneMaterials : Scene {
@@ -93,7 +94,7 @@ public class SceneMaterials : Scene {
         mesh = reflectionSphere.AddComponent<MeshComponent>();
         mesh.Mesh = AssetsEngine._mesh_Sphere;
         mesh.Material = AssetsEngine._mat_Reflection;
- 
+
         ///// Primitives
         x = 4;
         GameObject plane = new GameObject(PrimitiveTypes.Plane, position: new(x, 0, -2)) { Name = "Plane", };
@@ -154,13 +155,10 @@ public class SceneMaterials : Scene {
         ssao1.Transform.Position = new Vector3(x, 0, -4);
         GameObject ssao2 = new GameObject(PrimitiveTypes.Sphere) { Name = "ssao2", };
         ssao2.Transform.Position = new Vector3(x, 0, -4.5f);
-
-
-
     }
 
     public override void DrawRaw () {
-        
+
     }
 
 }

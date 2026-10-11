@@ -1,4 +1,6 @@
-﻿namespace Engine;
+using Engine;
+
+namespace Game.Samples;
 
 
 public class ActionScript_Test : IActionScript_Update {

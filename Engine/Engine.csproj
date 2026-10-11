@@ -47,4 +47,9 @@
 	  <None Remove="Editor\**" />
 	</ItemGroup>
 
+
+	<ItemGroup>
+	  <Folder Include="Tests\" />
+	</ItemGroup>
+
 </Project>

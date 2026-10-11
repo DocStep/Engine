@@ -101,8 +101,6 @@ public class Engine : IDisposable {
         EngineState = EngineStates.Ready;
         Log.log($"========== Init Finish ==========", LogType.system);
 
-        SceneManager.Instance.Awake();
-
         //audio = new Audio.AudioManager();
         //step = Audio.AudioClip.LoadWav("Assets/Audio/step_sand.wav");
         //Engine.SetFPSMax(144);

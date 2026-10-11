@@ -1,7 +1,8 @@
-﻿using Engine.Graphics;
+using Engine;
+using Engine.Graphics;
 using Engine.Graphics.UI;
 
-namespace Engine;
+namespace Game.Samples;
 
 
 public class SceneChunksGrid : Scene {

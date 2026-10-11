@@ -1,4 +1,7 @@
-﻿namespace Engine;
+using Engine;
+using Engine.Graphics;
+
+namespace Game.Samples;
 
 
 public class ScenePhysics : Scene {
@@ -7,7 +10,7 @@ public class ScenePhysics : Scene {
         GameObject go_sun1 = new GameObject() { Name = "Sun", };
         go_sun1.Transform.LocalPosition = new Vector3(0, 5, 0);
         go_sun1.Transform.LocalEuler = new Vector3(60, -30, 0);
-        Graphics.SunLight sun1 = go_sun1.AddComponent<Graphics.SunLight>();
+        SunLight sun1 = go_sun1.AddComponent<SunLight>();
 
         //GameObject ground = new GameObject() { Name = "Plane", };
         //ground.Transform.Position = new Vector3(0, 0, 0);

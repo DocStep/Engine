@@ -1,6 +1,7 @@
-﻿using Newtonsoft.Json;
+using Engine;
+using Engine.Graphics;
 
-namespace Engine;
+namespace Game.Samples;
 
 
 public class FlashLightScript : Script, IAwake, IUpdate {
@@ -11,12 +12,12 @@ public class FlashLightScript : Script, IAwake, IUpdate {
     public Transform tr1 = null!;
     public Transform tr2 = null!;
 
-    Graphics.PointLight? light;
+    PointLight? light;
     public Vector3 color;
 
 
     public void Awake () {
-        light ??= gameObject.GetComponent<Graphics.PointLight>();
+        light ??= gameObject.GetComponent<PointLight>();
     }
     public void Update () {
         //color = new Vector3()!;

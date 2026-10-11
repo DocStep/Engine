@@ -1,6 +1,7 @@
-﻿using Engine.Graphics;
+using Engine;
+using Engine.Graphics;
 
-namespace Engine;
+namespace Game.Samples;
 
 
 public class SceneTerrain : Scene {

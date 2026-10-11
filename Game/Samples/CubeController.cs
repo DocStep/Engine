@@ -1,6 +1,7 @@
-﻿using Engine.Input;
+using Engine;
+using Engine.Input;
 
-namespace Engine;
+namespace Game.Samples;
 
 
 //internal class CubeController : IActionScript_Update {

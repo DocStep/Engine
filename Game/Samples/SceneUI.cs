@@ -1,14 +1,16 @@
-﻿using Engine.Graphics;
+using Engine;
+using Engine.Audio;
+using Engine.Graphics;
 using Engine.Graphics.UI;
 
-namespace Engine;
+namespace Game.Samples;
 
 
 public class SceneUI : Scene {
 
-    Audio.AudioManager audio = new Audio.AudioManager();
-    Audio.AudioClip? click = Audio.AudioClip.Load("src/Sounds/UI/click.wav");
-    Audio.AudioClip? ambient = Audio.AudioClip.Load("src/Sounds/ambient.wav");
+    AudioManager audio = new AudioManager();
+    AudioClip? click = AudioClip.Load("src/Sounds/UI/click.wav");
+    AudioClip? ambient = AudioClip.Load("src/Sounds/ambient.wav");
 
 
     public override void OnGenerate () {
@@ -69,5 +71,5 @@ public class SceneUI : Scene {
         text.AlignH = TextAlignH.Center;
         text.Text = "Text Component";
     }
-    
+
 }
