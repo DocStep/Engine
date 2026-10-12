@@ -3,7 +3,7 @@
 namespace Engine;
 
 
-public class Scene : IUpdate, IAsset<Scene> {
+public class Scene : IAsset<Scene> {
     public Scene () {
         Name = GetType().Name;
         SceneManager.Instance.Scenes.Add(this);
@@ -46,9 +46,6 @@ public class Scene : IUpdate, IAsset<Scene> {
 
     }
 
-    public void Update () {
-
-    }
 
 
     public GameObject? Find (string name) {

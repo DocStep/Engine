@@ -1,5 +1,4 @@
 <Solution>
   <Project Path="Editor/Editor.csproj" Id="055fad6f-4ee5-4079-84a6-852ca5e38fea" />
   <Project Path="Engine/Engine.csproj" Id="ca39fbcb-6127-41ab-9143-de5fd5cd8090" />
-  <Project Path="Game/Game.csproj" />
 </Solution>

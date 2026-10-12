@@ -8,6 +8,7 @@ public static class Inputs {
     public static Action? de_UpdateInput = null;
 
     public static Vector2 WASD = Vector2.Zero;
+    public static Vector3 WASDY = Vector3.Zero;
     public static Vector2 MousePos = Vector2.Zero;
     public static Vector2 MousePos_Window = Vector2.Zero;
     public static Vector2 MouseDelta = Vector2.Zero;
@@ -326,8 +327,12 @@ public static class Inputs {
             }
         }
 
-        WASD.X = (Actions[MoveRight].pressed ? 1 : 0) + (Actions[MoveLeft].pressed ? -1 : 0);
-        WASD.Y = (Actions[MoveForward].pressed ? 1 : 0) + (Actions[MoveBack].pressed ? -1 : 0);
+        WASD = new Vector2((Actions[MoveRight].pressed ? 1 : 0) + (Actions[MoveLeft].pressed ? -1 : 0), 
+            (Actions[MoveForward].pressed ? 1 : 0) + (Actions[MoveBack].pressed ? -1 : 0));
+
+        WASDY = new Vector3((Actions[MoveRight].pressed ? 1 : 0) + (Actions[MoveLeft].pressed ? -1 : 0),
+            (Actions[MoveUp].pressed ? 1 : 0) + (Actions[MoveDown].pressed ? -1 : 0), 
+            (Actions[MoveForward].pressed ? 1 : 0) + (Actions[MoveBack].pressed ? -1 : 0));
 
         /// Mouse
         MousePos_Window = WindowInput.MousePos;

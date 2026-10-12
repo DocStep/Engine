@@ -1,4 +1,3 @@
-using Engine.Graphics;
 using Engine.Input;
 
 namespace Engine;
@@ -15,10 +14,10 @@ namespace Engine;
 
 
 public class Engine : IDisposable {
-    public Engine (Type? renderer = null, Action? de_Init = null) {
+    public Engine (EngineEntryPoint? entryPoint = null) {
         if (Instance is not null) throw new Exception($"{typeof(Engine)}.{nameof(Instance)} is not null");
         Instance = this;
-        Init(renderer, de_Init);
+        Init(entryPoint);
     }
 
     public static Engine Instance { get; private set; } = null!;
@@ -52,7 +51,7 @@ public class Engine : IDisposable {
     protected System.Diagnostics.Stopwatch sw_LatencySystems = new System.Diagnostics.Stopwatch();
 
 
-    public void Init (Type? renderer = null, Action? de_Init = null) {
+    private void Init (EngineEntryPoint? entryPoint) {
         ArgsUtils.Init();
 
         ThreadUtils.Init();
@@ -71,21 +70,25 @@ public class Engine : IDisposable {
 
         Inputs.KeysInit();
 
-        ReflectionActionScripts.CreateSingleton();
+        //ReflectionActionScripts.CreateSingleton();
 
         Windows.Window = Windows.WindowCreate();
-        Windows.Window.Load += () => OnLoad(renderer ?? typeof(Graphics.Renderer), de_Init);
+        Windows.Window.Load += () => OnLoad(entryPoint);
         Windows.Window.Update += OnUpdate;
         Windows.Window.Closing += OnClosing;
     }
-    public void Run () => Silk.NET.Windowing.WindowExtensions.Run(Windows.Window);
+    public void Run () {
+        Silk.NET.Windowing.WindowExtensions.Run(Windows.Window);
+    }
 
-    private void OnLoad (Type rendererType, Action? de_Init) {
+    private void OnLoad (EngineEntryPoint? entryPoint) {
         Windows.Input = Silk.NET.Input.InputWindowExtensions.CreateInput(Windows.Window);
         WindowInput.Init(Windows.Input);
 
         Log.log($"===== Systems Layer =====", LogType.system);
 
+        Type? rendererType = entryPoint?.Renderer;
+        if (rendererType is null) rendererType = typeof(Graphics.Renderer);
         Graphics.Renderer? renderer = Activator.CreateInstance(rendererType) as Graphics.Renderer;
         if (renderer is null) throw new Exception("Renderer is null");
 
@@ -95,14 +98,12 @@ public class Engine : IDisposable {
 
         Log.log($"===== Hook Layer =====", LogType.system);
 
-        de_Init?.Invoke();
-        //ReflectionActionScripts.CreateSingleton();
+        entryPoint?.OnLoad?.Invoke();
+        ReflectionActionScripts.CreateSingleton();
 
         EngineState = EngineStates.Ready;
         Log.log($"========== Init Finish ==========", LogType.system);
 
-        //audio = new Audio.AudioManager();
-        //step = Audio.AudioClip.LoadWav("Assets/Audio/step_sand.wav");
         //Engine.SetFPSMax(144);
     }
 

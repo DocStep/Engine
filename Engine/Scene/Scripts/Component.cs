@@ -17,6 +17,7 @@ public abstract class Component {
         set => _gameObject = value;
     }
 
+    [Hide] public Transform transform => _gameObject.Transform;
 
 
     public virtual void OnAdd () { }

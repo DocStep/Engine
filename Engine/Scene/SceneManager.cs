@@ -14,7 +14,7 @@ public class SceneManager : Singleton<SceneManager> {
             if (0 < Instance.Scenes.Count) return Instance.Scenes[Instance.sceneActiveID];
             else {
                 Log.log(error_NoActiveScene, LogType.warning);
-                Log.log(new StackTrace());
+                //Log.log(new StackTrace());
                 return null;
             }
         }
@@ -33,10 +33,10 @@ public class SceneManager : Singleton<SceneManager> {
             ActiveSceneSave();
         }
 
-        int count = Scenes.Count;
-        for (int i = 0; i < count; i++) {
-            Scenes[i].Update();
-        }
+        //int count = Scenes.Count;
+        //for (int i = 0; i < count; i++) {
+        //    Scenes[i].Update();
+        //}
     }
 
 
