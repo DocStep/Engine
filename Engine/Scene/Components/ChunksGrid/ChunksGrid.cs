@@ -73,6 +73,10 @@ public class ChunksGrid : Component, IUpdate, ICustomLoad<ChunksGrid> {
         //gameObject.Save("src/Prefabs/ChunksGrid.json");
     }
 
+    public void SetCenter (Vector3 newCenter) {
+        TransformTarget.Position = newCenter;
+    }
+
     public void Update () {
         Vector3 targetPos = TransformTarget.Position;
         UpdateCenter(targetPos);

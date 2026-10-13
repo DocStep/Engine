@@ -37,9 +37,6 @@ public class ComponentsManager : Singleton<ComponentsManager> {
 
         types = Reflection.FindAllSubclasses<ChunkLayer>();
         Json.KnownTypes.AddRange(System.Linq.Enumerable.ToList(types));
-        Json.KnownTypes.AddRange(typeof(TerrainLayer));
-        Json.KnownTypes.AddRange(typeof(EntitiesStaticLayer));
-        Json.KnownTypes.AddRange(typeof(EntitiesLayer));
 
         //RegisterAll();
 

@@ -98,7 +98,7 @@ public class Engine : IDisposable {
 
         Log.log($"===== Hook Layer =====", LogType.system);
 
-        entryPoint?.OnLoad?.Invoke();
+        entryPoint?.OnLoad();
         ReflectionActionScripts.CreateSingleton();
 
         EngineState = EngineStates.Ready;
