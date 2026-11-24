@@ -5,7 +5,6 @@ namespace Engine.Graphics;
 
 
 public class ShadowMap : IDisposable {
-
     public ShadowMap (int size = 2048) {
         GL gl = Renderer.GL;
         Size = size;
@@ -38,6 +37,8 @@ public class ShadowMap : IDisposable {
     public int Size;
     public Matrix4x4 LightSpace = Matrix4x4.Identity;
     public float TexelWorld, Bias;
+    bool _cullWas;
+
 
     public void Bind (TextureUnit unit) {
         Renderer.GL.ActiveTexture(unit);
@@ -74,19 +75,19 @@ public class ShadowMap : IDisposable {
         gl.Viewport(0, 0, (uint)Size, (uint)Size);
         gl.Disable(EnableCap.ScissorTest);
         gl.Disable(EnableCap.Blend);
+        _cullWas = gl.IsEnabled(EnableCap.CullFace);
+        gl.Disable(EnableCap.CullFace);
         gl.Enable(EnableCap.DepthTest);
         gl.DepthMask(true);
         gl.ColorMask(false, false, false, false);
         gl.Enable(EnableCap.DepthClamp);
         gl.Clear((uint)ClearBufferMask.DepthBufferBit);
-        gl.Enable(EnableCap.PolygonOffsetFill);
-        gl.PolygonOffset(2f, 4f);
     }
 
     public void End () {
         GL gl = Renderer.GL;
         gl.Disable(EnableCap.DepthClamp);
-        gl.Disable(EnableCap.PolygonOffsetFill);
+        if (_cullWas) gl.Enable(EnableCap.CullFace);
         gl.ColorMask(true, true, true, true);
         gl.BindFramebuffer(FramebufferTarget.Framebuffer, (uint)_prevFbo);
         gl.Viewport(0, 0, (uint)Renderer.Instance.Width, (uint)Renderer.Instance.Height);

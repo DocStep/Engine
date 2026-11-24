@@ -11,7 +11,7 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         //Shader.StatsReset();
 
         //_sh_Lit = new Shader(Assets.LoadText("src/Shaders/Lit_Vertex.shader"), Assets.LoadText("src/Shaders/Lit_Fragment.shader"), "Lit");
-        _sh_Lit_Instanced = new Shader("src/Shaders/Lit_Vertex.shader", "src/Shaders/Lit_Fragment.shader", "Lit", isLit: true);
+        _sh_Lit_Instanced = new Shader("src/Shaders/Lit_Vertex.shader", "src/Shaders/Lit3_Fragment.shader", "Lit", isLit: true);
         _sh_Lit_Instanced.Save("src/Shaders/Lit.shader");
         ///
         _sh_Unlit = new Shader("src/Shaders/Unlit_Vertex.shader", "src/Shaders/Unlit_Fragment.shader", "Unlit", isLit: false);

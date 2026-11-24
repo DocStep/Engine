@@ -1,8 +1,5 @@
 #version 400 core
 
-// Lit_Fragment.shader — PBR (Cook-Torrance / GGX / Fresnel-Schlick)
-// Multiple directional sun lights + SH ambient (diffuse) + equirect skybox reflection (specular).
-
 #define MAX_POINT_SHADOWS 4
 
 
