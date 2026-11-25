@@ -87,10 +87,17 @@ public class Scene : IAsset<Scene> {
         Prefab.SaveObjects(Objects, path);
     }
     public static Scene? Load (string path, int part = 100) {
-        Scene scene = new Scene(true) { Path = path };
-        scene.Objects.Clear(); /// constructor left Objects empty anyway, but explicit if that changes
-        scene.Objects.AddRange(Prefab.LoadObjects(path));
+        if (!File.Exists(path)) return null;
+
+        /// The new scene has to be the active one before objects are read, because
+        /// Prefab registers each GameObject with SceneManager.ActiveScene.
+        SceneManager.Instance.UnloadAll();
+        Scene scene = new Scene(true) {
+            Path = path,
+            Name = System.IO.Path.GetFileNameWithoutExtension(path),
+        };
         SceneManager.Instance.Scenes.Add(scene);
+        Prefab.LoadObjects(path);
         return scene;
     }
 

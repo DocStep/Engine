@@ -53,6 +53,7 @@ public class Engine : IDisposable {
 
     private void Init (EngineEntryPoint? entryPoint) {
         ArgsUtils.Init();
+        if (entryPoint?.Editor == true) ArgsUtils.isEditor = true;
 
         ThreadUtils.Init();
         Log.Init();

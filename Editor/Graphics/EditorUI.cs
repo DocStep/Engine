@@ -169,7 +169,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         //if (ImGui.Button(playName)) { }
 
         ImGui.End();
-        ImGui.PopStyleVar(2);
+        ImGui.PopStyleVar(1);
     }
 
     private void DrawDockHost (uint dockspaceId) {

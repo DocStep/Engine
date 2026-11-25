@@ -29,7 +29,7 @@ public class SceneManager : Singleton<SceneManager> {
     }
 
     public void Update () {
-        if (Inputs.Actions[Inputs.EditorSave].pressedDown) {
+        if (ArgsUtils.isEditor && Inputs.Actions[Inputs.EditorSave].pressedDown) {
             ActiveSceneSave();
         }
 
@@ -41,14 +41,21 @@ public class SceneManager : Singleton<SceneManager> {
 
 
     public void ActiveSceneSave () {
-        Scene? activeScene = ActiveScene;
-        if (activeScene is null) return;
+        if (!ArgsUtils.isEditor) return;
+        Project.SaveActiveScene();
+    }
 
-        JObj jObj = activeScene.ToJObj();
-        string path = Path.Combine(Dirs.Scenes, activeScene.Name + ".json");
 
-        Dirs.EnsureExist(Dirs.Scenes);
-        Json.Write(path, jObj);
+    /// Drops every loaded scene and destroys its objects. Safe to call before loading another scene.
+    public void UnloadAll () {
+        List<Scene> loaded = new List<Scene>(Scenes);
+        foreach (Scene scene in loaded) {
+            List<GameObject> objects = new List<GameObject>(scene.GameObjects);
+            for (int i = objects.Count - 1; i >= 0; i--) {
+                if (!objects[i].Destroyed) objects[i].DestroyImmediate();
+            }
+        }
+        Scenes.Clear();
     }
 
 }

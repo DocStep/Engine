@@ -4,7 +4,7 @@
 public static class ArgsUtils {
 
     public static bool isConsole { get; private set; } = true;
-    public static bool isEditor = false;
+    public static bool isEditor { get; set; } = false;
 
 
     public static void Init () {
