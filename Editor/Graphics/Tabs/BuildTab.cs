@@ -107,18 +107,29 @@ public class BuildTab : IEditorTab {
             RedirectStandardError = true,
             CreateNoWindow = true,
         };
-        process.StartInfo.ArgumentList.Add("publish");
-        process.StartInfo.ArgumentList.Add(projectPath);
-        process.StartInfo.ArgumentList.Add("--configuration");
-        process.StartInfo.ArgumentList.Add("Release");
-        process.StartInfo.ArgumentList.Add("--output");
-        process.StartInfo.ArgumentList.Add(outputPath);
-        process.StartInfo.ArgumentList.Add("--runtime");
-        process.StartInfo.ArgumentList.Add(runtimeIdentifier);
-        process.StartInfo.ArgumentList.Add("--self-contained");
-        process.StartInfo.ArgumentList.Add("true");
-        process.StartInfo.ArgumentList.Add("-p:PublishAot=" + nativeAot.ToString().ToLowerInvariant());
-        process.StartInfo.ArgumentList.Add("-p:GameBuild=true");
+
+        List<string> args = new() {
+        "publish", projectPath,
+        "--configuration", "Release",
+        "--output", outputPath,
+        "--runtime", runtimeIdentifier,
+        "--self-contained", "true",
+        "-p:PublishAot=" + nativeAot.ToString().ToLowerInvariant(),
+        "-p:GameBuild=true",
+        "-p:DebugType=none",
+        "-p:DebugSymbols=false",
+        "-p:GenerateDocumentationFile=false",
+        "-p:SatelliteResourceLanguages=en",
+    };
+
+        /// Single file only for non-AOT. Natives stay next to the exe on purpose.
+        if (!nativeAot) {
+            args.Add("-p:PublishSingleFile=true");
+            args.Add("-p:EnableCompressionInSingleFile=true");
+        }
+
+        foreach (string arg in args)
+            process.StartInfo.ArgumentList.Add(arg);
 
         try {
             if (!process.Start())

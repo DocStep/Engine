@@ -289,10 +289,14 @@ float ShadowFactor (vec3 N, vec3 L)
     return (1.0 - lit/float(SUN_PCF_TAPS))*fade;
 }
 
-const vec3 kDisk[8] = vec3[](
-    vec3(1,1,1), vec3(1,-1,1), vec3(-1,-1,1), vec3(-1,1,1),
-    vec3(1,1,-1), vec3(1,-1,-1), vec3(-1,-1,-1), vec3(-1,1,-1));
+const int   POINT_PCF_TAPS = 12;
+const float POINT_NORMAL_OFFSET = 2.0; // texels
+const float POINT_MAX_TAN = 8.0;       // clamp for the slope term at grazing angles
 
+// 0 = lit, 1 = fully in shadow.
+// Normal offset and slope bias are both sized from the cube texel's world footprint at this
+// distance, and the PCF kernel is a per-pixel rotated disk in the plane perpendicular to the
+// sample direction (no fixed axis-aligned tap pattern).
 float PointShadowFactor (int slot, vec3 lightPos, float range, vec3 N)
 {
     vec3 toLight = lightPos - vFragPos;
@@ -300,15 +304,30 @@ float PointShadowFactor (int slot, vec3 lightPos, float range, vec3 N)
     if (range <= dist) return 0.0;
 
     float NdotL = clamp(dot(N, toLight/dist), 0.0, 1.0);
-    vec3 dir = (vFragPos + N*dist*0.006*(1.0 - NdotL)) - lightPos; /// normal offset grows with distance, like a texel does
-    float current = length(dir)/range;
+    float sinT = sqrt(1.0 - NdotL*NdotL);
+    float tanT = min(sinT/max(NdotL, 1e-3), POINT_MAX_TAN);
+
+    float texelWorld = 2.0*dist/float(textureSize(uPointShadowMap, 0).x); // world size of one cube texel here
+    float radius = max(POINT_SOFTNESS*dist, 1.5*texelWorld);              // PCF radius, world units
+
+    vec3 pos = vFragPos + N*texelWorld*POINT_NORMAL_OFFSET*sinT;
+    vec3 dir = pos - lightPos;
+    float len = length(dir);
+    float current = (len - (radius + 0.5*texelWorld)*tanT)/range - POINT_BIAS; // receiver-plane style slope bias
+
+    vec3 fwd = dir/len;
+    vec3 up = abs(fwd.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+    vec3 t = normalize(cross(up, fwd));
+    vec3 b = cross(fwd, t);
+    float phi = 6.2831853*InterleavedGradientNoise(gl_FragCoord.xy + 17.0);
 
     float shadow = 0.0;
-    for (int i = 0; i < 8; i++) {
-        float d = textureLod(uPointShadowMap, vec4(dir + kDisk[i]*dist*POINT_SOFTNESS, float(slot)), 0.0).r;
-        if (current - POINT_BIAS > d) shadow += 1.0;
+    for (int i = 0; i < POINT_PCF_TAPS; i++) {
+        vec2 o = VogelDisk(i, POINT_PCF_TAPS, phi)*radius;
+        float d = textureLod(uPointShadowMap, vec4(dir + t*o.x + b*o.y, float(slot)), 0.0).r;
+        if (current > d) shadow += 1.0;
     }
-    return shadow/8.0;
+    return shadow/float(POINT_PCF_TAPS);
 }
 
 // ============================================================================
