@@ -254,12 +254,13 @@ vec2 VogelDisk(int i, int n, float phi)
 // Rotated Vogel-disk PCF (hardware 2x2 compare per tap) + receiver-plane depth bias:
 // every tap compares against the depth of the receiver's own plane at that tap, so the
 // kernel no longer self-shadows on slopes and no big slope-scaled bias is needed.
-float ShadowFactor (vec3 N, vec3 L)
-{
+float ShadowFactor (vec3 N, vec3 L) {
     float NdotL = clamp(dot(N, L), 0.0, 1.0);
     float sinT = sqrt(1.0 - NdotL*NdotL);
+    float tanT = min(sinT/max(NdotL, 0.05), 10.0);
 
-    vec3 pos = vFragPos + N*uShadowTexelWorld*uShadowNormalOffset*sinT;
+    /// never zero, so sun-facing surfaces are pushed off too
+    vec3 pos = vFragPos + N*uShadowTexelWorld*uShadowNormalOffset*(0.5 + sinT);
     vec4 lp = uLightSpace*vec4(pos, 1.0);
     vec3 p = (lp.xyz/lp.w)*0.5 + 0.5;
 
@@ -269,22 +270,14 @@ float ShadowFactor (vec3 N, vec3 L)
     if (edgeMin < 0.0) return 0.0;
     float fade = smoothstep(0.0, 0.1, edgeMin);
 
-    // d(depth)/d(shadow uv) of the receiver plane from world-position derivatives (sun = ortho, so w = 1)
-    vec3 ddx = (uLightSpace*vec4(gPosDx, 0.0)).xyz*0.5;
-    vec3 ddy = (uLightSpace*vec4(gPosDy, 0.0)).xyz*0.5;
-    float det = ddx.x*ddy.y - ddx.y*ddy.x;
-    vec2 grad = vec2(0.0);
-    if (abs(det) > 1e-12)
-        grad = vec2(ddy.y*ddx.z - ddx.y*ddy.z, ddx.x*ddy.z - ddy.x*ddx.z)/det;
-
+    float z = p.z - uShadowBias*(1.0 + tanT);
     vec2 texel = 1.0/vec2(textureSize(uShadowMap, 0));
     float phi = 6.2831853*InterleavedGradientNoise(gl_FragCoord.xy);
 
     float lit = 0.0;
     for (int k = 0; k < SUN_PCF_TAPS; ++k) {
         vec2 o = VogelDisk(k, SUN_PCF_TAPS, phi)*SUN_SOFTNESS*texel;
-        float rp = clamp(dot(o, grad), -RP_MAX_BIAS, RP_MAX_BIAS);
-        lit += textureLod(uShadowMap, vec3(p.xy + o, p.z + rp - uShadowBias), 0.0);
+        lit += textureLod(uShadowMap, vec3(p.xy + o, z), 0.0);
     }
     return (1.0 - lit/float(SUN_PCF_TAPS))*fade;
 }
