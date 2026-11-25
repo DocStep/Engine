@@ -40,6 +40,11 @@ public static class Lighting {
     [Range(0, 1)] public static float AmbientIntensity = 1.0f;
     [Range(0, 1)] public static float ReflectionIntensity = 1f;
 
+    public static float Light_Radius = 50f;
+    public static float Light_Pad = 100f;
+    public static float Light_Bias = 0.02f;
+
+
     public static void RegisterLightSource (LightSource lightSource) {
         LightSources.Add(lightSource);
         switch (lightSource) {
@@ -177,8 +182,12 @@ public static class Lighting {
         float envReflection = sunLightIntensityAvg;
         shader.SetFloat(uReflectionIntensity, Constants.renderSkyboxReflection ? ReflectionIntensity*envReflection : 0f);
 
-        if (Ambient == AmbientMode.Skybox && Renderer.Instance.Skybox.HdrTexture is not null) {
-            SetSHAmbient(shader, renderer.Skybox.Probe);
+        if (Ambient == AmbientMode.Skybox) { 
+            if (renderer.Skybox is not null) {
+                //if (renderer.Skybox.HdrTexture is not null)
+                    SetSHAmbient(shader, renderer.Skybox.Probe);
+            }
+            
         }
 
 

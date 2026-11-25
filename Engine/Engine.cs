@@ -45,10 +45,10 @@ public class Engine : IDisposable {
     public double sessionTime = 0f;
 
     //protected EngineStatsUpdate stats = new EngineStatsUpdate();
-    public EngineStats Stats = new EngineStats();
-    protected System.Diagnostics.Stopwatch sw_LatencyUpdate = new System.Diagnostics.Stopwatch();
-    protected System.Diagnostics.Stopwatch sw_LatencyFixedUpdate = new System.Diagnostics.Stopwatch();
-    protected System.Diagnostics.Stopwatch sw_LatencySystems = new System.Diagnostics.Stopwatch();
+    public EngineStats Stats = new();
+    protected System.Diagnostics.Stopwatch sw_LatencyUpdate = new();
+    protected System.Diagnostics.Stopwatch sw_LatencyFixedUpdate = new();
+    protected System.Diagnostics.Stopwatch sw_LatencySystems = new();
 
 
     private void Init (EngineEntryPoint? entryPoint) {
@@ -89,9 +89,9 @@ public class Engine : IDisposable {
         Log.log($"===== Systems Layer =====", LogType.system);
 
         Type? rendererType = entryPoint?.Renderer;
-        if (rendererType is null) rendererType = typeof(Graphics.Renderer);
-        Graphics.Renderer? renderer = Activator.CreateInstance(rendererType) as Graphics.Renderer;
-        if (renderer is null) throw new Exception("Renderer is null");
+        rendererType ??= typeof(Graphics.Renderer);
+        if (Activator.CreateInstance(rendererType) is not Graphics.Renderer) 
+            throw new Exception("Renderer is null");
 
         Physics.CreateSingleton();
         ComponentsManager.CreateSingleton();
@@ -99,7 +99,7 @@ public class Engine : IDisposable {
 
         Log.log($"===== Hook Layer =====", LogType.system);
 
-        entryPoint?.OnLoad();
+        entryPoint?.OnLoad?.Invoke();
         ReflectionActionScripts.CreateSingleton();
 
         EngineState = EngineStates.Ready;

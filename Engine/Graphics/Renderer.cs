@@ -44,12 +44,12 @@ public class Renderer {
                 }
             },
         };
+        SsaoPass = new PostProcessPass(_mat_SSAO);
+        SsaoBlurPass = new PostProcessPass(_mat_SSAO_Blur);
+        AoApplyPass = new PostProcessPass(_mat_SSAO_Composite);
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Grayscale));
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Depth));
-        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO) { Ldr = true, });
-        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO_Blur) { Ldr = true, });
-        PostProcess.Effects.Add(new PostProcessPass(_mat_SSAO_Composite) { Ldr = true, });
         //PostProcess.Effects.Add(new PostProcessPass(_mat_CameraFocus) { Ldr = true, });
         PostProcess.Effects.Add(new PostProcessPass(_mat_Fxaa) { Ldr = true, });
         //PostProcess.Effects.Add(new PostProcessPass(_mat_Vignette) { Ldr = true, });
@@ -90,6 +90,9 @@ public class Renderer {
     protected Frustum lightFrustum = new Frustum();
     public readonly PostProcessStack PostProcess = null!;
     public readonly TextRenderer TextRenderer = null!;
+    protected readonly PostProcessPass SsaoPass = null!;
+    protected readonly PostProcessPass SsaoBlurPass = null!;
+    protected readonly PostProcessPass AoApplyPass = null!;
 
 
     /// Debug
@@ -112,7 +115,7 @@ public class Renderer {
     /// Cached so UpdateViewProjection only rebuilds the UI ortho matrix when size actually changes
     protected float lastProjWidth = -1f;
     protected float lastProjHeight = -1f;
-
+    protected int transparentStart = -1;
 
 
     public virtual void Render () {
@@ -136,22 +139,21 @@ public class Renderer {
         /// Camera Matrix
         UpdateViewProjection(Width, Height);
 
-        DrawShadowPass();
+        DrawShadowPasses();
+        //DrawShadowPass();
 
         PostProcess.BeginScene();
 
         Skybox?.Draw();
 
-        DrawSceneAll();
-
         //SceneManager.ActiveScene?.DrawRaw();
-
+        DrawSceneAll();
+        PostProcess.RunAO(SsaoPass, SsaoBlurPass, AoApplyPass);
+        PostProcess.EndNormalOutput();
+        DrawTransparents();
         PostProcess.Run();
 
         de_DrawPostScene?.Invoke();
-
-        //PostProcess.BindOutputForOverlay();
-
         de_DrawAfterPostProcess?.Invoke();
 
         /// UI Stage
@@ -175,6 +177,7 @@ public class Renderer {
     public void ClearRenderData () {
         queue.Clear();
         shadowQueue.Clear();
+        transparentStart = -1;
 
         StatsEnd();
     }
@@ -239,43 +242,57 @@ public class Renderer {
         //Log.log("depth", Renderer.GL.IsEnabled(EnableCap.DepthTest), Renderer.GL.GetBoolean(GetPName.DepthWritemask));
 
         frustum.Extract(m4x4_View*m4x4_Projection);
-        long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
         queue.Build(frustum, Camera!.CameraPos);
-        long t1 = System.Diagnostics.Stopwatch.GetTimestamp();
-        /// Consecutive runs of the same (mesh, material) — adjacent thanks to the sort key —
-        /// get drawn as one instanced call. Every shader used here must read the model/normal
-        /// matrix from the instanced attributes (locations 3 and 7) — see Mesh.DrawInstanced.
-        /// UI is the exception: it goes through DrawRenderInfo with uniforms.
+
         int count = queue.Count;
         int idx = 0;
-        bool normalsOn = true;
-        //Log.log("Start");
+        transparentStart = count;
         while (idx < count) {
             RenderData first = queue[idx];
 
-            /// Everything after the opaque pass (transparents, UI) doesn't write FragNormal
-            if (normalsOn && first.material.Pass != RenderPass.Opaque) {
-                PostProcess.EndNormalOutput();
-                //Log.log("EndNormalOutput");
-                normalsOn = false;
-
-                //PostProcess.DebugReadDepth(PostProcess.SceneFbo, Width/2, Height/2);
-            }
-            //Log.log("RenderInfo", first.material.Pass);
-
-            if (first.material.Pass == RenderPass.UI) {
-                DrawRenderInfo(first);
-                idx++;
-                continue;
+            /// Queue is sorted opaque first, so the first non-opaque item starts the post-PP part
+            if (first.material.Pass != RenderPass.Opaque) {
+                transparentStart = idx;
+                break;
             }
 
             int runEnd = queue.RunEnd(idx);
             DrawInstancedRun(idx, runEnd);
             idx = runEnd;
         }
-        long t2 = System.Diagnostics.Stopwatch.GetTimestamp();
-        //Log.log("build ms", System.Diagnostics.Stopwatch.GetElapsedTime(t0, t1).TotalMilliseconds,
-        //    "draw ms", System.Diagnostics.Stopwatch.GetElapsedTime(t1, t2).TotalMilliseconds);
+    }
+
+    protected void DrawTransparents () {
+        int count = queue.Count;
+        if (transparentStart < 0 || count <= transparentStart) return;
+
+        gl.BindFramebuffer(FramebufferTarget.Framebuffer, PostProcess.SceneFbo);
+        gl.DrawBuffer(GLEnum.ColorAttachment0);
+        gl.Viewport(0, 0, (uint)Width, (uint)Height);
+        gl.Enable(EnableCap.DepthTest);
+        gl.DepthFunc(DepthFunction.Lequal);
+        gl.DepthMask(false);
+        gl.Enable(EnableCap.Blend);
+        gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+        state.Reset(); /// RunAO changed GL state behind the cache
+
+        int idx = transparentStart;
+        while (idx < count) {
+            RenderData first = queue[idx];
+            if (first.material.Pass == RenderPass.UI) {
+                DrawRenderInfo(first);
+                idx++;
+                continue;
+            }
+            int runEnd = queue.RunEnd(idx);
+            DrawInstancedRun(idx, runEnd);
+            idx = runEnd;
+        }
+
+        gl.DepthMask(true);
+        gl.Disable(EnableCap.Blend);
+        state.Reset();
     }
 
     public void DrawRenderInfo (RenderData info) {
@@ -346,7 +363,7 @@ public class Renderer {
             case RenderPass.Opaque:
             case RenderPass.Transparent:
                 SetSceneUniformsUnlit(shader, Camera!.CameraPos);
-                if (Skybox is not null) 
+                if (Skybox is not null)
                     SetSceneUniformsSkybox(shader, Skybox.PrefilteredHandle, Skybox.MaxLod);
                 Lighting.SetSceneUniformsLit(shader);
                 break;
@@ -378,19 +395,28 @@ public class Renderer {
     }
 
 
-    protected void DrawShadowPass () {
-        DrawShadowPasses();
-        PostProcess.BeginScene();
-    }
+    //protected void DrawShadowPass () {
+    //    DrawShadowPasses();
+    //    //PostProcess.BeginScene();
+    //}
 
     void DrawShadowPasses () {
         SunShadowLight = null;
         Array.Clear(PointShadows.Slots);
         if (!Lighting.UseShadow) return;
 
+        DrawSunShadowPass();
+        DrawPointShadowPass();
+
+        GL.CullFace(TriangleFace.Back);
+        state.Reset();
+    }
+
+    void DrawSunShadowPass () {
         SunLight? sun = Lighting.GetShadowSun();
         if (sun is not null) {
-            Shadow.SetSun(sun.gameObject.Transform.Forward, Camera!.CameraPos, 50f, 100f, 0.05f);
+            Shadow.SetSun(sun.gameObject.Transform.Forward, Camera!.CameraPos, 
+                Lighting.Light_Radius, Lighting.Light_Pad, Lighting.Light_Bias);
             lightFrustum.Extract(Shadow.LightSpace);
             shadowQueue.Build(lightFrustum, Camera.CameraPos);
 
@@ -401,31 +427,7 @@ public class Renderer {
             Shadow.End();
             SunShadowLight = sun;
         }
-
-        DrawPointShadowPass(); /// unchanged
-
-        GL.CullFace(TriangleFace.Back);
-        state.Reset();
     }
-
-    /*void DrawSunShadowPass () {
-        SunLight? light = Lighting.GetShadowSun();
-        if (light is null) return;
-
-        Vector3 sunDir = light.gameObject.Transform.Forward;
-        Shadow.SetSun(sunDir, Camera!.CameraPos, 35f, 100f, 0.05f);
-
-        lightFrustum.Extract(Shadow.LightSpace);
-        shadowQueue.Build(lightFrustum, Camera.CameraPos);
-
-        Shadow.Begin();
-        Shader shader = BindDepthMaterial(_mat_ShadowDepth, true);
-        shader.SetMatrix4x4("uLightSpace", Shadow.LightSpace);
-        DrawDepthQueue(shadowQueue);
-        Shadow.End();
-
-        SunShadowLight = light;
-    }*/
 
     void DrawPointShadowPass () {
         Lighting.PickPointShadowLights(PointShadows.Slots, Camera!.CameraPos);

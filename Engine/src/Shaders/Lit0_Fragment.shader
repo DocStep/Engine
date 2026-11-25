@@ -24,7 +24,6 @@ uniform float uMaxReflectionLod;
 uniform float uReflectionIntensity;
 
 const float PI = 3.14159265;
-const float uExposure = 1.0;
 
 out vec4 FragColor;
 layout (location = 1) out vec4 FragNormal;
@@ -103,7 +102,7 @@ void main () {
     /// Ambient specular (IBL)
     float lod = rough*uMaxReflectionLod;
     vec2 envUV = DirToEquirectUV(R);
-    vec3 envSpec = textureLod(uSkybox, envUV, lod).rgb*uExposure;
+    vec3 envSpec = textureLod(uSkybox, envUV, lod).rgb;
     vec3 envSpecMixed = mix(uAmbientColor, envSpec, clamp(uReflectionIntensity, 0.0, 1.0));
     float specOcclusion = GetSpecularOcclusion(NdV, 1.0, smoothness);
     vec3 specularAmbient = envSpecMixed*Fambient*specOcclusion;
@@ -111,11 +110,7 @@ void main () {
     vec3 ambient = diffuseAmbient + specularAmbient;
     vec3 color = ambient + Lo;
 
-    /// Tonemapping
-    color = color/(color + vec3(1.0));
-    color = pow(color, vec3(1.0/2.2));
-
-    FragColor = vec4(color, uAlpha);
+    FragColor = vec4(max(color, vec3(0.0)), uAlpha);
     // Write view-space normal into MRT attachment 1 so postprocess can sample it.
     FragNormal = vec4(normalize(vViewNormal), 1.0);
 }

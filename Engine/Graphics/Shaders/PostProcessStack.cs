@@ -35,9 +35,6 @@ public class PostProcessStack : IDisposable {
     [Hide] public uint SceneFbo => _sceneFbo;
     [Hide] public uint OutputTexture => _outputColor;
     [Hide] public uint OutputDepth => _outputDepth;
-    /// Output of the tonemap pass, kept alive for effects that need it (the AO composite)
-    [Hide] public uint TonemappedTexture { get; private set; }
-
     [Hide] public PostProcessPass Tonemap = null!; /// set by Renderer, always runs
     [Hide] readonly List<PostProcessPass> _chain = new List<PostProcessPass>();
 
@@ -48,21 +45,46 @@ public class PostProcessStack : IDisposable {
         }
     }
 
+    public void RunAO (PostProcessPass ssao, PostProcessPass blur, PostProcessPass apply) {
+        if (!Enabled) return;
+        GL gl = Renderer.GL;
+
+        gl.BindFramebuffer(FramebufferTarget.Framebuffer, _pingFbo[0]);
+        SetDrawBuffer(_pingFbo[0]);
+        PrepareFullscreenPass();
+        ssao.Apply(_sceneColor, _sceneDepth);
+
+        gl.BindFramebuffer(FramebufferTarget.Framebuffer, _pingFbo[1]);
+        SetDrawBuffer(_pingFbo[1]);
+        PrepareFullscreenPass();
+        blur.Apply(_pingColor[0], _sceneDepth);
+
+        gl.BindFramebuffer(FramebufferTarget.Framebuffer, _sceneFbo);
+        gl.DrawBuffer(GLEnum.ColorAttachment0);
+        gl.Disable(EnableCap.DepthTest);
+        gl.DepthMask(false);
+        gl.Disable(EnableCap.CullFace);
+        gl.Enable(EnableCap.Blend);
+        gl.BlendFuncSeparate(BlendingFactor.DstColor, BlendingFactor.Zero,
+            BlendingFactor.Zero, BlendingFactor.One);
+        apply.Apply(_pingColor[1], _sceneDepth);
+        gl.Disable(EnableCap.Blend);
+    }
+
     public void Run () => Run(_outputFbo);
     private void Run (uint finalTargetFbo) {
         Renderer.GL.Disable(EnableCap.DepthTest);
         BuildChain();
 
         uint currentInput = _sceneColor;
-        TonemappedTexture = 0;
         int last = _chain.Count - 1;
 
         for (int i = 0; i <= last; i++) {
             bool isLast = i == last;
 
-            /// Pick a ping target that is neither the current input nor the held tonemapped image
+            /// Pick a ping target that is not the current input
             int ping = 0;
-            while (_pingColor[ping] == currentInput || _pingColor[ping] == TonemappedTexture) ping++;
+            while (_pingColor[ping] == currentInput) ping++;
 
             uint targetFbo = isLast ? finalTargetFbo : _pingFbo[ping];
 
@@ -72,10 +94,7 @@ public class PostProcessStack : IDisposable {
 
             _chain[i].Apply(currentInput, _sceneDepth);
 
-            if (!isLast) {
-                currentInput = _pingColor[ping];
-                if (_chain[i] == Tonemap) TonemappedTexture = currentInput;
-            }
+            if (!isLast) currentInput = _pingColor[ping];
         }
 
         CopySceneDepth(finalTargetFbo);

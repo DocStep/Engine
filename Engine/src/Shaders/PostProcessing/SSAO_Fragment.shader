@@ -55,7 +55,7 @@ float Noise (vec2 p) {
 void main () {
     float centerRawDepth = texture(uDepth, vUV).r;
 
-    if (uFar*0.99 < LinearizeDepth(centerRawDepth)) {
+    if (1.0 <= centerRawDepth || uFar*0.99 < LinearizeDepth(centerRawDepth)) {
         FragColor = vec4(1.0);
         FragNormal = vec4(normalize(vViewNormal)*0.5 + 0.5, 1.0);
         return;

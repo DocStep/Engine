@@ -100,10 +100,10 @@ public class Skybox : IDisposable {
 
         /// fall back if the chosen source doesn't exist
         SkyMode m = mode;
-        if (m == SkyMode.Texture && Texture is null) m = SkyMode.Baked;
-        if (m == SkyMode.Baked && skyLdrHandle == 0) m = SkyMode.Hdr;
-        if (m == SkyMode.Hdr && HdrTexture is null) m = SkyMode.Texture;
-        if (m == SkyMode.Texture && Texture is null) return;
+        if (m is SkyMode.Texture && Texture is null) m = SkyMode.Baked;
+        if (m is SkyMode.Baked && skyLdrHandle == 0) m = SkyMode.Hdr;
+        if (m is SkyMode.Hdr && HdrTexture is null) m = SkyMode.Texture;
+        if (m is SkyMode.Texture && Texture is null) return;
 
         material = m == SkyMode.Hdr ? AssetsEngine._mat_SkyboxHdr : AssetsEngine._mat_Skybox;
         if (material is null) return;
@@ -117,11 +117,17 @@ public class Skybox : IDisposable {
         else if (m == SkyMode.Baked) {
             gl.ActiveTexture(TextureUnit.Texture0);
             gl.BindTexture(TextureTarget.Texture2D, skyLdrHandle);
-        } else HdrTexture.Bind(TextureUnit.Texture0);
+        } else if (m == SkyMode.Hdr) {
+            if (HdrTexture is not null) 
+                HdrTexture.Bind(TextureUnit.Texture0);
+        }
 
         material.shader.Use();
         material.Apply();
-        if (m == SkyMode.Hdr) material.shader.SetFloat(Shader.uExposure, HdrTexture.Exposure);
+        if (m == SkyMode.Hdr) {
+            if (HdrTexture is not null)
+                material.shader.SetFloat(Shader.uExposure, HdrTexture.Exposure);
+        }
 
         gl.BindVertexArray(_emptyVao);
         gl.DrawArrays(PrimitiveType.Triangles, 0, 3);
