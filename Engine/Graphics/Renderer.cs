@@ -32,7 +32,7 @@ public class Renderer {
         Skybox = new Skybox(_tex_Skybox);
         //Skybox = new Skybox(_hdr_Skybox);
 
-        Shadow = new ShadowMap(2048);
+        Shadow = new ShadowMap(4096);
         PointShadows = new PointShadowMap();
 
         PostProcess = new PostProcessStack() {

@@ -34,7 +34,7 @@ uniform vec3 uPointLightColor[MAX_POINT_LIGHTS];
 uniform float uPointLightIntensity[MAX_POINT_LIGHTS];
 uniform float uPointLightRange[MAX_POINT_LIGHTS];
 
-const float SUN_SOFTNESS = 1.5;
+const float SUN_SOFTNESS = 6.0;
 const float POINT_SOFTNESS = 0.004;  // jitter relative to distance
 const float POINT_BIAS = 0.001;      // in range-normalized depth
 
