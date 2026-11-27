@@ -27,15 +27,23 @@ public class MeshComponent : Component, IUpdate, IUpdateAtFreeze {
             return;
         }
 
-        /// One RenderInfo per usemtl group — MaterialOverrides maps a submesh's material name
-        /// to the Material to draw it with; falls back to Material when a name has no override.
+        /// Match scene overrides by material name because FBX submesh ordering can differ from OBJ.
         for (int i = 0; i < Mesh.SubMeshes.Length; i++) {
             Mesh.SubMesh sub = Mesh.SubMeshes[i];
-            Material mat = Materials is not null && i < Materials.Length && Materials[i] is not null
-                ? Materials[i]
-                : Mesh.DefaultMaterials is not null && i < Mesh.DefaultMaterials.Length
+            Material? overrideMaterial = null;
+            if (Materials is not null) {
+                foreach (Material? candidate in Materials) {
+                    if (candidate?.Name == sub.MaterialName) {
+                        overrideMaterial = candidate;
+                        break;
+                    }
+                }
+            }
+
+            Material mat = overrideMaterial
+                ?? (Mesh.DefaultMaterials is not null && i < Mesh.DefaultMaterials.Length
                     ? Mesh.DefaultMaterials[i]
-                    : Material;
+                    : Material);
 
             RenderData renderData = new RenderData() {
                 model = model,

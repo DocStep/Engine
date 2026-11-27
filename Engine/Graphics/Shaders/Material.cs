@@ -21,7 +21,16 @@ public class Material : IAsset<Material>, IOnLoaded {
     public Material () { }
     public void OnLoaded () {
         CoerceLoaded();
+        RestoreTextures();
         FillDefaults();
+    }
+
+    private void RestoreTextures () {
+        foreach ((string name, Texture texture) in textures.ToArray()) {
+            if (string.IsNullOrWhiteSpace(texture.Path)) continue;
+            textures[name] = Assets.Load<Texture>(texture.Path)
+                ?? throw new FileNotFoundException($"Material texture not found: {texture.Path}", texture.Path);
+        }
     }
     public Material (Shader shader) {
         this.shader = shader;
@@ -143,9 +152,9 @@ public class Material : IAsset<Material>, IOnLoaded {
             uniforms[key] = info.Type switch {
                 Silk.NET.OpenGL.UniformType.Int or Silk.NET.OpenGL.UniformType.Bool => Convert.ToInt32(value),
                 Silk.NET.OpenGL.UniformType.Float => Convert.ToSingle(value),
-                Silk.NET.OpenGL.UniformType.FloatVec2 => ((Newtonsoft.Json.Linq.JObject)value).ToObject<Vector2>(),
-                Silk.NET.OpenGL.UniformType.FloatVec3 => ((Newtonsoft.Json.Linq.JObject)value).ToObject<Vector3>(),
-                Silk.NET.OpenGL.UniformType.FloatVec4 => ((Newtonsoft.Json.Linq.JObject)value).ToObject<Vector4>(),
+                Silk.NET.OpenGL.UniformType.FloatVec2 => value is Vector2 v2 ? v2 : ((Newtonsoft.Json.Linq.JObject)value).ToObject<Vector2>(),
+                Silk.NET.OpenGL.UniformType.FloatVec3 => value is Vector3 v3 ? v3 : ((Newtonsoft.Json.Linq.JObject)value).ToObject<Vector3>(),
+                Silk.NET.OpenGL.UniformType.FloatVec4 => value is Vector4 v4 ? v4 : ((Newtonsoft.Json.Linq.JObject)value).ToObject<Vector4>(),
                 _ => value,
             };
         }

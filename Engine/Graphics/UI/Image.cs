@@ -23,12 +23,15 @@ public class Image : UIRenderingElement {
     }
 
     [Hide][JsonIgnore] private static Mesh? _sharedQuad = null;
+    public string TexturePath = "";
     private Texture? _texture;
+    private string? _loadedTexturePath;
     [Hide][JsonIgnore] public Texture? Texture {
         get => _texture;
         set {
             if (value is null) return;
             _texture = value;
+            TexturePath = value.Path ?? "";
             Material.textureId = value.Handle;
         }
     }
@@ -40,21 +43,29 @@ public class Image : UIRenderingElement {
 
         _sharedQuad ??= new Mesh(Plane.GenerateQuadUI());
         Material = new MaterialUI(AssetsEngine._sh_UI);
+        if (!string.IsNullOrWhiteSpace(TexturePath)) {
+            Texture = Assets.Load<Texture>(TexturePath)
+                ?? throw new FileNotFoundException($"UI texture not found: {TexturePath}", TexturePath);
+            _loadedTexturePath = TexturePath;
+        }
     }
     public override void OnRemove () {
         ChangeRectToTransform();
 
-        _texture?.Dispose();
+        if (_loadedTexturePath is not null) Assets.Unload<Texture>(_loadedTexturePath);
+        else _texture?.Dispose();
+        _texture = null;
+        _loadedTexturePath = null;
     }
 
 
     public override void Submit () {
-        if (_sharedQuad is null) return;
+        if (_sharedQuad is null || _texture is null) return;
 
         Vector2 origin = rect.Min; /// Min already accounts for pivot
         Vector2 size = rect.ActualSize;
         Material.SetVector4(Shader.uTint, Tint);
-        _texture!.Bind();
+        _texture.Bind();
 
         Renderer.Instance.AddRenderData(new RenderData {
             //name = "UIImage",

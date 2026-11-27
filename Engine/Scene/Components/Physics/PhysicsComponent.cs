@@ -20,7 +20,7 @@ public class PhysicsComponent : Component, IFixedUpdate {
     [Hide][JsonIgnore] public BodyHandle Handle { get; private set; }
     [Hide][JsonIgnore] public BodyReference Rigidbody => Physics.Instance.Simulation.Bodies.GetBodyReference(Handle);
     [Hide][JsonIgnore] public bool IsValid { get; private set; } = false;
-    [Hide][JsonIgnore] public bool isKinematicRequested = false;
+    [Hide] public bool isKinematicRequested = false;
 
     [Hide][JsonIgnore] TypedIndex shapeIndex;
     [Hide][JsonIgnore] BodyInertia dynamicInertia;

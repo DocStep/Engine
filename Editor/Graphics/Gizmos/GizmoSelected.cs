@@ -29,9 +29,9 @@ public class GizmoSelected : IDisposable {
     public bool isInteracting => selectedPositionMode != SelectedPositionGizmoMode.None
         || selectedPositionOverMode != SelectedPositionGizmoMode.None;
 
-    private const float _squareSize = 0.025f;
+    private const float _squareSize = 0.04f;
     private const float _axisLength = 0.15f;
-    private const float _axisRadius = 0.005f;
+    private const float _axisRadius = 0.02f;
     private const float _outlineWidth = 0.2f;
 
     public Vector3 selectedDragPos;

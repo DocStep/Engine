@@ -51,9 +51,16 @@ public class Engine : IDisposable {
     protected System.Diagnostics.Stopwatch sw_LatencySystems = new();
 
 
+    private EngineLaunchOptions launchOptions = null!;
+    private bool isEditorLaunch;
+
     private void Init (EngineEntryPoint? entryPoint) {
-        ArgsUtils.Init();
-        if (entryPoint?.Editor == true) ArgsUtils.isEditor = true;
+        string[] commandLineArguments = Environment.GetCommandLineArgs();
+        string[] arguments = entryPoint?.Arguments ?? (commandLineArguments.Length > 1 ? commandLineArguments[1..] : Array.Empty<string>());
+        launchOptions = EngineLaunchOptions.Parse(arguments);
+        isEditorLaunch = launchOptions.IsEditor || entryPoint?.Editor == true;
+        ArgsUtils.Init(launchOptions.Arguments);
+        if (isEditorLaunch) ArgsUtils.isEditor = true;
 
         ThreadUtils.Init();
         Log.Init();
@@ -88,9 +95,11 @@ public class Engine : IDisposable {
 
         Log.log($"===== Systems Layer =====", LogType.system);
 
-        Type? rendererType = entryPoint?.Renderer;
+        Type? rendererType = isEditorLaunch
+            ? entryPoint?.EditorRenderer ?? entryPoint?.Renderer
+            : entryPoint?.Renderer;
         rendererType ??= typeof(Graphics.Renderer);
-        if (Activator.CreateInstance(rendererType) is not Graphics.Renderer) 
+        if (Activator.CreateInstance(rendererType) is not Graphics.Renderer)
             throw new Exception("Renderer is null");
 
         Physics.CreateSingleton();
@@ -99,13 +108,40 @@ public class Engine : IDisposable {
 
         Log.log($"===== Hook Layer =====", LogType.system);
 
+        if (isEditorLaunch) entryPoint?.OnEditorLoad?.Invoke();
         entryPoint?.OnLoad?.Invoke();
+        if (SceneManager.Instance.Scenes.Count == 0) LoadStartScene();
         ReflectionActionScripts.CreateSingleton();
 
         EngineState = EngineStates.Ready;
         Log.log($"========== Init Finish ==========", LogType.system);
 
         //Engine.SetFPSMax(144);
+    }
+
+    private void LoadStartScene () {
+        if (string.IsNullOrWhiteSpace(launchOptions.ScenePath)) {
+            new Scene() { Name = "Empty Scene" };
+            return;
+        }
+
+        string scenePath;
+        if (Path.IsPathRooted(launchOptions.ScenePath)) {
+            scenePath = Path.HasExtension(launchOptions.ScenePath)
+                ? launchOptions.ScenePath : launchOptions.ScenePath + ".json";
+        } else if (!launchOptions.ScenePath.Contains(Path.DirectorySeparatorChar)
+                && !launchOptions.ScenePath.Contains(Path.AltDirectorySeparatorChar)) {
+            scenePath = Path.Combine(Dirs.Scenes, Path.GetFileNameWithoutExtension(launchOptions.ScenePath) + ".json");
+        } else {
+            scenePath = Path.Combine(Dirs.Root, Path.HasExtension(launchOptions.ScenePath)
+                ? launchOptions.ScenePath
+                : launchOptions.ScenePath + ".json");
+        }
+
+        if (Scene.Load(scenePath) is null) {
+            Log.log($"Start scene not found: {scenePath}. Creating an empty scene.", LogType.warning);
+            new Scene() { Name = "Empty Scene" };
+        }
     }
 
     //Audio.AudioManager audio;

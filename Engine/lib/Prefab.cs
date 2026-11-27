@@ -268,13 +268,37 @@ public static class Prefab {
 
     private static object? ReadValue (Type fieldType, JToken token, PrefabContext ctx) {
         if (token.Type == JTokenType.Null) return null;
-        if (typeof(Transform).IsAssignableFrom(fieldType)) 
+        if (fieldType.IsArray && token is JArray array) {
+            Type elementType = fieldType.GetElementType()!;
+            Array result = Array.CreateInstance(elementType, array.Count);
+            for (int i = 0; i < array.Count; i++)
+                result.SetValue(ReadValue(elementType, array[i], ctx), i);
+            return result;
+        }
+        if (typeof(Transform).IsAssignableFrom(fieldType))
             return ctx.ReadObjects.TryGetValue(token["$ref"]!.Value<int>(), out object? o) ? (Transform)o : null;
-        if (typeof(GameObject).IsAssignableFrom(fieldType)) 
+        if (typeof(GameObject).IsAssignableFrom(fieldType))
             return ctx.ReadObjects.TryGetValue(token["$ref"]!.Value<int>(), out object? o) ? (GameObject)o : null;
         if (typeof(IAsset).IsAssignableFrom(fieldType)) {
-            if (token.Type == JTokenType.Object)
-                return ctx.ReadObjects.TryGetValue(token["$ref"]!.Value<int>(), out object? o) ? o : null;
+            if (token.Type == JTokenType.Object) {
+                if (token["$ref"]?.Value<int>() is int refId && ctx.ReadObjects.TryGetValue(refId, out object? referenced))
+                    return referenced;
+                string? assetPath = token["Path"]?.Value<string>();
+                if (!string.IsNullOrWhiteSpace(assetPath))
+                    return AssetsLoadMethod.MakeGenericMethod(fieldType).Invoke(null, [assetPath]);
+
+                object inlineAsset = Activator.CreateInstance(fieldType)!;
+                JObject assetObject = (JObject)token;
+                ReadFields(inlineAsset, assetObject, ctx);
+                foreach (PropertyInfo property in fieldType.GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
+                    if (!property.CanWrite || property.GetIndexParameters().Length != 0
+                        || property.IsDefined(typeof(JsonIgnoreAttribute))) continue;
+                    if (assetObject.TryGetValue(property.Name, out JToken? propertyToken))
+                        property.SetValue(inlineAsset, ReadValue(property.PropertyType, propertyToken, ctx));
+                }
+                if (inlineAsset is IOnLoaded onLoaded) onLoaded.OnLoaded();
+                return inlineAsset;
+            }
             return AssetsLoadMethod.MakeGenericMethod(fieldType).Invoke(null, [token.Value<string>()!]);
         }
         return token.ToObject(fieldType, PolymorphicSerializer);

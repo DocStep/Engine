@@ -240,18 +240,33 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
     }
 
     public static Mesh Load (string path, int part = 100) {
-        Mesh mesh = new Mesh(ObjLoader.Load(path)) {
-            Name = System.IO.Path.GetFileNameWithoutExtension(path),
-            Path = path,
+        string sourcePath = ResolveSourcePath(path);
+        bool isFbx = System.IO.Path.GetExtension(sourcePath).Equals(".fbx", StringComparison.OrdinalIgnoreCase);
+        MeshData data = isFbx ? FbxLoader.Load(sourcePath) : ObjLoader.Load(sourcePath);
+        Mesh mesh = new Mesh(data) {
+            Name = System.IO.Path.GetFileNameWithoutExtension(sourcePath),
+            Path = sourcePath,
         };
 
-        string mtlPath = System.IO.Path.ChangeExtension(path, ".mtl");
-        if (File.Exists(mtlPath)) {
-            Dictionary<string, MtlData> mtl = MtlLoader.Load(mtlPath);
-            mesh.DefaultMaterials = MtlToMaterial.Build(mtl, mesh, AssetsEngine._mat_Lit);
+        if (!isFbx) {
+            string mtlPath = System.IO.Path.ChangeExtension(sourcePath, ".mtl");
+            if (File.Exists(mtlPath)) {
+                Dictionary<string, MtlData> mtl = MtlLoader.Load(mtlPath);
+                mesh.DefaultMaterials = MtlToMaterial.Build(mtl, mesh, AssetsEngine._mat_Lit);
+            }
         }
 
         return mesh;
+    }
+
+    public static string ResolveSourcePath (string path) {
+        string fbxPath = System.IO.Path.ChangeExtension(path, ".fbx");
+        if (File.Exists(fbxPath)) return fbxPath;
+
+        string objPath = System.IO.Path.ChangeExtension(path, ".obj");
+        if (File.Exists(objPath)) return objPath;
+
+        throw new FileNotFoundException($"Mesh file not found. Tried '{fbxPath}' and '{objPath}'.", path);
     }
 
 

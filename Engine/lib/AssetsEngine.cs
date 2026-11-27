@@ -72,11 +72,11 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mat_PointShadowDepth = new Material(_sh_PointShadowDepth);
         _mat_PointShadowDepth.Save("src/Materials/PointShadowDepth.mat");
 
-        _mesh_Cube = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Cube.obj"))!;
-        _mesh_Sphere = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Sphere.obj"))!;
-        _mesh_Capsule = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Capsule.obj"))!;
-        _mesh_Plane = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Plane.obj"))!;
-        _mesh_PlaneQuad = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "PlaneQuad.obj"))!;
+        _mesh_Cube = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Cube.fbx"))!;
+        _mesh_Sphere = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Sphere.fbx"))!;
+        _mesh_Capsule = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Capsule.fbx"))!;
+        _mesh_Plane = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Plane.fbx"))!;
+        _mesh_PlaneQuad = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "PlaneQuad.fbx"))!;
 
         _sh_Text = new Shader("src/Shaders/UI/Text_Vertex.shader", "src/Shaders/UI/Text_Fragment.shader", "Text");
         _sh_Text.Save("src/Shaders/UI/Text.shader");
@@ -130,9 +130,9 @@ public class AssetsEngine : Singleton<AssetsEngine> {
         _mat_LitBlue.SetVector3(uColor, Constants.blue);
         _mat_LitBlue.Save("src/Materials/Lit_Blue.mat");
 
-        _mesh_Torus = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Torus.obj"))!;
-        _mesh_Suzanne = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Suzanne.obj"))!;
-        _mesh_SuzanneHighRes = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "SuzanneHighRes.obj"))!;
+        _mesh_Torus = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Torus.fbx"))!;
+        _mesh_Suzanne = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "Suzanne.fbx"))!;
+        _mesh_SuzanneHighRes = Assets.Load<Mesh>(Path.Combine(Dirs.Models, "SuzanneHighRes.fbx"))!;
 
         /// Post-Process Effects
         _sh_Tonemap = new Shader("src/Shaders/PostProcessing/Fullscreen_Vertex.shader", 

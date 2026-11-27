@@ -8,6 +8,7 @@ public class JsonEngine {
         typeof(SettingsControlsEngine), typeof(SettingsSoundEngine), typeof(SettingsGraphicsEngine),
         typeof(Slider), typeof(Toggle), typeof(Keybinds), typeof(Keybinds), typeof(TextField),
         typeof(Slider_Sensetivity), typeof(Slider_Volume), typeof(Toggle_PostProcessing),
+        typeof(Vector2), typeof(Vector3), typeof(Vector4),
     };
 
 }

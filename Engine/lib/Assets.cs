@@ -50,6 +50,10 @@ public static class Assets {
         if (_builtins.TryGetValue(path, out IAsset? builtin)) return (T)builtin;
 
         (string fullPath, string relativePath) = ResolvePath(path);
+        if (typeof(T) == typeof(Graphics.Mesh)) {
+            fullPath = Graphics.Mesh.ResolveSourcePath(fullPath);
+            relativePath = Path.GetRelativePath(AppContext.BaseDirectory, fullPath);
+        }
         string key = CacheKey<T>(relativePath);
 
         if (_cache.TryGetValue(key, out IAsset? existing)) {
