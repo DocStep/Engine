@@ -2,6 +2,7 @@
 using BepuPhysics.Collidables;
 using BepuUtilities.Memory;
 using Newtonsoft.Json;
+using Engine.Graphics;
 
 namespace Engine;
 
@@ -23,6 +24,12 @@ public class MeshColliderComponent : ColliderComponent {
     protected override RigidPose LocalPose => new RigidPose(ScaledCenter + (UseHull ? hullCenter : Vector3.Zero));
 
 
+    public override void OnAdd () {
+        base.OnAdd();
+        MeshComponent? meshComponent = gameObject.GetComponent<MeshComponent>();
+        if (meshComponent?.Mesh != null) SetMesh(meshComponent.Mesh);
+    }
+
     public void SetMesh (Graphics.Mesh mesh) {
         Vertices = mesh.Data.Vertices;
         Indices = mesh.Data.Indices;
@@ -37,14 +44,15 @@ public class MeshColliderComponent : ColliderComponent {
         int triangleCount = Indices.Length/3;
         pool.Take(triangleCount, out Buffer<Triangle> triangles);
         for (int i = 0; i < triangleCount; i++) {
+            /// Reversed relative to render winding for Bepu triangle-mesh collision.
             triangles[i] = new Triangle(
                 Vertices[Indices[i*3]].Position,
-                Vertices[Indices[i*3 + 1]].Position,
-                Vertices[Indices[i*3 + 2]].Position
+                Vertices[Indices[i*3 + 2]].Position,
+                Vertices[Indices[i*3 + 1]].Position
             );
         }
         /// the mesh takes ownership of the triangle buffer and applies the scale itself
-        return shapes.Add(new Mesh(triangles, gameObject.Transform.Scale, pool));
+        return shapes.Add(new BepuPhysics.Collidables.Mesh(triangles, gameObject.Transform.Scale, pool));
     }
     public override void AddToCompound (ref CompoundBuilder builder, float weight) {
         builder.Add(BuildHull(Physics.Instance.BufferPool), LocalPose, weight);

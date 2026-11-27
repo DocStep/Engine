@@ -36,6 +36,41 @@ public static class Assets {
         return (Path.Combine(AppContext.BaseDirectory, path), path);
     }
 
+    static string[] GetExtensions (Type assetType) {
+        if (assetType == typeof(Graphics.Mesh)) return [".fbx", ".obj"];
+        if (assetType == typeof(Graphics.Material)) return [".mat"];
+        if (assetType == typeof(Graphics.Shader)) return [".shader"];
+        if (assetType == typeof(Graphics.Texture)) return [".png", ".jpg", ".jpeg", ".bmp", ".tga"];
+        if (assetType == typeof(Graphics.HdrTexture)) return [".hdr", ".hdrf"];
+        if (assetType == typeof(Graphics.ShaderRaw)) return [".shader", ".glsl", ".vert", ".frag"];
+        if (assetType == typeof(Graphics.UI.RawFont)) return [".ttf"];
+        if (assetType == typeof(Audio.AudioClip)) return [".wav"];
+        if (assetType == typeof(Scene) || assetType == typeof(GameObject)) return [".json"];
+        return [];
+    }
+
+    static (string fullPath, string relativePath) ResolvePath (Type assetType, string path) {
+        (string fullPath, _) = ResolvePath(path);
+        if (assetType == typeof(Graphics.Mesh)) fullPath = Graphics.Mesh.ResolveSourcePath(fullPath);
+        else if (!Path.HasExtension(fullPath)) {
+            foreach (string extension in GetExtensions(assetType)) {
+                string candidate = fullPath + extension;
+                if (File.Exists(candidate)) {
+                    fullPath = candidate;
+                    break;
+                }
+            }
+        }
+        return (fullPath, Path.GetRelativePath(AppContext.BaseDirectory, fullPath));
+    }
+
+    public static bool SupportsAssetPath (Type assetType, string path) {
+        string extension = Path.GetExtension(path);
+        return GetExtensions(assetType).Contains(extension, StringComparer.OrdinalIgnoreCase)
+            || (assetType == typeof(Graphics.Mesh) && (extension.Equals(".obj", StringComparison.OrdinalIgnoreCase)
+                || extension.Equals(".fbx", StringComparison.OrdinalIgnoreCase)));
+    }
+
     public static void RegisterBuiltin<T> (string name, T asset) where T : class, IAsset<T> {
         asset.Path = "builtin:" + name;
         _builtins[asset.Path] = asset;
@@ -49,11 +84,7 @@ public static class Assets {
     public static T? Load<T> (string path) where T : class, IAsset<T> {
         if (_builtins.TryGetValue(path, out IAsset? builtin)) return (T)builtin;
 
-        (string fullPath, string relativePath) = ResolvePath(path);
-        if (typeof(T) == typeof(Graphics.Mesh)) {
-            fullPath = Graphics.Mesh.ResolveSourcePath(fullPath);
-            relativePath = Path.GetRelativePath(AppContext.BaseDirectory, fullPath);
-        }
+        (string fullPath, string relativePath) = ResolvePath(typeof(T), path);
         string key = CacheKey<T>(relativePath);
 
         if (_cache.TryGetValue(key, out IAsset? existing)) {
@@ -77,7 +108,16 @@ public static class Assets {
     }
 
     public static string LoadText (string relativePath) {
-        string fullPath = Path.Combine(AppContext.BaseDirectory, relativePath);
+        (string fullPath, _) = ResolvePath(relativePath);
+        if (!Path.HasExtension(fullPath)) {
+            foreach (string extension in new[] { ".shader", ".vert", ".frag", ".glsl" }) {
+                string candidate = fullPath + extension;
+                if (File.Exists(candidate)) {
+                    fullPath = candidate;
+                    break;
+                }
+            }
+        }
         if (!File.Exists(fullPath))
             throw new FileNotFoundException($"File not found: {fullPath}.");
         return File.ReadAllText(fullPath);
@@ -112,7 +152,7 @@ public static class Assets {
     public static void Unload<T> (string path) where T : class, IAsset<T> {
         if (_builtins.ContainsKey(path)) return; /// built-ins are never disposed
 
-        (_, string relativePath) = ResolvePath(path);
+        (_, string relativePath) = ResolvePath(typeof(T), path);
         string key = CacheKey<T>(relativePath);
 
         if (!_cache.TryGetValue(key, out IAsset? asset)) return;

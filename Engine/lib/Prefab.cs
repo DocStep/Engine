@@ -63,6 +63,7 @@ public static class Prefab {
 
     /// Mirror of SaveObjects — returns every root GameObject, in file order.
     public static List<GameObject> LoadObjects (string path) {
+        if (!Path.HasExtension(path) && File.Exists(path + ".json")) path += ".json";
         JObject json = JObject.Parse(File.ReadAllText(path));
         PrefabContext ctx = new PrefabContext();
         ReadObjects((JArray)json["Objects"]!, ctx);

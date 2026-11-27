@@ -100,6 +100,7 @@ public class Scene : IAsset<Scene> {
     }
 
     public static Scene? Load (string path, int part = 100) {
+        if (!System.IO.Path.HasExtension(path) && File.Exists(path + ".json")) path += ".json";
         if (!File.Exists(path)) return null;
 
         /// The new scene has to be the active one before objects are read, because

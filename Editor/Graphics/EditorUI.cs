@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using Marshal = System.Runtime.InteropServices.Marshal;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
@@ -242,6 +243,12 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
 
 
+    public static unsafe void SetAssetDragPayload (string path) {
+        byte[] bytes = Encoding.UTF8.GetBytes(Path.GetFullPath(path) + '\0');
+        fixed (byte* data = bytes)
+            ImGui.SetDragDropPayload("ENGINE_ASSET_PATH", (IntPtr)data, (uint)bytes.Length);
+    }
+
     public static void DrawObject (object target, IEnumerable<Attribute>? attributes = null) {
         ImGui.PushID(target.GetHashCode());
 
@@ -294,10 +301,23 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             _ => false,
         };
 
-        IEnumerable<Attribute> attrs = member.GetCustomAttributes();
-        //if (!isWritable) attrs = attrs.Append(new Readonly());
+        Attribute[] attrs = member.GetCustomAttributes().ToArray();
+        if (attrs.OfType<Hide>().Any()) return;
 
-        object? drawn = DrawMember(member, value, attrs);
+        Type memberType = member is FieldInfo field ? field.FieldType : ((PropertyInfo)member).PropertyType;
+        bool isAssetReference = typeof(IAsset).IsAssignableFrom(memberType);
+        if (isAssetReference && (!isWritable || attrs.OfType<Readonly>().Any())) ImGui.BeginDisabled();
+        object? drawn;
+        if (isAssetReference) {
+            drawn = DrawAssetReference(member.Name, value as IAsset, memberType);
+            if (value is Material material && ImGui.TreeNodeEx($"Edit {member.Name}##Material", ImGuiTreeNodeFlags.DefaultOpen)) {
+                DrawObject(material);
+                ImGui.TreePop();
+            }
+        } else {
+            drawn = DrawMember(member, value, attrs);
+        }
+        if (isAssetReference && (!isWritable || attrs.OfType<Readonly>().Any())) ImGui.EndDisabled();
         if (drawn is null || !isWritable) return;
 
         switch (member) {
@@ -330,6 +350,29 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             }
         }
 
+        return result;
+    }
+
+    static unsafe object? DrawAssetReference (string label, IAsset? value, Type assetType) {
+        ImGui.AlignTextToFramePadding();
+        ImGui.TextUnformatted(label);
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(-1);
+        string display = value is null ? "None" : $"{value.Name} ({value.Path})";
+        ImGui.Button($"{display}##AssetSlot_{label}", new Vector2(-1, 0));
+
+        if (!ImGui.BeginDragDropTarget()) return null;
+        ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload("ENGINE_ASSET_PATH");
+        object? result = null;
+        if (payload.NativePtr != null && payload.DataSize > 1) {
+            string? path = Marshal.PtrToStringUTF8(payload.Data, (int)payload.DataSize - 1);
+            if (!string.IsNullOrEmpty(path) && Assets.SupportsAssetPath(assetType, path)) {
+                var method = typeof(Assets).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                    .Single(m => m.Name == nameof(Assets.Load) && m.IsGenericMethodDefinition);
+                result = method.MakeGenericMethod(assetType).Invoke(null, [path]);
+            }
+        }
+        ImGui.EndDragDropTarget();
         return result;
     }
 
@@ -529,6 +572,9 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
             case Mesh mesh:
                 temp_s = mesh.Name;
                 if (ImGui.InputText(label, ref temp_s, 256)) result = temp_s;
+                break;
+            case IAsset asset:
+                result = DrawAssetReference(label, asset, asset.GetType());
                 break;
             case PostProcessPass ppp:
                 if (ImGui.TreeNodeEx(label, ImGuiTreeNodeFlags.DefaultOpen, label)) {

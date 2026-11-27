@@ -20,7 +20,11 @@ public class HierarchyTab : IEditorTab {
         Scene? scene = SceneManager.ActiveScene;
         if (scene is not null) {
             ImGui.PushStyleColor(ImGuiCol.Text, EditorUIStyle.AccentColor);
-            ImGui.TextUnformatted(scene.Name);
+            string sceneName = scene.Name;
+            ImGui.SetNextItemWidth(-1);
+            bool sceneNameChanged = ImGui.InputText("##SceneName", ref sceneName, 256);
+            if (sceneNameChanged) scene.Name = sceneName;
+            if (ImGui.IsItemDeactivatedAfterEdit()) Project.RenameSceneFile(scene);
             ImGui.PopStyleColor();
             ImGui.Separator();
 

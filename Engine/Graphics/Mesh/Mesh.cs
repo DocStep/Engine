@@ -260,10 +260,17 @@ public class Mesh : IAsset<Mesh>, IOnLoaded {
     }
 
     public static string ResolveSourcePath (string path) {
-        string fbxPath = System.IO.Path.ChangeExtension(path, ".fbx");
+        string extension = System.IO.Path.GetExtension(path);
+        if (!string.IsNullOrEmpty(extension)) {
+            if ((extension.Equals(".fbx", StringComparison.OrdinalIgnoreCase)
+                || extension.Equals(".obj", StringComparison.OrdinalIgnoreCase)) && File.Exists(path)) return path;
+            throw new FileNotFoundException($"Mesh file not found: '{path}'.", path);
+        }
+
+        string fbxPath = path + ".fbx";
         if (File.Exists(fbxPath)) return fbxPath;
 
-        string objPath = System.IO.Path.ChangeExtension(path, ".obj");
+        string objPath = path + ".obj";
         if (File.Exists(objPath)) return objPath;
 
         throw new FileNotFoundException($"Mesh file not found. Tried '{fbxPath}' and '{objPath}'.", path);

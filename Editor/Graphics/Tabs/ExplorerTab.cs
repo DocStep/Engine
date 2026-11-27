@@ -45,6 +45,12 @@ public class ExplorerTab : IEditorTab {
             bool selected = ImGui.Selectable(name);
             if (selected) OnFileSelected(file);
 
+            if (ImGui.BeginDragDropSource()) {
+                EditorUI.SetAssetDragPayload(file);
+                ImGui.TextUnformatted(name);
+                ImGui.EndDragDropSource();
+            }
+
             if (ImGui.BeginPopupContextItem($"##FileContext_{file}")) {
                 if (IsSceneFile(file) && ImGui.MenuItem("Open")) OpenScene(file);
                 ImGui.EndPopup();

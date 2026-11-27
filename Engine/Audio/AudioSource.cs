@@ -21,6 +21,7 @@ public class AudioSource : Component {
 
     uint src;
     AL al = null!;
+    bool ownsClipReference;
 
     [Hide, JsonIgnore]
     public bool IsPlaying {
@@ -34,8 +35,10 @@ public class AudioSource : Component {
         al = AudioManager.Instance.AL;
         src = al.GenSource();
 
-        if (Clip is null && !string.IsNullOrEmpty(ClipPath)) 
-            Clip = AudioClip.Load(ClipPath);
+        if (Clip is null && !string.IsNullOrEmpty(ClipPath)) {
+            Clip = Assets.Load<AudioClip>(ClipPath);
+            ownsClipReference = Clip is not null;
+        }
         Apply();
         if (PlayOnAdd) Play();
     }
@@ -44,6 +47,11 @@ public class AudioSource : Component {
         al.SourceStop(src);
         al.SetSourceProperty(src, SourceInteger.Buffer, 0);
         al.DeleteSource(src);
+        if (ownsClipReference) {
+            Assets.Unload<AudioClip>(ClipPath);
+            Clip = null;
+            ownsClipReference = false;
+        }
     }
 
     public void Play () {
