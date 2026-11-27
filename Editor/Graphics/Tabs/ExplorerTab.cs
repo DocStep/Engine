@@ -18,6 +18,10 @@ public class ExplorerTab : IEditorTab {
         EditorUI.DrawTabContext(this);
 
         DrawDirectory(Dirs.AssetsPath);
+        if (ImGui.BeginPopupContextWindow("##ExplorerCreateContext", ImGuiPopupFlags.MouseButtonRight | ImGuiPopupFlags.NoOpenOverItems)) {
+            DrawCreateContext(Dirs.AssetsPath);
+            ImGui.EndPopup();
+        }
 
         ImGui.End();
     }
@@ -25,7 +29,12 @@ public class ExplorerTab : IEditorTab {
     void DrawDirectory (string path) {
         foreach (var dir in Directory.GetDirectories(path)) {
             var name = Path.GetFileName(dir);
-            if (ImGui.TreeNode(name)) {
+            bool open = ImGui.TreeNode(name);
+            if (ImGui.BeginPopupContextItem($"##FolderContext_{dir}")) {
+                DrawCreateContext(dir);
+                ImGui.EndPopup();
+            }
+            if (open) {
                 DrawDirectory(dir);
                 ImGui.TreePop();
             }
@@ -33,10 +42,50 @@ public class ExplorerTab : IEditorTab {
 
         foreach (var file in Directory.GetFiles(path)) {
             var name = Path.GetFileName(file);
-            if (ImGui.Selectable(name)) {
-                OnFileSelected(file);
+            bool selected = ImGui.Selectable(name);
+            if (selected) OnFileSelected(file);
+
+            if (ImGui.BeginPopupContextItem($"##FileContext_{file}")) {
+                if (IsSceneFile(file) && ImGui.MenuItem("Open")) OpenScene(file);
+                ImGui.EndPopup();
+            }
+
+            if (IsSceneFile(file)
+                && ImGui.IsItemHovered()
+                && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) {
+                OpenScene(file);
             }
         }
+    }
+
+    static void DrawCreateContext (string directory) {
+        if (ImGui.BeginMenu("Create")) {
+            if (ImGui.MenuItem("Scene")) CreateScene(directory);
+            ImGui.EndMenu();
+        }
+    }
+
+    static void CreateScene (string directory) {
+        Dirs.EnsureExist(directory);
+        string path = GetUniqueScenePath(directory);
+        Engine.Scene.Create(path);
+    }
+
+    static string GetUniqueScenePath (string directory) {
+        string path = Path.Combine(directory, "New Scene.json");
+        int suffix = 1;
+        while (File.Exists(path)) {
+            path = Path.Combine(directory, $"New Scene {suffix++}.json");
+        }
+        return path;
+    }
+
+    static bool IsSceneFile (string path) {
+        return string.Equals(Path.GetExtension(path), ".json", StringComparison.OrdinalIgnoreCase);
+    }
+
+    static void OpenScene (string path) {
+        Engine.Scene.Load(Path.GetFullPath(path));
     }
 
     void OnFileSelected (string path) {

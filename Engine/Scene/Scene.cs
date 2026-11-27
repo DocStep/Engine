@@ -86,6 +86,19 @@ public class Scene : IAsset<Scene> {
         Path = path;
         Prefab.SaveObjects(Objects, path);
     }
+    public static Scene Create (string path) {
+        string fullPath = System.IO.Path.GetFullPath(path);
+        string? directory = System.IO.Path.GetDirectoryName(fullPath);
+        if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
+
+        Scene scene = new Scene(true) {
+            Path = fullPath,
+            Name = System.IO.Path.GetFileNameWithoutExtension(fullPath),
+        };
+        scene.Save(fullPath);
+        return scene;
+    }
+
     public static Scene? Load (string path, int part = 100) {
         if (!File.Exists(path)) return null;
 
