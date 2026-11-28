@@ -16,7 +16,9 @@ public class BuildTab : IEditorTab {
     private string _projectPath = FindProjectFile();
     private string _outputPath = string.Empty;
     private string _runtimeIdentifier = RuntimeInformation.RuntimeIdentifier;
-    private bool _nativeAot;
+    private bool _singleFile = true;
+    private volatile bool _showBuildLogs;
+    private string? _settingsWarning;
     private volatile string _status = "Ready";
     private volatile bool _isPublishing;
 
@@ -27,6 +29,17 @@ public class BuildTab : IEditorTab {
     public BuildTab () {
         if (!string.IsNullOrEmpty(_projectPath))
             _outputPath = Path.Combine(Path.GetDirectoryName(_projectPath)!, "Build");
+
+        try {
+            if (File.Exists(SettingsPath)) {
+                string savedPath = File.ReadAllText(SettingsPath).Trim();
+                if (!string.IsNullOrEmpty(savedPath)) _outputPath = savedPath;
+            }
+        } catch (IOException ex) {
+            _settingsWarning = $"Could not load the last build path: {ex.Message}";
+        } catch (UnauthorizedAccessException ex) {
+            _settingsWarning = $"Could not load the last build path: {ex.Message}";
+        }
     }
 
 
@@ -38,22 +51,36 @@ public class BuildTab : IEditorTab {
         ImGui.InputText("Game project (.csproj)", ref _projectPath, 1024);
         ImGui.InputText("Output directory", ref _outputPath, 1024);
         ImGui.InputText("Runtime identifier", ref _runtimeIdentifier, 128);
-        ImGui.Checkbox("Native AOT (requires C++ tools)", ref _nativeAot);
+        ImGui.Checkbox("Publish as single file", ref _singleFile);
         if (ImGui.Button("Publish Game"))
             StartPublish();
         ImGui.EndDisabled();
 
+        ImGui.SameLine();
+        if (ImGui.Button("Open Build Folder"))
+            OpenBuildFolder();
+        ImGui.SameLine();
+        ImGui.Checkbox("Show build logs", ref _showBuildLogs);
+
+        if (_settingsWarning is not null)
+            ImGui.TextWrapped(_settingsWarning);
         ImGui.Text($"Status: {_status}");
         while (_pendingOutput.TryDequeue(out string? line)) {
-            _outputLines.Add(line);
-            if (_outputLines.Count > MaxOutputLines)
-                _outputLines.RemoveAt(0);
+            if (_showBuildLogs) {
+                _outputLines.Add(line);
+                if (_outputLines.Count > MaxOutputLines)
+                    _outputLines.RemoveAt(0);
+            }
         }
 
-        ImGui.BeginChild("##BuildOutput", new Vector2(0, 0));
-        foreach (string line in _outputLines)
-            ImGui.TextWrapped(line);
-        ImGui.EndChild();
+        if (_showBuildLogs) {
+            ImGui.BeginChild("##BuildOutput", new Vector2(0, 0));
+            foreach (string line in _outputLines)
+                ImGui.TextWrapped(line);
+            ImGui.EndChild();
+        } else {
+            _outputLines.Clear();
+        }
 
         ImGui.End();
     }
@@ -91,13 +118,21 @@ public class BuildTab : IEditorTab {
 
         while (_pendingOutput.TryDequeue(out _)) { }
         _outputLines.Clear();
+        _settingsWarning = null;
+        try {
+            SaveOutputPath(outputPath);
+        } catch (IOException ex) {
+            _settingsWarning = $"Could not remember the build path: {ex.Message}";
+        } catch (UnauthorizedAccessException ex) {
+            _settingsWarning = $"Could not remember the build path: {ex.Message}";
+        }
         _isPublishing = true;
         _status = "Starting publish...";
-        _ = PublishAsync(projectPath, outputPath, _runtimeIdentifier.Trim(), _nativeAot);
+        _ = PublishAsync(projectPath, outputPath, _runtimeIdentifier.Trim(), _singleFile);
     }
 
 
-    private async Task PublishAsync (string projectPath, string outputPath, string runtimeIdentifier, bool nativeAot) {
+    private async Task PublishAsync (string projectPath, string outputPath, string runtimeIdentifier, bool singleFile) {
         using Process process = new();
         process.StartInfo = new ProcessStartInfo {
             FileName = "dotnet",
@@ -109,23 +144,22 @@ public class BuildTab : IEditorTab {
         };
 
         List<string> args = new() {
-        "publish", projectPath,
-        "--configuration", "Release",
-        "--output", outputPath,
-        "--runtime", runtimeIdentifier,
-        "--self-contained", "true",
-        "-p:PublishAot=" + nativeAot.ToString().ToLowerInvariant(),
-        "-p:GameBuild=true",
-        "-p:DebugType=none",
-        "-p:DebugSymbols=false",
-        "-p:GenerateDocumentationFile=false",
-        "-p:SatelliteResourceLanguages=en",
-    };
+            "publish", projectPath,
+            "--configuration", "Release",
+            "--output", outputPath,
+            "--runtime", runtimeIdentifier,
+            "--self-contained", "true",
+            "-p:GameBuild=true",
+            "-p:DebugType=none",
+            "-p:DebugSymbols=false",
+            "-p:GenerateDocumentationFile=false",
+            "-p:SatelliteResourceLanguages=en",
+            "-p:PublishSingleFile=" + singleFile.ToString().ToLowerInvariant(),
+        };
 
-        /// Single file only for non-AOT. Natives stay next to the exe on purpose.
-        if (!nativeAot) {
-            args.Add("-p:PublishSingleFile=true");
+        if (singleFile) {
             args.Add("-p:EnableCompressionInSingleFile=true");
+            args.Add("-p:IncludeNativeLibrariesForSelfExtract=true");
         }
 
         foreach (string arg in args)
@@ -141,9 +175,10 @@ public class BuildTab : IEditorTab {
             await process.WaitForExitAsync();
             await Task.WhenAll(outputTask, errorTask);
 
-            _status = process.ExitCode == 0
+            string settingsNotice = _settingsWarning is null ? string.Empty : $" {_settingsWarning}";
+            _status = (process.ExitCode == 0
                 ? $"Publish succeeded: {outputPath}"
-                : $"Publish failed with exit code {process.ExitCode}.";
+                : $"Publish failed with exit code {process.ExitCode}.") + settingsNotice;
         } catch (System.ComponentModel.Win32Exception ex) {
             _status = $"Could not start dotnet: {ex.Message}";
         } catch (IOException ex) {
@@ -158,10 +193,60 @@ public class BuildTab : IEditorTab {
 
     private async Task ReadOutputAsync (StreamReader reader) {
         string? line;
-        while ((line = await reader.ReadLineAsync()) != null)
-            _pendingOutput.Enqueue(line);
+        while ((line = await reader.ReadLineAsync()) != null) {
+            if (_showBuildLogs)
+                _pendingOutput.Enqueue(line);
+        }
     }
 
+    private void OpenBuildFolder () {
+        if (string.IsNullOrWhiteSpace(_outputPath)) {
+            _status = "Choose an output directory first.";
+            return;
+        }
+
+        try {
+            string outputPath = Path.GetFullPath(_outputPath);
+            Directory.CreateDirectory(outputPath);
+            Process? explorer = Process.Start(new ProcessStartInfo {
+                FileName = outputPath,
+                UseShellExecute = true,
+            });
+            if (explorer is null) {
+                _status = "Could not open the build folder.";
+                return;
+            }
+            explorer.Dispose();
+            SaveOutputPath(outputPath);
+            _status = $"Opened build folder: {outputPath}";
+        } catch (ArgumentException ex) {
+            _status = $"Invalid build folder path: {ex.Message}";
+        } catch (NotSupportedException ex) {
+            _status = $"Invalid build folder path: {ex.Message}";
+        } catch (PathTooLongException ex) {
+            _status = $"Invalid build folder path: {ex.Message}";
+        } catch (IOException ex) {
+            _status = $"Could not open build folder: {ex.Message}";
+        } catch (UnauthorizedAccessException ex) {
+            _status = $"Could not open build folder: {ex.Message}";
+        } catch (System.ComponentModel.Win32Exception ex) {
+            _status = $"Could not open build folder: {ex.Message}";
+        } catch (InvalidOperationException ex) {
+            _status = $"Could not open build folder: {ex.Message}";
+        }
+    }
+
+    private static string SettingsPath => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "EngineGame",
+        "BuildTabOutputPath.txt");
+
+    private static void SaveOutputPath (string outputPath) {
+        string? settingsDirectory = Path.GetDirectoryName(SettingsPath);
+        if (!string.IsNullOrEmpty(settingsDirectory))
+            Directory.CreateDirectory(settingsDirectory);
+        File.WriteAllText(SettingsPath, outputPath);
+    }
 
     private static string FindProjectFile () {
         for (DirectoryInfo? directory = new(AppContext.BaseDirectory); directory != null; directory = directory.Parent) {

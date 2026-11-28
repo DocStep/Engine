@@ -3,7 +3,7 @@
 namespace Engine.Graphics;
 
 
-public class MeshComponent : Component, IUpdate, IUpdateAtFreeze {
+public class MeshComponent : Component, IUpdateAtFreeze {
 
     public Mesh? Mesh = null;
     public Material? Material = AssetsEngine._mat_Lit;

@@ -113,7 +113,7 @@ public class Engine : IDisposable {
         if (SceneManager.Instance.Scenes.Count == 0) LoadStartScene();
         ReflectionActionScripts.CreateSingleton();
 
-        EngineState = EngineStates.Ready;
+        EngineState = isEditorLaunch ? EngineStates.Paused : EngineStates.Ready;
         Log.log($"========== Init Finish ==========", LogType.system);
 
         //Engine.SetFPSMax(144);
@@ -173,7 +173,6 @@ public class Engine : IDisposable {
             }
         } else {
             de_UpdateAlways?.Invoke();
-            ComponentsManager.Instance.UpdateAlways();
         }
 
         F3_Log();

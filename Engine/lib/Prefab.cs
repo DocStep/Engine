@@ -173,11 +173,11 @@ public static class Prefab {
 
             if (type == "Transform") {
                 Transform tr = (Transform)ctx.ReadObjects[entry["$id"]!.Value<int>()];
+                JToken parentRef = entry["Parent"]!;
+                if (parentRef.Type != JTokenType.Null) tr.Parent = (Transform)ctx.ReadObjects[parentRef["$ref"]!.Value<int>()];
                 tr.LocalPosition = entry["LocalPosition"]!.ToObject<Vector3>();
                 tr.LocalEuler = entry["LocalEuler"]!.ToObject<Vector3>();
                 tr.LocalScale = entry["LocalScale"]!.ToObject<Vector3>();
-                JToken parentRef = entry["Parent"]!;
-                if (parentRef.Type != JTokenType.Null) tr.Parent = (Transform)ctx.ReadObjects[parentRef["$ref"]!.Value<int>()];
                 continue;
             }
 

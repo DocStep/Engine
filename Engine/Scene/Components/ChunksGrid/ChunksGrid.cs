@@ -13,7 +13,7 @@ public enum ChunkState { None, Loading, Ready, Saving, Unloading }
 public enum ChunkTaskType { Load, Save, Unload }
 
 
-public class ChunksGrid : Component, IUpdate, ICustomLoad<ChunksGrid> {
+public class ChunksGrid : Component, IUpdate, IUpdateAtFreeze, ICustomLoad<ChunksGrid> {
 
     /// Events
     public event Action<ChunkLayer, Vector2Int>? de_ChunkLoaded;
@@ -45,6 +45,7 @@ public class ChunksGrid : Component, IUpdate, ICustomLoad<ChunksGrid> {
     [Hide] private readonly List<ChunkTask> _pending = new List<ChunkTask>();
     [Hide] private Vector2Int _lastCenterChunk;
     [Hide] private bool _initialized;
+    [Hide] private bool _editorPreviewInitialized;
     [Hide] private int _initialLoadRemaining;
 
     [Hide, JsonProperty] private readonly Dictionary<ChunkLayer, List<ChunkLayer>> DependencyLayers = new();
@@ -83,6 +84,17 @@ public class ChunksGrid : Component, IUpdate, ICustomLoad<ChunksGrid> {
         //ForceResync();
         ProcessTasks();
     }
+
+    void IUpdateAtFreeze.Update () {
+        if (!Time.isPaused) return;
+
+        if (!_editorPreviewInitialized) {
+            _editorPreviewInitialized = true;
+            UpdateCenter(Center);
+        }
+        if (_pending.Count > 0) ProcessTasks();
+    }
+
     /// Call on spawn and whenever the streaming center moves (player position, etc).
     /// Only enqueues work - pair with ProcessTasks() every frame or nothing actually runs.
     public void UpdateCenter (Vector3 newCenter) {

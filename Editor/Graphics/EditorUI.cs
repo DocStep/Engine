@@ -160,14 +160,10 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         EditorTabs.ContextDrawTab();
 
-        //ImGui.SameLine();
-        //ImGui.Separator();
-        //ImGui.SameLine();
-
-        //string playName = "Play";
-        //float buttonWidth = ImGui.CalcTextSize(playName).X + ImGui.GetStyle().FramePadding.X * 2;
-        //ImGui.SetCursorPosX((ImGui.GetWindowWidth() - buttonWidth) * 0.5f);
-        //if (ImGui.Button(playName)) { }
+        ImGui.SameLine();
+        bool isPlaying = Engine.Engine.Instance.EngineState == EngineStates.Ready;
+        if (ImGui.Button(isPlaying ? "Pause" : "Play"))
+            Engine.Engine.Instance.EngineState = isPlaying ? EngineStates.Paused : EngineStates.Ready;
 
         ImGui.End();
         ImGui.PopStyleVar(1);

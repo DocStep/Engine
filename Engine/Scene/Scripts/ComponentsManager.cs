@@ -16,7 +16,7 @@ public class ComponentsManager : Singleton<ComponentsManager> {
     private readonly List<IStart> componentsStart = new List<IStart>();
     private readonly List<IStart> _componentsStart = new List<IStart>();
     private readonly List<IUpdate> componentsUpdate = new List<IUpdate>();
-    private readonly List<IUpdate> componentsUpdateAlways = new List<IUpdate>();
+    private readonly List<IUpdateAtFreeze> componentsRenderUpdate = new List<IUpdateAtFreeze>();
     private readonly List<IFixedUpdate> componentsFixedUpdate = new List<IFixedUpdate>();
     private readonly List<IDrawRaw> componentsDrawRaw = new List<IDrawRaw>();
 
@@ -40,7 +40,7 @@ public class ComponentsManager : Singleton<ComponentsManager> {
 
         //RegisterAll();
 
-        Engine.Instance.de_AfterUpdate += GameObject.Flush;
+        Engine.Instance.de_UpdateAlways += GameObject.Flush;
         Renderer.Instance.de_DrawUI += DrawRaw;
     }
 
@@ -82,10 +82,12 @@ public class ComponentsManager : Singleton<ComponentsManager> {
                 componentsDrawRaw[c].DrawRaw();
         }
     }
-    public void UpdateAlways () {
-        //for (int c = 0; c < componentsUpdateAlways.Count; c++) {
-        //    componentsUpdateAlways[c].Update();
-        //}
+    public void UpdateRenderComponents () {
+        int count = componentsRenderUpdate.Count;
+        for (int c = 0; c < count; c++) {
+            if (!componentsRenderUpdate[c].Enabled) continue;
+            componentsRenderUpdate[c].Update();
+        }
     }
     public void FixedUpdate () {
         for (int c = 0; c < componentsFixedUpdate.Count; c++) {
@@ -113,10 +115,9 @@ public class ComponentsManager : Singleton<ComponentsManager> {
         }
         if (component is IUpdate iComponentUpdate) {
             componentsUpdate.Add(iComponentUpdate);
-
-            if (component is IUpdateAtFreeze iRenderComponent) {
-                componentsUpdateAlways.Add(iComponentUpdate);
-            }
+        }
+        if (component is IUpdateAtFreeze iRenderComponent) {
+            componentsRenderUpdate.Add(iRenderComponent);
         }
         if (component is IDrawRaw iComponentDrawRaw) {
             componentsDrawRaw.Add(iComponentDrawRaw);
@@ -146,10 +147,9 @@ public class ComponentsManager : Singleton<ComponentsManager> {
         }
         if (component is IUpdate iComponentUpdate) {
             componentsUpdate.Remove(iComponentUpdate);
-
-            if (component is IUpdateAtFreeze iRenderComponent) {
-                componentsUpdateAlways.Remove(iComponentUpdate);
-            }
+        }
+        if (component is IUpdateAtFreeze iRenderComponent) {
+            componentsRenderUpdate.Remove(iRenderComponent);
         }
         if (component is IFixedUpdate iComponentFixedUpdate) {
             componentsFixedUpdate.Remove(iComponentFixedUpdate);

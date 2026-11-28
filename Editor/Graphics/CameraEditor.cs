@@ -10,7 +10,7 @@ public sealed class CameraEditor : Camera {
         Instance = this;
         SetTransformDefault();
 
-        Engine.Engine.Instance.de_AfterUpdate += Update;
+        Engine.Engine.Instance.de_UpdateAlways += Update;
     }
 
     [Hide] new public GameObject gameObject {

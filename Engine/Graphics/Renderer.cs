@@ -128,6 +128,7 @@ public class Renderer {
             ClearRenderData();
             return;
         }
+        ComponentsManager.Instance.UpdateRenderComponents();
         StatsStart();
 
         de_PreRender?.Invoke();
