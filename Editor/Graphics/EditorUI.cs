@@ -60,6 +60,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     private bool _isClosing = false;
     private bool _closeConfirmationRequested;
     private bool _closeConfirmed;
+    private bool _closeRequested;
     private string? _saveError;
 
     public const bool drawInverted = true;
@@ -134,6 +135,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         }
 
         _docked = true;
+        if (_closeRequested) Windows.Window.Close();
     }
 
 
@@ -202,15 +204,15 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         if (ImGui.Button("Save and Close")) {
             if (SaveScene()) {
                 _closeConfirmed = true;
+                _closeRequested = true;
                 ImGui.CloseCurrentPopup();
-                Windows.Window.Close();
             }
         }
         ImGui.SameLine();
         if (ImGui.Button("Close Without Saving")) {
             _closeConfirmed = true;
+            _closeRequested = true;
             ImGui.CloseCurrentPopup();
-            Windows.Window.Close();
         }
         ImGui.SameLine();
         if (ImGui.Button("Cancel")) {

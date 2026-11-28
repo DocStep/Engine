@@ -153,39 +153,17 @@ public class RendererEditor : Renderer {
     static void BuildGridMaterials (ref Material[] cache, ref int cachedTotal, int total) {
         cache = new Material[total*total];
         for (int x = 0; x < total; x++) {
+            float smoothnessAxis = total == 1 ? 0f : (float)x/(total - 1);
             for (int z = 0; z < total; z++) {
+                float metallicAxis = total == 1 ? 0f : (float)z/(total - 1);
                 Material mat = new Material(_mat_MaterialPreview);
                 mat.SetVector3(uColor, Constants.white);
+                mat.SetFloat(uSmoothness, Mathf.Lerp(0.1f, 1f, smoothnessAxis));
+                mat.SetFloat(uMetallic, Mathf.Lerp(0.05f, 1f, metallicAxis));
                 cache[x*total + z] = mat;
             }
         }
         cachedTotal = total;
-    }
-
-    static void UpdateGridMaterials (int total) {
-        Vector3 forward = CameraEditor.Instance?._forward ?? Vector3.UnitZ;
-        Vector2 horizontalForward = new Vector2(forward.X, forward.Z);
-        float lookBlend = 0.5f;
-        if (horizontalForward.LengthSquared() > 0.0001f) {
-            horizontalForward = Vector2.Normalize(horizontalForward);
-            Vector2 positiveDiagonal = Vector2.Normalize(new Vector2(1f, 1f));
-            lookBlend = Math.Clamp(0.5f + 0.5f*Vector2.Dot(horizontalForward, positiveDiagonal), 0f, 1f);
-            lookBlend = lookBlend*lookBlend*(3f - 2f*lookBlend);
-        }
-
-        for (int x = 0; x < total; x++) {
-            float smoothnessAxis = total == 1 ? 0f : (float)x/(total - 1);
-            float smoothness = Mathf.Lerp(0.1f + 0.2f*smoothnessAxis,
-                0.35f + 0.65f*smoothnessAxis, lookBlend);
-            for (int z = 0; z < total; z++) {
-                float metallicAxis = total == 1 ? 0f : (float)z/(total - 1);
-                float metallic = Mathf.Lerp(0.05f + 0.15f*metallicAxis,
-                    0.25f + 0.75f*metallicAxis, lookBlend);
-                Material mat = _gridMaterialsA[x*total + z];
-                mat.SetFloat(uSmoothness, smoothness);
-                mat.SetFloat(uMetallic, metallic);
-            }
-        }
     }
 
 
@@ -197,7 +175,6 @@ public class RendererEditor : Renderer {
 
         int total = GridCells(testGridCount, testGridDensity);
         if (total != _gridTotalA) BuildGridMaterials(ref _gridMaterialsA, ref _gridTotalA, total);
-        UpdateGridMaterials(total);
 
         AddWaveGrid(offsetX, offsetZ, total, 1f/testGridDensity, _mesh_Sphere, _gridMaterialsA, 1f);
     }
