@@ -38,6 +38,7 @@ public class Engine : IDisposable {
     public Action? de_Unfocus = null;
 
     public Action? de_Closing = null;
+    public Func<bool>? de_ClosingRequest = null;
 
     /// Debug
     public EngineStates EngineState = EngineStates.Loading;
@@ -248,8 +249,12 @@ public class Engine : IDisposable {
     }*/
 
     private void OnClosing () {
-        de_Closing?.Invoke();
+        if (de_ClosingRequest?.Invoke() == false) {
+            Windows.Window.IsClosing = false;
+            return;
+        }
 
+        de_Closing?.Invoke();
         Console.ResetColor();
     }
 

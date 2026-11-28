@@ -145,10 +145,10 @@ public class BuildTab : IEditorTab {
 
         List<string> args = new() {
             "publish", projectPath,
-            "--configuration", "Release",
-            "--output", outputPath,
-            "--runtime", runtimeIdentifier,
-            "--self-contained", "true",
+            "-c", "Release",
+            "-o", outputPath,
+            "-r", runtimeIdentifier,
+            "-p:SelfContained=true",
             "-p:GameBuild=true",
             "-p:DebugType=none",
             "-p:DebugSymbols=false",

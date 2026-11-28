@@ -28,6 +28,7 @@ public static class Project {
         string newPath = Path.Combine(directory, scene.Name + extension);
         if (oldPath is not null && string.Equals(Path.GetFullPath(oldPath), Path.GetFullPath(newPath), StringComparison.OrdinalIgnoreCase))
             return;
+        scene.MarkDirty();
 
         if (File.Exists(newPath)) {
             Log.log($"Cannot rename scene: '{newPath}' already exists.", LogType.warning);

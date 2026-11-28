@@ -18,9 +18,9 @@ public sealed class EngineLaunchOptions {
 
         for (int i = 0; i < arguments.Length; i++) {
             string argument = arguments[i];
-            if (argument is "-editor" or "--editor") {
+            if (argument == "-editor") {
                 editor = true;
-            } else if (argument is "-scene" or "-scene") {
+            } else if (argument == "-scene") {
                 if (i + 1 >= arguments.Length || arguments[i + 1].StartsWith('-'))
                     throw new ArgumentException($"{argument} requires a scene name or path.");
                 scenePath = arguments[++i];

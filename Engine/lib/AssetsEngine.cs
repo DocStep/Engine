@@ -6,7 +6,7 @@ namespace Engine;
 
 public class AssetsEngine : Singleton<AssetsEngine> {
     static AssetsEngine () {
-        Windows.Window.Closing += OnClosing;
+        Engine.Instance.de_Closing += OnClosing;
 
         //Shader.StatsReset();
 

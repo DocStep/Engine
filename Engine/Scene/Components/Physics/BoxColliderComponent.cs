@@ -8,10 +8,11 @@ public class BoxColliderComponent : ColliderComponent {
 
 
     public Vector3 Size = Vector3.One;
+    public Vector3 GizmoDimensions => Vector3.Abs(Size*gameObject.Transform.Scale);
 
     Box Shape {
         get {
-            Vector3 s = Size*gameObject.Transform.Scale;
+            Vector3 s = Vector3.Abs(Size*gameObject.Transform.Scale);
             return new Box(s.X, s.Y, s.Z);
         }
     }

@@ -8,8 +8,12 @@ public class HierarchyTab : IEditorTab {
     public string Name { get; set; } = "Hierarchy";
     public bool isActive { get; set; } = true;
 
-    /// removal is deferred until after the draw loop so the collection isn't modified mid-iteration
+    /// Hierarchy mutations are deferred until after traversal to avoid changing child lists mid-iteration.
     private GameObject? _toRemove = null;
+    private GameObject? _toReparent = null;
+    private Transform? _newParent;
+    private bool _hasReparentRequest;
+    private GameObject? _expandOnNextFrame;
 
 
     public void Draw () {
@@ -23,16 +27,28 @@ public class HierarchyTab : IEditorTab {
             string sceneName = scene.Name;
             ImGui.SetNextItemWidth(-1);
             bool sceneNameChanged = ImGui.InputText("##SceneName", ref sceneName, 256);
-            if (sceneNameChanged) scene.Name = sceneName;
+            if (sceneNameChanged) {
+                scene.Name = sceneName;
+                scene.MarkDirty();
+            }
             if (ImGui.IsItemDeactivatedAfterEdit()) Project.RenameSceneFile(scene);
             ImGui.PopStyleColor();
             ImGui.Separator();
+            ImGui.Button("Scene Root", new System.Numerics.Vector2(-1f, 0f));
+            DrawRootDropTarget();
 
             foreach (GameObject go in scene.GameObjects) {
                 if (go.Transform.Parent is null) DrawHierarchyNode(go);
             }
 
             DrawAddGameObjectContext();
+
+            if (_hasReparentRequest && _toReparent is not null) {
+                _toReparent.Transform.Parent = _newParent;
+                _toReparent = null;
+                _newParent = null;
+                _hasReparentRequest = false;
+            }
 
             if (_toRemove is not null) {
                 if (Gizmos._gizmo_Selected.go_selected == _toRemove) Gizmos._gizmo_Selected.UpdateSelected(null); /// needs a nullable param
@@ -53,12 +69,28 @@ public class HierarchyTab : IEditorTab {
 
         GameObject? go_selected = Gizmos._gizmo_Selected.go_selected;
         if (go_selected == go) flags |= ImGuiTreeNodeFlags.Selected;
+        if (_expandOnNextFrame == go) {
+            ImGui.SetNextItemOpen(true);
+            _expandOnNextFrame = null;
+        }
 
         bool open = ImGui.TreeNodeEx(go.Name, flags);
 
         if (ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen()) {
-            /// set selection the same way the gizmo/inspector already reads it
             Gizmos._gizmo_Selected.UpdateSelected(go);
+        }
+        if (ImGui.BeginDragDropSource()) {
+            EditorUI.SetGameObjectDragPayload(go);
+            ImGui.TextUnformatted(go.Name);
+            ImGui.EndDragDropSource();
+        }
+        if (ImGui.BeginDragDropTarget()) {
+            GameObject? dragged = EditorUI.AcceptGameObjectDragPayload();
+            if (dragged is not null && CanSetParent(dragged, go)) {
+                QueueReparent(dragged, go.Transform);
+                _expandOnNextFrame = go;
+            }
+            ImGui.EndDragDropTarget();
         }
 
         /// must come right after the tree node, it attaches to the last item
@@ -77,6 +109,23 @@ public class HierarchyTab : IEditorTab {
         }
 
         ImGui.PopID();
+    }
+    private void DrawRootDropTarget () {
+        if (!ImGui.BeginDragDropTarget()) return;
+        GameObject? dragged = EditorUI.AcceptGameObjectDragPayload();
+        if (dragged is not null) QueueReparent(dragged, null);
+        ImGui.EndDragDropTarget();
+    }
+    private void QueueReparent (GameObject gameObject, Transform? parent) {
+        _toReparent = gameObject;
+        _newParent = parent;
+        _hasReparentRequest = true;
+    }
+    private static bool CanSetParent (GameObject child, GameObject parent) {
+        if (child == parent) return false;
+        for (Transform? ancestor = parent.Transform; ancestor is not null; ancestor = ancestor.Parent)
+            if (ancestor == child.Transform) return false;
+        return true;
     }
 
     public static void DrawAddGameObjectContext () {

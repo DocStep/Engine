@@ -33,6 +33,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
 
         Engine.Engine.Instance.de_UpdateAlways += Update;
         Engine.Engine.Instance.de_Render += Draw;
+        Engine.Engine.Instance.de_ClosingRequest += OnClosingRequest;
         Engine.Engine.Instance.de_Closing += EditorTabs.Closing;
 
         Renderer.Instance.de_Dispose += Dispose;
@@ -57,6 +58,9 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
     private bool _docked = false;
     //private bool _dockBuilt = false;
     private bool _isClosing = false;
+    private bool _closeConfirmationRequested;
+    private bool _closeConfirmed;
+    private string? _saveError;
 
     public const bool drawInverted = true;
     public const float valueStep = 0.01f;
@@ -109,6 +113,8 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         Renderer.GL.Clear((uint)ClearBufferMask.ColorBufferBit);
 
         DrawToolbar();
+        DrawCloseConfirmation();
+        DrawSaveError();
 
         uint dockspaceId = ImGui.GetID("MainDockspace");
         DrawDockHost(dockspaceId);
@@ -145,8 +151,7 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         ImGuiWindowFlags flags =
             ImGuiWindowFlags.NoDocking | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize |
             ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoSavedSettings |
-            ImGuiWindowFlags.NoBringToFrontOnFocus;
-        flags |= ImGuiWindowFlags.AlwaysAutoResize;
+            ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.AlwaysAutoResize;
 
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(4, 0));
         //ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(4, 0));
@@ -161,12 +166,85 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         EditorTabs.ContextDrawTab();
 
         ImGui.SameLine();
+        if (ImGui.Button("Save Scene")) SaveScene();
+
+        ImGui.SameLine();
         bool isPlaying = Engine.Engine.Instance.EngineState == EngineStates.Ready;
-        if (ImGui.Button(isPlaying ? "Pause" : "Play"))
+        string playLabel = isPlaying ? "Pause" : "Play";
+        float playButtonWidth = ImGui.CalcTextSize(playLabel).X + ImGui.GetStyle().FramePadding.X*2f;
+        ImGui.SetCursorPosX((viewport.Size.X - playButtonWidth)*0.5f);
+        if (ImGui.Button(playLabel))
             Engine.Engine.Instance.EngineState = isPlaying ? EngineStates.Paused : EngineStates.Ready;
+
+        ImGui.SetCursorPosX(viewport.Size.X - ImGui.GetStyle().WindowPadding.X - 1f);
+        ImGui.Dummy(new Vector2(1f, 1f));
 
         ImGui.End();
         ImGui.PopStyleVar(1);
+    }
+
+    private bool OnClosingRequest () {
+        if (_closeConfirmed) return true;
+        if (SceneManager.ActiveScene?.IsDirty != true) return true;
+
+        _closeConfirmationRequested = true;
+        return false;
+    }
+    private void DrawCloseConfirmation () {
+        if (_closeConfirmationRequested) {
+            ImGui.OpenPopup("Unsaved Scene Changes");
+            _closeConfirmationRequested = false;
+        }
+        if (!ImGui.BeginPopupModal("Unsaved Scene Changes", ImGuiWindowFlags.AlwaysAutoResize)) return;
+
+        ImGui.TextWrapped("The scene has unsaved changes. Save before closing?");
+        if (_saveError is not null) ImGui.TextWrapped(_saveError);
+        if (ImGui.Button("Save and Close")) {
+            if (SaveScene()) {
+                _closeConfirmed = true;
+                ImGui.CloseCurrentPopup();
+                Windows.Window.Close();
+            }
+        }
+        ImGui.SameLine();
+        if (ImGui.Button("Close Without Saving")) {
+            _closeConfirmed = true;
+            ImGui.CloseCurrentPopup();
+            Windows.Window.Close();
+        }
+        ImGui.SameLine();
+        if (ImGui.Button("Cancel")) {
+            _saveError = null;
+            ImGui.CloseCurrentPopup();
+        }
+        ImGui.EndPopup();
+    }
+    private void DrawSaveError () {
+        if (_saveError is null || ImGui.IsPopupOpen("Unsaved Scene Changes")) return;
+        ImGui.OpenPopup("Scene Save Error");
+        if (!ImGui.BeginPopupModal("Scene Save Error", ImGuiWindowFlags.AlwaysAutoResize)) return;
+        ImGui.TextWrapped(_saveError);
+        if (ImGui.Button("OK")) {
+            _saveError = null;
+            ImGui.CloseCurrentPopup();
+        }
+        ImGui.EndPopup();
+    }
+    private bool SaveScene () {
+        try {
+            SceneManager.Instance.ActiveSceneSave();
+            _saveError = null;
+            return SceneManager.ActiveScene?.IsDirty != true;
+        } catch (IOException ex) {
+            _saveError = $"Could not save scene: {ex.Message}";
+        } catch (UnauthorizedAccessException ex) {
+            _saveError = $"Could not save scene: {ex.Message}";
+        } catch (ArgumentException ex) {
+            _saveError = $"Could not save scene: {ex.Message}";
+        } catch (Newtonsoft.Json.JsonException ex) {
+            _saveError = $"Could not serialize scene: {ex.Message}";
+        }
+        return false;
     }
 
     private void DrawDockHost (uint dockspaceId) {
@@ -209,11 +287,12 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         bool remove = false;
 
         ImGui.PushID(component.GetHashCode());
-        bool enabled = component.Enabled;
-        if (ImGui.Checkbox("##Enabled", ref enabled)) {
-            component.Enabled = enabled;
+        if (component is not Transform) {
+            bool enabled = component.Enabled;
+            if (ImGui.Checkbox("##Enabled", ref enabled))
+                component.Enabled = enabled;
+            ImGui.SameLine();
         }
-        ImGui.SameLine();
         bool open = ImGui.CollapsingHeader(component.Name, ImGuiTreeNodeFlags.DefaultOpen);
 
         /// must come right after the header, it attaches to the last item
@@ -243,6 +322,18 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         byte[] bytes = Encoding.UTF8.GetBytes(Path.GetFullPath(path) + '\0');
         fixed (byte* data = bytes)
             ImGui.SetDragDropPayload("ENGINE_ASSET_PATH", (IntPtr)data, (uint)bytes.Length);
+    }
+    public static unsafe void SetGameObjectDragPayload (GameObject gameObject) {
+        byte[] bytes = BitConverter.GetBytes(gameObject.Id);
+        fixed (byte* data = bytes)
+            ImGui.SetDragDropPayload("ENGINE_GAMEOBJECT", (IntPtr)data, (uint)bytes.Length);
+    }
+    public static unsafe GameObject? AcceptGameObjectDragPayload () {
+        ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload("ENGINE_GAMEOBJECT");
+        if (payload.NativePtr == null || payload.DataSize != sizeof(long)) return null;
+
+        long id = Marshal.ReadInt64(payload.Data);
+        return SceneManager.ActiveScene?.GameObjects.FirstOrDefault(gameObject => gameObject.Id == id);
     }
 
     public static void DrawObject (object target, IEnumerable<Attribute>? attributes = null) {
@@ -319,6 +410,10 @@ public class EditorUI : Singleton<EditorUI>, IDisposable {
         switch (member) {
             case FieldInfo f: f.SetValue(target, drawn); break;
             case PropertyInfo p when p.CanWrite: p.SetValue(target, drawn); break;
+        }
+        if (!Equals(value, drawn)) {
+            if (target is ColliderComponent collider) collider.Refresh();
+            SceneManager.ActiveScene?.MarkDirty();
         }
     }
 

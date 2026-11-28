@@ -48,6 +48,19 @@ public class PhysicsComponent : Component, IFixedUpdate {
 
         Physics.Instance.RegisterRigidbody(this);
     }
+    protected override void OnEnabledChanged (bool enabled) {
+        base.OnEnabledChanged(enabled);
+        if (!isAdded) return;
+
+        if (enabled) {
+            Rebuild();
+            return;
+        }
+
+        DestroyBody();
+        foreach (ColliderComponent collider in gameObject.GetComponents<ColliderComponent>())
+            collider.CreateStatic();
+    }
     public override void OnRemove () {
         gameObject.Transform.de_RotationChanged -= SetRotation;
         gameObject.Transform.de_PositionChanged -= SetPosition;
@@ -68,7 +81,7 @@ public class PhysicsComponent : Component, IFixedUpdate {
     /// Builds one body from every collider on this object.
     /// Called when a collider is added/removed or when mass/scale changes.
     public void Rebuild (ColliderComponent? ignore = null) {
-        if (!isAdded) return;
+        if (!isAdded || !Enabled) return;
 
         Simulation sim = Physics.Instance.Simulation;
         BufferPool pool = Physics.Instance.BufferPool;
@@ -81,7 +94,7 @@ public class PhysicsComponent : Component, IFixedUpdate {
             DestroyBody();
         }
 
-        List<ColliderComponent> colliders = gameObject.GetComponents<ColliderComponent>().Where(c => c != ignore && c.IsReady).ToList();
+        List<ColliderComponent> colliders = gameObject.GetComponents<ColliderComponent>().Where(c => c != ignore && c.Enabled && c.IsReady).ToList();
         if (colliders.Count == 0) {
             Log.log($"{gameObject.Name}: PhysicsComponent needs at least one ColliderComponent.", LogType.warning);
             return;
@@ -156,6 +169,7 @@ public class PhysicsComponent : Component, IFixedUpdate {
         Quaternion rotation = Rigidbody.Pose.Orientation;
         gameObject.Transform.SetPosition_Silent(Rigidbody.Pose.Position - Vector3.Transform(centerOfMass, rotation));
         gameObject.Transform.SetRotation_Silent(rotation);
+        gameObject.Transform.NotifyChildrenPoseChanged();
     }
     public void UpdateRigidbody () {
         ApplyPose(gameObject.Transform.Position, gameObject.Transform.Rotation);

@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using System.Globalization;
+using System.Reflection;
+using Newtonsoft.Json;
 using Task = System.Threading.Tasks.Task;
 
 namespace Engine;
@@ -15,9 +17,28 @@ public abstract class ChunkLayer {
     public virtual List<Type> Dependencies { get; } = [];
     public float Radius = 64f; /// own radius against the grid's shared shape (IsCircle)
 
+    [JsonIgnore] public string ChunkObjectNamePrefix => Name + ":";
+
+    public void OnLoaded () {
+        foreach (FieldInfo field in GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            if (field.GetValue(this) is IOnLoaded asset) asset.OnLoaded();
+    }
+
+    public static bool TryParseCoordinate (string value, out Vector2Int coord) {
+        coord = default;
+        if (value.Length < 5 || value[0] != '(' || value[^1] != ')') return false;
+        string[] parts = value[1..^1].Split(',', 2);
+        if (parts.Length != 2
+            || !int.TryParse(parts[0].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int x)
+            || !int.TryParse(parts[1].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int y))
+            return false;
+        coord = new Vector2Int(x, y);
+        return true;
+    }
+
     [JsonIgnore, Hide] public readonly HashSet<Vector2Int> Running = new();
-    [Hide] public readonly Dictionary<Vector2Int, ChunkState> States = new();
-    [Hide] public readonly Dictionary<Vector2Int, ChunkTask> Pending = new();
+    [JsonIgnore, Hide] public readonly Dictionary<Vector2Int, ChunkState> States = new();
+    [JsonIgnore, Hide] public readonly Dictionary<Vector2Int, ChunkTask> Pending = new();
 
     [JsonIgnore, Hide] public readonly Dictionary<Vector2Int, List<GameObject>> GameObjects = new();
 

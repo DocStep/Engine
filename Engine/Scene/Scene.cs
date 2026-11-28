@@ -23,6 +23,7 @@ public class Scene : IAsset<Scene> {
 
     [JsonIgnore] public readonly static string TypeName = typeof(Scene).Name;
     [JsonIgnore] public bool Enabled { get; set; } = true;
+    [JsonIgnore] public bool IsDirty { get; private set; }
 
     public string Name { get; set; } = nameof(Scene);
     public long Id { get; set; }
@@ -34,8 +35,15 @@ public class Scene : IAsset<Scene> {
 
 
     public void GameObjectAdd (GameObject gameObject) {
+        if (Objects.Contains(gameObject)) return;
         Objects.Add(gameObject);
-        //Log.log("GameObjectAdd", gameObject.Name);
+        MarkDirtyIfEditing();
+    }
+    public void MarkDirty () => IsDirty = true;
+    public void MarkSaved () => IsDirty = false;
+    internal static void MarkDirtyIfEditing () {
+        if (ArgsUtils.isEditor && Engine.Instance.EngineState == EngineStates.Paused)
+            SceneManager.ActiveScene?.MarkDirty();
     }
     /*public void ObjectRemove (GameObject gameObject) {
         objects.Remove(gameObject);
@@ -83,8 +91,9 @@ public class Scene : IAsset<Scene> {
 
 
     public void Save (string path) {
-        Path = path;
         Prefab.SaveObjects(Objects, path);
+        Path = System.IO.Path.GetFullPath(path);
+        MarkSaved();
     }
     public static Scene Create (string path) {
         string fullPath = System.IO.Path.GetFullPath(path);

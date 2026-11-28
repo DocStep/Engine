@@ -22,10 +22,10 @@ public class GameObject : IDisposable, IAsset<GameObject> {
         InitTransform();
         SceneManager.ActiveScene?.GameObjectAdd(this);
     }
-    /// Used only by the deserializer — sets up JsonIgnore'd runtime state
-    /// without touching the scene or generating a throwaway Id
+    /// Used only by the deserializer — sets up runtime state without touching the scene.
     [JsonConstructor]
     internal GameObject (bool deserializing) {
+        Id = Lib.Id;
         InitTransform();
         //SceneManager.ActiveScene.GameObjectAdd(this);
     }
@@ -101,7 +101,19 @@ public class GameObject : IDisposable, IAsset<GameObject> {
     public long Id { get; set; }
     public string? Path { get; set; }
 
-    public bool Enabled = true;
+    private bool enabled = true;
+    public bool Enabled {
+        get => enabled;
+        set {
+            if (enabled == value) return;
+            bool wasActive = IsActiveInHierarchy;
+            enabled = value;
+            NotifyHierarchyEnabledChanged(wasActive, IsActiveInHierarchy);
+            Scene.MarkDirtyIfEditing();
+        }
+    }
+    [JsonIgnore, Hide] public bool IsActiveInHierarchy => Enabled && (Transform.Parent?.gameObject.IsActiveInHierarchy ?? true);
+
     [JsonIgnore, Hide] private TransformHandle TransformHandle = null!;
     public Transform Transform => TransformHandle.Current;
 
@@ -144,6 +156,7 @@ public class GameObject : IDisposable, IAsset<GameObject> {
 
         Components.Add(component);
         component.gameObject = this;
+        Scene.MarkDirtyIfEditing();
         ComponentsManager.Instance.ComponentRegister(component);
         return component;
     }
@@ -181,6 +194,7 @@ public class GameObject : IDisposable, IAsset<GameObject> {
         if (component is Transform) return;
         if (!Components.Remove(component)) return;
 
+        Scene.MarkDirtyIfEditing();
         ComponentsManager.Instance.ComponentUnregister(component); /// OnRemove runs here, gameObject still valid
         component.gameObject = null!;
     }
@@ -203,6 +217,16 @@ public class GameObject : IDisposable, IAsset<GameObject> {
         TransformHandle.Rebind(transform);
     }
 
+    internal void NotifyHierarchyEnabledChanged (bool wasActive, bool isActive) {
+        Transform.NotifyEnabledChanged(wasActive, isActive);
+        foreach (Component component in Components)
+            component.NotifyEnabledChanged(wasActive, isActive);
+
+        foreach (Transform child in Transform.Children) {
+            GameObject childObject = child.gameObject;
+            childObject.NotifyHierarchyEnabledChanged(wasActive && childObject.Enabled, isActive && childObject.Enabled);
+        }
+    }
 
     [JsonIgnore, Hide] public bool Destroyed = false;
     [JsonIgnore, Hide] private static readonly System.Collections.Concurrent.ConcurrentQueue<GameObject> DestroyQueue =
@@ -231,6 +255,7 @@ public class GameObject : IDisposable, IAsset<GameObject> {
         ComponentsManager.Instance.ComponentUnregister(Transform);
         if (SceneManager.ActiveScene is null) return;
         SceneManager.ActiveScene.GameObjects.Remove(this);
+        Scene.MarkDirtyIfEditing();
 
         Dispose();
     }

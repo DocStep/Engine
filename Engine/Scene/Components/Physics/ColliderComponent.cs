@@ -23,22 +23,52 @@ public abstract class ColliderComponent : Component {
     /// Pose relative to the GameObject. Override when a shape needs an offset or rotation.
     protected virtual RigidPose LocalPose => new RigidPose(ScaledCenter);
 
+    public Matrix4x4 GetGizmoModel (Vector3 dimensions, Vector3 localOffset = default) {
+        Transform t = gameObject.Transform;
+        RigidPose local = LocalPose;
+        Vector3 position = t.Position + Vector3.Transform(local.Position + localOffset, t.Rotation);
+        Quaternion rotation = Quaternion.Concatenate(local.Orientation, t.Rotation);
+        return Matrix4x4.CreateScale(dimensions)*Matrix4x4.CreateFromQuaternion(rotation)*Matrix4x4.CreateTranslation(position);
+    }
 
     public override void OnAdd () {
+        Transform t = gameObject.Transform;
+        t.de_PositionChanged += OnTransformChanged;
+        t.de_RotationChanged += OnTransformChanged;
+        t.de_ScaleChanged += OnTransformChanged;
         Refresh();
     }
     public override void OnRemove () {
+        Transform t = gameObject.Transform;
+        t.de_PositionChanged -= OnTransformChanged;
+        t.de_RotationChanged -= OnTransformChanged;
+        t.de_ScaleChanged -= OnTransformChanged;
         ReleaseStatic();
-        //Log.log("OnRemove", gameObject);
         if (gameObject.GetComponent<PhysicsComponent>() is PhysicsComponent rb) {
             rb.Rebuild(ignore: this);
         }
+    }
+    protected override void OnEnabledChanged (bool enabled) {
+        base.OnEnabledChanged(enabled);
+        if (gameObject is null) return;
+
+        if (!enabled) ReleaseStatic();
+        if (gameObject.GetComponent<PhysicsComponent>() is PhysicsComponent rb && rb.Enabled)
+            rb.Rebuild();
+        else if (enabled)
+            CreateStatic();
+    }
+    private void OnTransformChanged (Vector3 _) => RefreshStaticTransform();
+    private void OnTransformChanged (Quaternion _) => RefreshStaticTransform();
+    private void RefreshStaticTransform () {
+        if (gameObject.GetComponent<PhysicsComponent>() is PhysicsComponent rb && rb.Enabled) return;
+        Refresh();
     }
 
 
     /// Call after changing shape data (radius, size, mesh, scale, ...) to rebuild the physics shape.
     public void Refresh () {
-        if (gameObject.GetComponent<PhysicsComponent>() is PhysicsComponent rb) {
+        if (gameObject.GetComponent<PhysicsComponent>() is PhysicsComponent rb && rb.Enabled) {
             rb.Rebuild();
             return;
         }
@@ -47,7 +77,8 @@ public abstract class ColliderComponent : Component {
     }
 
     public void CreateStatic () {
-        if (StaticHandle.HasValue || !IsReady) return;
+        if (StaticHandle.HasValue || !IsReady || !Enabled) return;
+        if (gameObject.GetComponent<PhysicsComponent>() is PhysicsComponent rb && rb.Enabled) return;
 
         Simulation sim = Physics.Instance.Simulation;
         var t = gameObject.Transform;

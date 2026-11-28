@@ -51,7 +51,8 @@ public static class Prefab {
         PrefabContext ctx = new PrefabContext();
         List<GameObject> flat = new List<GameObject>();
         HashSet<GameObject> seen = new HashSet<GameObject>();
-        foreach (GameObject root in roots) Flatten(root, flat, seen);
+        HashSet<GameObject> runtimeChunks = FindRuntimeChunkObjects(roots);
+        foreach (GameObject root in roots) Flatten(root, flat, seen, runtimeChunks);
         AssignWriteIds(flat, ctx);
 
         JObject json = new JObject {
@@ -71,11 +72,33 @@ public static class Prefab {
     }
 
 
-    private static void Flatten (GameObject go, List<GameObject> into, HashSet<GameObject> seen) {
-        if (!seen.Add(go)) return; // already flattened as someone else's child — skip
+    private static HashSet<GameObject> FindRuntimeChunkObjects (List<GameObject> roots) {
+        HashSet<GameObject> runtimeChunks = new HashSet<GameObject>();
+        HashSet<GameObject> visited = new HashSet<GameObject>();
+        Stack<GameObject> pending = new Stack<GameObject>(roots);
+
+        while (pending.Count > 0) {
+            GameObject gameObject = pending.Pop();
+            if (!visited.Add(gameObject)) continue;
+
+            foreach (ChunksGrid grid in gameObject.Components.OfType<ChunksGrid>()) {
+                if (grid.SaveChunks) continue;
+                foreach (ChunkLayer layer in grid.Layers)
+                    foreach (List<GameObject> chunkObjects in layer.GameObjects.Values)
+                        runtimeChunks.UnionWith(chunkObjects);
+            }
+
+            foreach (Transform child in gameObject.Transform.Children)
+                pending.Push(child.gameObject);
+        }
+
+        return runtimeChunks;
+    }
+
+    private static void Flatten (GameObject go, List<GameObject> into, HashSet<GameObject> seen, HashSet<GameObject> runtimeChunks) {
+        if (!seen.Add(go) || runtimeChunks.Contains(go)) return;
         into.Add(go);
-        //if (go.GetComponent<ChunksGrid>() != null) return; // chunks are runtime-generated — don't serialize them
-        foreach (Transform child in go.Transform.Children) Flatten(child.gameObject, into, seen);
+        foreach (Transform child in go.Transform.Children) Flatten(child.gameObject, into, seen, runtimeChunks);
     }
 
     private static void AssignWriteIds (List<GameObject> flat, PrefabContext ctx) {
@@ -245,6 +268,12 @@ public static class Prefab {
             if (field.IsDefined(typeof(JsonIgnoreAttribute))) continue;
             obj[field.Name] = WriteValue(field.GetValue(c), ctx);
         }
+        foreach (PropertyInfo property in c.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
+            JsonPropertyAttribute? jsonProperty = property.GetCustomAttribute<JsonPropertyAttribute>();
+            if (jsonProperty is null || !property.CanRead || property.GetIndexParameters().Length != 0
+                || property.IsDefined(typeof(JsonIgnoreAttribute))) continue;
+            obj[jsonProperty.PropertyName ?? property.Name] = WriteValue(property.GetValue(c), ctx);
+        }
         return obj;
     }
 
@@ -264,6 +293,14 @@ public static class Prefab {
             if (field.IsDefined(typeof(JsonIgnoreAttribute))) continue;
             if (!obj.TryGetValue(field.Name, out JToken? token) || token == null) continue;
             field.SetValue(c, ReadValue(field.FieldType, token, ctx));
+        }
+        foreach (PropertyInfo property in c.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
+            JsonPropertyAttribute? jsonProperty = property.GetCustomAttribute<JsonPropertyAttribute>();
+            if (jsonProperty is null || !property.CanWrite || property.GetIndexParameters().Length != 0
+                || property.IsDefined(typeof(JsonIgnoreAttribute))) continue;
+            string propertyName = jsonProperty.PropertyName ?? property.Name;
+            if (!obj.TryGetValue(propertyName, out JToken? token) || token == null) continue;
+            property.SetValue(c, ReadValue(property.PropertyType, token, ctx));
         }
     }
 

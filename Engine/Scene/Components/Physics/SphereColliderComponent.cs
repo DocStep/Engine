@@ -6,6 +6,13 @@ namespace Engine;
 
 public class SphereColliderComponent : ColliderComponent {
     public float Radius = 0.5f;
+    public Vector3 GizmoDimensions {
+        get {
+            float diameter = 2f*Radius*MathF.Max(MathF.Abs(gameObject.Transform.Scale.X),
+                MathF.Max(MathF.Abs(gameObject.Transform.Scale.Y), MathF.Abs(gameObject.Transform.Scale.Z)));
+            return new Vector3(diameter);
+        }
+    }
 
     Sphere Shape {
         get {

@@ -5,7 +5,17 @@ namespace Engine.Graphics;
 
 public class MeshComponent : Component, IUpdateAtFreeze {
 
-    public Mesh? Mesh = null;
+    [Hide, JsonIgnore] private Mesh? mesh;
+    [JsonProperty("Mesh")]
+    public Mesh? Mesh {
+        get => mesh;
+        set {
+            if (ReferenceEquals(mesh, value)) return;
+            mesh = value;
+            if (_gameObject is not null)
+                _gameObject.GetComponent<global::Engine.MeshColliderComponent>()?.SetMesh(value);
+        }
+    }
     public Material? Material = AssetsEngine._mat_Lit;
     public Material[]? Materials;
 

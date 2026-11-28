@@ -13,7 +13,7 @@ public enum ChunkState { None, Loading, Ready, Saving, Unloading }
 public enum ChunkTaskType { Load, Save, Unload }
 
 
-public class ChunksGrid : Component, IUpdate, IUpdateAtFreeze, ICustomLoad<ChunksGrid> {
+public class ChunksGrid : Component, IUpdate, IUpdateAtFreeze, ICustomLoad<ChunksGrid>, IOnLoaded {
 
     /// Events
     public event Action<ChunkLayer, Vector2Int>? de_ChunkLoaded;
@@ -22,10 +22,11 @@ public class ChunksGrid : Component, IUpdate, IUpdateAtFreeze, ICustomLoad<Chunk
     public event Action? de_ChunksUnloaded; /// UnloadAll
 
     [JsonIgnore] public static Transform Transform { get; private set; } = null!;
-    [JsonIgnore] public static Transform TransformTarget { get; private set; } = null!;
+    [JsonIgnore] private Vector3 _targetCenter;
 
     /// Config
     public bool IsPermanentChunks = false; /// true = load full extent once per layer, never streams/unloads on move
+    public bool SaveChunks = false;
     public bool IsCircle = true; /// false = quad
     public Vector3 Center = Vector3.Zero;
     public static int ChunkSize = 5;
@@ -60,10 +61,34 @@ public class ChunksGrid : Component, IUpdate, IUpdateAtFreeze, ICustomLoad<Chunk
 
     public override void OnAdd () {
         Transform = gameObject.Transform;
-        TransformTarget = new GameObject() { Name = "ChunksGridTarget", }.Transform;
+        _targetCenter = Center;
         RebuildLayerOrder();
+        RestoreSavedChunks();
 
         de_ChunksLoaded += save;
+    }
+
+    public void OnLoaded () {
+        foreach (ChunkLayer layer in Layers)
+            layer.OnLoaded();
+    }
+
+    private void RestoreSavedChunks () {
+        if (!SaveChunks) return;
+
+        foreach (ChunkLayer layer in Layers) {
+            string prefix = layer.ChunkObjectNamePrefix;
+            foreach (Transform child in Transform.Children) {
+                if (!child.gameObject.Name.StartsWith(prefix, StringComparison.Ordinal)
+                    || !ChunkLayer.TryParseCoordinate(child.gameObject.Name[prefix.Length..], out Vector2Int coord))
+                    continue;
+
+                if (!layer.GameObjects.TryGetValue(coord, out List<GameObject>? objects))
+                    layer.GameObjects[coord] = objects = new List<GameObject>();
+                objects.Add(child.gameObject);
+                layer.States[coord] = ChunkState.Ready;
+            }
+        }
     }
     public override void OnRemove () {
         de_ChunksLoaded -= save;
@@ -75,12 +100,11 @@ public class ChunksGrid : Component, IUpdate, IUpdateAtFreeze, ICustomLoad<Chunk
     }
 
     public void SetCenter (Vector3 newCenter) {
-        TransformTarget.Position = newCenter;
+        _targetCenter = newCenter;
     }
 
     public void Update () {
-        Vector3 targetPos = TransformTarget.Position;
-        UpdateCenter(targetPos);
+        UpdateCenter(_targetCenter);
         //ForceResync();
         ProcessTasks();
     }

@@ -26,7 +26,9 @@ public class Camera : Component {
         get {
             Camera? best = null;
             for (int i = 0; i < Cameras.Count; i++) {
-                if (best == null || best.priority <= Cameras[i].priority) best = Cameras[i];
+                Camera camera = Cameras[i];
+                if (!camera.Enabled) continue;
+                if (best == null || best.priority <= camera.priority) best = camera;
             }
             return best;
         }
@@ -91,7 +93,7 @@ public class Camera : Component {
 
 
     public override void OnAdd () {
-        Cameras.Add(this);
+        if (!Cameras.Contains(this)) Cameras.Add(this);
     }
     public override void OnRemove () {
         Cameras.Remove(this);

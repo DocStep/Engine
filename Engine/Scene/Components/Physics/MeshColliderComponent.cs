@@ -15,8 +15,10 @@ public class MeshColliderComponent : ColliderComponent {
     [Hide][JsonIgnore] public Graphics.Vertex[] Vertices = null!;
     [Hide][JsonIgnore] public uint[] Indices = null!;
     [Hide][JsonIgnore] Vector3 hullCenter;
+    [Hide][JsonIgnore] public Graphics.Mesh? GizmoMesh { get; private set; }
 
     public override bool IsReady => Vertices != null && Indices != null && Indices.Length >= 3;
+    public Vector3 GizmoLocalOffset => -ScaledCenter - (UseHull ? hullCenter : Vector3.Zero);
 
     bool UseHull => Convex || gameObject.GetComponent<PhysicsComponent>() is not null;
 
@@ -30,9 +32,29 @@ public class MeshColliderComponent : ColliderComponent {
         if (meshComponent?.Mesh != null) SetMesh(meshComponent.Mesh);
     }
 
-    public void SetMesh (Graphics.Mesh mesh) {
-        Vertices = mesh.Data.Vertices;
-        Indices = mesh.Data.Indices;
+    public void SetMesh (Graphics.Mesh? mesh) {
+        GizmoMesh?.Dispose();
+        GizmoMesh = null;
+        if (mesh?.Data is not Graphics.MeshData data) {
+            Vertices = null!;
+            Indices = null!;
+            if (gameObject is not null) Refresh();
+            return;
+        }
+
+        Vertices = data.Vertices;
+        Indices = data.Indices;
+        uint[] lineIndices = new uint[(Indices.Length/3)*6];
+        for (int i = 0; i + 2 < Indices.Length; i += 3) {
+            int line = i*2;
+            lineIndices[line] = Indices[i];
+            lineIndices[line + 1] = Indices[i + 1];
+            lineIndices[line + 2] = Indices[i + 1];
+            lineIndices[line + 3] = Indices[i + 2];
+            lineIndices[line + 4] = Indices[i + 2];
+            lineIndices[line + 5] = Indices[i];
+        }
+        GizmoMesh = new Graphics.Mesh(new Graphics.MeshData(Vertices, lineIndices, Silk.NET.OpenGL.PrimitiveType.Lines));
         if (gameObject != null) Refresh();
     }
 
@@ -56,6 +78,11 @@ public class MeshColliderComponent : ColliderComponent {
     }
     public override void AddToCompound (ref CompoundBuilder builder, float weight) {
         builder.Add(BuildHull(Physics.Instance.BufferPool), LocalPose, weight);
+    }
+    public override void OnRemove () {
+        base.OnRemove();
+        GizmoMesh?.Dispose();
+        GizmoMesh = null;
     }
 
 

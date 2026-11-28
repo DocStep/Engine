@@ -9,81 +9,34 @@ public static class ComponentsGizmo {
     public static void DrawAll (Dictionary<Type, List<Component>> components) {
         if (!Constants.drawGizmos) return;
 
-        ForEach<BoxColliderComponent>(components, c => c.DrawGizmo());
-        ForEach<CapsuleColliderComponent>(components, c => c.DrawGizmo());
-        ForEach<PlaneColliderComponent>(components, c => c.DrawGizmo());
-        ForEach<SphereColliderComponent>(components, c => c.DrawGizmo());
+        ForEach<BoxColliderComponent>(components, c => Draw(c, Gizmos._mesh_CubeWireframe, c.GizmoDimensions));
+        ForEach<CapsuleColliderComponent>(components, c => {
+            if (c.Enabled) Draw(c, c.GetGizmoMesh(), Vector3.One);
+        });
+        ForEach<PlaneColliderComponent>(components, c => Draw(c, Gizmos._mesh_PlaneWireframe, c.GizmoDimensions,
+            new Vector3(0f, c.Thickness*0.5f, 0f)));
+        ForEach<SphereColliderComponent>(components, c => Draw(c, Gizmos._mesh_SphereWireframe, c.GizmoDimensions));
+        ForEach<MeshColliderComponent>(components, c => DrawMesh(c));
     }
 
     static void ForEach<T> (Dictionary<Type, List<Component>> components, Action<T> draw) where T : Component {
         if (!components.TryGetValue(typeof(T), out List<Component>? list)) return;
 
-        /// Index loop: no enumerator allocation, and no throw if a component is added mid-frame
-        for (int i = 0; i < list.Count; i++) {
+        for (int i = 0; i < list.Count; i++)
             draw((T)list[i]);
-        }
     }
-
-
-
-    extension(BoxColliderComponent comp) {
-        public void DrawGizmo () {
-            if (Constants.drawGizmos) {
-                RenderData renderInfo = new RenderData() {
-                    model = comp.gameObject.Transform.GetWorldMatrix(),
-
-                    mesh = Gizmos._mesh_CubeWireframe,
-                    material = Gizmos._mat_GizmosGreen_Instanced,
-                    primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
-                };
-                Renderer.Instance.AddRenderData(renderInfo);
-            }
-        }
+    static void Draw (ColliderComponent collider, Mesh mesh, Vector3 dimensions, Vector3 localOffset = default) {
+        if (!collider.Enabled) return;
+        Renderer.Instance.AddRenderData(new RenderData {
+            model = collider.GetGizmoModel(dimensions, localOffset),
+            mesh = mesh,
+            material = Gizmos._mat_GizmosGreen_Instanced,
+            primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
+        });
     }
-
-    extension(CapsuleColliderComponent comp) {
-        public void DrawGizmo () {
-            if (Constants.drawGizmos) {
-                RenderData renderInfo = new RenderData() {
-                    model = comp.gameObject.Transform.GetWorldMatrix(),
-
-                    mesh = Gizmos._mesh_CapsuleWireframe,
-                    material = Gizmos._mat_GizmosGreen_Instanced,
-                    primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
-                };
-                Renderer.Instance.AddRenderData(renderInfo);
-            }
-        }
-    }
-
-    extension(PlaneColliderComponent comp) {
-        public void DrawGizmo () {
-            if (Constants.drawGizmos) {
-                RenderData renderInfo = new RenderData() {
-                    model = comp.gameObject.Transform.GetWorldMatrix(),
-
-                    mesh = Gizmos._mesh_PlaneWireframe,
-                    material = Gizmos._mat_GizmosGreen_Instanced,
-                    primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
-                };
-                Renderer.Instance.AddRenderData(renderInfo);
-            }
-        }
-    }
-
-    extension(SphereColliderComponent comp) {
-        public void DrawGizmo () {
-            if (Constants.drawGizmos) {
-                RenderData renderInfo = new RenderData() {
-                    model = comp.gameObject.Transform.GetWorldMatrix(),
-
-                    mesh = Gizmos._mesh_SphereWireframe,
-                    material = Gizmos._mat_GizmosGreen_Instanced,
-                    primitiveType = Silk.NET.OpenGL.PrimitiveType.Lines,
-                };
-                Renderer.Instance.AddRenderData(renderInfo);
-            }
-        }
+    static void DrawMesh (MeshColliderComponent collider) {
+        if (!collider.Enabled || collider.GizmoMesh is null) return;
+        Draw(collider, collider.GizmoMesh, collider.gameObject.Transform.Scale, collider.GizmoLocalOffset);
     }
 
 }

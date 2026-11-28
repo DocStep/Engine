@@ -5,10 +5,6 @@ namespace Engine;
 
 public class Transform : Component {
 
-#pragma warning disable CS0108
-    [Hide] public bool Enabled { get; set; } = true;
-#pragma warning restore CS0108
-
     [Hide, JsonIgnore] public Action<Vector3>? de_PositionChanged = null;
     [Hide, JsonIgnore] public Action<Quaternion>? de_RotationChanged = null;
     [Hide, JsonIgnore] public Action<Vector3>? de_ScaleChanged = null;
@@ -41,9 +37,13 @@ public class Transform : Component {
         get => parent;
         set {
             if (parent == value || value == this) return;
+            for (Transform? ancestor = value; ancestor is not null; ancestor = ancestor.Parent)
+                if (ancestor == this) return;
 
+            bool wasActive = gameObject?.IsActiveInHierarchy ?? true;
             Vector3 worldPosition = Position;
             Quaternion worldRotation = Rotation;
+            Vector3 worldScale = Scale;
 
             parent?.Children.Remove(this);
             parent = value;
@@ -53,9 +53,9 @@ public class Transform : Component {
 
             SetPosition_Silent(worldPosition);
             SetRotation_Silent(worldRotation);
-
-            de_PositionChanged?.Invoke(Position);
-            de_RotationChanged?.Invoke(Rotation);
+            SetScale_Silent(worldScale);
+            NotifyHierarchyChanged(position: true, rotation: true, scale: true);
+            gameObject?.NotifyHierarchyEnabledChanged(wasActive, gameObject.IsActiveInHierarchy);
         }
     }
 
@@ -71,7 +71,7 @@ public class Transform : Component {
 
             localPosition = value;
 
-            de_PositionChanged?.Invoke(Position);
+            NotifyHierarchyChanged(position: true);
         }
     }
 
@@ -86,7 +86,7 @@ public class Transform : Component {
             localRotation = EulerToQuaternion(value);
             rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
 
-            de_RotationChanged?.Invoke(Rotation);
+            NotifyHierarchyChanged(rotation: true);
         }
     }
     public void RotateLocalEuler (Vector3 degrees) {
@@ -103,7 +103,7 @@ public class Transform : Component {
         localRotationEuler = QuaternionToEuler(localRotation, localRotationEuler);
         rotationEuler = QuaternionToEuler(Rotation, rotationEuler);
 
-        de_RotationChanged?.Invoke(Rotation);
+        NotifyHierarchyChanged(rotation: true);
     }
 
     [Hide][JsonIgnore]
@@ -112,7 +112,7 @@ public class Transform : Component {
         set {
             SetLocalRotation_Silent(value);
 
-            de_RotationChanged?.Invoke(Rotation);
+            NotifyHierarchyChanged(rotation: true);
         }
     }
 
@@ -124,7 +124,7 @@ public class Transform : Component {
 
             localScale = value;
 
-            de_ScaleChanged?.Invoke(Scale);
+            NotifyHierarchyChanged(scale: true);
         }
     }
 
@@ -143,7 +143,7 @@ public class Transform : Component {
         set {
             SetPosition_Silent(value);
 
-            de_PositionChanged?.Invoke(Position);
+            NotifyHierarchyChanged(position: true);
         }
     }
 
@@ -157,7 +157,7 @@ public class Transform : Component {
         set {
             SetRotation_Silent(value);
 
-            de_RotationChanged?.Invoke(Rotation);
+            NotifyHierarchyChanged(rotation: true);
         }
     }
 
@@ -171,7 +171,7 @@ public class Transform : Component {
 
             rotationEuler = value;
 
-            de_RotationChanged?.Invoke(Rotation);
+            NotifyHierarchyChanged(rotation: true);
         }
     }
 
@@ -226,6 +226,32 @@ public class Transform : Component {
         }
 
         localPosition = Vector3.Transform(position, inverse);
+    }
+    private void SetScale_Silent (Vector3 scale) {
+        if (Parent is null) {
+            localScale = scale;
+            return;
+        }
+
+        Vector3 parentScale = Parent.Scale;
+        localScale = new Vector3(
+            parentScale.X != 0f ? scale.X/parentScale.X : 0f,
+            parentScale.Y != 0f ? scale.Y/parentScale.Y : 0f,
+            parentScale.Z != 0f ? scale.Z/parentScale.Z : 0f
+        );
+    }
+    private void NotifyHierarchyChanged (bool position = false, bool rotation = false, bool scale = false) {
+        if (position) de_PositionChanged?.Invoke(Position);
+        if (rotation) de_RotationChanged?.Invoke(Rotation);
+        if (scale) de_ScaleChanged?.Invoke(Scale);
+        Scene.MarkDirtyIfEditing();
+
+        foreach (Transform child in Children)
+            child.NotifyHierarchyChanged(position || rotation || scale, rotation, scale);
+    }
+    internal void NotifyChildrenPoseChanged () {
+        foreach (Transform child in Children)
+            child.NotifyHierarchyChanged(position: true, rotation: true);
     }
     public void SetLocalRotation_Silent (Quaternion rotation) {
         localRotation = NormalizeSafe(rotation);
@@ -293,17 +319,17 @@ public class Transform : Component {
 
     public void RotateLocalX (float degrees) {
         RotateLocalX_Silent(degrees);
-        de_RotationChanged?.Invoke(Rotation);
+        NotifyHierarchyChanged(rotation: true);
     }
 
     public void RotateLocalY (float degrees) {
         RotateLocalY_Silent(degrees);
-        de_RotationChanged?.Invoke(Rotation);
+        NotifyHierarchyChanged(rotation: true);
     }
 
     public void RotateLocalZ (float degrees) {
         RotateLocalZ_Silent(degrees);
-        de_RotationChanged?.Invoke(Rotation);
+        NotifyHierarchyChanged(rotation: true);
     }
 
     private void RotateLocalX_Silent (float degrees) {
@@ -345,7 +371,7 @@ public class Transform : Component {
         Quaternion delta = Quaternion.CreateFromAxisAngle(axis, degrees*Mathf.Deg2Rad);
         SetRotation_Silent(delta*Rotation);
 
-        de_RotationChanged?.Invoke(Rotation);
+        NotifyHierarchyChanged(rotation: true);
     }
 
 

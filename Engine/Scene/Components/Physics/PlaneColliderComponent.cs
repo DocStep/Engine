@@ -9,6 +9,12 @@ public class PlaneColliderComponent : ColliderComponent {
     public Vector2 Size = new Vector2(100f, 100f);
     /// Thick enough that fast objects can't tunnel through.
     public float Thickness = 1f;
+    public Vector3 GizmoDimensions {
+        get {
+            Vector3 scale = Vector3.Abs(gameObject.Transform.Scale);
+            return new Vector3(Size.X*scale.X, 1f, Size.Y*scale.Z);
+        }
+    }
 
     Box Shape {
         get {

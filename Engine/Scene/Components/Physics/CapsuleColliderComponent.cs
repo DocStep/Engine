@@ -16,6 +16,32 @@ public class CapsuleColliderComponent : ColliderComponent {
     /// Total height including both caps, like Unity.
     public float Height = 2f;
     public ColliderAxis Direction = ColliderAxis.Y;
+    [Hide][Newtonsoft.Json.JsonIgnore] private Graphics.Mesh? gizmoMesh;
+    [Hide][Newtonsoft.Json.JsonIgnore] private float gizmoRadius = float.NaN;
+    [Hide][Newtonsoft.Json.JsonIgnore] private float gizmoLength = float.NaN;
+
+    public Graphics.Mesh GetGizmoMesh () {
+        Vector3 scale = Vector3.Abs(gameObject.Transform.Scale);
+        float along = Direction switch {
+            ColliderAxis.X => scale.X,
+            ColliderAxis.Z => scale.Z,
+            _ => scale.Y
+        };
+        float across = Direction switch {
+            ColliderAxis.X => MathF.Max(scale.Y, scale.Z),
+            ColliderAxis.Z => MathF.Max(scale.X, scale.Y),
+            _ => MathF.Max(scale.X, scale.Z)
+        };
+        float radius = Radius*across;
+        float length = MathF.Max(0f, Height*along - 2f*radius);
+        if (gizmoMesh is null || gizmoRadius != radius || gizmoLength != length) {
+            gizmoMesh?.Dispose();
+            gizmoMesh = new Graphics.Mesh(Graphics.Capsule.GenerateWireframe(radius, length));
+            gizmoRadius = radius;
+            gizmoLength = length;
+        }
+        return gizmoMesh;
+    }
 
     Capsule Shape {
         get {
@@ -59,5 +85,10 @@ public class CapsuleColliderComponent : ColliderComponent {
     }
     public override void AddToCompound (ref CompoundBuilder builder, float weight) {
         builder.Add(Shape, LocalPose, weight);
+    }
+    public override void OnRemove () {
+        base.OnRemove();
+        gizmoMesh?.Dispose();
+        gizmoMesh = null;
     }
 }

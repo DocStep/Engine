@@ -21,8 +21,8 @@ public class Renderer {
             throw new Exception($"[ctor] {typeof(Renderer)}.{nameof(Instance)} ({GetHashCode()}) is not null");
 
         Engine.Instance.de_Render += Render;
+        Engine.Instance.de_Closing += Dispose;
         Windows.Window.FramebufferResize += OnFrameBufferResize;
-        Windows.Window.Closing += Dispose;
 
         gl = Windows.Window.CreateOpenGL();
         GLDebug.Init();

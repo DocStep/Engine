@@ -111,13 +111,16 @@ public static class Capsule {
         return new MeshData(vertices.ToArray(), indices.ToArray(), Silk.NET.OpenGL.PrimitiveType.Triangles);
     }
 
-    public static MeshData GenerateWireframe (float radius = 0.5f, int segments = 32) {
-        Vector3 p1 = -0.5f*Vector3.UnitY;
-        Vector3 p2 = 0.5f*Vector3.UnitY;
-        Vector3 axis = p2-p1;
-        float height = axis.Length();
+    public static MeshData GenerateWireframe (float radius = 0.5f, int segments = 32) =>
+        GenerateWireframe(radius, 1f, segments);
 
-        Vector3 up = 1e-6f < height ? axis/height : Vector3.UnitY;
+    public static MeshData GenerateWireframe (float radius, float height, int segments = 32) {
+        Vector3 p1 = -0.5f*height*Vector3.UnitY;
+        Vector3 p2 = 0.5f*height*Vector3.UnitY;
+        Vector3 axis = p2-p1;
+        float axisLength = axis.Length();
+
+        Vector3 up = 1e-6f < axisLength ? axis/axisLength : Vector3.UnitY;
         (Vector3 right, Vector3 forward) = OrthonormalBasis(up);
 
         List<Vertex> vertices = new List<Vertex>();
