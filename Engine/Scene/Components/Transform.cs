@@ -178,13 +178,13 @@ public class Transform : Component {
     [Hide][JsonIgnore]
     public Vector3 Scale {
         get {
-            if (Parent is null) return LocalScale;
-
-            Vector3 parentScale = Parent.Scale;
+            Matrix4x4 world = WorldMatrix;
+            Vector3 inheritedScale = Parent is null ? Vector3.One : Parent.Scale;
+            Vector3 scaleSign = LocalScale*inheritedScale;
             return new Vector3(
-                LocalScale.X*parentScale.X,
-                LocalScale.Y*parentScale.Y,
-                LocalScale.Z*parentScale.Z);
+                MathF.CopySign(MathF.Sqrt(world.M11*world.M11 + world.M12*world.M12 + world.M13*world.M13), scaleSign.X),
+                MathF.CopySign(MathF.Sqrt(world.M21*world.M21 + world.M22*world.M22 + world.M23*world.M23), scaleSign.Y),
+                MathF.CopySign(MathF.Sqrt(world.M31*world.M31 + world.M32*world.M32 + world.M33*world.M33), scaleSign.Z));
         }
         set {
             if (Parent is null) {
@@ -220,10 +220,8 @@ public class Transform : Component {
             return;
         }
 
-        if (!Matrix4x4.Invert(Parent.WorldMatrix, out Matrix4x4 inverse)) {
-            localPosition = position;
+        if (!Matrix4x4.Invert(Parent.WorldMatrix, out Matrix4x4 inverse))
             return;
-        }
 
         localPosition = Vector3.Transform(position, inverse);
     }
@@ -246,11 +244,13 @@ public class Transform : Component {
         if (scale) de_ScaleChanged?.Invoke(Scale);
         Scene.MarkDirtyIfEditing();
 
-        foreach (Transform child in Children)
+        Transform[] children = Children.ToArray();
+        foreach (Transform child in children)
             child.NotifyHierarchyChanged(position || rotation || scale, rotation, scale);
     }
     internal void NotifyChildrenPoseChanged () {
-        foreach (Transform child in Children)
+        Transform[] children = Children.ToArray();
+        foreach (Transform child in children)
             child.NotifyHierarchyChanged(position: true, rotation: true);
     }
     public void SetLocalRotation_Silent (Quaternion rotation) {
@@ -270,6 +270,8 @@ public class Transform : Component {
     }
 
     public void CopyFrom (Transform source) {
+        if (ReferenceEquals(this, source)) return;
+
         localPosition = source.localPosition;
         localRotation = source.localRotation;
         localRotationEuler = source.localRotationEuler;

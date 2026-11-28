@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using ImGuiNET;
 
@@ -10,13 +11,19 @@ namespace Editor.Graphics;
 
 public class BuildTab : IEditorTab {
 
+    private enum BuildType {
+        None,
+        Grouped,
+        SingleFile,
+    }
+
     private const int MaxOutputLines = 500;
     private readonly ConcurrentQueue<string> _pendingOutput = new();
     private readonly List<string> _outputLines = new();
     private string _projectPath = FindProjectFile();
     private string _outputPath = string.Empty;
     private string _runtimeIdentifier = RuntimeInformation.RuntimeIdentifier;
-    private bool _singleFile = true;
+    private BuildType _buildType = BuildType.Grouped;
     private volatile bool _showBuildLogs;
     private string? _settingsWarning;
     private volatile string _status = "Ready";
@@ -51,7 +58,10 @@ public class BuildTab : IEditorTab {
         ImGui.InputText("Game project (.csproj)", ref _projectPath, 1024);
         ImGui.InputText("Output directory", ref _outputPath, 1024);
         ImGui.InputText("Runtime identifier", ref _runtimeIdentifier, 128);
-        ImGui.Checkbox("Publish as single file", ref _singleFile);
+        int buildTypeIndex = (int)_buildType;
+        string[] buildTypeNames = { "None", "Grouped", "Single file" };
+        if (ImGui.Combo("Build type", ref buildTypeIndex, buildTypeNames, buildTypeNames.Length))
+            _buildType = (BuildType)buildTypeIndex;
         if (ImGui.Button("Publish Game"))
             StartPublish();
         ImGui.EndDisabled();
@@ -128,44 +138,46 @@ public class BuildTab : IEditorTab {
         }
         _isPublishing = true;
         _status = "Starting publish...";
-        _ = PublishAsync(projectPath, outputPath, _runtimeIdentifier.Trim(), _singleFile);
+        _ = PublishAsync(projectPath, outputPath, _runtimeIdentifier.Trim(), _buildType);
     }
 
 
-    private async Task PublishAsync (string projectPath, string outputPath, string runtimeIdentifier, bool singleFile) {
-        using Process process = new();
-        process.StartInfo = new ProcessStartInfo {
-            FileName = "dotnet",
-            WorkingDirectory = Path.GetDirectoryName(projectPath)!,
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            CreateNoWindow = true,
-        };
-
-        List<string> args = new() {
-            "publish", projectPath,
-            "-c", "Release",
-            "-o", outputPath,
-            "-r", runtimeIdentifier,
-            "-p:SelfContained=true",
-            "-p:GameBuild=true",
-            "-p:DebugType=none",
-            "-p:DebugSymbols=false",
-            "-p:GenerateDocumentationFile=false",
-            "-p:SatelliteResourceLanguages=en",
-            "-p:PublishSingleFile=" + singleFile.ToString().ToLowerInvariant(),
-        };
-
-        if (singleFile) {
-            args.Add("-p:EnableCompressionInSingleFile=true");
-            args.Add("-p:IncludeNativeLibrariesForSelfExtract=true");
-        }
-
-        foreach (string arg in args)
-            process.StartInfo.ArgumentList.Add(arg);
-
+    private async Task PublishAsync (string projectPath, string outputPath, string runtimeIdentifier, BuildType buildType) {
+        string stagingPath = Path.Combine(Path.GetTempPath(), "EngineGamePublish-" + Guid.NewGuid().ToString("N"));
         try {
+            Directory.CreateDirectory(stagingPath);
+            using Process process = new();
+            process.StartInfo = new ProcessStartInfo {
+                FileName = "dotnet",
+                WorkingDirectory = Path.GetDirectoryName(projectPath)!,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+
+            List<string> args = new() {
+                "publish", projectPath,
+                "-c", "Release",
+                "-o", stagingPath,
+                "-r", runtimeIdentifier,
+                "-p:SelfContained=true",
+                "-p:GameBuild=true",
+                "-p:DebugType=none",
+                "-p:DebugSymbols=false",
+                "-p:GenerateDocumentationFile=false",
+                "-p:SatelliteResourceLanguages=en",
+                "-p:PublishSingleFile=" + (buildType == BuildType.SingleFile).ToString().ToLowerInvariant(),
+            };
+
+            if (buildType == BuildType.SingleFile) {
+                args.Add("-p:EnableCompressionInSingleFile=true");
+                args.Add("-p:IncludeNativeLibrariesForSelfExtract=true");
+            }
+
+            foreach (string arg in args)
+                process.StartInfo.ArgumentList.Add(arg);
+
             if (!process.Start())
                 throw new InvalidOperationException("The dotnet publish process could not be started.");
 
@@ -175,19 +187,155 @@ public class BuildTab : IEditorTab {
             await process.WaitForExitAsync();
             await Task.WhenAll(outputTask, errorTask);
 
-            string settingsNotice = _settingsWarning is null ? string.Empty : $" {_settingsWarning}";
-            _status = (process.ExitCode == 0
-                ? $"Publish succeeded: {outputPath}"
-                : $"Publish failed with exit code {process.ExitCode}.") + settingsNotice;
+            if (process.ExitCode != 0) {
+                _status = $"Publish failed with exit code {process.ExitCode}.";
+                return;
+            }
+
+            CopyPublishOutput(stagingPath, outputPath, buildType, runtimeIdentifier);
+            _status = $"Publish succeeded: {outputPath}";
         } catch (System.ComponentModel.Win32Exception ex) {
             _status = $"Could not start dotnet: {ex.Message}";
         } catch (IOException ex) {
             _status = $"Publish I/O error: {ex.Message}";
+        } catch (UnauthorizedAccessException ex) {
+            _status = $"Publish access error: {ex.Message}";
         } catch (InvalidOperationException ex) {
             _status = $"Publish failed: {ex.Message}";
+        } catch (InvalidDataException ex) {
+            _status = $"Invalid publish metadata: {ex.Message}";
+        } catch (System.Text.Json.JsonException ex) {
+            _status = $"Invalid publish metadata: {ex.Message}";
         } finally {
+            try {
+                if (Directory.Exists(stagingPath))
+                    Directory.Delete(stagingPath, recursive: true);
+            } catch (IOException ex) {
+                _status = $"Could not clean publish staging files: {ex.Message}";
+            } catch (UnauthorizedAccessException ex) {
+                _status = $"Could not clean publish staging files: {ex.Message}";
+            }
             _isPublishing = false;
         }
+    }
+
+
+    private static void CopyPublishOutput (string stagingPath, string outputPath, BuildType buildType, string runtimeIdentifier) {
+        Directory.CreateDirectory(outputPath);
+        foreach (string pattern in new[] { "*.dll", "*.exe", "*.deps.json", "*.runtimeconfig.json", "*.pdb" }) {
+            foreach (string oldArtifact in Directory.GetFiles(outputPath, pattern, SearchOption.TopDirectoryOnly))
+                File.Delete(oldArtifact);
+        }
+
+        string runtimesPath = Path.Combine(outputPath, "runtimes");
+        if (Directory.Exists(runtimesPath))
+            Directory.Delete(runtimesPath, recursive: true);
+
+        string libsPath = Path.Combine(outputPath, "libs");
+        if (Directory.Exists(libsPath))
+            Directory.Delete(libsPath, recursive: true);
+
+        string mainAssemblyName = Directory.GetFiles(stagingPath, "*.runtimeconfig.json", SearchOption.TopDirectoryOnly)
+            .Select(Path.GetFileNameWithoutExtension)
+            .FirstOrDefault(name => name is not null) is string runtimeConfigName
+                ? Path.GetFileNameWithoutExtension(runtimeConfigName)
+                : string.Empty;
+
+        HashSet<string> movedLibraries = new(StringComparer.OrdinalIgnoreCase);
+        foreach (string stagedFile in Directory.GetFiles(stagingPath, "*", SearchOption.TopDirectoryOnly)) {
+            string fileName = Path.GetFileName(stagedFile);
+            bool isDll = Path.GetExtension(stagedFile).Equals(".dll", StringComparison.OrdinalIgnoreCase);
+            bool isManagedLibrary = isDll
+                && !Path.GetFileNameWithoutExtension(stagedFile).Equals(mainAssemblyName, StringComparison.OrdinalIgnoreCase)
+                && buildType != BuildType.None
+                && IsManagedAssembly(stagedFile);
+            bool isGroupedNativeLibrary = isDll
+                && !Path.GetFileNameWithoutExtension(stagedFile).Equals(mainAssemblyName, StringComparison.OrdinalIgnoreCase)
+                && buildType == BuildType.Grouped
+                && runtimeIdentifier.StartsWith("win-", StringComparison.OrdinalIgnoreCase)
+                && !IsRuntimeHostLibrary(fileName)
+                && !isManagedLibrary;
+            string destination = isManagedLibrary || isGroupedNativeLibrary
+                ? Path.Combine(libsPath, fileName)
+                : Path.Combine(outputPath, fileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+            File.Copy(stagedFile, destination, overwrite: true);
+            if (isManagedLibrary || isGroupedNativeLibrary)
+                movedLibraries.Add(fileName);
+        }
+
+        foreach (string stagedDirectory in Directory.GetDirectories(stagingPath, "*", SearchOption.TopDirectoryOnly)) {
+            string destination = Path.Combine(outputPath, Path.GetFileName(stagedDirectory));
+            CopyDirectory(stagedDirectory, destination);
+        }
+
+        if (movedLibraries.Count > 0)
+            UpdateDependencyPaths(Path.Combine(outputPath, mainAssemblyName + ".deps.json"), movedLibraries);
+    }
+
+
+    private static void UpdateDependencyPaths (string depsPath, HashSet<string> movedLibraries) {
+        JsonObject dependencies = JsonNode.Parse(File.ReadAllText(depsPath))?.AsObject()
+            ?? throw new InvalidDataException($"Could not parse dependency manifest: {depsPath}");
+        if (dependencies["targets"] is not JsonObject targets)
+            throw new InvalidDataException($"Dependency manifest has no targets: {depsPath}");
+
+        foreach (JsonNode? target in targets.Select(property => property.Value)) {
+            if (target is not JsonObject libraries)
+                continue;
+            foreach (JsonNode? library in libraries.Select(property => property.Value)) {
+                if (library is not JsonObject assets)
+                    continue;
+                foreach (string assetKind in new[] { "runtime", "runtimeTargets", "native" }) {
+                    if (assets[assetKind] is not JsonObject runtimeAssets)
+                        continue;
+                    foreach (KeyValuePair<string, JsonNode?> asset in runtimeAssets.ToArray()) {
+                        string fileName = Path.GetFileName(asset.Key);
+                        if (!movedLibraries.Contains(fileName))
+                            continue;
+                        runtimeAssets.Remove(asset.Key);
+                        runtimeAssets["libs/" + fileName] = asset.Value?.DeepClone();
+                    }
+                }
+            }
+        }
+
+        File.WriteAllText(depsPath, dependencies.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+    }
+
+
+    private static bool IsManagedAssembly (string path) {
+        try {
+            _ = System.Reflection.AssemblyName.GetAssemblyName(path);
+            return true;
+        } catch (BadImageFormatException) {
+            return false;
+        }
+    }
+
+
+    private static bool IsRuntimeHostLibrary (string fileName) {
+        string name = Path.GetFileNameWithoutExtension(fileName);
+        return name.Equals("coreclr", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("hostfxr", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("hostpolicy", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("clrjit", StringComparison.OrdinalIgnoreCase)
+            || name.StartsWith("clrgc", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("clretwrc", StringComparison.OrdinalIgnoreCase)
+            || name.StartsWith("mscordaccore", StringComparison.OrdinalIgnoreCase)
+            || name.StartsWith("mscordbi", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("mscorrc", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("msquic", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("System.IO.Compression.Native", StringComparison.OrdinalIgnoreCase);
+    }
+
+
+    private static void CopyDirectory (string sourcePath, string destinationPath) {
+        Directory.CreateDirectory(destinationPath);
+        foreach (string file in Directory.GetFiles(sourcePath, "*", SearchOption.TopDirectoryOnly))
+            File.Copy(file, Path.Combine(destinationPath, Path.GetFileName(file)), overwrite: true);
+        foreach (string directory in Directory.GetDirectories(sourcePath, "*", SearchOption.TopDirectoryOnly))
+            CopyDirectory(directory, Path.Combine(destinationPath, Path.GetFileName(directory)));
     }
 
 

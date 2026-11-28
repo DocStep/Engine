@@ -23,6 +23,18 @@ public class ExplorerTab : IEditorTab {
             ImGui.EndPopup();
         }
 
+        if (!string.Equals(Path.GetFullPath(Dirs.Scenes), Path.GetFullPath(Path.Combine(Dirs.AssetsPath, "Scenes")), StringComparison.OrdinalIgnoreCase)) {
+            bool scenesOpen = ImGui.TreeNode("Project Scenes");
+            if (ImGui.BeginPopupContextItem("##ProjectScenesContext")) {
+                DrawCreateContext(Dirs.Scenes);
+                ImGui.EndPopup();
+            }
+            if (scenesOpen) {
+                DrawDirectory(Dirs.Scenes);
+                ImGui.TreePop();
+            }
+        }
+
         ImGui.End();
     }
 

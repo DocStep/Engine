@@ -24,7 +24,11 @@ public class Engine : IDisposable {
 
     //public Action? de_Update_Engine = null;
     //public Action? de_FixedUpdate_Engine = null;
-    public static string savesFolder = "Data";
+    private static string? customSavesFolder;
+    public static string savesFolder {
+        get => customSavesFolder ?? Dirs.Data;
+        set => customSavesFolder = value;
+    }
 
     public Action? de_StateReset = null;
     public Action? de_Update = null;
@@ -59,6 +63,7 @@ public class Engine : IDisposable {
         string[] commandLineArguments = Environment.GetCommandLineArgs();
         string[] arguments = entryPoint?.Arguments ?? (commandLineArguments.Length > 1 ? commandLineArguments[1..] : Array.Empty<string>());
         launchOptions = EngineLaunchOptions.Parse(arguments);
+        Dirs.InitializeProjectRoot(launchOptions.ProjectRoot);
         isEditorLaunch = launchOptions.IsEditor || entryPoint?.Editor == true;
         ArgsUtils.Init(launchOptions.Arguments);
         if (isEditorLaunch) ArgsUtils.isEditor = true;
@@ -134,9 +139,13 @@ public class Engine : IDisposable {
                 && !launchOptions.ScenePath.Contains(Path.AltDirectorySeparatorChar)) {
             scenePath = Path.Combine(Dirs.Scenes, Path.GetFileNameWithoutExtension(launchOptions.ScenePath) + ".json");
         } else {
-            scenePath = Path.Combine(Dirs.Root, Path.HasExtension(launchOptions.ScenePath)
+            string relativeScenePath = Path.HasExtension(launchOptions.ScenePath)
                 ? launchOptions.ScenePath
-                : launchOptions.ScenePath + ".json");
+                : launchOptions.ScenePath + ".json";
+            string projectScenePath = Path.Combine(Dirs.ProjectRoot, relativeScenePath);
+            scenePath = File.Exists(projectScenePath)
+                ? projectScenePath
+                : Path.Combine(Dirs.Root, relativeScenePath);
         }
 
         if (Scene.Load(scenePath) is null) {
